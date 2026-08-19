@@ -37,7 +37,6 @@
 </head>
 
 <body>
-    <canvas id="sceneCanvas" aria-hidden="true"></canvas>
 
     <nav id="navbar">
         <div class="nav-container">
@@ -149,9 +148,8 @@
                     <div class="underline"></div>
                 </div>
                 <div class="overview-copy" data-i18n="lab_overview">
-                    <p><strong>SAIL</strong>(안전 자율·지능연구실)은 자율이동체가 <strong>안전을 보장하면서</strong> 복잡한 환경에서 움직이도록 만드는 제어·계획 알고리즘을 연구합니다. 이론적으로 안전성을 증명할 수 있는 제어기와, 실제 선박·로봇에서 동작하는 시스템을 함께 만듭니다.</p>
-                    <p>핵심 도구는 <strong>모델예측제어(MPC)</strong>, <strong>제어 장벽 함수(CBF)</strong>, <strong>도달가능성 해석(Reachability Analysis)</strong>, 그리고 학습·데이터 기반 모델링입니다. 운하·연안과 같은 제약된 해상 환경에서의 자율운항, COLREGs를 고려한 충돌회피, 접안, 수중운동체 제어까지 실험을 통해 검증합니다.</p>
-                    <p>2025년 9월 국립공주대학교 기계자동차공학부에서 출발한 랩으로, 다가오는 자율운항 선박·무인이동체 산업에서 <strong>안전이 설계에 내장된 시스템</strong>을 만드는 연구자를 키우는 것이 목표입니다.</p>
+                    <p><strong>SAIL</strong>(안전 자율·지능연구실)은 이동로봇·모바일로봇 등 자율이동체가 <strong>안전을 보장하면서</strong> 복잡한 환경에서 움직이도록 만드는 제어·계획 알고리즘을 연구합니다. 이론적으로 안전성을 증명할 수 있는 제어기와, 실제 로봇에서 동작하는 피지컬 AI 시스템을 함께 만듭니다.</p>
+                    <p>핵심 도구는 <strong>모델예측제어(MPC)</strong>, <strong>제어 장벽 함수(CBF)</strong>, <strong>도달가능성 해석(Reachability Analysis)</strong>, 그리고 학습·데이터 기반 모델링입니다. 실내·실외 환경에서의 자율주행, 충돌회피, 피지컬 AI 기반 로봇 제어까지 실험을 통해 검증합니다.</p>
                 </div>
                 <div class="details-grid">
                     <div class="details-list glass-panel" data-i18n="do_block">
@@ -358,11 +356,6 @@
                     <p class="accent-text">Assistant Professor</p>
                     <p>이찬규</p>
                     <p class="small-text">Division of Mechanical and Automotive Engineering<br>Kongju National University</p>
-                    <div class="contact-mini">
-                        <p><i class="fas fa-envelope"></i> <a href="mailto:leeck@kongju.ac.kr">leeck@kongju.ac.kr</a></p>
-                        <p><i class="fas fa-phone-alt"></i> <a href="tel:+82415219248">041-521-9248</a></p>
-                        <p><i class="fas fa-location-dot"></i> Engineering Building #1, 609</p>
-                    </div>
                 </div>
                 <div>
                     <h3 class="subsection-title">Career</h3>
@@ -665,41 +658,43 @@
         </div>
     </section>
 
-    <footer id="contact" class="footer">
-        <div id="global-recruitment-banner" class="recruitment-banner" style="display:none; margin: 0 auto 40px;">
-            <div class="banner-content">
-                <div class="banner-content-header">
-                    <span class="pulse-dot"></span>
-                    <h3 class="banner-title" data-i18n="banner_title">학부생 및 대학원생 상시 모집</h3>
+    <section id="contact" class="section page-section hidden-page">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Contact</h2>
+                <div class="underline"></div>
+            </div>
+            <div class="footer-container">
+                <div class="footer-logo"><span class="sail">SAIL</span> <span class="lab">Lab</span></div>
+                <div class="contact-details">
+                    <p><i class="fas fa-user"></i> <strong>Prof. Changyu Lee</strong></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:leeck@kongju.ac.kr"><strong>leeck@kongju.ac.kr</strong></a></p>
+                    <p><i class="fas fa-phone-alt"></i> <a href="tel:+82415219248"><strong>041-521-9248</strong></a></p>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Engineering Building #1, 609</strong><br>
+                        1223-24, Cheonan-daero, Seobuk-gu, Cheonan-si, Chungcheongnam-do, Republic of Korea</p>
                 </div>
-                <p class="banner-desc" data-i18n="banner_desc">SAIL에서 <strong>안전 자율주행·자율운항 연구</strong>를 함께할 열정적인 학생을 찾습니다.</p>
-                <a href="mailto:leeck@kongju.ac.kr" class="btn btn-primary">Contact Professor</a>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SAIL, Kongju National University.</p>
             </div>
         </div>
-        <div class="footer-container">
-            <div class="footer-logo"><span class="sail">SAIL</span> <span class="lab">Lab</span></div>
-            <div class="contact-details">
-                <h3>Contact</h3>
-                <p><i class="fas fa-user"></i> <strong>Prof. Changyu Lee</strong></p>
-                <p><i class="fas fa-envelope"></i> <a href="mailto:leeck@kongju.ac.kr"><strong>leeck@kongju.ac.kr</strong></a></p>
-                <p><i class="fas fa-phone-alt"></i> <a href="tel:+82415219248"><strong>041-521-9248</strong></a></p>
-                <p><i class="fas fa-map-marker-alt"></i> <strong>Engineering Building #1, 609</strong><br>
-                    1223-24, Cheonan-daero, Seobuk-gu, Cheonan-si, Chungcheongnam-do, Republic of Korea</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 SAIL, Kongju National University. Draft site.</p>
-        </div>
-    </footer>
+    </section>
 
     <script src="script.js" defer></script>
+    <script
+      color="15,138,130"
+      opacity="0.7"
+      zIndex="-2"
+      count="120"
+      src="canvas-nest.js">
+    </script>
     <script>
     (function () {
       var I18N_EN = {
         "hero_subtitle": `Division of Mechanical and Automotive Engineering, KNU`,
         "banner_title": `Now recruiting undergraduate and graduate students`,
         "banner_desc": `SAIL is looking for motivated students to work on <strong>safe autonomy for ships, marine vehicles, and mobile robots</strong>.`,
-        "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real ships and robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through autonomous navigation in restricted waters, COLREGs-aware collision avoidance, berthing, and underwater vehicle control.</p><p>The lab opened in September 2025 in the Division of Mechanical and Automotive Engineering at Kongju National University. The goal is to train researchers who can put <strong>safety into the design</strong> of autonomous ships and unmanned vehicles.</p>`,
+        "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and Physical AI systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and Physical AI–based robot control.</p>`,
         "do_block": `<h3><i class="fas fa-laptop-code"></i> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Experiments on autonomous ships, USVs, and UUVs</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
         "career_block": `<h3><i class="fas fa-briefcase"></i> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li><li>Anyone curious about safety problems in ships, marine systems, and mobility</li></ul>`,
         "r1_card": `Safe trajectory planning and collision avoidance with CBFs and reachability`,
