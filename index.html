@@ -373,13 +373,13 @@
                             <div class="bento-content">
                                 <span class="bento-badge">Algorithm</span>
                                 <h3>Learning-based Planning &amp; Control</h3>
-                                <p data-i18n="r2_card">딥러닝 기반 MPC와 LLM 항법</p>
+                                <p data-i18n="r2_card">딥러닝 기반 MPC, imitation learning, LLM 항법</p>
                                 <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                             </div>
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r2_intro">학습으로 동역학을 맞추고, 포항 운하 자율운항과 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
+                                <p data-i18n="r2_intro">학습으로 동역학을 맞추고, imitation learning으로 제어 정책을 모사하며, 포항 운하 자율운항과 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -394,8 +394,26 @@
                                         <figcaption>MARQA field experiment</figcaption>
                                     </figure>
                                 </div>
+                                <h4 class="rep-pub-title">Collaborators</h4>
+                                <div class="collab-list">
+                                    <a class="collab-card" href="https://sites.google.com/view/byungkwanlee" target="_blank" rel="noopener">
+                                        <img class="collab-logo" src="images/logos/nvidia.svg" alt="NVIDIA">
+                                        <div>
+                                            <div><span class="member-name">Byungkwan Lee</span><span class="member-kor">이병관</span></div>
+                                            <div class="member-role">NVIDIA</div>
+                                        </div>
+                                    </a>
+                                    <a class="collab-card" href="https://kanghoonyoon.github.io/" target="_blank" rel="noopener">
+                                        <img class="collab-logo" src="images/logos/huawei.svg" alt="Huawei">
+                                        <div>
+                                            <div><span class="member-name">Kanghoon Yoon</span><span class="member-kor">윤강훈</span></div>
+                                            <div class="member-role">Huawei Research · Ph.D.</div>
+                                        </div>
+                                    </a>
+                                </div>
                                 <h4 class="rep-pub-title">Representative publications</h4>
                                 <ul class="pub-list">
+                                    <li><strong>Changyu Lee*</strong>, Byungkwan Lee, "Physics-Consistent Behavior Cloning of Nonlinear Model Predictive Control for Surface Vehicle Trajectory Tracking", In Prep. (Collaboration with NVIDIA)</li>
                                     <li>Yeongha Shin, <strong>Changyu Lee</strong>, Jinwhan Kim*, "MARQA: LLM-Based Question Answering for Negotiation-Capable Autonomous Ship Navigation", Under Revision. <a class="project-page" href="https://yeongha-shin.github.io/MARQA/" target="_blank" rel="noopener">Project page</a></li>
                                     <li>Jonghwi Kim**, <strong>Changyu Lee**</strong>, Dongha Chung, Jinwhan Kim*, "Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways," <em>IEEE RA-L</em>, Sep 2023. (**: equally contributed)</li>
                                     <li>Junwoo Jang, <strong>Changyu Lee</strong>, Jinwhan Kim*, "A learning-based approach to surface vehicle dynamics modeling for robust multistep prediction," <em>Autonomous Robots</em>, June 2023.</li>
@@ -1347,14 +1365,14 @@
         "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
         "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li></ul>`,
         "r1_card": `Multimodal planning that chooses tracking, avoidance, or berthing with turning-circle CBFs`,
-        "r2_card": `Deep learning-based MPC and LLM navigation`,
+        "r2_card": `Deep learning-based MPC, imitation learning, and LLM navigation`,
         "r3_card": `Tube-MPC, berthing, drones, and Koopman modeling`,
         "r4_card": `Exact-geometry MPC-CBF for docking, turning-circle CBF, and COLREGs avoidance`,
         "r5_card": `Dynamic obstacle avoidance for AGVs and pedestrian-aware delivery robots`,
         "r6_card": `ASV collision avoidance and Pohang Canal autonomous navigation`,
         "r7_card": `Formation tracking of autonomous vehicles`,
         "r1_intro": `We treat the turning radius of nonholonomic vehicles as a constraint, and choose among several behavior modes instead of a single trajectory.`,
-        "r2_intro": `We learn dynamics models, connect them to canal-scale navigation, and use LLM question answering (MARQA) for ship operations.`,
+        "r2_intro": `We learn dynamics models, imitate control policies, connect them to canal-scale navigation, and use LLM question answering (MARQA) for ship operations.`,
         "r3_intro": `Cascade tube-MPC, L1 adaptation, and Koopman models keep a safe region under disturbance and model error.`,
         "r4_intro": `Left and right turning circles encode both avoidance direction and turning capability, then a QP enforces COLREGs-compliant motion.`,
         "r5_intro": `We plan pedestrian-aware trajectories for mobile robots such as LEMO in crowded indoor spaces.`,
