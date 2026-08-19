@@ -841,6 +841,13 @@ a.project-page {
   flex: none;
 }
 
+.collab-logo-hust {
+  width: 220px;
+  height: 56px;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .project-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -856,6 +863,7 @@ a.project-page {
 
 .project-card .bento-content {
   min-height: 180px;
+  justify-content: flex-start;
 }
 
 .video-item figcaption {
