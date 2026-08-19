@@ -343,7 +343,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r1_intro">비홀로노믹 이동체의 회전반경을 제약으로 두고, 하나의 궤적 대신 추종·회피·접안 등 여러 거동 후보를 만듭니다. 회전원 기반 제어장벽함수로 각 모드의 안전을 판정한 뒤, 그 가운데 안전한 모드를 고르는 멀티모달 계획을 연구합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -378,7 +377,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r2_intro">학습으로 선박 동역학을 맞추고, 비선형 MPC의 제어 정책을 imitation learning으로 모사합니다. 인지된 가항 영역을 따라가는 perception-guided MPC와 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -432,7 +430,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r3_intro">외란과 모델 오차를 튜브로 묶어, cascade tube-MPC와 L1 적응으로 안전 영역을 지킵니다. 선박 접안·USV 회수·쿼드롭터 궤적에 적용하고, Koopman 연산자로 비선형 동역학을 데이터로부터 모델링합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -487,7 +484,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r4_intro">좌·우 회전원으로 선회 능력과 회피 방향을 함께 제약에 넣고, QP로 실시간 풉니다. 좁은 슬립 접안을 위한 exact-geometry MPC-CBF와, COLREGs를 지키는 다선 충돌회피로 확장합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -545,7 +541,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r5_intro">비홀로노믹 AGV와 배송 로봇이 움직이는 장애물·보행자를 피해 가도록 NMPC 경로계획을 연구합니다. 혼잡한 실내 보행자 공간에서 LEMO 등 모바일 로봇의 자율주행을 실험으로 검증합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -579,7 +574,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r6_intro">운하·연안의 좁은 수로에서 장애물 제약을 넣은 비선형 MPC로 자율운항 선박을 제어합니다. 실선 ASV·크루즈 보트 현장 실험과 포항 운하 멀티모달 데이터셋으로 인지–계획–제어를 검증합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -587,12 +581,19 @@
                                         </div>
                                         <figcaption>NMPC with Obstacle Avoidance Constraints for Autonomous Navigation in a Canal Environment</figcaption>
                                     </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/vTFZQQuFJvI" title="Navigable Area Detection and Perception-guided MPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Navigable Area Detection and Perception-guided MPC for Autonomous Navigation in Narrow Waterways</figcaption>
+                                    </figure>
                                 </div>
                                 <h4 class="rep-pub-title">Representative publications</h4>
                                 <ul class="pub-list">
                                     <li><strong>Changyu Lee</strong>, Dongha Chung, Jonghwi Kim, Jinwhan Kim*, <a href="https://doi.org/10.1109/TMECH.2023.3312672" target="_blank" rel="noopener">"Nonlinear Model Predictive Control with Obstacle Avoidance Constraints for Autonomous Navigation in a Canal Environment,"</a> <em>IEEE/ASME TMECH</em>, June 2024.</li>
                                     <li>Jonghwi Kim, <strong>Changyu Lee</strong>, Dongha Chung, Yonghoon Cho, Jinwhan Kim*, Wangseok Jang, Saeyong Park, <a href="https://doi.org/10.1002/rob.22262" target="_blank" rel="noopener">"Field experiment of autonomous ship navigation in canal and surrounding nearshore environments,"</a> <em>JFR</em>, 2024.</li>
                                     <li>Dongha Chung, Jonghwi Kim, <strong>Changyu Lee</strong>, Jinwhan Kim*, <a href="https://doi.org/10.1177/02783649231191145" target="_blank" rel="noopener">"Pohang Canal Dataset: A Multimodal Maritime Dataset for Autonomous Navigation in Restricted Waters,"</a> <em>IJRR</em>, Oct 2023.</li>
+                                    <li>Jonghwi Kim**, <strong>Changyu Lee**</strong>, Dongha Chung, Jinwhan Kim*, <a href="https://doi.org/10.1109/LRA.2023.3291949" target="_blank" rel="noopener">"Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways,"</a> <em>IEEE RA-L</em>, Sep 2023. (**: equally contributed)</li>
                                 </ul>
                             </div>
                         </div>
@@ -609,7 +610,6 @@
                         </div>
                         <div class="bento-details">
                             <div class="details-inner glass-panel">
-                                <p data-i18n="r7_intro">베어링 기반 formation tracking으로 여러 이동체가 상대 위치를 유지하며 움직이게 합니다. 출력 조절과 제어장벽함수로 외란·장애물 아래에서도 편대를 유지하고 회피합니다.</p>
                                 <div class="video-stack">
                                     <figure class="video-item">
                                         <div class="video-embed">
@@ -1356,7 +1356,7 @@
             </div>
             <div class="footer-container">
                 <div class="footer-logo">
-                    <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#i-mark"></use></svg>
+                    <img class="logo-mark" src="images/logos/sail_logo.png" alt="">
                     <span class="sail">SAIL</span>
                     <span class="lab">Lab</span>
                 </div>
@@ -1400,13 +1400,6 @@
         "r5_card": `We plan NMPC trajectories so nonholonomic AGVs and delivery robots can pass moving obstacles and pedestrians. The work is validated on indoor mobile robots such as LEMO in crowded pedestrian spaces.`,
         "r6_card": `Nonlinear MPC with obstacle constraints steers autonomous ships through narrow canals and nearshore waters. Full-scale ASV and cruise-boat field tests, together with the Pohang Canal multimodal dataset, close the perception–planning–control loop.`,
         "r7_card": `Bearing-based formation tracking keeps multiple vehicles in a relative formation while they move. Output regulation and control barrier functions hold the formation and avoid obstacles under disturbance.`,
-        "r1_intro": `We treat the turning radius of nonholonomic vehicles as a constraint and generate several behavior candidates—tracking, avoidance, and berthing—instead of a single trajectory. A turning-circle control barrier function then certifies each mode so that multimodal planning can pick a safe one.`,
-        "r2_intro": `We learn surface-vehicle dynamics and imitate nonlinear MPC policies with behavior cloning. Perception-guided MPC follows detected navigable regions, and MARQA connects planning and control through LLM-based ship question answering.`,
-        "r3_intro": `Disturbance and model error are wrapped in a tube so cascade tube-MPC and L1 adaptation keep a safe region. We apply this to ship berthing, USV recovery, and quadrotor flight, and model nonlinear dynamics with a parameter-varying Koopman operator.`,
-        "r4_intro": `Left and right turning circles put both turning capability and avoidance side into the constraint, then a QP solves it in real time. The same idea extends to exact-geometry MPC-CBF for narrow-slip docking and COLREGs-compliant multi-vessel avoidance.`,
-        "r5_intro": `We plan NMPC trajectories so nonholonomic AGVs and delivery robots can pass moving obstacles and pedestrians. The work is validated on indoor mobile robots such as LEMO in crowded pedestrian spaces.`,
-        "r6_intro": `Nonlinear MPC with obstacle constraints steers autonomous ships through narrow canals and nearshore waters. Full-scale ASV and cruise-boat field tests, together with the Pohang Canal multimodal dataset, close the perception–planning–control loop.`,
-        "r7_intro": `Bearing-based formation tracking keeps multiple vehicles in a relative formation while they move. Output regulation and control barrier functions hold the formation and avoid obstacles under disturbance.`,
         "robot_lemo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance experiments.`,
         "email_tba": `Email to be added`,
         "no_pub_yet": `No publications listed yet.`,

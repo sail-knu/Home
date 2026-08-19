@@ -17,6 +17,9 @@
   if (!ctx) return;
 
   var mouse = { x: null, y: null, r: 22 };
+  var pointer = { x: null, y: null };
+  var prevPtr = { x: null, y: null };
+  window.sailObstaclePos = mouse;
   var robotR = 20;
   var lidarRange = 150;
   var beamCount = 24;
@@ -327,9 +330,41 @@
     ctx.restore();
   }
 
+  function updateObstacle() {
+    if (pointer.x === null) {
+      mouse.x = null;
+      mouse.y = null;
+      return;
+    }
+    if (mouse.x === null) {
+      mouse.x = pointer.x;
+      mouse.y = pointer.y;
+      prevPtr.x = pointer.x;
+      prevPtr.y = pointer.y;
+      return;
+    }
+    var pdx = pointer.x - prevPtr.x;
+    var pdy = pointer.y - prevPtr.y;
+    var cap = Math.hypot(pdx, pdy) * (2 / 3);
+    var dx = pointer.x - mouse.x;
+    var dy = pointer.y - mouse.y;
+    var gap = Math.hypot(dx, dy);
+    if (cap < 0.35) cap = Math.min(gap, 5);
+    if (gap > cap && cap > 0) {
+      mouse.x += dx / gap * cap;
+      mouse.y += dy / gap * cap;
+    } else {
+      mouse.x = pointer.x;
+      mouse.y = pointer.y;
+    }
+    prevPtr.x = pointer.x;
+    prevPtr.y = pointer.y;
+  }
+
   function tick() {
     raf = 0;
     if (document.hidden) return;
+    updateObstacle();
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
       var n = activeCount;
@@ -365,12 +400,12 @@
   };
 
   window.addEventListener("mousemove", function (e) {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
   }, { passive: true });
   document.addEventListener("mouseleave", function () {
-    mouse.x = null;
-    mouse.y = null;
+    pointer.x = null;
+    pointer.y = null;
   });
   window.addEventListener("resize", size);
   document.addEventListener("visibilitychange", function () {

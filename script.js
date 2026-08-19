@@ -98,14 +98,20 @@
     });
   });
 
+  function setResearchCardOpen(wrapper, open) {
+    const item = wrapper.querySelector(".bento-item");
+    const details = wrapper.querySelector(".bento-details");
+    const actionText = wrapper.querySelector(".action-text");
+    wrapper.classList.toggle("expanded", open);
+    item?.classList.toggle("expanded", open);
+    item?.setAttribute("aria-expanded", open ? "true" : "false");
+    if (details) details.style.maxHeight = open ? details.scrollHeight + "px" : null;
+    if (actionText) actionText.textContent = open ? "Close Details" : "View Details";
+  }
+
   function collapseResearchCards() {
     document.querySelectorAll(".bento-wrapper.expanded").forEach((w) => {
-      w.classList.remove("expanded");
-      w.querySelector(".bento-item")?.classList.remove("expanded");
-      const d = w.querySelector(".bento-details");
-      if (d) d.style.maxHeight = null;
-      const t = w.querySelector(".action-text");
-      if (t) t.textContent = "View Details";
+      setResearchCardOpen(w, false);
     });
   }
 
@@ -129,31 +135,16 @@
     const wrapper = document.getElementById(wrapperId);
     if (!wrapper) return;
     const details = wrapper.querySelector(".bento-details");
-    const item = wrapper.querySelector(".bento-item");
-    const actionText = wrapper.querySelector(".action-text");
     const isExpanded = wrapper.classList.contains("expanded");
 
     document.querySelectorAll(".bento-wrapper.expanded").forEach((w) => {
-      if (w.id !== wrapperId) {
-        w.classList.remove("expanded");
-        w.querySelector(".bento-item")?.classList.remove("expanded");
-        const d = w.querySelector(".bento-details");
-        if (d) d.style.maxHeight = null;
-        const t = w.querySelector(".action-text");
-        if (t) t.textContent = "View Details";
-      }
+      if (w.id !== wrapperId) setResearchCardOpen(w, false);
     });
 
     if (isExpanded) {
-      wrapper.classList.remove("expanded");
-      item?.classList.remove("expanded");
-      if (details) details.style.maxHeight = null;
-      if (actionText) actionText.textContent = "View Details";
+      setResearchCardOpen(wrapper, false);
     } else {
-      wrapper.classList.add("expanded");
-      item?.classList.add("expanded");
-      if (details) details.style.maxHeight = details.scrollHeight + "px";
-      if (actionText) actionText.textContent = "Close Details";
+      setResearchCardOpen(wrapper, true);
       setTimeout(() => {
         const y = wrapper.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: "smooth" });
@@ -669,6 +660,59 @@
 
   Object.entries(COURSE_DEMOS).forEach(([key, data]) => initCourseDemos(key, data));
 
+  function youtubeIdFromSrc(src) {
+    const m = String(src || "").match(/(?:embed\/|youtu\.be\/|watch\?v=)([\w-]{11})/);
+    return m ? m[1] : "";
+  }
+
+  function playYoutubeLite(box) {
+    const id = box.getAttribute("data-youtube");
+    const title = box.getAttribute("data-youtube-title") || "YouTube video";
+    if (!id) return;
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://www.youtube-nocookie.com/embed/" + id +
+      "?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3";
+    iframe.title = title;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    box.classList.remove("is-lite");
+    box.replaceChildren(iframe);
+    const details = box.closest(".bento-wrapper.expanded")?.querySelector(".bento-details");
+    if (details) details.style.maxHeight = details.scrollHeight + "px";
+  }
+
+  function initYoutubeLite() {
+    document.querySelectorAll(".video-embed iframe[src*='youtube']").forEach((iframe) => {
+      const id = youtubeIdFromSrc(iframe.src);
+      const box = iframe.closest(".video-embed");
+      if (!id || !box) return;
+      const title = iframe.title || "YouTube video";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "yt-lite";
+      btn.setAttribute("aria-label", "Play " + title);
+      const thumb = document.createElement("img");
+      thumb.alt = "";
+      thumb.loading = "lazy";
+      thumb.src = "https://i.ytimg.com/vi/" + id + "/hq720.jpg";
+      thumb.addEventListener("error", function onErr() {
+        thumb.removeEventListener("error", onErr);
+        thumb.src = "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
+      });
+      const play = document.createElement("span");
+      play.className = "yt-lite-play";
+      play.setAttribute("aria-hidden", "true");
+      btn.append(thumb, play);
+      box.classList.add("is-lite");
+      box.setAttribute("data-youtube", id);
+      box.setAttribute("data-youtube-title", title);
+      box.replaceChildren(btn);
+      btn.addEventListener("click", () => playYoutubeLite(box));
+    });
+  }
+
+  initYoutubeLite();
+
   document.addEventListener("DOMContentLoaded", () => {
     if (window.location.hash) navigateToSection(window.location.hash);
   });
@@ -722,7 +766,10 @@
     document.addEventListener("mouseenter", () => root.classList.add("is-on"));
 
     function tick() {
-      obstacle.style.transform = "translate3d(" + x + "px," + y + "px,0)";
+      const pos = window.sailObstaclePos;
+      const px = pos && pos.x !== null ? pos.x : x;
+      const py = pos && pos.y !== null ? pos.y : y;
+      obstacle.style.transform = "translate3d(" + px + "px," + py + "px,0)";
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
