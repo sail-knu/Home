@@ -766,10 +766,7 @@
     document.addEventListener("mouseenter", () => root.classList.add("is-on"));
 
     function tick() {
-      const pos = window.sailObstaclePos;
-      const px = pos && pos.x !== null ? pos.x : x;
-      const py = pos && pos.y !== null ? pos.y : y;
-      obstacle.style.transform = "translate3d(" + px + "px," + py + "px,0)";
+      obstacle.style.transform = "translate3d(" + x + "px," + y + "px,0)";
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);

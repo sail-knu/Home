@@ -17,9 +17,6 @@
   if (!ctx) return;
 
   var mouse = { x: null, y: null, r: 22 };
-  var pointer = { x: null, y: null };
-  var prevPtr = { x: null, y: null };
-  window.sailObstaclePos = mouse;
   var robotR = 20;
   var lidarRange = 150;
   var beamCount = 24;
@@ -27,8 +24,8 @@
   var viewW = 0;
   var viewH = 0;
   var robots = [
-    { x: 180, y: 160, th: 0.35, v: 4, trail: [], ti: 0, sweep: 0, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 4.1, rgb: color, nose: colorB, hits: new Array(beamCount) },
-    { x: 520, y: 420, th: 3.5, v: 4, trail: [], ti: 0, sweep: 1.8, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 4.6, rgb: colorB, nose: color, hits: new Array(beamCount) }
+    { x: 180, y: 160, th: 0.35, v: 2.67, trail: [], ti: 0, sweep: 0, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 2.73, rgb: color, nose: colorB, hits: new Array(beamCount) },
+    { x: 520, y: 420, th: 3.5, v: 2.67, trail: [], ti: 0, sweep: 1.8, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 3.07, rgb: colorB, nose: color, hits: new Array(beamCount) }
   ];
   var i;
   for (i = 0; i < robots.length; i++) {
@@ -330,41 +327,9 @@
     ctx.restore();
   }
 
-  function updateObstacle() {
-    if (pointer.x === null) {
-      mouse.x = null;
-      mouse.y = null;
-      return;
-    }
-    if (mouse.x === null) {
-      mouse.x = pointer.x;
-      mouse.y = pointer.y;
-      prevPtr.x = pointer.x;
-      prevPtr.y = pointer.y;
-      return;
-    }
-    var pdx = pointer.x - prevPtr.x;
-    var pdy = pointer.y - prevPtr.y;
-    var cap = Math.hypot(pdx, pdy) * (2 / 3);
-    var dx = pointer.x - mouse.x;
-    var dy = pointer.y - mouse.y;
-    var gap = Math.hypot(dx, dy);
-    if (cap < 0.35) cap = Math.min(gap, 5);
-    if (gap > cap && cap > 0) {
-      mouse.x += dx / gap * cap;
-      mouse.y += dy / gap * cap;
-    } else {
-      mouse.x = pointer.x;
-      mouse.y = pointer.y;
-    }
-    prevPtr.x = pointer.x;
-    prevPtr.y = pointer.y;
-  }
-
   function tick() {
     raf = 0;
     if (document.hidden) return;
-    updateObstacle();
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
       var n = activeCount;
@@ -400,12 +365,12 @@
   };
 
   window.addEventListener("mousemove", function (e) {
-    pointer.x = e.clientX;
-    pointer.y = e.clientY;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
   }, { passive: true });
   document.addEventListener("mouseleave", function () {
-    pointer.x = null;
-    pointer.y = null;
+    mouse.x = null;
+    mouse.y = null;
   });
   window.addEventListener("resize", size);
   document.addEventListener("visibilitychange", function () {

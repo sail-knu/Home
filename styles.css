@@ -733,7 +733,7 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 .bento-grid:has(.bento-wrapper.expanded) .bento-wrapper:not(.expanded) .bento-item {
-  opacity: 0.68;
+  opacity: 0.38;
 }
 
 .bento-content {
@@ -2009,10 +2009,14 @@ a.member-card:hover {
   font-weight: 700;
 }
 
-.footer-logo .logo-mark {
+.footer-logo .footer-sail-mark {
+  display: block;
   width: auto;
-  height: 2em;
+  height: 2.4em;
+  max-width: none;
+  aspect-ratio: 338 / 632;
   object-fit: contain;
+  flex: none;
 }
 
 .footer-credit .univ-seal {
