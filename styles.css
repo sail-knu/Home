@@ -868,13 +868,20 @@ button,
 }
 
 .robot-grid {
-  grid-template-columns: minmax(0, 440px);
+  grid-template-columns: 1fr;
+}
+
+.robot-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .robot-visual {
-  height: 180px;
+  position: relative;
+  aspect-ratio: 16 / 9;
   border-radius: 12px;
-  margin-bottom: 14px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -896,8 +903,8 @@ button,
   vertical-align: top;
 }
 
-.robot-card .video-item {
-  margin-top: 16px;
+.robot-media .video-embed {
+  margin: 0;
 }
 
 .profile-wrap {
@@ -1353,6 +1360,7 @@ a.lecture-card-link:hover {
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }
   .video-stack { grid-template-columns: 1fr; }
+  .robot-media { grid-template-columns: 1fr; }
 }
 
 @media (hover: hover) and (pointer: fine) {
