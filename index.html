@@ -325,6 +325,7 @@
                 <h2 class="section-title">Research</h2>
                 <div class="underline"></div>
             </div>
+            <p class="overview-copy" data-i18n="research_lead">SAIL은 비홀로노믹 이동체의 회전반경과 외란을 제약으로 두고, 제어장벽함수·도달가능성·모델예측제어로 안전한 궤적을 계획하고 제어합니다. 학습으로 동역학과 제어 정책을 맞추며, 여러 거동 후보 가운데 안전한 모드를 고르는 멀티모달 계획과 COLREGs를 지키는 회피를 하나의 틀로 묶습니다. 이 방법들을 자율운항 선박·USV·모바일 로봇에 적용하고, 운하 항법·접안·편대 추종과 같은 현장 실험으로 검증합니다.</p>
 
             <div class="tabs">
                 <button class="tab-btn active" onclick="openTab(event, 'research-algorithm')">Algorithm</button>
@@ -396,18 +397,25 @@
                                 </div>
                                 <h4 class="rep-pub-title">Collaborators</h4>
                                 <div class="collab-list">
-                                    <a class="collab-card" href="https://sites.google.com/view/byungkwanlee" target="_blank" rel="noopener">
+                                    <a class="collab-card" href="https://byungkwanlee.github.io/ByungKwanLee-CV/" target="_blank" rel="noopener">
                                         <img class="collab-logo" src="images/logos/nvidia.svg" alt="NVIDIA">
                                         <div>
-                                            <div><span class="member-name">Byungkwan Lee</span><span class="member-kor">이병관</span></div>
-                                            <div class="member-role">NVIDIA</div>
+                                            <div><span class="member-name">Byung-Kwan Lee</span><span class="member-kor">이병관</span></div>
+                                            <div class="member-role">NVIDIA · Research Scientist</div>
                                         </div>
                                     </a>
                                     <a class="collab-card" href="https://kanghoonyoon.github.io/" target="_blank" rel="noopener">
-                                        <img class="collab-logo" src="images/logos/huawei.svg" alt="Huawei">
+                                        <img class="collab-logo" src="images/logos/huawei.png" alt="Huawei">
                                         <div>
                                             <div><span class="member-name">Kanghoon Yoon</span><span class="member-kor">윤강훈</span></div>
                                             <div class="member-role">Huawei Research · Ph.D.</div>
+                                        </div>
+                                    </a>
+                                    <a class="collab-card" href="https://sites.google.com/view/tranvanquoc/home" target="_blank" rel="noopener">
+                                        <img class="collab-logo" src="images/logos/hust.png" alt="HUST">
+                                        <div>
+                                            <div><span class="member-name">Quoc Van Tran</span><span class="member-kor">Tran Van Quoc</span></div>
+                                            <div class="member-role">HUST</div>
                                         </div>
                                     </a>
                                 </div>
@@ -632,10 +640,22 @@
 
             <div class="mt-5">
                 <h3 class="subsection-title">Projects</h3>
-                <ul class="grant-list">
-                    <li><strong class="accent-text">Current.</strong> 한국연구재단 신진연구, 멀티모달 안전 궤적 계획 및 제어를 위한 도달 가능성 분석 기반 MPPI 알고리즘 개발 (2026–2029)</li>
-                    <li><strong class="accent-text">Current.</strong> 국립공주대학교 신임교수정착연구비, 모델예측제어를 통한 강건한 무인이동체 제어 알고리즘 개발 (2026–2027)</li>
-                </ul>
+                <div class="project-grid">
+                    <div class="bento-item project-card">
+                        <div class="bento-content">
+                            <span class="bento-badge">Current</span>
+                            <h3>한국연구재단 신진연구</h3>
+                            <p>멀티모달 안전 궤적 계획 및 제어를 위한 도달 가능성 분석 기반 MPPI 알고리즘 개발 (2026–2029)</p>
+                        </div>
+                    </div>
+                    <div class="bento-item project-card">
+                        <div class="bento-content">
+                            <span class="bento-badge">Current</span>
+                            <h3>국립공주대학교 신임교수정착연구비</h3>
+                            <p>모델예측제어를 통한 강건한 무인이동체 제어 알고리즘 개발 (2026–2027)</p>
+                        </div>
+                    </div>
+                </div>
                 <ul class="ack-list">
                     <li>이 논문은 2026년 국립공주대학교 글로컬대학30사업의 지원을 받아 수행되었음.<br>This work was supported by the Glocal University 30 Project of Kongju National University in 2026.</li>
                     <li>이 논문은 2026년 국립공주대학교 학술연구지원사업의 연구지원에 의하여 연구되었음.<br>This work was supported by the research grant of Kongju National University in 2026.</li>
@@ -1370,6 +1390,7 @@
         "banner_title": `Now recruiting undergraduate and graduate students`,
         "banner_desc": `SAIL is looking for motivated students to work on <strong>safe autonomy for ships, marine vehicles, and mobile robots</strong>.`,
         "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and robot control.</p>`,
+        "research_lead": `SAIL plans and controls safe trajectories for nonholonomic vehicles by treating turning radius and disturbance as constraints, using control barrier functions, reachability, and model predictive control. Learning is used to fit dynamics and imitate control policies, and multimodal planning selects a safe mode among candidate behaviors while keeping COLREGs. We apply these methods to autonomous ships, USVs, and mobile robots, and validate them in field experiments such as canal navigation, berthing, and formation tracking.`,
         "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
         "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li></ul>`,
         "r1_card": `Multimodal planning that chooses tracking, avoidance, or berthing with turning-circle CBFs`,

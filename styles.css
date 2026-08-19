@@ -622,9 +622,15 @@ button,
   transform: rotate(-45deg);
 }
 
+.overview-copy,
 .overview-copy p {
   margin-bottom: 16px;
   color: var(--copy-color);
+  line-height: 1.7;
+}
+
+#research .overview-copy {
+  max-width: 52rem;
 }
 
 .details-grid {
@@ -829,10 +835,27 @@ a.project-page {
 
 .collab-logo {
   width: 88px;
-  height: 28px;
+  height: 36px;
   object-fit: contain;
   object-position: left center;
   flex: none;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 12px 0 8px;
+}
+
+.project-card,
+.project-card.bento-item {
+  cursor: default;
+  min-height: 0;
+}
+
+.project-card .bento-content {
+  min-height: 180px;
 }
 
 .video-item figcaption {
@@ -1833,7 +1856,8 @@ a.member-card:hover {
   .profile-wrap,
   .robot-grid,
   .news-item,
-  .bento-grid {
+  .bento-grid,
+  .project-grid {
     grid-template-columns: 1fr;
   }
 }

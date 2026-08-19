@@ -236,12 +236,19 @@
       desc: "mech-desc",
       frame: "mech-frame",
       lectures: [
+        { id: "1", name: "1강 · 파이프라인" },
         { id: "2", name: "2강 · 센서·샘플링" },
         { id: "3", name: "3강 · 평균" },
         { id: "4", name: "4강 · 필터" },
         { id: "5", name: "5강 · 칼만 필터" },
         { id: "6", name: "6강 · 모델링" },
-        { id: "7", name: "7강 · 1차 시스템" }
+        { id: "7", name: "7강 · 1·2차 응답" },
+        { id: "9", name: "9강 · 라플라스" },
+        { id: "10", name: "10강 · 전달함수" },
+        { id: "11", name: "11강 · 피드백·PID" },
+        { id: "12", name: "12강 · PID 튜닝" },
+        { id: "13", name: "13강 · 경로 추종" },
+        { id: "14", name: "14강 · 표현·검증" }
       ],
       demos: [
         { lec: "1", title: "계측·모델링·제어 파이프라인", src: "lecture/mechatronics/demo/01강_큰그림파이프라인_demo.html" },
