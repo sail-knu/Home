@@ -81,6 +81,7 @@
     if (targetId === "#lecture-future" && typeof window.refreshPidDemo === "function") {
       requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
     }
+    if (typeof window.setSailCursorPage === "function") window.setSailCursorPage(targetId);
   }
 
   window.addEventListener("popstate", () => {
@@ -698,12 +699,55 @@
     root.innerHTML =
       '<div class="sail-cursor-obstacle">' +
         '<div class="sail-cursor-core"></div>' +
+        '<img class="sail-cursor-face" alt="">' +
+        '<div class="sail-cursor-initials"></div>' +
       '</div>';
     document.body.appendChild(root);
     document.documentElement.classList.add("has-sail-cursor");
 
     const obstacle = root.querySelector(".sail-cursor-obstacle");
+    const face = root.querySelector(".sail-cursor-face");
+    const initials = root.querySelector(".sail-cursor-initials");
     const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+
+    function clearCursorMember() {
+      root.classList.remove("is-member", "has-photo");
+      face.removeAttribute("src");
+      initials.textContent = "";
+    }
+
+    window.setSailCursorPage = function (targetId) {
+      const section = document.querySelector(targetId);
+      const photo = section && section.querySelector(".profile-photo");
+      if (!photo) {
+        clearCursorMember();
+        return;
+      }
+      const img = photo.querySelector("img");
+      const label = ((img && img.getAttribute("alt")) || photo.textContent || "").trim();
+      const parts = label.split(/\s+/).filter(Boolean);
+      const letters = photo.classList.contains("avatar-fallback")
+        ? photo.textContent.trim().slice(0, 2)
+        : (parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : label.slice(0, 2).toUpperCase());
+      root.classList.add("is-member");
+      if (img && img.getAttribute("src")) {
+        root.classList.add("has-photo");
+        face.src = img.getAttribute("src");
+        face.alt = "";
+        initials.textContent = "";
+        face.onerror = function () {
+          root.classList.remove("has-photo");
+          face.removeAttribute("src");
+          initials.textContent = letters;
+        };
+      } else {
+        root.classList.remove("has-photo");
+        face.removeAttribute("src");
+        initials.textContent = letters;
+      }
+    };
+
+    window.setSailCursorPage(window.location.hash || "#home");
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
 

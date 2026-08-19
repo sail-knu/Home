@@ -24,8 +24,8 @@
   var viewW = 0;
   var viewH = 0;
   var robots = [
-    { x: 180, y: 160, th: 0.35, v: 2, trail: [], ti: 0, sweep: 0, cool: 0, cruise: 2.05, rgb: color, nose: colorB, hits: new Array(beamCount) },
-    { x: 520, y: 420, th: 3.5, v: 2, trail: [], ti: 0, sweep: 1.8, cool: 0, cruise: 2.3, rgb: colorB, nose: color, hits: new Array(beamCount) }
+    { x: 180, y: 160, th: 0.35, v: 4, trail: [], ti: 0, sweep: 0, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 4.1, rgb: color, nose: colorB, hits: new Array(beamCount) },
+    { x: 520, y: 420, th: 3.5, v: 4, trail: [], ti: 0, sweep: 1.8, cool: 0, passMouse: 0, passBot: 0, wFilt: 0, cruise: 4.6, rgb: colorB, nose: color, hits: new Array(beamCount) }
   ];
   var i;
   for (i = 0; i < robots.length; i++) {
@@ -138,56 +138,72 @@
     var vx = Math.cos(bot.th);
     var vy = Math.sin(bot.th);
     var range = lidarRange * 0.95;
+    var locked = false;
+    var headOn = 0;
 
-    function avoidPoint(ox, oy, rad, passRight) {
+    function avoidPoint(ox, oy, rad, lockKey, preferRight) {
       var dx = bot.x - ox;
       var dy = bot.y - oy;
       var dist = Math.hypot(dx, dy) || 1;
       var gap = dist - rad;
+      if (gap >= range * 1.12) {
+        bot[lockKey] = 0;
+        return;
+      }
       if (gap >= range) return;
+      locked = true;
       var nx = dx / dist;
       var ny = dy / dist;
       var tx = ny;
       var ty = -nx;
-      if (!passRight && vx * tx + vy * ty < 0) {
-        tx = -tx;
-        ty = -ty;
+      if (!bot[lockKey]) {
+        var align = vx * tx + vy * ty;
+        bot[lockKey] = preferRight ? 1 : (align >= 0 ? 1 : -1);
       }
+      tx *= bot[lockKey];
+      ty *= bot[lockKey];
+      var approach = vx * (-nx) + vy * (-ny);
+      if (approach > headOn) headOn = approach;
       var push = 1 - Math.max(0, gap) / range;
       push *= push;
-      vx += nx * push * 1.85 + tx * push * 1.35;
-      vy += ny * push * 1.85 + ty * push * 1.35;
+      var radial = approach > 0.62 ? 0.55 : 1.7;
+      var tang = approach > 0.62 ? 2.35 : 1.4;
+      vx += nx * push * radial + tx * push * tang;
+      vy += ny * push * radial + ty * push * tang;
     }
 
-    if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, false);
+    if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, "passMouse", false);
+    else bot.passMouse = 0;
     var other = bot === robots[0] ? robots[1] : robots[0];
-    avoidPoint(other.x, other.y, robotR, true);
+    avoidPoint(other.x, other.y, robotR, "passBot", true);
 
     var desired = Math.atan2(vy, vx);
-    if (front < lidarRange * 0.72) {
-      var side = (right - left) * 0.018;
-      if (right - left < 10 && left - right < 10) side = right >= left ? -0.7 : 0.7;
+    if (!locked && front < lidarRange * 0.72) {
+      var side = (right - left) * 0.012;
       desired = wrap(desired + side);
     }
 
     var err = wrap(desired - bot.th);
+    if (err < 0.04 && err > -0.04) err = 0;
     var nearBot = Math.hypot(bot.x - other.x, bot.y - other.y) - robotR * 2;
-    var wMax = bot.cool > 0 ? 0.04 : (nearBot < 70 ? 0.15 : 0.1);
-    var wCmd = err * 0.18;
+    var wMax = bot.cool > 0 ? 0.04 : (nearBot < 70 || headOn > 0.6 ? 0.12 : 0.09);
+    var wCmd = err * 0.14;
     if (wCmd > wMax) wCmd = wMax;
     if (wCmd < -wMax) wCmd = -wMax;
+    bot.wFilt += (wCmd - bot.wFilt) * 0.28;
     var slow = (front - 24) / 100;
     if (slow > 1) slow = 1;
-    if (slow < 0.28) slow = 0.28;
+    if (slow < 0.22) slow = 0.22;
     var sBot = (nearBot + 20) / 90;
-    if (sBot < slow) slow = sBot < 0.28 ? 0.28 : sBot;
+    if (sBot < slow) slow = sBot < 0.22 ? 0.22 : sBot;
     if (mouse.x !== null) {
       var dMouse = Math.hypot(bot.x - mouse.x, bot.y - mouse.y);
-      if (dMouse < mouse.r + 46 && slow > 0.35) slow = 0.35;
+      if (dMouse < mouse.r + 46 && slow > 0.32) slow = 0.32;
     }
+    if (headOn > 0.62) slow = Math.min(slow, 0.2);
 
     bot.v += (bot.cruise * slow - bot.v) * 0.12;
-    bot.th = wrap(bot.th + wCmd);
+    bot.th = wrap(bot.th + bot.wFilt);
     bot.x += Math.cos(bot.th) * bot.v;
     bot.y += Math.sin(bot.th) * bot.v;
     bounceWalls(bot);
