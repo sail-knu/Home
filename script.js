@@ -45,6 +45,7 @@
     if (!targetSection || !targetSection.classList.contains("page-section")) return;
 
     const navAlias = {
+      "#professor": "#members",
       "#member-im": "#members",
       "#member-yu": "#members",
       "#lecture-future": "#lecture",

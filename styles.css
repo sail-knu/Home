@@ -1039,10 +1039,18 @@ a.member-card:hover {
   flex: none;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
   font-family: "Outfit", sans-serif;
   font-weight: 700;
+}
+
+.member-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
 }
 
 .member-name { font-weight: 700; }
