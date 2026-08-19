@@ -96,7 +96,7 @@
 
     for (var i = 0; i < hits.length; i++) {
       var rel = wrap(hits[i].ang - robot.th);
-      if (Math.abs(rel) < 0.7) front = Math.min(front, hits[i].dist);
+      if (Math.abs(rel) < 0.75) front = Math.min(front, hits[i].dist);
       if (rel > 0.12 && rel < 1.7) {
         left += hits[i].dist;
         leftN++;
@@ -109,56 +109,60 @@
     left = leftN ? left / leftN : lidarRange;
     right = rightN ? right / rightN : lidarRange;
 
-    var desired = robot.th;
-    var turn = 0;
-    var margin = 70;
+    var vx = Math.cos(robot.th);
+    var vy = Math.sin(robot.th);
+    var range = lidarRange * 0.95;
 
-    if (robot.x < margin) turn += (margin - robot.x) / margin * 0.9;
-    if (robot.x > w - margin) turn -= (robot.x - (w - margin)) / margin * 0.9;
-    if (robot.y < margin) turn += (margin - robot.y) / margin * (Math.cos(robot.th) >= 0 ? 0.9 : -0.9);
-    if (robot.y > h - margin) turn += (robot.y - (h - margin)) / margin * (Math.cos(robot.th) >= 0 ? -0.9 : 0.9);
-
-    if (mouse.x !== null) {
-      var mx = robot.x - mouse.x;
-      var my = robot.y - mouse.y;
-      var dist = Math.sqrt(mx * mx + my * my) || 1;
-      var avoidR = lidarRange * 0.92;
-      if (dist < avoidR + mouse.r) {
-        var nx = mx / dist;
-        var ny = my / dist;
-        var tx = -ny;
-        var ty = nx;
-        if (Math.cos(robot.th) * tx + Math.sin(robot.th) * ty < 0) {
-          tx = -tx;
-          ty = -ty;
-        }
-        var push = Math.pow(1 - Math.min(1, (dist - mouse.r) / avoidR), 2);
-        desired = Math.atan2(
-          Math.sin(robot.th) * (1 - push * 0.7) + ny * push + ty * push * 1.15,
-          Math.cos(robot.th) * (1 - push * 0.7) + nx * push + tx * push * 1.15
-        );
+    function avoidPoint(ox, oy, rad) {
+      var dx = robot.x - ox;
+      var dy = robot.y - oy;
+      var dist = Math.hypot(dx, dy) || 1;
+      var gap = dist - rad;
+      if (gap >= range) return;
+      var nx = dx / dist;
+      var ny = dy / dist;
+      var tx = -ny;
+      var ty = nx;
+      if (vx * tx + vy * ty < 0) {
+        tx = -tx;
+        ty = -ty;
       }
+      var push = Math.pow(1 - Math.max(0, gap) / range, 2);
+      vx += nx * push * 1.85 + tx * push * 1.25;
+      vy += ny * push * 1.85 + ty * push * 1.25;
     }
 
-    if (front < 88) {
-      turn += (right - left) * 0.012;
-      if (Math.abs(right - left) < 8) turn += 0.55;
+    if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r);
+    avoidPoint(0, robot.y, 0);
+    avoidPoint(w, robot.y, 0);
+    avoidPoint(robot.x, 0, 0);
+    avoidPoint(robot.x, h, 0);
+
+    var desired = Math.atan2(vy, vx);
+    if (front < lidarRange * 0.72) {
+      var side = (right - left) * 0.018;
+      if (Math.abs(right - left) < 10) side = right >= left ? -0.7 : 0.7;
+      desired = wrap(desired + side);
     }
 
-    desired = wrap(desired + turn);
     var err = wrap(desired - robot.th);
-    var wCmd = Math.max(-0.085, Math.min(0.085, err * 0.12));
-    var slow = Math.max(0.28, Math.min(1, (front - 28) / 90));
+    var wallDist = Math.min(robot.x, w - robot.x, robot.y, h - robot.y);
+    var wMax = wallDist < 90 ? 0.14 : 0.1;
+    var wCmd = Math.max(-wMax, Math.min(wMax, err * 0.18));
+    var slow = Math.max(0.22, Math.min(1, (front - 24) / 100, wallDist / 88));
     if (mouse.x !== null) {
       var dMouse = Math.hypot(robot.x - mouse.x, robot.y - mouse.y);
       if (dMouse < mouse.r + 46) slow = Math.min(slow, 0.35);
     }
+
     robot.v += ((cruise * slow) - robot.v) * 0.12;
     robot.th = wrap(robot.th + wCmd);
     robot.x += Math.cos(robot.th) * robot.v;
     robot.y += Math.sin(robot.th) * robot.v;
-    robot.x = Math.max(18, Math.min(w - 18, robot.x));
-    robot.y = Math.max(18, Math.min(h - 18, robot.y));
+
+    var pad = 28;
+    robot.x = Math.max(pad, Math.min(w - pad, robot.x));
+    robot.y = Math.max(pad, Math.min(h - pad, robot.y));
   }
 
   function drawLidar(hits) {
