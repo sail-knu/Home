@@ -159,13 +159,17 @@
       var ny = dy / dist;
       var tx = ny;
       var ty = -nx;
-      var approach = vx * (-nx) + vy * (-ny);
+      var toX = -nx;
+      var toY = -ny;
+      var approach = vx * toX + vy * toY;
+      var side = vx * toY - vy * toX;
       if (!bot[lockKey]) {
-        var align = vx * tx + vy * ty;
-        if (Math.abs(align) < 0.3 || approach > 0.7) {
+        if (Math.abs(side) < 0.16 && approach > 0.78) {
           bot[lockKey] = Math.random() < 0.5 ? 1 : -1;
         } else {
-          bot[lockKey] = align >= 0 ? 1 : -1;
+          var ex = side >= 0 ? vy : -vy;
+          var ey = side >= 0 ? -vx : vx;
+          bot[lockKey] = tx * ex + ty * ey >= 0 ? 1 : -1;
         }
       }
       tx *= bot[lockKey];

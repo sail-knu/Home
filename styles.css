@@ -2099,63 +2099,16 @@ a.member-card:hover {
     background: var(--primary-color);
   }
 
-  .sail-cursor-face,
-  .sail-cursor-initials {
-    display: none;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-  }
-
-  .sail-cursor-face {
-    object-fit: cover;
-    object-position: center 18%;
-  }
-
-  .sail-cursor-initials {
-    place-items: center;
-    font-family: "Outfit", sans-serif;
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: var(--primary-color);
-    background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
-  }
-
-  .sail-cursor.is-member .sail-cursor-obstacle {
-    width: 52px;
-    height: 52px;
-    margin: -26px 0 0 -26px;
-    overflow: hidden;
-    border-style: solid;
-    background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
-  }
-
-  .sail-cursor.is-member .sail-cursor-core { display: none; }
-  .sail-cursor.has-photo .sail-cursor-face { display: block; }
-  .sail-cursor.is-member:not(.has-photo) .sail-cursor-initials { display: grid; }
-
   .sail-cursor.is-hover .sail-cursor-obstacle {
     width: 52px;
     height: 52px;
     margin: -26px 0 0 -26px;
   }
 
-  .sail-cursor.is-member.is-hover .sail-cursor-obstacle {
-    width: 60px;
-    height: 60px;
-    margin: -30px 0 0 -30px;
-  }
-
   .sail-cursor.is-down .sail-cursor-obstacle {
     width: 36px;
     height: 36px;
     margin: -18px 0 0 -18px;
-  }
-
-  .sail-cursor.is-member.is-down .sail-cursor-obstacle {
-    width: 44px;
-    height: 44px;
-    margin: -22px 0 0 -22px;
   }
 }
 
