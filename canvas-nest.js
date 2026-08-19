@@ -12,13 +12,13 @@
   canvas.style.cssText = "display:block;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:" + zIndex;
   document.body.appendChild(canvas);
 
-  var ctx = canvas.getContext("2d");
+  var ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
   if (!ctx) return;
 
   var mouse = { x: null, y: null, r: 22 };
   var robotR = 20;
   var lidarRange = 168;
-  var beamCount = 88;
+  var beamCount = 48;
   var robots = [
     { x: 180, y: 160, th: 0.35, v: 0, trail: [], sweep: 0, cruise: 2.05, rgb: color, nose: colorB },
     { x: 520, y: 420, th: 3.5, v: 0, trail: [], sweep: 1.8, cruise: 2.3, rgb: colorB, nose: color }
@@ -40,17 +40,11 @@
   }
 
   function wrap(a) {
-    while (a > Math.PI) a -= Math.PI * 2;
-    while (a < -Math.PI) a += Math.PI * 2;
+    if (a > Math.PI) a -= Math.PI * 2;
+    if (a < -Math.PI) a += Math.PI * 2;
+    if (a > Math.PI) a -= Math.PI * 2;
+    if (a < -Math.PI) a += Math.PI * 2;
     return a;
-  }
-
-  function othersOf(bot) {
-    var list = [];
-    for (var i = 0; i < robots.length; i++) {
-      if (robots[i] !== bot) list.push(robots[i]);
-    }
-    return list;
   }
 
   function rayWall(ox, oy, dx, dy, maxDist, w, h) {
@@ -59,7 +53,7 @@
     else if (dx < -1e-6) t = Math.min(t, -ox / dx);
     if (dy > 1e-6) t = Math.min(t, (h - oy) / dy);
     else if (dy < -1e-6) t = Math.min(t, -oy / dy);
-    return Math.max(0, t);
+    return t > 0 ? t : maxDist;
   }
 
   function rayCircle(ox, oy, dx, dy, cx, cy, r, maxDist) {
@@ -74,38 +68,45 @@
     return maxDist;
   }
 
+  function bounceWalls(bot, w, h) {
+    var pad = 28;
+    var vx = Math.cos(bot.th);
+    var vy = Math.sin(bot.th);
+    var hit = false;
+    if (bot.x <= pad && vx < 0) { vx = -vx; hit = true; }
+    if (bot.x >= w - pad && vx > 0) { vx = -vx; hit = true; }
+    if (bot.y <= pad && vy < 0) { vy = -vy; hit = true; }
+    if (bot.y >= h - pad && vy > 0) { vy = -vy; hit = true; }
+    if (hit) bot.th = Math.atan2(vy, vx);
+    if (bot.x < pad) bot.x = pad;
+    else if (bot.x > w - pad) bot.x = w - pad;
+    if (bot.y < pad) bot.y = pad;
+    else if (bot.y > h - pad) bot.y = h - pad;
+  }
+
   function scanLidar(bot, w, h) {
-    var hits = [];
+    var hits = bot.hits || (bot.hits = new Array(beamCount));
     var ox = bot.x;
     var oy = bot.y;
-    var mates = othersOf(bot);
+    var other = bot === robots[0] ? robots[1] : robots[0];
     for (var i = 0; i < beamCount; i++) {
       var ang = bot.th + (i / beamCount) * Math.PI * 2 - Math.PI;
       var dx = Math.cos(ang);
       var dy = Math.sin(ang);
       var dist = rayWall(ox, oy, dx, dy, lidarRange, w, h);
-      var kind = dist < lidarRange - 0.5 ? "wall" : "free";
+      var kind = dist < lidarRange - 0.5 ? 3 : 0;
       if (mouse.x !== null) {
         var md = rayCircle(ox, oy, dx, dy, mouse.x, mouse.y, mouse.r, dist);
-        if (md < dist) {
-          dist = md;
-          kind = "obs";
-        }
+        if (md < dist) { dist = md; kind = 1; }
       }
-      for (var j = 0; j < mates.length; j++) {
-        var bd = rayCircle(ox, oy, dx, dy, mates[j].x, mates[j].y, robotR, dist);
-        if (bd < dist) {
-          dist = bd;
-          kind = "bot";
-        }
-      }
-      hits.push({
-        ang: ang,
-        dist: dist,
-        kind: kind,
-        x: ox + dx * dist,
-        y: oy + dy * dist
-      });
+      var bd = rayCircle(ox, oy, dx, dy, other.x, other.y, robotR, dist);
+      if (bd < dist) { dist = bd; kind = 2; }
+      var hit = hits[i] || (hits[i] = {});
+      hit.ang = ang;
+      hit.dist = dist;
+      hit.kind = kind;
+      hit.x = ox + dx * dist;
+      hit.y = oy + dy * dist;
     }
     return hits;
   }
@@ -116,18 +117,14 @@
     var right = 0;
     var leftN = 0;
     var rightN = 0;
+    var i;
 
-    for (var i = 0; i < hits.length; i++) {
+    for (i = 0; i < beamCount; i++) {
+      if (hits[i].kind === 3) continue;
       var rel = wrap(hits[i].ang - bot.th);
-      if (Math.abs(rel) < 0.75) front = Math.min(front, hits[i].dist);
-      if (rel > 0.12 && rel < 1.7) {
-        left += hits[i].dist;
-        leftN++;
-      }
-      if (rel < -0.12 && rel > -1.7) {
-        right += hits[i].dist;
-        rightN++;
-      }
+      if (rel < 0.75 && rel > -0.75) front = Math.min(front, hits[i].dist);
+      if (rel > 0.12 && rel < 1.7) { left += hits[i].dist; leftN++; }
+      if (rel < -0.12 && rel > -1.7) { right += hits[i].dist; rightN++; }
     }
     left = leftN ? left / leftN : lidarRange;
     right = rightN ? right / rightN : lidarRange;
@@ -146,57 +143,48 @@
       var ny = dy / dist;
       var tx = ny;
       var ty = -nx;
-      if (!passRight) {
-        if (vx * tx + vy * ty < 0) {
-          tx = -tx;
-          ty = -ty;
-        }
+      if (!passRight && vx * tx + vy * ty < 0) {
+        tx = -tx;
+        ty = -ty;
       }
-      var push = Math.pow(1 - Math.max(0, gap) / range, 2);
+      var push = (1 - Math.max(0, gap) / range);
+      push *= push;
       vx += nx * push * 1.85 + tx * push * 1.35;
       vy += ny * push * 1.85 + ty * push * 1.35;
     }
 
     if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, false);
-    avoidPoint(0, bot.y, 0, false);
-    avoidPoint(w, bot.y, 0, false);
-    avoidPoint(bot.x, 0, 0, false);
-    avoidPoint(bot.x, h, 0, false);
-
-    var mates = othersOf(bot);
-    for (var k = 0; k < mates.length; k++) {
-      avoidPoint(mates[k].x, mates[k].y, robotR, true);
-    }
+    var other = bot === robots[0] ? robots[1] : robots[0];
+    avoidPoint(other.x, other.y, robotR, true);
 
     var desired = Math.atan2(vy, vx);
     if (front < lidarRange * 0.72) {
       var side = (right - left) * 0.018;
-      if (Math.abs(right - left) < 10) side = right >= left ? -0.7 : 0.7;
+      if (right - left < 10 && left - right < 10) side = right >= left ? -0.7 : 0.7;
       desired = wrap(desired + side);
     }
 
     var err = wrap(desired - bot.th);
-    var wallDist = Math.min(bot.x, w - bot.x, bot.y, h - bot.y);
-    var nearBot = lidarRange;
-    for (var n = 0; n < mates.length; n++) {
-      nearBot = Math.min(nearBot, Math.hypot(bot.x - mates[n].x, bot.y - mates[n].y) - robotR * 2);
-    }
-    var wMax = wallDist < 90 || nearBot < 70 ? 0.15 : 0.1;
-    var wCmd = Math.max(-wMax, Math.min(wMax, err * 0.18));
-    var slow = Math.max(0.22, Math.min(1, (front - 24) / 100, wallDist / 88, (nearBot + 20) / 90));
+    var nearBot = Math.hypot(bot.x - other.x, bot.y - other.y) - robotR * 2;
+    var wMax = nearBot < 70 ? 0.15 : 0.1;
+    var wCmd = err * 0.18;
+    if (wCmd > wMax) wCmd = wMax;
+    if (wCmd < -wMax) wCmd = -wMax;
+    var slow = (front - 24) / 100;
+    if (slow > 1) slow = 1;
+    if (slow < 0.22) slow = 0.22;
+    var sBot = (nearBot + 20) / 90;
+    if (sBot < slow) slow = sBot < 0.22 ? 0.22 : sBot;
     if (mouse.x !== null) {
       var dMouse = Math.hypot(bot.x - mouse.x, bot.y - mouse.y);
-      if (dMouse < mouse.r + 46) slow = Math.min(slow, 0.35);
+      if (dMouse < mouse.r + 46 && slow > 0.35) slow = 0.35;
     }
 
-    bot.v += ((bot.cruise * slow) - bot.v) * 0.12;
+    bot.v += (bot.cruise * slow - bot.v) * 0.12;
     bot.th = wrap(bot.th + wCmd);
     bot.x += Math.cos(bot.th) * bot.v;
     bot.y += Math.sin(bot.th) * bot.v;
-
-    var pad = 28;
-    bot.x = Math.max(pad, Math.min(w - pad, bot.x));
-    bot.y = Math.max(pad, Math.min(h - pad, bot.y));
+    bounceWalls(bot, w, h);
   }
 
   function drawLidar(bot, hits) {
@@ -204,59 +192,59 @@
     if (bot.sweep > Math.PI * 2) bot.sweep -= Math.PI * 2;
     var sweepAng = bot.th + bot.sweep - Math.PI;
     var rgb = bot.rgb;
+    var ox = bot.x;
+    var oy = bot.y;
 
-    ctx.beginPath();
-    ctx.arc(bot.x, bot.y, lidarRange, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(" + rgb + ",0.2)";
     ctx.lineWidth = 1;
-    ctx.setLineDash([3, 7]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
     ctx.beginPath();
-    ctx.moveTo(bot.x, bot.y);
-    ctx.arc(bot.x, bot.y, lidarRange, sweepAng - 0.4, sweepAng);
-    ctx.closePath();
+    ctx.arc(ox, oy, lidarRange, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.fillStyle = "rgba(" + rgb + ",0.09)";
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.arc(ox, oy, lidarRange, sweepAng - 0.4, sweepAng);
+    ctx.closePath();
     ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(bot.x, bot.y);
-    ctx.lineTo(bot.x + Math.cos(sweepAng) * lidarRange, bot.y + Math.sin(sweepAng) * lidarRange);
     ctx.strokeStyle = "rgba(" + rgb + ",0.45)";
     ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + Math.cos(sweepAng) * lidarRange, oy + Math.sin(sweepAng) * lidarRange);
     ctx.stroke();
 
-    for (var i = 0; i < hits.length; i++) {
+    ctx.strokeStyle = "rgba(" + rgb + ",0.16)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(" + rgb + ",0.5)";
+    var i;
+    for (i = 0; i < beamCount; i++) {
       var hit = hits[i];
-      var dSweep = Math.abs(wrap(hit.ang - sweepAng));
-      var hot = dSweep < 0.36;
-      var seen = hit.kind !== "free";
-      var alpha = seen ? (hot ? 0.42 : 0.12) : (hot ? 0.07 : 0.025);
-      ctx.beginPath();
-      ctx.moveTo(bot.x, bot.y);
+      if (!hit.kind) continue;
+      ctx.moveTo(ox, oy);
       ctx.lineTo(hit.x, hit.y);
-      ctx.strokeStyle = "rgba(" + rgb + "," + alpha + ")";
-      ctx.lineWidth = hot && seen ? 1.2 : 0.55;
-      ctx.stroke();
-      if (seen) {
-        ctx.beginPath();
-        ctx.arc(hit.x, hit.y, hot ? 3 : 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = hit.kind === "wall"
-          ? "rgba(" + rgb + "," + (hot ? 0.4 : 0.2) + ")"
-          : "rgba(" + rgb + "," + (hot ? 0.75 : 0.4) + ")";
-        ctx.fill();
-      }
     }
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (i = 0; i < beamCount; i++) {
+      if (!hits[i].kind) continue;
+      ctx.moveTo(hits[i].x + 2.2, hits[i].y);
+      ctx.arc(hits[i].x, hits[i].y, 2.2, 0, Math.PI * 2);
+    }
+    ctx.fill();
   }
 
   function drawTrail(bot) {
-    bot.trail.push({ x: bot.x, y: bot.y });
-    if (bot.trail.length > 42) bot.trail.shift();
-    if (bot.trail.length < 2) return;
+    var t = bot.trail;
+    t.push(bot.x, bot.y);
+    if (t.length > 48) { t.shift(); t.shift(); }
+    if (t.length < 4) return;
     ctx.beginPath();
-    ctx.moveTo(bot.trail[0].x, bot.trail[0].y);
-    for (var i = 1; i < bot.trail.length; i++) ctx.lineTo(bot.trail[i].x, bot.trail[i].y);
+    ctx.moveTo(t[0], t[1]);
+    for (var i = 2; i < t.length; i += 2) ctx.lineTo(t[i], t[i + 1]);
     ctx.strokeStyle = "rgba(" + bot.rgb + ",0.15)";
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -266,16 +254,15 @@
     ctx.save();
     ctx.translate(bot.x, bot.y);
     ctx.rotate(bot.th);
-    ctx.globalAlpha = Math.max(0.45, opacity);
+    ctx.globalAlpha = opacity > 0.45 ? opacity : 0.45;
 
     ctx.fillStyle = "#1a2330";
-    roundRect(ctx, -10, -16, 18, 6, 2);
-    ctx.fill();
-    roundRect(ctx, -10, 10, 18, 6, 2);
-    ctx.fill();
+    ctx.fillRect(-10, -16, 18, 6);
+    ctx.fillRect(-10, 10, 18, 6);
 
     ctx.fillStyle = "rgb(" + bot.rgb + ")";
-    roundRect(ctx, -12, -11, 28, 22, 5);
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(-12, -11, 28, 22, 5) : ctx.rect(-12, -11, 28, 22);
     ctx.fill();
 
     ctx.beginPath();
@@ -292,15 +279,8 @@
     ctx.moveTo(16, -6);
     ctx.lineTo(25, 0);
     ctx.lineTo(16, 6);
-    ctx.closePath();
     ctx.fill();
     ctx.restore();
-  }
-
-  function roundRect(c, x, y, w, h, r) {
-    c.beginPath();
-    if (c.roundRect) c.roundRect(x, y, w, h, r);
-    else c.rect(x, y, w, h);
   }
 
   function draw() {
@@ -308,13 +288,16 @@
       var w = canvas.width;
       var h = canvas.height;
       ctx.clearRect(0, 0, w, h);
-      var i;
-      for (i = 0; i < robots.length; i++) steer(robots[i], scanLidar(robots[i], w, h), w, h);
-      for (i = 0; i < robots.length; i++) {
-        drawTrail(robots[i]);
-        drawLidar(robots[i], scanLidar(robots[i], w, h));
-        drawRobot(robots[i]);
-      }
+      var a = scanLidar(robots[0], w, h);
+      var b = scanLidar(robots[1], w, h);
+      steer(robots[0], a, w, h);
+      steer(robots[1], b, w, h);
+      drawTrail(robots[0]);
+      drawTrail(robots[1]);
+      drawLidar(robots[0], a);
+      drawLidar(robots[1], b);
+      drawRobot(robots[0]);
+      drawRobot(robots[1]);
     }
     raf = window.requestAnimationFrame(draw);
   }
