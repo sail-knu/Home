@@ -139,7 +139,7 @@
         <section class="hero">
             <div class="univ-lockup">
                 <img class="univ-seal" src="images/logos/knu-w.png" alt="">
-                <span>Kongju National University</span>
+                <span data-i18n="univ_name">국립공주대학교</span>
             </div>
             <h1>SAIL</h1>
             <h2>
@@ -623,8 +623,8 @@
                                     <a class="collab-card" href="https://sites.google.com/view/tranvanquoc/home" target="_blank" rel="noopener">
                                         <img class="collab-logo collab-logo-hust" src="images/logos/hust.png" alt="HUST">
                                         <div>
-                                            <div><span class="member-name">Quoc Van Tran</span><span class="member-kor">Tran Van Quoc</span></div>
-                                            <div class="member-role">HUST</div>
+                                            <div><span class="member-name">Quoc Van Tran</span></div>
+                                            <div class="member-role">HUST · Lecturer</div>
                                         </div>
                                     </a>
                                 </div>
@@ -1294,7 +1294,7 @@
             <article class="sim-block">
                 <h3 class="subsection-title" id="mech-title"></h3>
                 <p class="small-text" id="mech-desc"></p>
-                <iframe class="course-frame" id="mech-frame" title="메카트로닉스 데모" allow="accelerometer"></iframe>
+                <div class="course-embed demo-app" id="mech-host" data-theme="light"></div>
             </article>
         </div>
     </section>
@@ -1312,7 +1312,7 @@
             <article class="sim-block">
                 <h3 class="subsection-title" id="vib-title"></h3>
                 <p class="small-text" id="vib-desc"></p>
-                <iframe class="course-frame" id="vib-frame" title="기계진동학 데모" allow="accelerometer"></iframe>
+                <div class="course-embed demo-app" id="vib-host" data-theme="light"></div>
             </article>
         </div>
     </section>
@@ -1381,12 +1381,13 @@
       color="12,122,115"
       opacity="0.7"
       zIndex="0"
-      count="600"
+      count="200"
       src="canvas-nest.js">
     </script>
     <script>
     (function () {
       var I18N_EN = {
+        "univ_name": `Kongju National University`,
         "hero_subtitle": `Division of Mechanical and Automotive Engineering, KNU`,
         "banner_title": `Now recruiting undergraduate and graduate students`,
         "banner_desc": `SAIL is looking for motivated students to work on <strong>safe autonomy for ships, marine vehicles, and mobile robots</strong>.`,

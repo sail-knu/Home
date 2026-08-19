@@ -341,17 +341,22 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 14px;
   margin-bottom: 28px;
   color: var(--muted-text);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.78rem;
+  font-size: 1.56rem;
+}
+
+html[data-lang="ko"] .univ-lockup {
+  letter-spacing: 0.06em;
+  text-transform: none;
 }
 
 .univ-lockup .univ-seal {
-  width: 24px;
-  height: 24px;
+  width: 48px;
+  height: 48px;
 }
 
 .hero h1 {
@@ -815,7 +820,7 @@ a.project-page {
 
 .collab-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
   gap: 12px;
   margin: 0 0 8px;
 }
@@ -1119,6 +1124,10 @@ a.member-card:hover {
 .member-name { font-weight: 700; }
 .member-kor { opacity: 0.55; font-size: 0.85rem; margin-left: 6px; }
 .member-role { color: var(--primary-color); font-size: 0.88rem; margin-top: 2px; }
+.collab-card .member-role {
+  margin-top: 8px;
+  white-space: nowrap;
+}
 .member-desc { color: var(--muted-text); font-size: 0.86rem; }
 .member-recruit { color: var(--muted-text); opacity: 0.7; }
 
@@ -1299,7 +1308,8 @@ a.member-card:hover {
   margin: -8px 0 12px;
 }
 
-.course-frame {
+.course-frame,
+.course-embed > .course-frame {
   width: 100%;
   height: min(88vh, 820px);
   min-height: 640px;
@@ -2052,51 +2062,73 @@ a.member-card:hover {
 
   .sail-cursor.is-on { opacity: 1; }
 
-  .sail-cursor-dot,
-  .sail-cursor-ring {
+  .sail-cursor-scan,
+  .sail-cursor-robot {
     position: fixed;
     top: 0;
     left: 0;
-    border-radius: 50%;
     will-change: transform;
   }
 
-  .sail-cursor-dot {
-    width: 7px;
-    height: 7px;
-    margin: -3.5px 0 0 -3.5px;
-    background: var(--primary-color);
-    box-shadow: 0 0 10px color-mix(in srgb, var(--primary-color) 55%, transparent);
-  }
-
-  .sail-cursor-ring {
-    width: 30px;
-    height: 30px;
-    margin: -15px 0 0 -15px;
-    border: 1.5px solid color-mix(in srgb, var(--primary-color) 80%, transparent);
-    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  .sail-cursor-scan {
+    width: 76px;
+    height: 76px;
+    margin: -38px 0 0 -38px;
+    border-radius: 50%;
+    border: 1.5px dashed color-mix(in srgb, var(--primary-color) 55%, transparent);
+    background:
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary-color) 16%, transparent) 0 28%, transparent 62%);
     transition: width 0.22s ease, height 0.22s ease, margin 0.22s ease, background 0.22s ease, border-color 0.22s ease;
   }
 
-  .sail-cursor.is-hover .sail-cursor-dot {
-    width: 4px;
-    height: 4px;
-    margin: -2px 0 0 -2px;
-    background: var(--on-primary);
+  .sail-cursor-robot {
+    width: 42px;
+    height: 32px;
+    margin: -16px 0 0 -21px;
+    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--primary-color) 40%, transparent));
   }
 
-  .sail-cursor.is-hover .sail-cursor-ring {
-    width: 46px;
-    height: 46px;
-    margin: -23px 0 0 -23px;
-    background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+  .sail-cursor-robot svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sail-cursor-robot .robot-body { fill: var(--primary-color); }
+  .sail-cursor-robot .robot-wheel { fill: #1a2330; }
+  .sail-cursor-robot .robot-lidar {
+    fill: color-mix(in srgb, var(--primary-color) 35%, #ffffff);
+    stroke: var(--on-primary);
+    stroke-width: 1.2;
+  }
+  .sail-cursor-robot .robot-lidar-core { fill: var(--on-primary); }
+  .sail-cursor-robot .robot-nose { fill: var(--secondary-color); }
+
+  .sail-cursor.is-hover .sail-cursor-scan {
+    width: 96px;
+    height: 96px;
+    margin: -48px 0 0 -48px;
     border-color: var(--primary-color);
+    background:
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary-color) 22%, transparent) 0 30%, transparent 64%);
   }
 
-  .sail-cursor.is-down .sail-cursor-ring {
-    width: 22px;
-    height: 22px;
-    margin: -11px 0 0 -11px;
+  .sail-cursor.is-hover .sail-cursor-robot {
+    width: 48px;
+    height: 36px;
+    margin: -18px 0 0 -24px;
+  }
+
+  .sail-cursor.is-down .sail-cursor-scan {
+    width: 58px;
+    height: 58px;
+    margin: -29px 0 0 -29px;
+  }
+
+  .sail-cursor.is-down .sail-cursor-robot {
+    width: 36px;
+    height: 28px;
+    margin: -14px 0 0 -18px;
   }
 }
 

@@ -4,9 +4,9 @@
   var pointColor = (tag && tag.getAttribute("pointColor")) || color;
   var opacity = parseFloat((tag && tag.getAttribute("opacity")) || "0.7");
   var zIndex = (tag && tag.getAttribute("zIndex")) || "0";
-  var count = parseInt((tag && tag.getAttribute("count")) || "600", 10);
+  var count = parseInt((tag && tag.getAttribute("count")) || "200", 10);
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (window.innerWidth < 720) count = Math.min(count, 350);
+  if (window.innerWidth < 720) count = Math.min(count, 120);
 
   var canvas = document.createElement("canvas");
   canvas.id = "nestCanvas";
@@ -20,7 +20,6 @@
   var points = [];
   var mouse = { x: null, y: null };
   var raf = 0;
-  var linkMax = 6000;
   var avoidRadius = 160;
   var avoidRadius2 = avoidRadius * avoidRadius;
   var avoidStrength = 0.85;
@@ -43,7 +42,8 @@
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         xa: Math.cos(angle) * speed,
-        ya: Math.sin(angle) * speed
+        ya: Math.sin(angle) * speed,
+        r: 5 + Math.random() * 4
       });
     }
   }
@@ -58,10 +58,10 @@
   }
 
   function bounce(p, w, h) {
-    if (p.x < 0) { p.x = 0; p.xa = Math.abs(p.xa); }
-    else if (p.x > w) { p.x = w; p.xa = -Math.abs(p.xa); }
-    if (p.y < 0) { p.y = 0; p.ya = Math.abs(p.ya); }
-    else if (p.y > h) { p.y = h; p.ya = -Math.abs(p.ya); }
+    if (p.x < p.r) { p.x = p.r; p.xa = Math.abs(p.xa); }
+    else if (p.x > w - p.r) { p.x = w - p.r; p.xa = -Math.abs(p.xa); }
+    if (p.y < p.r) { p.y = p.r; p.ya = Math.abs(p.ya); }
+    else if (p.y > h - p.r) { p.y = h - p.r; p.ya = -Math.abs(p.ya); }
   }
 
   function flee(p) {
@@ -90,6 +90,16 @@
     p.ya += ty * push * 0.45;
   }
 
+  function drawParticle(p) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(" + pointColor + "," + opacity + ")";
+    ctx.fill();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(" + color + "," + Math.min(1, opacity + 0.15) + ")";
+    ctx.stroke();
+  }
+
   function draw() {
     if (!document.hidden) {
       var w = canvas.width;
@@ -110,25 +120,7 @@
         p.x += p.xa;
         p.y += p.ya;
         bounce(p, w, h);
-
-        ctx.fillStyle = "rgba(" + pointColor + "," + opacity + ")";
-        ctx.fillRect(p.x - 0.5, p.y - 0.5, 1.2, 1.2);
-
-        for (var j = i + 1; j < points.length; j++) {
-          var q = points[j];
-          var ldx = p.x - q.x;
-          var ldy = p.y - q.y;
-          var dist = ldx * ldx + ldy * ldy;
-          if (dist < linkMax) {
-            var c = (linkMax - dist) / linkMax;
-            ctx.beginPath();
-            ctx.lineWidth = c / 2;
-            ctx.strokeStyle = "rgba(" + color + "," + (c * opacity) + ")";
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x, q.y);
-            ctx.stroke();
-          }
-        }
+        drawParticle(p);
       }
     }
     raf = window.requestAnimationFrame(draw);
