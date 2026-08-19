@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-lang="ko">
+<html lang="ko" data-lang="ko" data-theme="soft">
 
 <head>
     <meta charset="UTF-8">
@@ -26,31 +26,14 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            margin-left: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 999px;
-            padding: 2px;
-            background: rgba(255, 255, 255, 0.04);
-        }
-        .lang-btn {
-            appearance: none;
-            border: 0;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.6);
-            font: 600 0.72rem/1 Outfit, sans-serif;
-            letter-spacing: .04em;
-            padding: 5px 11px;
-            border-radius: 999px;
-            cursor: pointer;
-        }
-        .lang-btn.active { background: var(--primary-color); color: #06201c; }
-        @media (max-width: 900px) { .lang-switch { margin-left: auto; margin-right: 8px; } }
-    </style>
+    <script>
+      (function () {
+        var t = "soft";
+        try { t = localStorage.getItem("sail-theme") || "soft"; } catch (e) {}
+        if (t !== "dark" && t !== "soft" && t !== "light") t = "soft";
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
 </head>
 
 <body>
@@ -69,9 +52,16 @@
                 <li><a href="#lecture">Lecture</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
-            <div class="lang-switch" role="group" aria-label="Language">
-                <button type="button" class="lang-btn active" data-lang="ko">KO</button>
-                <button type="button" class="lang-btn" data-lang="en">EN</button>
+            <div class="nav-tools">
+                <div class="chip-switch" role="group" aria-label="Theme">
+                    <button type="button" class="chip-btn" data-theme="dark">Dark</button>
+                    <button type="button" class="chip-btn active" data-theme="soft">Soft</button>
+                    <button type="button" class="chip-btn" data-theme="light">Light</button>
+                </div>
+                <div class="chip-switch" role="group" aria-label="Language">
+                    <button type="button" class="chip-btn lang-btn active" data-lang="ko">KO</button>
+                    <button type="button" class="chip-btn lang-btn" data-lang="en">EN</button>
+                </div>
             </div>
             <button type="button" class="hamburger" aria-label="Open menu" aria-expanded="false">
                 <i class="fas fa-bars"></i>

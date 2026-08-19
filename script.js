@@ -5,6 +5,21 @@
   const navItems = document.querySelectorAll(".nav-links li a");
   const pageSections = document.querySelectorAll(".page-section");
 
+  function applyTheme(theme) {
+    if (theme !== "dark" && theme !== "soft" && theme !== "light") theme = "soft";
+    document.documentElement.setAttribute("data-theme", theme);
+    document.querySelectorAll(".chip-btn[data-theme]").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
+    });
+    try { localStorage.setItem("sail-theme", theme); } catch (e) {}
+    if (typeof window.refreshParticles === "function") window.refreshParticles();
+  }
+
+  document.querySelectorAll(".chip-btn[data-theme]").forEach((btn) => {
+    btn.addEventListener("click", () => applyTheme(btn.getAttribute("data-theme")));
+  });
+  applyTheme(document.documentElement.getAttribute("data-theme") || "soft");
+
   window.addEventListener("scroll", () => {
     if (!navbar) return;
     navbar.classList.toggle("scrolled", window.scrollY > 50);
@@ -146,9 +161,8 @@
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  const rootStyles = getComputedStyle(document.documentElement);
   function getThemeColor(varName, fallback) {
-    const val = rootStyles.getPropertyValue(varName).trim();
+    const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
     return val || fallback;
   }
 
@@ -244,6 +258,7 @@
   resizeCanvas();
   init();
   animate();
+  window.refreshParticles = init;
   window.addEventListener("resize", () => {
     resizeCanvas();
     init();
