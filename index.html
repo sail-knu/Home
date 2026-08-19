@@ -29,6 +29,12 @@
 
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" class="svg-sprite" aria-hidden="true">
+        <symbol id="i-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 23.2c3-2 6-2 9 0s6 2 9 0 6-2 9 0"/>
+            <path d="M16 7.2l7.4 13.2H8.6z"/>
+            <path d="M8 18.4c3-5.6 7.6-8.2 13.4-7.8"/>
+            <circle cx="16" cy="16.4" r="1.3" fill="currentColor" stroke="none"/>
+        </symbol>
         <symbol id="i-safe" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M36.5 10.5c5.2 6.4 6 16.8 1.2 24.4-3.2 5-8.8 8.2-15.2 8.6"/>
             <path d="M8 31c6.2-1.4 11.4-6.2 16.8-16.8"/>
@@ -84,12 +90,6 @@
             <path d="M12 21s-6.2-6.1-6.2-10.2A6.2 6.2 0 0 1 12 4.6a6.2 6.2 0 0 1 6.2 6.2C18.2 14.9 12 21 12 21z"/>
             <circle cx="12" cy="10.6" r="1.9"/>
         </symbol>
-        <symbol id="i-asv" viewBox="0 0 64 40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 28c6-3.2 12-3.2 18 0s12 3.2 18 0 12-3.2 18 0"/>
-            <path d="M14 24.5c3 3 10 4.6 18 4.6s15-1.6 18-4.6"/>
-            <path d="M31 6l13 16H20z"/>
-            <path d="M31 6v17"/>
-        </symbol>
         <symbol id="i-platform" viewBox="0 0 64 40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 30c6-3 12-3 18 0s12 3 18 0 12-3 18 0"/>
             <rect x="20" y="14" width="24" height="12" rx="2.5"/>
@@ -102,9 +102,9 @@
     <nav id="navbar">
         <div class="nav-container">
             <a href="#home" class="logo-header">
-                <img class="brand-knu" src="images/logos/knu.png" alt="">
-                <span class="brand-divider" aria-hidden="true"></span>
-                <img class="brand-sail" src="images/logos/sail.png" alt="SAIL Lab, Kongju National University">
+                <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#i-mark"></use></svg>
+                <span class="sail">SAIL</span>
+                <span class="lab">Lab</span>
             </a>
             <button type="button" class="hamburger" aria-label="Open menu" aria-expanded="false">
                 <span></span><span></span><span></span>
@@ -133,11 +133,11 @@
 
     <div id="home" class="page-section">
         <section class="hero">
-            <div class="hero-brands">
-                <img class="hero-knu" src="images/logos/knu.png" alt="Kongju National University">
-                <img class="hero-sail" src="images/logos/sail.png" alt="SAIL — Safe Autonomy &amp; Intelligence Lab">
+            <div class="univ-lockup">
+                <img class="univ-seal" src="images/logos/knu.png" alt="">
+                <span>Kongju National University</span>
             </div>
-            <h1 class="visually-hidden">SAIL</h1>
+            <h1>SAIL</h1>
             <h2>
                 <span class="highlight">S</span>afe
                 <span class="highlight">A</span>utonomy &amp;
@@ -322,146 +322,244 @@
                 <div class="underline"></div>
             </div>
 
-            <div class="bento-grid">
-                <div class="bento-wrapper bento-wide" id="item-r1">
-                    <div class="bento-item" onclick="toggleDetails('item-r1')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Multi-modal Obstacle Avoidance Trajectory Planning &amp; Control</h3>
-                            <p data-i18n="r1_card">회전원 CBF로 추종·회피·접안 모드를 안전하게 고르는 멀티모달 계획</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab(event, 'research-algorithm')">Algorithm</button>
+                <button class="tab-btn" onclick="openTab(event, 'research-application')">Application</button>
+            </div>
+
+            <div id="research-algorithm" class="tab-content">
+                <div class="bento-grid">
+                    <div class="bento-wrapper bento-wide" id="item-r1">
+                        <div class="bento-item" onclick="toggleDetails('item-r1')">
+                            <div class="bento-content">
+                                <span class="bento-badge">Algorithm</span>
+                                <h3>Multi-modal Obstacle Avoidance Trajectory Planning &amp; Control</h3>
+                                <p data-i18n="r1_card">회전원 CBF로 추종·회피·접안 모드를 안전하게 고르는 멀티모달 계획</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
+                        </div>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r1_intro">비홀로노믹 이동체의 회전반경을 제약으로 넣고, 하나의 궤적이 아니라 여러 거동 후보 중에서 안전한 모드를 고릅니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/Ps9NJ6feaH8" title="Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based CBF" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based CBF</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/NskstBwB5Mk" title="Multimodal Trajectory Planning - Unicycle" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Multimodal Trajectory Planning — Unicycle</figcaption>
+                                    </figure>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r1_intro">비홀로노믹 이동체의 회전반경을 제약으로 넣고, 하나의 궤적이 아니라 여러 거동 후보 중에서 안전한 모드를 고릅니다.</p>
-                            <div class="video-embed">
-                                <iframe src="https://www.youtube-nocookie.com/embed/_fUdCjV7Lbg" title="Turning Circle-based CBF supplementary video" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+
+                    <div class="bento-wrapper" id="item-r2">
+                        <div class="bento-item" onclick="toggleDetails('item-r2')">
+                            <div class="bento-content">
+                                <span class="bento-badge">Algorithm</span>
+                                <h3>Learning-based Planning &amp; Control</h3>
+                                <p data-i18n="r2_card">딥러닝 기반 MPC와 LLM 항법</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
+                        </div>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r2_intro">학습으로 동역학을 맞추고, 포항 운하 자율운항과 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/vTFZQQuFJvI" title="Navigable Area Detection and Perception-guided MPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Navigable Area Detection and Perception-guided MPC for Autonomous Navigation in Narrow Waterways</figcaption>
+                                    </figure>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-wrapper" id="item-r3">
+                        <div class="bento-item" onclick="toggleDetails('item-r3')">
+                            <div class="bento-content">
+                                <span class="bento-badge">Algorithm</span>
+                                <h3>Robust Model Predictive Control</h3>
+                                <p data-i18n="r3_card">Tube-MPC, 접안, 드론, Koopman 모델링</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
+                        </div>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r3_intro">외란과 모델 오차 아래에서도 안전 영역을 지키는 cascade tube-MPC, L1 적응, Koopman 기반 데이터 구동 제어를 다룹니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/CYmVk4ZTb5o" title="Safe USV recovery simulation" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Safe USV Recovery — simulation</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/pBSBDa7eUqQ" title="Safe USV recovery pool experiment" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Safe USV Recovery — pool experiment</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/nMzKQgqXK3o" title="Safety-Guaranteed Ship Berthing using Cascade Tube-based MPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Safety-Guaranteed Ship Berthing using Cascade Tube-based MPC</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/5RChpdkqNnk" title="Tube-based MPC for Quadrotor" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Tube-based MPC for Quadrotor</figcaption>
+                                    </figure>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-wrapper bento-wide" id="item-r4">
+                        <div class="bento-item" onclick="toggleDetails('item-r4')">
+                            <div class="bento-content">
+                                <span class="bento-badge">Algorithm</span>
+                                <h3>Control Barrier Function (CBF)</h3>
+                                <p data-i18n="r4_card">접안용 exact-geometry MPC-CBF, 회전원 CBF, COLREGs 충돌회피</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
+                        </div>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r4_intro">좌·우 회전원으로 회피 방향과 선회 능력을 같이 넣고, COLREGs를 지키면서 QP로 빠르게 풉니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/Tc-cA_J3Hvo" title="Exact-Geometry MPC-CBF docking scenario 1" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Exact-Geometry MPC-CBF for Autonomous Boat Docking in Narrow Slips — Scenario 1</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/hWXW9UEOSXQ" title="Exact-Geometry MPC-CBF docking scenario 5" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Exact-Geometry MPC-CBF for Autonomous Boat Docking in Narrow Slips — Scenario 5</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/_fUdCjV7Lbg" title="Turning Circle-based CBF for nonholonomic vehicles" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Turning Circle-based CBF for Efficient Collision Avoidance of Nonholonomic Vehicles</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/t__N0BX2tBQ" title="CBF-based COLREGs-compliant collision avoidance, multi vessels" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>CBF-based COLREGs-Compliant Collision Avoidance — Multi Vessels</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/HvF8yXl9-hc" title="CBF-based COLREGs-compliant collision avoidance" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>CBF-based COLREGs-Compliant Collision Avoidance</figcaption>
+                                    </figure>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-wrapper" id="item-plan">
+                        <div class="bento-item" onclick="toggleDetails('item-plan')">
+                            <div class="bento-content">
+                                <span class="bento-badge plan">Plan</span>
+                                <h3>Physical AI</h3>
+                                <p data-i18n="r_plan_card">실로봇에서 학습과 안전 제어를 붙이는 다음 방향</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
+                        </div>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r_plan_intro">Physical AI는 시뮬레이터가 아니라 LEMO가 물리 세계와 직접 상호작용하며 배우고 움직이는 것을 목표로 합니다. CBF·reachability 같은 안전 제약을 학습 정책에 넣어, 현장에서 실패해도 안전한 거동을 남기려 합니다.</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="bento-wrapper" id="item-r2">
-                    <div class="bento-item" onclick="toggleDetails('item-r2')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Learning-based Planning &amp; Control</h3>
-                            <p data-i18n="r2_card">딥러닝 기반 MPC와 LLM 항법</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+            <div id="research-application" class="tab-content" style="display:none;">
+                <div class="bento-grid">
+                    <div class="bento-wrapper" id="item-r5">
+                        <div class="bento-item" onclick="toggleDetails('item-r5')">
+                            <div class="bento-content">
+                                <span class="bento-badge application">Application</span>
+                                <h3>Mobile Robots</h3>
+                                <p data-i18n="r5_card">AGV 동적 장애물 회피와 배송 로봇 보행자 회피</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r2_intro">학습으로 동역학을 맞추고, 포항 운하 자율운항과 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
-                            <div class="video-embed">
-                                <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Canal NMPC field experiment" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r5_intro">혼잡한 보행자 공간에서 LEMO 등 모바일 로봇이 사람을 피해 가는 궤적 계획을 연구합니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/VH7DcQ5LjnM" title="Dynamic Obstacle Avoidance for AGV using NMPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Dynamic Obstacle Avoidance for AGV using NMPC</figcaption>
+                                    </figure>
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/rMhYUBd4eCY" title="Mobile Robot MPC — Human Avoidance Control" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>Mobile Robot MPC — Human Avoidance Control</figcaption>
+                                    </figure>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="bento-wrapper" id="item-r3">
-                    <div class="bento-item" onclick="toggleDetails('item-r3')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Robust Model Predictive Control</h3>
-                            <p data-i18n="r3_card">Tube-MPC, 접안, 드론, Koopman 모델링</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                    <div class="bento-wrapper" id="item-r6">
+                        <div class="bento-item" onclick="toggleDetails('item-r6')">
+                            <div class="bento-content">
+                                <span class="bento-badge application">Application</span>
+                                <h3>Marine Vehicles</h3>
+                                <p data-i18n="r6_card">ASV 충돌회피와 포항 운하 자율운항</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r3_intro">외란과 모델 오차 아래에서도 안전 영역을 지키는 cascade tube-MPC, L1 적응, Koopman 기반 데이터 구동 제어를 다룹니다.</p>
-                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bento-wrapper bento-wide" id="item-r4">
-                    <div class="bento-item" onclick="toggleDetails('item-r4')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Control Barrier Function (CBF)</h3>
-                            <p data-i18n="r4_card">접안용 exact-geometry MPC-CBF, 회전원 CBF, COLREGs 충돌회피</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
-                        </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r4_intro">좌·우 회전원으로 회피 방향과 선회 능력을 같이 넣고, COLREGs를 지키면서 QP로 빠르게 풉니다.</p>
-                            <div class="video-embed">
-                                <iframe src="https://www.youtube-nocookie.com/embed/HvF8yXl9-hc" title="COLREGs-compliant CBF collision avoidance" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r6_intro">실선 ASV와 크루즈 보트에서 인지–계획–제어를 검증하고, 운하·연안 데이터셋을 같이 공개합니다.</p>
+                                <div class="video-stack">
+                                    <figure class="video-item">
+                                        <div class="video-embed">
+                                            <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="NMPC autonomous navigation in a canal environment" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                        <figcaption>NMPC with Obstacle Avoidance Constraints for Autonomous Navigation in a Canal Environment</figcaption>
+                                    </figure>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="bento-wrapper" id="item-r5">
-                    <div class="bento-item" onclick="toggleDetails('item-r5')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Mobile Robots</h3>
-                            <p data-i18n="r5_card">AGV 동적 장애물 회피와 배송 로봇 보행자 회피</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
-                        </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r5_intro">혼잡한 보행자 공간에서 LEMO 등 모바일 로봇이 사람을 피해 가는 궤적 계획을 연구합니다.</p>
-                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bento-wrapper" id="item-r6">
-                    <div class="bento-item" onclick="toggleDetails('item-r6')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Marine Vehicles</h3>
-                            <p data-i18n="r6_card">ASV 충돌회피와 포항 운하 자율운항</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
-                        </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r6_intro">실선 ASV와 크루즈 보트에서 인지–계획–제어를 검증하고, 운하·연안 데이터셋을 같이 공개합니다.</p>
-                            <div class="video-embed">
-                                <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Pohang Canal autonomous navigation" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                    <div class="bento-wrapper" id="item-r7">
+                        <div class="bento-item" onclick="toggleDetails('item-r7')">
+                            <div class="bento-content">
+                                <span class="bento-badge application">Application</span>
+                                <h3>Multi-agent Control</h3>
+                                <p data-i18n="r7_card">자율이동체 formation tracking</p>
+                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bento-wrapper" id="item-r7">
-                    <div class="bento-item" onclick="toggleDetails('item-r7')">
-                        <div class="bento-content">
-                            <span class="bento-badge">Core</span>
-                            <h3>Multi-agent Control</h3>
-                            <p data-i18n="r7_card">자율이동체 formation tracking</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
-                        </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r7_intro">베어링 기반 formation tracking으로 여러 이동체가 상대 위치를 유지하며 움직이게 합니다. Co-work: Dr. Quoc Van Tran (HUST).</p>
-                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bento-wrapper" id="item-plan">
-                    <div class="bento-item" onclick="toggleDetails('item-plan')">
-                        <div class="bento-content">
-                            <span class="bento-badge plan">Plan</span>
-                            <h3>Physical AI</h3>
-                            <p data-i18n="r_plan_card">실로봇에서 학습과 안전 제어를 붙이는 다음 방향</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
-                        </div>
-                    </div>
-                    <div class="bento-details">
-                        <div class="details-inner glass-panel">
-                            <p data-i18n="r_plan_intro">Physical AI는 시뮬레이터가 아니라 LEMO·해양 플랫폼이 물리 세계와 직접 상호작용하며 배우고 움직이는 것을 목표로 합니다. CBF·reachability 같은 안전 제약을 학습 정책에 넣어, 현장에서 실패해도 안전한 거동을 남기려 합니다.</p>
+                        <div class="bento-details">
+                            <div class="details-inner glass-panel">
+                                <p data-i18n="r7_intro">베어링 기반 formation tracking으로 여러 이동체가 상대 위치를 유지하며 움직이게 합니다. Co-work: Dr. Quoc Van Tran (HUST).</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -489,25 +587,12 @@
                         </div>
                         <h3>LEMO</h3>
                         <p class="small-text" data-i18n="robot_lemo">실내·보행자 환경용 모바일 로봇. 동적 장애물 회피와 Physical AI 실험 플랫폼.</p>
-                        <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
-                    </div>
-                    <div class="robot-card">
-                        <div class="robot-visual">
-                            <svg class="icon" aria-hidden="true"><use href="#i-asv"></use></svg>
-                        </div>
-                        <h3>Autonomous Surface Vehicle</h3>
-                        <p class="small-text" data-i18n="robot_asv">운하·연안 자율운항, 접안, COLREGs 충돌회피 실험 플랫폼</p>
-                        <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
-                    </div>
-                    <div class="robot-card">
-                        <div class="robot-visual">
-                            <svg class="icon" aria-hidden="true"><use href="#i-marine"></use></svg>
-                        </div>
-                        <h3>Autonomous Boat</h3>
-                        <p class="small-text" data-i18n="robot_boat">포항 운하 자율운항 실험에 사용한 실선 보트 플랫폼</p>
-                        <div class="video-embed">
-                            <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Autonomous boat in Pohang Canal" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-                        </div>
+                        <figure class="video-item">
+                            <div class="video-embed">
+                                <iframe src="https://www.youtube-nocookie.com/embed/rMhYUBd4eCY" title="LEMO mobile robot human avoidance" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                            </div>
+                            <figcaption>Mobile Robot MPC — Human Avoidance Control</figcaption>
+                        </figure>
                     </div>
                 </div>
             </div>
@@ -971,7 +1056,32 @@
     <section id="lecture-future" class="section page-section hidden-page">
         <div class="section-container course-wrap">
             <a href="#lecture" class="page-back">← Lecture</a>
-            <iframe class="course-frame" src="lecture/future-tech/index.html" title="미래첨단기술의이해 II 실습 시뮬레이터"></iframe>
+            <div class="section-header">
+                <h2 class="section-title">미래첨단기술의이해 II</h2>
+                <div class="underline"></div>
+            </div>
+            <p class="small-text" data-i18n="course_intro">학부 강의 실습용 시뮬레이터입니다. 아래 네 개를 이 페이지에서 바로 조작할 수 있습니다.</p>
+
+            <article class="sim-block">
+                <h3 class="subsection-title">역진자 PID 제어</h3>
+                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 외란 밀기, 위치 제어</p>
+                <iframe class="course-frame" src="lecture/future-tech/inverted-pendulum-pid_Mobile.html" title="역진자 PID 제어" allow="accelerometer" loading="lazy"></iframe>
+            </article>
+            <article class="sim-block">
+                <h3 class="subsection-title">직선 경로 추종 제어기</h3>
+                <p class="small-text">횡방향 오차 · 방위 오차 피드백으로 배를 직선 경로에 붙이기</p>
+                <iframe class="course-frame" src="lecture/future-tech/Straight_Path_Following_Controller_Mobile.html" title="직선 경로 추종 제어기" allow="accelerometer" loading="lazy"></iframe>
+            </article>
+            <article class="sim-block">
+                <h3 class="subsection-title">LOS 유도 — 웨이포인트 추종</h3>
+                <p class="small-text">전방주시거리 Δ 튜닝, 웨이포인트 편집, 유도 법칙 비교</p>
+                <iframe class="course-frame" src="lecture/future-tech/LOS_Guidance_Simulator_Mobile.html" title="LOS 유도 웨이포인트 추종" allow="accelerometer" loading="lazy"></iframe>
+            </article>
+            <article class="sim-block">
+                <h3 class="subsection-title">MPPI 선박 충돌 회피</h3>
+                <p class="small-text">샘플링 기반 모델 예측 제어로 장애물 피해 가기</p>
+                <iframe class="course-frame" src="lecture/future-tech/MPPI_Ship_Collision_Avoidance_Mobile.html" title="MPPI 선박 충돌 회피" allow="accelerometer" loading="lazy"></iframe>
+            </article>
         </div>
     </section>
 
@@ -1013,11 +1123,9 @@
             </div>
             <div class="footer-container">
                 <div class="footer-logo">
-                    <a href="https://www.kongju.ac.kr/" target="_blank" rel="noopener noreferrer">
-                        <img class="brand-knu" src="images/logos/knu.png" alt="Kongju National University">
-                    </a>
-                    <span class="brand-divider" aria-hidden="true"></span>
-                    <img class="brand-sail" src="images/logos/sail.png" alt="SAIL Lab">
+                    <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#i-mark"></use></svg>
+                    <span class="sail">SAIL</span>
+                    <span class="lab">Lab</span>
                 </div>
                 <div class="contact-details">
                     <p><svg class="icon" aria-hidden="true"><use href="#i-person"></use></svg> <strong>Prof. Changyu Lee</strong></p>
@@ -1028,7 +1136,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 SAIL, Kongju National University.</p>
+                <p class="footer-credit">&copy; 2026 SAIL, <img class="univ-seal" src="images/logos/knu.png" alt=""> Kongju National University.</p>
             </div>
         </div>
     </section>
@@ -1065,14 +1173,11 @@
         "r5_intro": `We plan pedestrian-aware trajectories for mobile robots such as LEMO in crowded indoor spaces.`,
         "r6_intro": `We validate perception–planning–control on full-scale ASVs and cruise boats, and release canal and nearshore datasets with the algorithms.`,
         "r7_intro": `Bearing-based formation tracking keeps multiple vehicles in relative formation. Co-work: Dr. Quoc Van Tran (HUST).`,
-        "r_plan_intro": `Physical AI means LEMO and marine platforms learn and move by interacting with the real world. We fold CBF and reachability constraints into learned policies so failures in the field still leave a safe behavior.`,
-        "video_soon": `Videos will be added as we move them over from the Google Site.`,
+        "r_plan_intro": `Physical AI means LEMO learns and moves by interacting with the real world, not only a simulator. We fold CBF and reachability constraints into learned policies so failures in the field still leave a safe behavior.`,
         "robot_lemo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance and Physical AI experiments.`,
-        "robot_asv": `Canal and nearshore autonomy, berthing, and COLREGs collision-avoidance platform`,
-        "robot_boat": `Full-scale boat used for Pohang Canal autonomous navigation experiments`,
         "email_tba": `Email to be added`,
         "no_pub_yet": `No publications listed yet.`,
-        "course_intro": `This undergraduate course teaches control, robotics, and autonomy through interactive simulators. The demos below were brought over from the previous course site and now live on this homepage.`
+        "course_intro": `Undergraduate lab simulators. Use the four demos below directly on this page.`
       };
       var origKO = {};
       function cacheKO() {

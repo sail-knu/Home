@@ -202,45 +202,46 @@ button,
 .footer-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   flex: none;
 }
 
-.brand-knu,
-.brand-sail,
-.hero-knu,
-.hero-sail {
+.logo-header {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.logo-mark {
   display: block;
-  width: auto;
+  width: 20px;
+  height: 20px;
   flex: none;
+  overflow: visible;
+  color: var(--primary-color);
 }
 
-.logo-header .brand-knu {
-  height: 34px;
+.logo-header .sail,
+.footer-logo .sail {
+  color: var(--primary-color);
 }
 
-.logo-header .brand-sail {
-  height: 40px;
+.logo-header .lab,
+.footer-logo .lab {
+  color: var(--heading-color);
+  font-weight: 600;
 }
 
-.brand-divider {
-  width: 1px;
-  height: 26px;
-  background: color-mix(in srgb, var(--heading-color) 16%, transparent);
+.univ-seal {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: -3px;
   flex: none;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .nav-links {
@@ -336,20 +337,30 @@ button,
   padding: 120px 20px 48px;
 }
 
-.hero-brands {
-  display: flex;
-  flex-direction: column;
+.univ-lockup {
+  display: inline-flex;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 8px;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 28px;
+  color: var(--muted-text);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
 }
 
-.hero-knu {
-  height: 86px;
+.univ-lockup .univ-seal {
+  width: 18px;
+  height: 18px;
 }
 
-.hero-sail {
-  height: clamp(96px, 16vw, 128px);
+.hero h1 {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(2.6rem, 6.5vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--primary-color);
 }
 
 .hero h2 {
@@ -738,15 +749,36 @@ button,
   color: var(--muted-text);
 }
 
+.video-stack {
+  display: grid;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.video-item {
+  margin: 0;
+  max-width: 640px;
+}
+
+.video-item figcaption {
+  margin-top: 8px;
+  color: var(--muted-text);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .video-embed {
   position: relative;
   width: 100%;
   max-width: 640px;
   aspect-ratio: 16 / 9;
-  margin-top: 16px;
   border-radius: 12px;
   overflow: hidden;
   background: var(--photo-to);
+}
+
+.video-item .video-embed {
+  max-width: none;
 }
 
 .video-embed iframe {
@@ -772,8 +804,12 @@ button,
   color: #f4f2ff;
 }
 
+.bento-badge.application {
+  background: var(--secondary-color);
+}
+
 .robot-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 440px);
 }
 
 .robot-visual {
@@ -792,6 +828,10 @@ button,
   width: 64px;
   height: 40px;
   vertical-align: top;
+}
+
+.robot-card .video-item {
+  margin-top: 16px;
 }
 
 .profile-wrap {
@@ -1040,13 +1080,21 @@ a.lecture-card-link:hover {
 }
 
 .course-wrap {
-  max-width: 720px;
+  max-width: 640px;
+}
+
+.sim-block {
+  margin-top: 28px;
+}
+
+.sim-block .small-text {
+  margin: -8px 0 12px;
 }
 
 .course-frame {
   width: 100%;
-  min-height: min(80vh, 760px);
-  height: 80vh;
+  height: min(88vh, 820px);
+  min-height: 640px;
   border: 1px solid var(--surface-border);
   border-radius: 16px;
   background: var(--surface);
@@ -1081,16 +1129,20 @@ a.lecture-card-link:hover {
   max-width: 640px;
 }
 
-.footer-logo .brand-knu {
-  height: 56px;
+.footer-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
-.footer-logo .brand-sail {
-  height: 52px;
+.footer-logo .logo-mark {
+  width: 24px;
+  height: 24px;
 }
 
-.footer-logo .brand-divider {
-  height: 36px;
+.footer-credit .univ-seal {
+  width: 14px;
+  height: 14px;
+  margin: 0 2px 0 1px;
 }
 
 .contact-details {
@@ -1144,8 +1196,7 @@ a.lecture-card-link:hover {
 }
 
 @media (min-width: 641px) and (max-width: 992px) {
-  .research-grid,
-  .robot-grid {
+  .research-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1187,12 +1238,10 @@ a.lecture-card-link:hover {
   .nav-container { padding: 12px 16px; gap: 10px; }
   .chip-btn { padding: 5px 7px; }
   .hero { padding: 108px 16px 40px; }
-  .hero-knu { height: 68px; }
-  .hero-sail { height: 88px; }
+  .hero h1 { font-size: 2.4rem; }
   .hero h2 { font-size: 1.05rem; }
-  .logo-header .brand-knu { height: 28px; }
-  .logo-header .brand-sail { height: 32px; }
-  .logo-header .brand-divider { height: 22px; }
+  .logo-header { font-size: 1.05rem; }
+  .logo-mark { width: 18px; height: 18px; }
   .section { padding: 72px 0 56px; }
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }

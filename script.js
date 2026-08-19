@@ -76,16 +76,31 @@
     });
   });
 
+  function collapseResearchCards() {
+    document.querySelectorAll(".bento-wrapper.expanded").forEach((w) => {
+      w.classList.remove("expanded");
+      w.querySelector(".bento-item")?.classList.remove("expanded");
+      const d = w.querySelector(".bento-details");
+      if (d) d.style.maxHeight = null;
+      const t = w.querySelector(".action-text");
+      if (t) t.textContent = "View Details";
+    });
+  }
+
   function openTab(evt, tabName) {
-    const tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-    const tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
+    const btn = evt && evt.currentTarget;
+    const scope = btn && btn.closest(".tabs") && btn.closest(".tabs").parentElement;
+    if (!scope) return;
+    scope.querySelectorAll(":scope > .tab-content").forEach((el) => {
+      el.style.display = "none";
+    });
+    scope.querySelectorAll(":scope > .tabs .tab-btn").forEach((link) => {
+      link.classList.remove("active");
+    });
     const panel = document.getElementById(tabName);
     if (panel) panel.style.display = "block";
-    if (evt && evt.currentTarget) evt.currentTarget.className += " active";
+    btn.classList.add("active");
+    collapseResearchCards();
   }
 
   function toggleDetails(wrapperId) {
@@ -115,12 +130,12 @@
     } else {
       wrapper.classList.add("expanded");
       item?.classList.add("expanded");
-      if (details) details.style.maxHeight = Math.max(details.scrollHeight, 820) + "px";
+      if (details) details.style.maxHeight = details.scrollHeight + "px";
       if (actionText) actionText.textContent = "Close Details";
       setTimeout(() => {
         const y = wrapper.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: "smooth" });
-        if (details) details.style.maxHeight = Math.max(details.scrollHeight, 820) + "px";
+        if (details) details.style.maxHeight = details.scrollHeight + "px";
       }, 50);
     }
   }
