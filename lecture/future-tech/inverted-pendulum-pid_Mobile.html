@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>역진자 PID 제어 시뮬레이터 (모바일)</title>
+<style>
+:root{
+  --bg:#f5f7fa; --panel:#ffffff; --line:#dde3ec; --line2:#eef2f7;
+  --ink:#1a2233; --ink2:#5c6a7e; --ink3:#8a97a8;
+  --accent:#2563eb; --ok:#059669; --warn:#dc2626; --purple:#7c3aed;
+  --mono:'Consolas','D2Coding','Menlo',monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Pretendard','Malgun Gothic','맑은 고딕',-apple-system,system-ui,sans-serif;
+  font-size:15px; line-height:1.5;
+  overscroll-behavior:none;
+  -webkit-tap-highlight-color:transparent;
+  min-height:100vh; min-height:100dvh;
+  display:flex; flex-direction:column;
+  overflow-x:hidden;
+}
+
+/* ---------- 레이아웃 : 세로 1열 ---------- */
+.wrap{flex:1 0 auto; width:100%; max-width:560px; margin:0 auto; padding:10px 10px 14px}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:10px}
+.card > h2{
+  font-size:12px; font-weight:700; margin:0; padding:9px 12px;
+  border-bottom:1px solid var(--line2); color:var(--ink2); letter-spacing:.02em;
+}
+.card .body{padding:12px}
+
+.tip{
+  background:#eaf0fe; border:1px solid #cfdcfb; color:#1e3a8a;
+  border-radius:9px; padding:9px 11px; font-size:12.5px; line-height:1.45; margin-bottom:10px;
+}
+.tip b{color:var(--accent)}
+
+/* ---------- 무대 (상단 고정 패널) ---------- */
+/* 캔버스 + 핵심 수치를 sticky 로 화면 상단에 붙여둔다.
+   조상(.wrap, body, html)에 overflow:hidden/auto/scroll 이 없어야 동작한다. */
+.stagewrap{
+  position:sticky; top:0; z-index:20;
+  margin:0 -10px 10px; padding:0 10px 6px;
+  background:var(--bg);                       /* 불투명 — 뒤로 컨트롤이 비치지 않게 */
+  box-shadow:0 5px 12px -7px #0f172a40;
+}
+.stagewrap > .card{margin-bottom:0}
+
+#stage{
+  width:100%; height:220px; display:block;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+
+/* 핵심 수치 한 줄 (compact) */
+.robar{border-top:1px solid var(--line2)}
+.readout{display:flex}
+.readout div.cell{
+  min-width:0; padding:4px 3px; border-right:1px solid var(--line2);
+  display:flex; align-items:baseline; justify-content:center; gap:3px;
+  white-space:nowrap; overflow:hidden;
+}
+.readout div.cell:last-child{border-right:none}
+.readout .c-t{flex:1 1 0}
+.readout .c-th{flex:1.45 1 0}
+.readout .c-x{flex:1.15 1 0}
+.readout .c-f{flex:1.1 1 0}
+.readout .k{font-size:10.5px; color:var(--ink3); letter-spacing:.02em}
+.readout .val{font-family:var(--mono); font-size:15px; font-variant-numeric:tabular-nums; line-height:1.3}
+.readout .sub,.readout .u{font-family:var(--mono); font-size:9.5px; color:var(--ink3)}
+@media (max-width:349px){
+  .readout .val{font-size:13.5px}
+  .readout .k{font-size:10px}
+  .readout .sub,.readout .u{font-size:9px}
+}
+
+.fbar{height:5px; background:var(--line2); position:relative; overflow:hidden; border-top:1px solid var(--line2)}
+.fbar i{position:absolute; top:0; bottom:0; background:var(--warn); display:block}
+.fbar u{position:absolute; top:0; bottom:0; left:50%; width:1px; background:var(--ink3)}
+
+/* ---------- 버튼 ---------- */
+button{
+  font:inherit; font-weight:600; min-height:44px; padding:10px 14px; border-radius:9px;
+  border:1px solid var(--line); background:#fff; color:var(--ink);
+  cursor:pointer; touch-action:manipulation; user-select:none; -webkit-user-select:none;
+}
+button:active{background:#e8edf5}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+button.primary:active{background:#1d4fd0}
+button.danger{background:var(--warn); border-color:var(--warn); color:#fff}
+button.danger:active{background:#bb1f1f}
+button.purple{background:#fff; border-color:var(--purple); color:var(--purple); font-family:var(--mono)}
+button.purple:active{background:#f3edff}
+#btnPos.on{background:var(--ok); border-color:var(--ok); color:#fff}
+#btnPos.on:active{background:#047a57}
+button:disabled{opacity:.4}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+
+/* ---------- 슬라이더 ---------- */
+.sl{margin-bottom:2px}
+.sl + .sl{margin-top:6px}
+.sl-top{display:flex; align-items:baseline; gap:8px}
+.sl-name{font-family:var(--mono); font-size:14px; font-weight:600}
+.sl-desc{font-size:11.5px; color:var(--ink3)}
+.sl-val{
+  margin-left:auto; font-family:var(--mono); font-size:20px; font-weight:600;
+  font-variant-numeric:tabular-nums; color:var(--accent);
+}
+input[type=range]{
+  -webkit-appearance:none; appearance:none;
+  display:block; width:100%; height:44px; background:transparent; margin:0; padding:0;
+}
+input[type=range]:focus{outline:none}
+input[type=range]::-webkit-slider-runnable-track{
+  height:8px; border-radius:4px; background:var(--line); border:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:28px; height:28px; border-radius:50%; margin-top:-10px;
+  background:var(--accent); border:3px solid #fff; box-shadow:0 1px 4px #0003;
+}
+input[type=range]::-moz-range-track{height:8px; border-radius:4px; background:var(--line); border:none}
+input[type=range]::-moz-range-thumb{
+  width:28px; height:28px; border-radius:50%;
+  background:var(--accent); border:3px solid #fff; box-shadow:0 1px 4px #0003;
+}
+input[type=range]:disabled::-webkit-slider-thumb{background:var(--ink3)}
+input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
+
+.note{
+  font-family:var(--mono); font-size:12px; line-height:1.6;
+  background:#f7f9fc; border:1px solid var(--line2); border-radius:7px;
+  padding:7px 9px; color:var(--ink2); margin-top:8px;
+}
+.note.good{background:#ecfdf5; border-color:#bbf7d0; color:#046c50}
+.note.warn{background:#fffbeb; border-color:#fde68a; color:#92400e}
+.note.bad{background:#fef2f2; border-color:#fecaca; color:#b91c1c}
+.note .apx{display:block; margin-top:3px; font-size:10.5px; line-height:1.4; opacity:.72}
+.note .apx.hot{opacity:1; color:#b45309; font-weight:600}
+.hintline{font-size:11.5px; color:var(--ink3); margin-top:8px; line-height:1.45}
+
+/* ---------- 그래프 ---------- */
+#chart{width:100%; height:200px; display:block; touch-action:pan-y}
+.legend{display:flex; flex-wrap:wrap; gap:6px; padding:9px 10px 6px}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; font-size:12.5px;
+  min-height:44px; padding:0 14px;
+  border:1px solid var(--line); border-radius:22px; user-select:none; -webkit-user-select:none;
+  touch-action:manipulation; cursor:pointer;
+}
+.chip i{width:9px; height:9px; border-radius:50%; display:block}
+.chip.off{opacity:.35}
+.chartfoot{padding:4px 12px 10px; font-size:11px; color:var(--ink3); font-family:var(--mono)}
+
+/* ---------- 하단 고정 바 ---------- */
+.dock{
+  position:sticky; bottom:0; z-index:20;
+  background:rgba(255,255,255,.96); border-top:1px solid var(--line);
+  box-shadow:0 -3px 14px #0f172a12;
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  display:grid; grid-template-columns:2fr 1fr; gap:9px;
+}
+.dock button{min-height:50px; font-size:16px; border-radius:11px}
+/* 아주 낮은 화면(가로 모드 등)에서는 고정 바를 줄여 컨트롤 공간을 확보한다 */
+@media (max-height:430px){
+  .dock{padding:6px 10px calc(6px + env(safe-area-inset-bottom))}
+  .dock button{min-height:42px; font-size:14px}
+}
+</style>
+</head>
+<body>
+<p style="margin:8px 12px 0;font:700 13px/1.4 Pretendard,sans-serif"><a href="index.html" style="color:#2563eb;text-decoration:none">← 실습 목록</a></p>
+
+<div class="wrap">
+
+  <div class="tip">
+    <b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요.
+    화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다.
+    아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다.
+  </div>
+
+  <!-- ================= 무대 (화면 상단 고정) ================= -->
+  <div class="stagewrap" id="stageWrap">
+    <div class="card">
+      <canvas id="stage"></canvas>
+      <div class="robar" id="roBar">
+        <div class="readout">
+          <div class="cell c-t"><span class="k">t</span><span class="val" id="rT">0.00</span><span class="u">s</span></div>
+          <div class="cell c-th"><span class="k">θ</span><span class="val" id="rTh">0.350</span><span class="sub" id="rThDeg">20.1°</span></div>
+          <div class="cell c-x"><span class="k">x</span><span class="val" id="rX">0.000</span><span class="u">m</span></div>
+          <div class="cell c-f"><span class="k">F</span><span class="val" id="rF">0.00</span><span class="u">N</span></div>
+        </div>
+        <div class="fbar"><u></u><i id="fBar"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PID 게인 ================= -->
+  <div class="card">
+    <h2>PID 게인 (실행 중에도 조절 가능)</h2>
+    <div class="body">
+      <div class="sl">
+        <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="vPt">100</span></div>
+        <input type="range" id="kPt" min="0" max="300" step="1" value="100">
+      </div>
+      <div class="sl">
+        <div class="sl-top"><span class="sl-name">k<sub>I</sub></span><span class="sl-desc">적분 — 남은 오차 제거</span><span class="sl-val" id="vIt">0</span></div>
+        <input type="range" id="kIt" min="0" max="150" step="1" value="0">
+      </div>
+      <div class="sl">
+        <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="vDt">20</span></div>
+        <input type="range" id="kDt" min="0" max="100" step="0.5" value="20">
+      </div>
+      <div class="note" id="hint"></div>
+      <div class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω &nbsp;(각도만 제어하면 진자는 서지만 카트는 멈추지 않고 계속 흘러갑니다 — 아래 <b>위치 제어</b>를 켜 보세요)</div>
+    </div>
+  </div>
+
+  <!-- ================= 위치 제어 ================= -->
+  <div class="card">
+    <h2>위치 제어 (카트를 x = 0으로 되돌리기)</h2>
+    <div class="body">
+      <button id="btnPos" style="width:100%" aria-controls="posBody" aria-expanded="false">위치 제어 켜기</button>
+      <div id="posBody" hidden>
+        <div class="sl" style="margin-top:10px">
+          <div class="sl-top"><span class="sl-name">k<sub>Px</sub></span><span class="sl-desc">위치 — x = 0으로 되돌림</span><span class="sl-val" id="vPx">2.0</span></div>
+          <input type="range" id="kPx" min="0" max="10" step="0.1" value="2">
+        </div>
+        <div class="sl">
+          <div class="sl-top"><span class="sl-name">k<sub>Dx</sub></span><span class="sl-desc">속도 — 카트 속도 감쇠</span><span class="sl-val" id="vDx">4.0</span></div>
+          <input type="range" id="kDx" min="0" max="15" step="0.1" value="4">
+        </div>
+        <div class="note" id="posNote"></div>
+        <div class="hintline">위치항은 F에 <b>+ k<sub>Px</sub>·x + k<sub>Dx</sub>·v</b> 로 <b>더해집니다</b>(부호가 +).
+        카트가 오른쪽(x&gt;0)에 있으면 힘을 오히려 오른쪽으로 줘서 진자를 왼쪽으로 살짝 기울이고,
+        각도 루프가 진자를 세우는 과정에서 카트가 왼쪽(목표 쪽)으로 끌려갑니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 초기 각도 / 외란 ================= -->
+  <div class="card">
+    <h2>초기 각도 · 외란</h2>
+    <div class="body">
+      <div class="sl">
+        <div class="sl-top"><span class="sl-name">θ₀</span><span class="sl-desc">시작할 때 기운 정도</span><span class="sl-val" id="vTh">0.35</span></div>
+        <input type="range" id="sth" min="-0.60" max="0.60" step="0.01" value="0.35">
+      </div>
+      <div class="grid2" style="margin-top:8px">
+        <button class="purple" id="btnPushL">← 밀기</button>
+        <button class="purple" id="btnPushR">밀기 →</button>
+      </div>
+      <div class="hintline">밀기 버튼은 짧은 충격(25 N × 0.1 s), 화면을 길게 누르면 누르는 동안 계속 힘이 가해집니다.</div>
+    </div>
+  </div>
+
+  <!-- ================= 그래프 ================= -->
+  <div class="card" id="chartCard">
+    <h2>응답 그래프 (최근 30초)</h2>
+    <div class="legend" id="legend"></div>
+    <canvas id="chart"></canvas>
+    <div class="chartfoot" id="chartInfo">–</div>
+  </div>
+
+</div>
+
+<div class="dock">
+  <button id="btnRun" class="primary">시뮬레이션 시작</button>
+  <button id="btnReset">초기화</button>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+ *  0. 상수 / 설정                       (원본과 동일)
+ * ============================================================ */
+const G         = 9.81;   // 중력가속도 [m/s^2]
+const PHYS_DT   = 0.001;  // 물리 적분 고정 스텝 [s]
+const CTRL_HZ   = 100;    // 제어 주기 [Hz] — ZOH
+const LOG_HZ    = 50;     // 데이터 기록 주기 [Hz]
+const LOG_MAX   = 1500;   // 그래프에 남기는 최근 샘플 수 (50 Hz × 30 s)
+
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+ *  1. 물리 모델  — 질량 없는 막대 + 끝점 질량 (cart-pole)
+ *
+ *    상태 s = [x, v, θ, ω]
+ *    좌표: x는 오른쪽 +, θ는 연직 위 기준 반시계 +
+ *    ★ 원본 수식 그대로 ★
+ * ============================================================ */
+
+/** 순수 함수: 인자로 받은 상태만 참조한다 (RK4 중간 단계 정확도를 위해 중요) */
+function derivative(s, F, p) {
+  const [x, v, th, om] = s;
+  const st = Math.sin(th), ct = Math.cos(th);
+
+  const Fnet = F + p.FD - p.b * v;                       // 제어력 + 외란 − 점성마찰
+
+  const num = Fnet + p.mb * G * st * ct - p.mb * p.L * om * om * st;
+  const den = p.mc + p.mb - p.mb * ct * ct;
+  const xdd = num / den;
+  const thdd = (xdd * ct + G * st) / p.L;
+
+  return [v, xdd, om, thdd];
+}
+
+/** 4차 룽게-쿠타 한 스텝. F는 스텝 내내 일정(ZOH). */
+function rk4(s, F, p, dt) {
+  const h = dt / 2;
+  const k1 = derivative(s, F, p);
+  const k2 = derivative([s[0]+k1[0]*h, s[1]+k1[1]*h, s[2]+k1[2]*h, s[3]+k1[3]*h], F, p);
+  const k3 = derivative([s[0]+k2[0]*h, s[1]+k2[1]*h, s[2]+k2[2]*h, s[3]+k2[3]*h], F, p);
+  const k4 = derivative([s[0]+k3[0]*dt, s[1]+k3[1]*dt, s[2]+k3[2]*dt, s[3]+k3[3]*dt], F, p);
+  return [
+    s[0] + (k1[0] + 2*k2[0] + 2*k3[0] + k4[0]) / 6 * dt,
+    s[1] + (k1[1] + 2*k2[1] + 2*k3[1] + k4[1]) / 6 * dt,
+    s[2] + (k1[2] + 2*k2[2] + 2*k3[2] + k4[2]) / 6 * dt,
+    s[3] + (k1[3] + 2*k2[3] + 2*k3[3] + k4[3]) / 6 * dt,
+  ];
+}
+
+/* ============================================================
+ *  2. 제어기 — 사다리꼴 적분기 + PID (각도 루프 + 선택형 위치 루프)
+ * ============================================================ */
+class Trapezoid {
+  constructor() { this.reset(); }
+  reset() { this.area = 0; this.last = 0; this.primed = false; }
+  add(val, dt) {
+    if (!this.primed) { this.last = val; this.primed = true; return this.area; } // 첫 샘플은 면적 0
+    this.area += dt * 0.5 * (this.last + val);
+    this.last = val;
+    return this.area;
+  }
+}
+
+const ctrl = {
+  iTheta: new Trapezoid(),
+  F: 0,
+  reset() { this.iTheta.reset(); this.F = 0; },
+
+  /** 상태 s를 보고 제어력을 갱신한다. 제어 주기마다 한 번만 호출.
+   *  적분항은 게인이 0이면 아예 누적하지 않고 리셋한다 — 그래야 시뮬레이션 도중에
+   *  k_I를 0에서 올렸을 때 그동안 쌓인 면적이 한꺼번에 튀어나오지 않는다. */
+  update(s, dt) {
+    const th = s[2], om = s[3];
+    let F = -K.kPt * th - K.kDt * om;
+    if (K.kIt !== 0) F += -K.kIt * this.iTheta.add(th, dt); else this.iTheta.reset();
+    // 위치 루프: 부호가 + 인 것이 맞다 (비최소위상 — 목표 반대쪽으로 먼저 밀어
+    // 진자를 목표 쪽으로 기울여야 각도 루프가 카트를 목표로 끌고 간다)
+    if (posOn) F += K.kPx * s[0] + K.kDx * s[1];
+    this.F = F;
+    return F;
+  }
+};
+
+/* ============================================================
+ *  3. 상태 / 파라미터 / 게인
+ * ============================================================ */
+const K  = { kPt:100, kIt:0, kDt:20, kPx:2, kDx:4 };
+const p  = { mc:1, mb:1, L:2, b:0, FD:0 };     // 물성은 고정 (모바일판에서는 조절 UI 제거)
+const s0 = { x:0, v:0, th:0.35, om:0 };
+let S    = [0, 0, 0.35, 0];                    // 현재 상태벡터
+
+let posOn = false;         // 위치 루프 on/off (버튼)
+let mode = 'idle';         // 'idle' | 'running' | 'paused'
+let simT = 0;
+let physAcc = 0, ctrlAcc = 0, logAcc = 0;
+let lastFrame = 0;
+let chartAcc = 0;
+let fellOver = false;
+
+/* 외란 */
+const PUSH_F = 25;         // 외란 크기 [N]
+const PUSH_T = 0.10;       // 버튼 충격 지속시간 [s]
+let holdDir = 0;           // 캔버스를 누르고 있는 방향 (−1/0/+1)
+let pulseDir = 0, pulseLeft = 0;
+
+const log = { t:[], x:[], v:[], th:[], om:[], F:[] };
+function clearLog() { for (const k in log) log[k].length = 0; }
+
+/* ============================================================
+ *  4. 입력 바인딩 — 슬라이더
+ * ============================================================ */
+const GAIN_IDS = ['kPt', 'kIt', 'kDt', 'kPx', 'kDx'];   // 슬라이더 id → 표시 id: kPt→vPt, …
+
+function readGains() { for (const k of GAIN_IDS) K[k] = parseFloat($(k).value) || 0; }
+
+function showValues() {
+  $('vPt').textContent = K.kPt.toFixed(0);
+  $('vIt').textContent = K.kIt.toFixed(0);
+  $('vDt').textContent = K.kDt.toFixed(1);
+  $('vPx').textContent = K.kPx.toFixed(1);
+  $('vDx').textContent = K.kDx.toFixed(1);
+  $('vTh').textContent = s0.th.toFixed(2);
+}
+
+function bindInputs() {
+  for (const k of GAIN_IDS) {
+    $(k).addEventListener('input', () => { readGains(); showValues(); updateHint(); updatePosNote(); });
+  }
+  $('sth').addEventListener('input', () => {
+    s0.th = parseFloat($('sth').value) || 0;
+    if (mode === 'idle') S = [s0.x, s0.v, s0.th, s0.om];
+    showValues();
+  });
+}
+
+/* ---- 위치 루프 on/off ---- */
+function setPos(on) {
+  posOn = on;
+  const b = $('btnPos');
+  b.textContent = on ? '✓ 위치 제어 켜짐 — 누르면 끄기' : '위치 제어 켜기';
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-expanded', on ? 'true' : 'false');
+  $('posBody').hidden = !on;
+  if (on) {
+    // 카트가 돌아오는 과정이 보이도록 그래프의 x(m) 곡선을 자동으로 켠다
+    const sx = SERIES.find(se => se.key === 'x');
+    if (sx && !sx.on) { sx.on = true; if (sx.el) sx.el.classList.remove('off'); }
+    drawChart();
+  }
+  updateHint();
+  updatePosNote();
+}
+
+/** 위치 루프 포함 선형 안정성 판정 (θ·x 소신호, b=0, kI=0 가정)
+ *  F = −kP·θ − kD·ω + kPx·x + kDx·v 를 넣고 선형화하면
+ *  mc·L·s⁴ + (kD − L·kDx)·s³ + (kP − L·kPx − g(mc+mb))·s² + g·kDx·s + g·kPx = 0
+ *  → 라우스 판별로 안정 여부를 돌려준다 */
+function posLoopStable() {
+  const a4 = p.mc * p.L,
+        a3 = K.kDt - p.L * K.kDx,
+        a2 = K.kPt - p.L * K.kPx - G * (p.mc + p.mb),
+        a1 = G * K.kDx,
+        a0 = G * K.kPx;
+  if (a3 <= 0 || a2 <= 0 || a1 <= 0 || a0 <= 0) return false;
+  const b1 = (a3 * a2 - a4 * a1) / a3;
+  if (b1 <= 0) return false;
+  return (b1 * a1 - a3 * a0) / b1 > 0;
+}
+
+function updatePosNote() {
+  const el = $('posNote'); if (!el) return;
+  const apx = '<span class="apx">※ θ·x 소신호 근사(b=0' + (K.kIt !== 0 ? ', k<sub>I</sub> 무시' : '') + ') 예측 — 실제 거동과 다를 수 있다</span>';
+  const kc = G * (p.mc + p.mb);
+  let cls = '', msg;
+  if (K.kPx === 0 && K.kDx === 0) {
+    msg = '두 게인이 모두 0 — 각도만 제어할 때와 같다. 슬라이더를 올려 보세요.';
+  } else if (K.kPt - p.L * K.kPx - kc <= 0) {
+    // s² 계수 ≤ 0 — 어떤 조합이든 불안정 (위치항이 각도 루프 여유를 깎아먹는다)
+    cls = 'bad';
+    msg = 'k<sub>P</sub>가 부족해 불안정 — 위치 제어까지 하려면 k<sub>P</sub> &gt; g(m<sub>c</sub>+m<sub>b</sub>) + L·k<sub>Px</sub> = '
+        + (kc + p.L * K.kPx).toFixed(1) + ' 필요.';
+  } else if (K.kDt - p.L * K.kDx <= 0) {
+    // s³ 계수 ≤ 0 — 마찬가지로 무조건 불안정
+    cls = 'bad';
+    msg = 'k<sub>Dx</sub>가 너무 크다 — k<sub>D</sub> &gt; ' + p.L + '·k<sub>Dx</sub> 여야 한다. k<sub>Dx</sub>를 줄이거나 k<sub>D</sub>를 키워 보세요.';
+  } else if (K.kPx === 0) {
+    // kPx=0 이면 s=0 근이 생기고, 남는 3차식의 라우스 조건은 (kD−L·kDx)(kP−kc) > mc·L·g·kDx
+    if ((K.kDt - p.L * K.kDx) * (K.kPt - kc) > p.mc * p.L * G * K.kDx) {
+      cls = 'warn'; msg = 'k<sub>Dx</sub>만으로는 카트가 <b>멈추기만</b> 하고 x = 0으로 돌아오지 않는다 — k<sub>Px</sub>도 올려 보세요.';
+    } else {
+      cls = 'bad'; msg = '이 k<sub>Dx</sub>에서는 발산한다 — k<sub>Dx</sub>를 줄이거나 k<sub>D</sub>를 키워 보세요.';
+    }
+  } else if (K.kDx === 0) {
+    cls = 'bad'; msg = 'k<sub>Px</sub>만으로는 발진한다 — k<sub>Dx</sub>를 함께 올려야 한다.';
+  } else if (posLoopStable()) {
+    cls = 'good'; msg = '안정 예측 — 카트가 x = 0으로 돌아온다.';
+  } else {
+    cls = 'bad'; msg = '불안정 예측 — 이 조합은 발산한다. k<sub>Px</sub>를 줄이거나 k<sub>Dx</sub>·k<sub>D</sub>를 조절해 보세요.';
+  }
+  el.className = 'note ' + cls;
+  el.innerHTML = msg + apx;
+}
+
+/** 선형화 지표 (θ 루프): θ̈ + kD/(mc·L)·θ̇ + (kP − g(mc+mb))/(mc·L)·θ = 0 */
+function updateHint() {
+  const kcrit = G * (p.mc + p.mb);
+  const eff   = (K.kPt - kcrit) / (p.mc * p.L);
+  const el = $('hint');
+
+  if (eff > 0) {
+    const wn   = Math.sqrt(eff);
+    const zeta  = K.kDt / (2 * p.mc * p.L * wn);
+    const zText = zeta.toFixed(2);
+    const z     = parseFloat(zText);   // 화면에 찍히는 값으로 판정 — 표시값과 문구가 어긋날 수 없다
+    // 판정 경계와 문구 안의 숫자 범위는 항상 일치해야 한다 (원본 기준: 적정 = 0.4~1.6)
+    let cls = '', msg;
+    if (z < 0.2)       { cls = 'bad';  msg = '감쇠 부족 — 크게 진동한다'; }
+    else if (z < 0.4)  { cls = 'warn'; msg = '감쇠가 조금 모자라다 — 적정은 ζ = 0.4~1.6'; }
+    else if (z <= 1.6) { cls = 'good'; msg = '적정 범위 (ζ = 0.4~1.6)'; }
+    else if (z <= 1.8) { cls = 'warn'; msg = '감쇠가 조금 과하다 — 적정은 ζ = 0.4~1.6'; }
+    else               { cls = '';     msg = '과감쇠 — 반응이 느리다'; }
+    // 판정은 소신호 선형화 근사 — 임계값 여유가 작으면 실제로는 넘어질 수 있다 (단서 항상 표시)
+    const near = (K.kPt - kcrit) < 0.15 * kcrit;
+    const posTag = posOn ? ', 위치 루프 무시' : '';
+    const apx  = near
+      ? '<span class="apx hot">※ θ 소신호 2차 근사' + posTag + ' — k<sub>P</sub>가 임계값('
+        + kcrit.toFixed(1) + ')에 가까워 실제로는 넘어질 수 있다</span>'
+      : '<span class="apx">※ θ 소신호 2차 근사(b=0' + posTag + ') 예측 — 실제 거동과 다를 수 있다</span>';
+    el.className = 'note ' + cls;
+    el.innerHTML = 'ζ = ' + zText + ' · ω<sub>n</sub> = ' + wn.toFixed(2)
+                 + ' rad/s<br>' + msg + apx;
+  } else {
+    el.className = 'note bad';
+    el.innerHTML = 'k<sub>P</sub> ≤ g(m<sub>c</sub>+m<sub>b</sub>) = ' + kcrit.toFixed(1)
+                 + '<br>비례 게인이 임계값보다 작아 세울 수 없다'
+                 + '<span class="apx">※ θ 소신호 2차 근사(b=0' + (posOn ? ', 위치 루프 무시' : '') + ') 예측</span>';
+  }
+}
+
+/* ============================================================
+ *  5. 시뮬레이션 루프                    (원본과 동일)
+ * ============================================================ */
+function stepPhysics() {
+  // 외란력 갱신 (누르고 있는 동안 지속 / 버튼은 짧은 충격)
+  if (pulseLeft > 0) { pulseLeft -= PHYS_DT; if (pulseLeft <= 0) { pulseLeft = 0; pulseDir = 0; } }
+  p.FD = holdDir ? holdDir * PUSH_F : (pulseLeft > 0 ? pulseDir * PUSH_F : 0);
+
+  // 제어기: CTRL_HZ 주기로만 갱신 (ZOH)
+  const ctrlDt = 1 / CTRL_HZ;
+  ctrlAcc += PHYS_DT;
+  if (ctrlAcc >= ctrlDt - 1e-12) { ctrlAcc -= ctrlDt; ctrl.update(S, ctrlDt); }
+
+  S = rk4(S, ctrl.F, p, PHYS_DT);
+  simT += PHYS_DT;
+
+  // 데이터 기록
+  logAcc += PHYS_DT;
+  if (logAcc >= 1 / LOG_HZ - 1e-12) {
+    logAcc = 0;
+    log.t.push(simT); log.x.push(S[0]); log.v.push(S[1]);
+    log.th.push(S[2]); log.om.push(S[3]); log.F.push(ctrl.F);
+    if (log.t.length > LOG_MAX) { for (const k in log) log[k].shift(); }
+  }
+
+  // 넘어짐 판정 (|θ| > 90°) — 계속 진행하되 배지로 표시
+  if (Math.abs(S[2]) > Math.PI / 2) fellOver = true;
+}
+
+function frame(ts) {
+  requestAnimationFrame(frame);
+
+  if (mode === 'running') {
+    let wall = lastFrame ? (ts - lastFrame) / 1000 : 0;
+    lastFrame = ts;
+    if (wall > 0.1) wall = 0.1;                        // 탭 복귀 등 큰 점프 클램프
+
+    physAcc += wall;
+    let guard = 0;
+    while (physAcc >= PHYS_DT && guard++ < 5000) { stepPhysics(); physAcc -= PHYS_DT; }
+
+    chartAcc += wall;
+    if (chartAcc >= 0.1) { chartAcc = 0; drawChart(); }   // 그래프는 10 Hz로 갱신
+  } else {
+    lastFrame = ts;
+  }
+
+  drawStage();
+  updateReadout();
+}
+
+/* ---- 실행 제어 ---- */
+function start() {
+  if (mode === 'idle') {
+    readGains();
+    S = [s0.x, s0.v, s0.th, s0.om];
+    simT = 0; fellOver = false;
+    ctrl.reset(); clearLog();
+    physAcc = logAcc = chartAcc = 0;
+    ctrlAcc = 1 / CTRL_HZ - PHYS_DT;      // 첫 물리 스텝에서 바로 제어기가 돌도록
+    camX = S[0];
+  }
+  mode = 'running';
+  lastFrame = 0;
+  $('sth').disabled = true;
+  $('btnRun').textContent = '정지';
+  $('btnRun').className = 'danger';
+}
+
+function stop() {
+  mode = 'paused';
+  clearPush();
+  $('sth').disabled = false;
+  $('btnRun').textContent = '이어서 실행';
+  $('btnRun').className = 'primary';
+  drawChart();
+}
+
+function reset() {
+  mode = 'idle';
+  clearPush();
+  S = [s0.x, s0.v, s0.th, s0.om];
+  simT = 0; fellOver = false;
+  ctrl.reset(); clearLog();
+  camX = S[0];
+  $('sth').disabled = false;
+  $('btnRun').textContent = '시뮬레이션 시작';
+  $('btnRun').className = 'primary';
+  drawChart();
+}
+
+function clearPush() { holdDir = 0; pulseDir = 0; pulseLeft = 0; p.FD = 0; }
+
+/** 버튼 외란: 짧은 충격 */
+function pulsePush(dir) {
+  if (mode !== 'running') start();
+  pulseDir = dir; pulseLeft = PUSH_T;
+}
+
+/* ============================================================
+ *  6. 무대 렌더링 (Canvas 2D)  — 좌표는 모두 CSS 픽셀 기준
+ * ============================================================ */
+const stage = $('stage');
+const chart = $('chart');
+let camX = 0;                          // 카메라 중심의 월드 x [m]
+let lastCartPx = 0;                    // 마지막으로 그린 카트의 화면 x (터치 방향 판정용)
+
+/** devicePixelRatio 대응: 버퍼는 dpr 배, 그리기 좌표는 CSS 픽셀 */
+function fitCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = cv.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+/** 뷰포트에 맞춰 캔버스 CSS 크기 결정
+ *  상단 sticky 블록(캔버스 + 핵심 수치)이 뷰포트 높이의 45%를 넘지 않게 잡는다.
+ *  (다만 캔버스 하한 132 px 이 우선이므로, 아주 낮은 가로 모드에서는 45%를 조금 넘는다) */
+function sizeCanvases() {
+  const vh = window.innerHeight || 640;
+  const roH = $('roBar') ? $('roBar').offsetHeight : 32;   // 수치 줄 + F 바 실측 높이
+  const budget = Math.floor(vh * 0.45) - roH - 8;         // 8 = 카드 테두리 2 + 고정패널 하단 여백 6
+  // 하한 132 px — drawStage() 가 진자 전체(막대 + 추)를 담으면서도 1 m = 22 px 이상을
+  // 유지할 수 있는 최소 높이. 이보다 낮으면 그림이 알아보기 힘들 만큼 작아진다.
+  // (아주 낮은 가로 모드에서는 이 하한이 45 % 예산보다 우선한다)
+  stage.style.height = Math.max(132, Math.min(300, budget)) + 'px';
+  chart.style.height = Math.max(140, Math.min(230, Math.round(vh * 0.26))) + 'px';
+  drawStage();
+  drawChart();
+}
+
+function drawStage() {
+  const { ctx, w, h } = fitCanvas(stage);
+  ctx.clearRect(0, 0, w, h);
+
+  // 배경
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#fbfcfe'); sky.addColorStop(1, '#eef2f8');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+
+  const railY = h - 56;
+
+  // 픽셀/미터 — 화면 폭에 약 7 m가 들어가게 잡되, 진자 전체(막대 + 추)가 캔버스 위로
+  // 삐져나가지 않도록 높이로 한 번 더 조인다. 이 상한은 가독성 하한 22보다 우선한다.
+  //   필요조건: cyTop − L·ppm − br ≥ TOP_PAD,   cyTop = railY − ch + 6
+  // ch(카트 높이)·br(추 반지름)도 ppm에 비례하므로 몇 번 반복해 상한을 수렴시킨다.
+  const TOP_PAD = 4;
+  const Lm = Math.max(p.L, 0.6);
+  let ppmMax = (railY - 40) / Lm;
+  for (let i = 0; i < 4; i++) {
+    const chG = Math.max(22, ppmMax * 0.30);            // 아래 카트 높이 식과 동일
+    const brG = Math.max(11, ppmMax * 0.115);           // 아래 추 반지름 식과 동일
+    ppmMax = (railY + 6 - TOP_PAD - chG - brG) / Lm;
+  }
+  const ppm = Math.max(1, Math.min(Math.max(22, Math.min(w / 7, 120)), ppmMax));
+
+  // 카메라: 데드존 밖으로 나가면 따라간다
+  const half = (w / ppm) * 0.22;
+  if (S[0] > camX + half) camX = S[0] - half;
+  if (S[0] < camX - half) camX = S[0] + half;
+
+  const sx = wx => (wx - camX) * ppm + w / 2;          // 월드 x → 화면 x
+
+  // --- 눈금자 ---
+  const left = camX - (w / 2) / ppm, right = camX + (w / 2) / ppm;
+  const tickStep = ppm < 45 ? 2 : 1;
+  ctx.font = '11px Consolas, monospace';
+  ctx.textAlign = 'center';
+  for (let m = Math.ceil(left / tickStep) * tickStep; m <= right; m += tickStep) {
+    const px = sx(m);
+    ctx.strokeStyle = '#c8d2e0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, railY + 12); ctx.lineTo(px, railY + 18); ctx.stroke();
+    ctx.fillStyle = '#95a2b4';
+    ctx.fillText(m + ' m', px, railY + 31);
+  }
+
+  // --- 기준선 x = 0 (위치 제어 중에는 목표선으로 강조) ---
+  const zx = sx(0);
+  const zc = posOn ? '#059669' : '#94a3b8';
+  ctx.save();
+  ctx.setLineDash([5, 5]); ctx.strokeStyle = zc; ctx.lineWidth = posOn ? 1.6 : 1.2;
+  ctx.beginPath(); ctx.moveTo(zx, 22); ctx.lineTo(zx, railY + 10); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = zc; ctx.font = (posOn ? '600 ' : '') + '11px sans-serif';
+  ctx.fillText(posOn ? '목표 x = 0' : 'x = 0', zx, 16);
+
+  // --- 레일 ---
+  ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, railY + 8, w, 4);
+  ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, railY + 12, w, 3);
+
+  // --- 카트 ---
+  const cx = sx(S[0]);
+  lastCartPx = cx;
+  const cw = Math.max(44, ppm * 0.62), ch = Math.max(22, ppm * 0.30);
+  const cyTop = railY - ch + 6;
+
+  ctx.fillStyle = '#0f172a22';
+  ctx.beginPath(); ctx.ellipse(cx, railY + 10, cw * 0.6, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+  roundRect(ctx, cx - cw / 2, cyTop, cw, ch, 5);
+  ctx.fillStyle = '#334155'; ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '600 11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(p.mc + ' kg', cx, cyTop + ch / 2 + 4);
+
+  const wr = Math.max(6, ch * 0.30);
+  for (const off of [-cw * 0.28, cw * 0.28]) {
+    ctx.beginPath(); ctx.arc(cx + off, railY + 8 - wr * 0.2, wr, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + off, railY + 8 - wr * 0.2, wr * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#94a3b8'; ctx.fill();
+  }
+
+  // --- 진자 ---
+  const px = cx, py = cyTop;                            // 피벗
+  const th = S[2];
+  const tipX = px - Math.sin(th) * p.L * ppm;           // θ>0 = 반시계 = 왼쪽으로 기움
+  const tipY = py - Math.cos(th) * p.L * ppm;
+
+  // 연직 기준선 + 각도 호
+  ctx.save();
+  ctx.setLineDash([3, 4]); ctx.strokeStyle = '#b6c2d2'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - p.L * ppm * 0.55); ctx.stroke();
+  ctx.restore();
+  // 각도 호는 −π~π 로 감아서 그린다 (넘어진 뒤 θ가 계속 커져도 원을 그리지 않도록)
+  const thW = Math.atan2(Math.sin(th), Math.cos(th));
+  if (Math.abs(thW) > 0.02 && Math.abs(thW) < 2.4) {
+    const r = Math.min(40, p.L * ppm * 0.42);
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(px, py, r, -Math.PI / 2, -Math.PI / 2 - thW, thW > 0);
+    ctx.stroke();
+    ctx.fillStyle = '#2563eb'; ctx.font = '600 12px sans-serif';
+    ctx.fillText('θ', px - Math.sin(thW / 2) * (r + 13), py - Math.cos(thW / 2) * (r + 13) + 4);
+  }
+
+  // 막대
+  ctx.strokeStyle = fellOver ? '#dc2626' : '#475569';
+  ctx.lineWidth = Math.max(4, ppm * 0.045); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+  // 피벗
+  ctx.beginPath(); ctx.arc(px, py, Math.max(4, ppm * 0.04), 0, Math.PI * 2);
+  ctx.fillStyle = '#94a3b8'; ctx.fill();
+
+  // 추
+  const br = Math.max(11, ppm * 0.115);
+  ctx.beginPath(); ctx.arc(tipX, tipY, br, 0, Math.PI * 2);
+  ctx.fillStyle = fellOver ? '#dc2626' : '#2563eb'; ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '600 10px sans-serif';
+  ctx.fillText(p.mb + 'kg', tipX, tipY + 3.5);
+
+  // --- 제어력 화살표 ---
+  if (Math.abs(ctrl.F) > 0.05) {
+    const len = Math.min(90, Math.abs(ctrl.F) * 1.8) * Math.sign(ctrl.F);
+    const ay = cyTop + ch / 2;
+    ctx.strokeStyle = '#dc2626'; ctx.fillStyle = '#dc2626'; ctx.lineWidth = 3;
+    const from = cx + Math.sign(ctrl.F) * (cw / 2 + 3);
+    ctx.beginPath(); ctx.moveTo(from, ay); ctx.lineTo(from + len, ay); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(from + len + Math.sign(ctrl.F) * 9, ay);
+    ctx.lineTo(from + len, ay - 6); ctx.lineTo(from + len, ay + 6);
+    ctx.closePath(); ctx.fill();
+    ctx.font = '600 11px Consolas, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(ctrl.F.toFixed(1) + ' N', from + len / 2, ay - 11);
+  }
+
+  // --- 외란 화살표 ---
+  if (Math.abs(p.FD) > 0.05) {
+    const dlen = 46 * Math.sign(p.FD);
+    const dy = cyTop - 16;
+    ctx.strokeStyle = '#7c3aed'; ctx.fillStyle = '#7c3aed'; ctx.lineWidth = 3;
+    const dfrom = cx + Math.sign(p.FD) * (cw / 2 + 3);
+    ctx.beginPath(); ctx.moveTo(dfrom, dy); ctx.lineTo(dfrom + dlen, dy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(dfrom + dlen + Math.sign(p.FD) * 9, dy);
+    ctx.lineTo(dfrom + dlen, dy - 6); ctx.lineTo(dfrom + dlen, dy + 6);
+    ctx.closePath(); ctx.fill();
+    ctx.font = '600 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('외란', dfrom + dlen / 2, dy - 10);
+  }
+
+  // --- 상태 배지 ---
+  ctx.textAlign = 'left';
+  ctx.font = '600 12px sans-serif';
+  if (fellOver) {
+    ctx.fillStyle = '#dc2626'; ctx.fillText('넘어짐 (|θ| > 90°)', 12, 22);
+  } else if (mode === 'running') {
+    ctx.fillStyle = '#059669'; ctx.fillText('● 실행 중', 12, 22);
+  } else if (mode === 'paused') {
+    ctx.fillStyle = '#94a3b8'; ctx.fillText('■ 정지됨', 12, 22);
+  } else {
+    ctx.fillStyle = '#94a3b8'; ctx.fillText('▷ 대기', 12, 22);
+  }
+  ctx.fillStyle = '#94a3b8'; ctx.font = '11px Consolas, monospace';
+  ctx.fillText('1 m = ' + ppm.toFixed(0) + ' px', 12, h - 8);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+/** -0.000 같은 음의 0 표기를 막는다 */
+function fx(v, d) {
+  const s = v.toFixed(d);
+  return /^-0\.?0*$/.test(s) ? s.slice(1) : s;
+}
+
+function updateReadout() {
+  $('rT').textContent    = simT.toFixed(2);
+  $('rTh').textContent   = fx(S[2], 3);
+  $('rThDeg').textContent = fx(S[2] * 180 / Math.PI, 1) + '°';
+  $('rX').textContent    = fx(S[0], 3);
+  $('rF').textContent    = fx(ctrl.F, 2);
+  const pct = Math.min(50, Math.abs(ctrl.F) / 60 * 50);
+  const bar = $('fBar');
+  bar.style.left  = (ctrl.F >= 0 ? 50 : 50 - pct) + '%';
+  bar.style.width = pct + '%';
+}
+
+/* ============================================================
+ *  7. 결과 그래프 (의존성 없이 직접 그림)
+ * ============================================================ */
+const SERIES = [
+  { key:'th', label:'θ (rad)', color:'#2563eb', axis:'L', on:true  },
+  { key:'x',  label:'x (m)',   color:'#059669', axis:'L', on:false },
+  { key:'F',  label:'F (N)',   color:'#dc2626', axis:'R', on:true  },
+];
+
+function buildLegend() {
+  $('legend').innerHTML = '';
+  SERIES.forEach(se => {
+    const el = document.createElement('span');
+    se.el = el;                                   // setPos()에서 x 곡선을 켤 때 씀
+    el.className = 'chip' + (se.on ? '' : ' off');
+    el.innerHTML = '<i style="background:' + se.color + '"></i>' + se.label
+                 + (se.axis === 'R' ? ' <span style="color:#8a97a8">(우축)</span>' : '');
+    el.addEventListener('click', () => {
+      se.on = !se.on; el.classList.toggle('off', !se.on); drawChart();
+    });
+    $('legend').appendChild(el);
+  });
+}
+
+/** 보기 좋은 눈금 간격 */
+function niceTicks(min, max, target) {
+  if (!(max > min)) { max = min + 1; min -= 1; }
+  const raw = (max - min) / target;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const ticks = [];
+  for (let t = Math.ceil(min / step) * step; t <= max + step * 1e-9; t += step) ticks.push(t);
+  return { ticks, step };
+}
+
+function rangeOf(keys) {
+  let lo = Infinity, hi = -Infinity;
+  for (const k of keys) for (const v of log[k]) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  if (!Number.isFinite(lo)) return null;
+  lo = Math.min(lo, 0); hi = Math.max(hi, 0);          // 0 을 항상 포함
+  const pad = (hi - lo) * 0.08 || 0.5;
+  return [lo - pad, hi + pad];
+}
+
+function drawChart() {
+  const { ctx, w, h } = fitCanvas(chart);
+  ctx.clearRect(0, 0, w, h);
+  if (log.t.length < 2) { $('chartInfo').textContent = '시작을 누르면 응답이 그려집니다'; return; }
+
+  const onL = SERIES.filter(s => s.on && s.axis === 'L').map(s => s.key);
+  const onR = SERIES.filter(s => s.on && s.axis === 'R').map(s => s.key);
+  const padL = 42, padR = onR.length ? 40 : 12, padT = 10, padB = 26;
+  const x0 = padL, x1 = w - padR, y0 = padT, y1 = h - padB;
+
+  const t0 = log.t[0], t1 = log.t[log.t.length - 1];
+  const rL = rangeOf(onL), rR = rangeOf(onR);
+
+  const X  = t => x0 + (t - t0) / (t1 - t0 || 1) * (x1 - x0);
+  const YL = v => rL ? y1 - (v - rL[0]) / (rL[1] - rL[0]) * (y1 - y0) : 0;
+  const YR = v => rR ? y1 - (v - rR[0]) / (rR[1] - rR[0]) * (y1 - y0) : 0;
+
+  // 배경 + 격자
+  ctx.fillStyle = '#fbfcfe'; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  ctx.font = '10px Consolas, monospace';
+
+  if (rL) {
+    const { ticks } = niceTicks(rL[0], rL[1], 4);
+    ctx.textAlign = 'right';
+    for (const t of ticks) {
+      const y = YL(t);
+      ctx.strokeStyle = Math.abs(t) < 1e-9 ? '#c2ccd9' : '#edf1f6';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+      ctx.fillStyle = '#8a97a8'; ctx.fillText(fmtTick(t), x0 - 5, y + 3.5);
+    }
+  }
+  if (rR) {
+    const { ticks } = niceTicks(rR[0], rR[1], 4);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#dc2626aa';
+    for (const t of ticks) ctx.fillText(fmtTick(t), x1 + 5, YR(t) + 3.5);
+  }
+
+  // 시간축
+  const { ticks: tt } = niceTicks(t0, t1, 5);
+  ctx.textAlign = 'center'; ctx.font = '10px Consolas, monospace';
+  for (const t of tt) {
+    if (t < t0 || t > t1) continue;
+    const x = X(t);
+    ctx.strokeStyle = '#edf1f6'; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    ctx.fillStyle = '#8a97a8'; ctx.fillText(t.toFixed(1), x, y1 + 13);
+  }
+  ctx.fillStyle = '#5c6a7e'; ctx.font = '10px sans-serif';
+  ctx.fillText('시간 (s)', (x0 + x1) / 2, h - 3);
+
+  ctx.strokeStyle = '#dde3ec'; ctx.lineWidth = 1;
+  ctx.strokeRect(x0 + .5, y0 + .5, x1 - x0 - 1, y1 - y0 - 1);
+
+  // 데이터 곡선 (점이 많으면 솎아냄)
+  const n = log.t.length;
+  const stride = Math.max(1, Math.floor(n / ((x1 - x0) * 2)));
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+  for (const se of SERIES) {
+    if (!se.on) continue;
+    const Y = se.axis === 'L' ? YL : YR;
+    ctx.strokeStyle = se.color; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < n; i += stride) {
+      const px = X(log.t[i]), py = Y(log[se.key][i]);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.lineTo(X(log.t[n - 1]), Y(log[se.key][n - 1]));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  $('chartInfo').textContent = n + ' 샘플 · t = ' + t1.toFixed(2) + ' s';
+}
+
+function fmtTick(v) {
+  const a = Math.abs(v);
+  return a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : v.toFixed(2);
+}
+
+/* ============================================================
+ *  8. 터치 / 포인터 입력
+ * ============================================================ */
+function pointerDir(e) {
+  const r = stage.getBoundingClientRect();
+  return (e.clientX - r.left) >= lastCartPx ? 1 : -1;
+}
+
+stage.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (mode !== 'running') start();
+  try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+  holdDir = pointerDir(e);
+}, { passive: false });
+
+stage.addEventListener('pointermove', e => {
+  if (!holdDir) return;
+  e.preventDefault();
+  holdDir = pointerDir(e);
+}, { passive: false });
+
+const endHold = () => { holdDir = 0; if (!pulseLeft) p.FD = 0; };
+stage.addEventListener('pointerup', endHold);
+stage.addEventListener('pointercancel', endHold);
+stage.addEventListener('pointerleave', endHold);
+
+/* ============================================================
+ *  9. 초기화
+ * ============================================================ */
+bindInputs();
+buildLegend();
+readGains();
+s0.th = parseFloat($('sth').value) || 0;
+S = [s0.x, s0.v, s0.th, s0.om];
+camX = S[0];
+showValues();
+updateHint();
+updatePosNote();
+
+$('btnRun').onclick   = () => (mode === 'running' ? stop() : start());
+$('btnReset').onclick = reset;
+$('btnPushL').onclick = () => pulsePush(-1);
+$('btnPushR').onclick = () => pulsePush(1);
+$('btnPos').onclick   = () => setPos(!posOn);
+
+window.addEventListener('resize', sizeCanvases);
+window.addEventListener('orientationchange', () => setTimeout(sizeCanvases, 250));
+
+sizeCanvases();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

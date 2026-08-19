@@ -15,21 +15,6 @@
   }
   const pageSections = document.querySelectorAll(".page-section");
 
-  function applyTheme(theme) {
-    if (theme !== "dark" && theme !== "soft" && theme !== "light") theme = "soft";
-    document.documentElement.setAttribute("data-theme", theme);
-    document.querySelectorAll(".chip-btn[data-theme]").forEach((btn) => {
-      btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
-    });
-    try { localStorage.setItem("sail-appearance", theme); } catch (e) {}
-    if (typeof window.refreshParticles === "function") window.refreshParticles();
-  }
-
-  document.querySelectorAll(".chip-btn[data-theme]").forEach((btn) => {
-    btn.addEventListener("click", () => applyTheme(btn.getAttribute("data-theme")));
-  });
-  applyTheme(document.documentElement.getAttribute("data-theme") || "soft");
-
   window.addEventListener("scroll", () => {
     if (!navbar) return;
     navbar.classList.toggle("scrolled", window.scrollY > 50);
@@ -45,8 +30,14 @@
     const targetSection = document.querySelector(targetId);
     if (!targetSection || !targetSection.classList.contains("page-section")) return;
 
+    const navAlias = {
+      "#member-im": "#members",
+      "#member-yu": "#members",
+      "#lecture-future": "#lecture"
+    };
     navItems.forEach((nav) => {
-      nav.classList.toggle("active", nav.getAttribute("href") === targetId);
+      const href = nav.getAttribute("href");
+      nav.classList.toggle("active", href === targetId || href === navAlias[targetId]);
     });
 
     pageSections.forEach((section) => section.classList.add("hidden-page"));
@@ -124,12 +115,12 @@
     } else {
       wrapper.classList.add("expanded");
       item?.classList.add("expanded");
-      if (details) details.style.maxHeight = details.scrollHeight + "px";
+      if (details) details.style.maxHeight = Math.max(details.scrollHeight, 820) + "px";
       if (actionText) actionText.textContent = "Close Details";
       setTimeout(() => {
         const y = wrapper.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: "smooth" });
-        if (details) details.style.maxHeight = details.scrollHeight + "px";
+        if (details) details.style.maxHeight = Math.max(details.scrollHeight, 820) + "px";
       }, 50);
     }
   }
@@ -154,12 +145,53 @@
     if (typeof window.CanvasNestSetColor !== "function") return;
     var styles = getComputedStyle(document.documentElement);
     var rgb = [
-      styles.getPropertyValue("--theme-primary-r").trim() || "15",
-      styles.getPropertyValue("--theme-primary-g").trim() || "138",
-      styles.getPropertyValue("--theme-primary-b").trim() || "130"
+      styles.getPropertyValue("--theme-primary-r").trim() || "12",
+      styles.getPropertyValue("--theme-primary-g").trim() || "122",
+      styles.getPropertyValue("--theme-primary-b").trim() || "115"
     ].join(",");
     window.CanvasNestSetColor(rgb);
   };
 
   window.refreshParticles();
+
+  (function initSailCursor() {
+    if (window.matchMedia("(hover: none), (pointer: coarse), (prefers-reduced-motion: reduce)").matches) return;
+
+    const root = document.createElement("div");
+    root.className = "sail-cursor";
+    root.setAttribute("aria-hidden", "true");
+    root.innerHTML = '<div class="sail-cursor-ring"></div><div class="sail-cursor-dot"></div>';
+    document.body.appendChild(root);
+    document.documentElement.classList.add("has-sail-cursor");
+
+    const ring = root.querySelector(".sail-cursor-ring");
+    const dot = root.querySelector(".sail-cursor-dot");
+    const hoverSel = "a, button, .chip-btn, .tab-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    let rx = x;
+    let ry = y;
+
+    window.addEventListener("mousemove", (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      const overFrame = e.target.closest("iframe");
+      root.classList.toggle("is-on", !overFrame);
+      document.documentElement.classList.toggle("has-sail-cursor", !overFrame);
+      root.classList.toggle("is-hover", !overFrame && !!e.target.closest(hoverSel));
+    });
+    window.addEventListener("mousedown", () => root.classList.add("is-down"));
+    window.addEventListener("mouseup", () => root.classList.remove("is-down"));
+    document.addEventListener("mouseleave", () => root.classList.remove("is-on"));
+    document.addEventListener("mouseenter", () => root.classList.add("is-on"));
+
+    function tick() {
+      rx += (x - rx) * 0.16;
+      ry += (y - ry) * 0.16;
+      dot.style.transform = "translate3d(" + x + "px," + y + "px,0)";
+      ring.style.transform = "translate3d(" + rx + "px," + ry + "px,0)";
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
 })();

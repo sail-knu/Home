@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>MPPI — 선박 충돌회피 시뮬레이터 (모바일)</title>
+<style>
+/* ── 토큰: 야간 해도 (원본과 동일 팔레트) ───────────────────────────── */
+:root{
+  --ink:#07121c; --ink-2:#0d1c29; --ink-3:#132738; --ink-4:#050d15;
+  --rule:#1d3547; --rule-2:#2b4c63;
+  --text:#dbe9f2; --text-2:#8ba9bd; --text-3:#5d7f95;
+  --accent:#2dd4bf; --accent-deep:#0f766e; --accent-on:#04241f;
+  --grid:#0f2130; --grid-major:#183245;
+  --track:#38bdf8;   /* 저비용 롤아웃 · 엘리트 */
+  --mark:#f5a524;    /* 목표 · 주의 */
+  --hull:#4ade80;    /* 자선 · 자취 */
+  --devi:#fb7185;    /* 고비용 롤아웃 · 위험 */
+  --course:#c4b5fd;  /* 중간비용 롤아웃 */
+  --rock:#9a8358;    /* 해도의 육지·천퇴 */
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+}
+:root[data-theme="light"]{
+  --ink:#e7eef2; --ink-2:#ffffff; --ink-3:#f0f5f8; --ink-4:#d3dfe7;
+  --rule:#cfdde5; --rule-2:#a9c1cf;
+  --text:#0b2130; --text-2:#42606f; --text-3:#6b8798;
+  --accent:#0d9488; --accent-deep:#0d9488; --accent-on:#ffffff;
+  --grid:#dae7ee; --grid-major:#bed4e0;
+  --track:#0369a1; --mark:#b45309; --hull:#15803d;
+  --devi:#be123c; --course:#6d28d9; --rock:#8a7443;
+  --shadow:0 6px 20px rgba(20,50,70,.12);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --ink:#e7eef2; --ink-2:#ffffff; --ink-3:#f0f5f8; --ink-4:#d3dfe7;
+    --rule:#cfdde5; --rule-2:#a9c1cf;
+    --text:#0b2130; --text-2:#42606f; --text-3:#6b8798;
+    --accent:#0d9488; --accent-deep:#0d9488; --accent-on:#ffffff;
+    --grid:#dae7ee; --grid-major:#bed4e0;
+    --track:#0369a1; --mark:#b45309; --hull:#15803d;
+    --devi:#be123c; --course:#6d28d9; --rock:#8a7443;
+    --shadow:0 6px 20px rgba(20,50,70,.12);
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+/* overflow-x:hidden 은 position:sticky 를 무력화하므로 쓰지 않는다.
+   가로 넘침은 각 요소를 border-box + max-width:100% 로 막는다. */
+body{
+  margin:0;background:var(--ink);color:var(--text);
+  overscroll-behavior:none;
+  padding-bottom:env(safe-area-inset-bottom);
+  font-family:"Pretendard Variable","Pretendard","Malgun Gothic","Apple SD Gothic Neo",
+              system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.mono{font-family:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,monospace;
+      font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+button{font-family:inherit;touch-action:manipulation}
+
+/* ── 헤더 ─────────────────────────────────────────────────────────── */
+header{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--ink-2);border-bottom:1px solid var(--rule);
+}
+header .kicker{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+               color:var(--accent);font-weight:800;flex:none}
+header h1{font-size:13px;margin:0;font-weight:700;letter-spacing:-.2px;
+          flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  border:1px solid var(--rule-2);color:var(--text-2);background:var(--ink-3);
+  white-space:nowrap;flex:none;
+}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill[data-s="run"]{color:var(--hull)}
+.pill[data-s="done"]{color:var(--accent)}
+.pill[data-s="hit"]{color:var(--devi)}
+
+.guide{
+  padding:7px 12px;font-size:11.5px;line-height:1.45;color:var(--text-2);
+  background:var(--ink-3);border-bottom:1px solid var(--rule);
+}
+.guide b{color:var(--accent);font-weight:700}
+
+/* ── 고정 스테이지 (지도 + 핵심 계측 + 비용 막대) ────────────────────
+   컨트롤을 스크롤하는 동안에도 화면 상단에 남아야 한다.
+   높이 예산은 뷰포트의 약 45% (JS autoHeight 가 캔버스 높이로 조절). */
+.stage{
+  position:sticky;top:0;z-index:20;
+  background:var(--ink);                 /* 반드시 불투명 */
+  border-bottom:1px solid var(--rule-2);
+  box-shadow:0 6px 16px rgba(0,0,0,.38);
+}
+:root[data-theme="light"] .stage{box-shadow:0 6px 16px rgba(20,50,70,.16)}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .stage{box-shadow:0 6px 16px rgba(20,50,70,.16)}
+}
+
+/* ── 지도 캔버스 ──────────────────────────────────────────────────── */
+.chart{position:relative;width:100%;height:30vh;
+       background:var(--ink-4);border-bottom:1px solid var(--rule)}
+#cv{width:100%;height:100%;display:block;touch-action:none}
+
+/* ── 핵심 계측 (스테이지 내부, compact) ───────────────────────────── */
+.rd{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px 12px 0}
+.rd .cell{background:var(--ink-2);border:1px solid var(--rule);border-radius:8px;
+          padding:3px 7px;min-width:0}
+.rd .k{display:block;font-size:9px;letter-spacing:.04em;font-weight:700;
+       color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd .v{display:block;font-size:14px;line-height:1.3;color:var(--text);
+       white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── 터치 도구 ────────────────────────────────────────────────────── */
+.tools{display:flex;gap:6px;padding:8px 12px 0}
+.tools button{
+  flex:1;min-height:44px;background:var(--ink-3);border:1px solid var(--rule);
+  color:var(--text-2);border-radius:9px;font-size:12.5px;cursor:pointer;
+}
+.tools button.on{background:var(--accent-deep);border-color:var(--accent);
+                 color:var(--accent-on);font-weight:800}
+.tip{padding:6px 12px 0;font-size:11px;color:var(--text-3)}
+
+/* ── 계측 그리드 ──────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 12px 0}
+.stats .cell{background:var(--ink-2);border:1px solid var(--rule);border-radius:9px;
+             padding:6px 8px;min-width:0}
+.stats .k{display:block;font-size:9.5px;letter-spacing:.06em;font-weight:700;
+          color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats .v{display:block;font-size:15px;color:var(--text);white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis}
+.stats .v.warn,.rd .v.warn{color:var(--devi)}
+.stats .v.caut,.rd .v.caut{color:var(--mark)}
+.stats .v.ok,.rd .v.ok{color:var(--accent)}
+
+/* ── 비용 구성 막대 (스테이지 내부, 얇게) ─────────────────────────── */
+.costwrap{padding:6px 12px 6px}
+.costwrap .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;
+               background:var(--ink-3);border:1px solid var(--rule)}
+.costwrap .bar span{height:100%;transition:width .18s}
+.costwrap .kyrow{display:flex;align-items:baseline;gap:7px;margin-top:3px}
+.costwrap .lbl{font-size:9px;letter-spacing:.06em;color:var(--text-3);
+               font-weight:700;white-space:nowrap;flex:none}
+.costwrap .ky{display:flex;flex-wrap:wrap;gap:1px 7px;font-size:9.5px;
+              line-height:1.35;color:var(--text-3);min-width:0}
+.costwrap .ky b{font-weight:400}
+@media (max-width:345px){                /* 아주 좁은 화면: 범례를 한 줄에 */
+  .costwrap .lbl{font-size:8.5px}
+  .costwrap .ky{font-size:9px;gap:1px 5px}
+}
+
+/* ── 섹션 · 컨트롤 ────────────────────────────────────────────────── */
+.sec{padding:14px 12px 0}
+.sec > .h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sec > .h .t{font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+             font-weight:800;color:var(--text-3)}
+.sec > .h .ln{flex:1;height:1px;background:var(--rule)}
+
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{
+  flex:1 1 46%;min-height:44px;background:var(--ink-3);border:1px solid var(--rule);
+  color:var(--text-2);border-radius:9px;font-size:12.5px;cursor:pointer;
+}
+.seg button.on{background:var(--accent-deep);border-color:var(--accent);
+               color:var(--accent-on);font-weight:800}
+
+.ctl{margin:2px 0 10px}
+.ctl.off{display:none}
+.ctl .lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl .lab .n{color:var(--text-2);font-size:12.5px}
+.ctl .lab .v{color:var(--accent);font-size:15px;font-weight:700}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;display:block;width:100%;height:44px;
+  background:transparent;margin:0;cursor:pointer;
+  touch-action:none;   /* 슬라이더 조작 중 페이지가 함께 스크롤되지 않도록 */
+}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:var(--rule-2)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:28px;height:28px;border-radius:50%;margin-top:-11px;
+  background:var(--accent);border:3px solid var(--ink-2);
+  box-shadow:0 0 0 1px var(--accent),0 2px 6px rgba(0,0,0,.35);
+}
+input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--rule-2)}
+input[type=range]::-moz-range-thumb{
+  width:28px;height:28px;border-radius:50%;background:var(--accent);
+  border:3px solid var(--ink-2);box-shadow:0 0 0 1px var(--accent);
+}
+label.chk{display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text-2);
+          font-size:13px;min-height:44px}
+label.chk input{accent-color:var(--accent);width:22px;height:22px;flex:none}
+.note{color:var(--text-3);font-size:11.5px;line-height:1.65;background:var(--ink-3);
+      border-left:2px solid var(--rule-2);padding:9px 11px;border-radius:0 8px 8px 0;margin:4px 0 0}
+.note b{color:var(--text-2);font-weight:700}
+.note code{color:var(--accent);font-family:ui-monospace,Consolas,monospace;font-size:11px}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;padding:12px 12px 4px;
+        font-size:11px;color:var(--text-2)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;
+          margin-right:5px;vertical-align:middle}
+.legend .dot{width:10px;height:10px;border-radius:50%}
+
+.foot{padding:14px 12px 18px;font-size:10.5px;color:var(--text-3);line-height:1.6}
+
+/* ── 하단 고정 바 ─────────────────────────────────────────────────── */
+.dock{
+  position:sticky;bottom:0;z-index:20;display:flex;flex-wrap:wrap;gap:8px;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  background:var(--ink-2);border-top:1px solid var(--rule);
+  box-shadow:0 -6px 18px rgba(0,0,0,.28);
+}
+/* 배속 슬라이더 — 재생·리셋과 함께 하단에 상시 고정 */
+.dock .speedrow{flex:1 1 100%;display:flex;align-items:center;gap:10px;min-width:0}
+.dock .speedrow .lab{flex:none;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text-3)}
+.dock .speedrow input[type=range]{flex:1;min-width:0}
+.dock .speedrow .val{flex:none;min-width:56px;text-align:right;color:var(--accent);
+                     font-size:14px;font-weight:700;
+                     font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.dock button{
+  min-height:52px;border-radius:11px;border:1px solid var(--rule);
+  background:var(--ink-3);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;
+}
+.dock #btnPlay{flex:2;background:var(--accent-deep);border-color:var(--accent);color:var(--accent-on)}
+.dock #btnReset{flex:1}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<p style="margin:8px 12px 0;font:700 13px/1.4 Pretendard,sans-serif"><a href="index.html" style="color:#2563eb;text-decoration:none">← 실습 목록</a></p>
+
+<header>
+  <span class="kicker">MPPI</span>
+  <h1>선박 충돌회피 시뮬레이터</h1>
+  <span class="pill" id="statusPill">대기</span>
+</header>
+
+<div class="guide">
+  지도를 <b>끌어</b> 암초·타선·목표를 옮기고, <b>샘플 수 K</b>·<b>잡음 σ</b>를 바꿔
+  회피 경로가 어떻게 달라지는지 보세요.
+</div>
+
+<!-- ── 고정 스테이지: 스크롤해도 항상 화면 상단에 남는다 ────────────── -->
+<div class="stage" id="stage">
+  <div class="chart" id="chart"><canvas id="cv"></canvas></div>
+  <div class="rd" id="stats"></div>
+  <div class="costwrap">
+    <span class="bar" id="cbar"></span>
+    <div class="kyrow"><span class="lbl">비용 구성</span><span class="ky" id="ckey"></span></div>
+  </div>
+</div>
+
+<div class="tools">
+  <button id="modeMove" class="on">✥ 이동</button>
+  <button id="modeAdd">＋ 암초</button>
+  <button id="modeDel">✕ 삭제</button>
+</div>
+<div class="tip" id="tip"></div>
+
+<div class="stats" id="stats2"></div>
+
+<div class="sec">
+  <div class="h"><span class="t">시나리오</span><span class="ln"></span></div>
+  <div class="seg" id="scen"></div>
+  <div class="note" style="margin-top:8px">
+    <b>4 정중앙 암초</b>는 좌·우 두 무리로 롤아웃이 갈리는 <b>다봉(多峰)</b> 상황입니다 —
+    평균이 골짜기(암초 정중앙)에 꽂히지 않는지 보세요.
+  </div>
+</div>
+
+<div class="sec">
+  <div class="h"><span class="t">MPPI 파라미터</span><span class="ln"></span></div>
+  <div id="panel"></div>
+</div>
+
+<div class="dock">
+  <div class="speedrow">
+    <span class="lab">배속</span>
+    <input type="range" id="spd" min="1" max="15" step="1" aria-label="배속 (시뮬 시간)">
+    <span class="val" id="spdv">—</span>
+  </div>
+  <button id="btnPlay">▶ 재생</button>
+  <button id="btnReset">↺ 리셋</button>
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   MPPI 선박 충돌회피 시뮬레이터 — 모바일(세로) 실습판
+   -------------------------------------------------------------------------
+   수치 계산부(운동모델 · 롤아웃 샘플링 · 비용함수 · 가중평균 · 적분기)는
+   데스크톱 원본과 동일합니다. 달라진 것은 레이아웃 / 입력 UI / 표시 옵션 수 /
+   모바일용 기본값 / 롤아웃 렌더링 상한뿐입니다.
+   ========================================================================= */
+
+/* ---------- 수학 ---------- */
+var PI=Math.PI, TWO_PI=2*PI, D2R=PI/180, R2D=180/PI;
+function wrap(a){ return Math.atan2(Math.sin(a), Math.cos(a)); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function smoothstep(x,a,b){ var t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); }
+
+/* =========================================================================
+   1. 선박 제원과 3-DOF 동역학  (원본 그대로)
+   ========================================================================= */
+var LPP=80.0, BEAM=14.0, DRAFTM=5.0, RHO=1025;
+var UDES=6.173;                                   // 설계속력 12 kn [m/s]
+var M11=4.33944e6, M22=7.88867e6, M23=2.17783e7, M33=2.88667e9;
+var iA=1.294625e-7, iB=-9.76724e-10, iD=3.537962e-10;
+var YV=-7.27107e4, YR=1.09163e6, NV=-2.09308e6, NR=-6.72879e7;
+var KCF=2306.25;                                  // 교차류 항력 상수
+var KRES=2666.2;                                  // 전저항 상수
+var DP=3.2, KT0=0.35, KJP=0.30, WP=0.25, TRD=0.20, NPMAX=2.5591;
+var ARUD=8.0, FALPHA=2.72444, ETAR=0.84329, KAPR=0.50, EPSR=1.0, GAMR=0.45;
+var AHR=0.35, LEVER=52.6, LRR=-56;
+var DMAX=35*D2R;                                  // 최대 타각
+var RHULL=Math.sqrt((LPP/6)*(LPP/6)+(BEAM/2)*(BEAM/2));   // 3원 근사 반경 15.06 m
+var HULLOFF=[-LPP/3, 0, LPP/3];                   // -26.67 / 0 / +26.67
+var RENC=40.8;                                    // 광역 컬링용 외접원
+
+function thrust(n,u){
+  if(n>=0) return RHO*DP*DP*DP*DP*KT0*n*n - RHO*DP*DP*DP*KJP*n*(1-WP)*u;
+  return -0.55*RHO*DP*DP*DP*DP*KT0*n*n;           // 후진은 별도 분기 (필수)
+}
+
+/* 상태 도함수. st = [x,y,psi,u,v,r], 액추에이터 delta·n 은 인자로 고정. */
+var _d=[0,0,0,0,0,0];
+function deriv(x,y,psi,u,v,r,delta,n,out){
+  var Ue=Math.sqrt(u*u+v*v); if(Ue<0.5) Ue=0.5;
+  var X=-KRES*Math.abs(u)*u;
+  var Y=YV*Ue*v + YR*Ue*r;
+  var Nm=NV*Ue*v + NR*Ue*r;
+
+  /* Hoerner 교차류 항력 — 스트립 적분의 해석적 폐형식. */
+  if(Math.abs(r)<1e-7){
+    Y += -KCF*Math.abs(v)*v*LPP;
+  }else{
+    var w1=v-r*LPP/2, w2=v+r*LPP/2;
+    var F=(Math.abs(w2)*w2*w2 - Math.abs(w1)*w1*w1)/3;
+    var G=(Math.abs(w2)*w2*w2*w2 - Math.abs(w1)*w1*w1*w1)/4;
+    Y  += -KCF*F/r;
+    Nm += -KCF*(G - v*F)/(r*r);
+  }
+
+  /* 원심항 (MMG 형식). */
+  X += M22*v*r;
+  Y += -M11*u*r;
+
+  /* 프로펠러 */
+  var Tp=thrust(n,u);
+  X += (1-TRD)*Tp;
+
+  /* 타 (MMG) — 진입점에서 부호 규약 정렬 */
+  var deltaEff=-delta;
+  var ua=(1-WP)*u; if(ua<0) ua=0;
+  var wr=(1-KAPR)*ua + KAPR*Math.sqrt(ua*ua + 8*Math.max(Tp,0)/(RHO*PI*DP*DP));
+  var uR=EPSR*Math.sqrt(ETAR*wr*wr + (1-ETAR)*ua*ua);
+  var vR=GAMR*(v + LRR*r);
+  var al=deltaEff + Math.atan2(vR, uR>0.3?uR:0.3);
+  if(al>1.4) al=1.4; else if(al<-1.4) al=-1.4;
+  var FN=0.5*RHO*ARUD*FALPHA*(uR*uR+vR*vR)*Math.sin(al);
+  var cd=Math.cos(deltaEff), sd=Math.sin(deltaEff);
+  X  += -(1-TRD)*FN*sd;
+  Y  += -(1+AHR)*FN*cd;
+  Nm += LEVER*FN*cd;
+
+  var cp=Math.cos(psi), sp=Math.sin(psi);
+  out[0]=u*cp - v*sp + ENV.cx;      // 조류는 water-relative → 운동학에만 가산
+  out[1]=u*sp + v*cp + ENV.cy;
+  out[2]=r;
+  out[3]=X/M11;
+  out[4]=iA*Y + iB*Nm;
+  out[5]=iB*Y + iD*Nm;
+}
+
+/* =========================================================================
+   2. 상태
+   ========================================================================= */
+var SH={x:0,y:0,psi:0,u:UDES,v:0,r:0,delta:0,n:NPMAX*0.8};
+var GOAL={x:1850,y:562.5};
+var START={x:150,y:562.5,psi:0};
+var ROCKS=[];            // {x,y,r}
+var TGTS=[];             // {x,y,psi,U,name}
+var ENV={cx:0,cy:0};
+
+var SIM={
+  t:0, running:false, done:false, hit:false,
+  trail:[], hist:[], log:[],
+  minClr:1e9, planMs:0, frameMs:0, fps:0, solves:0,
+  nextSolve:0
+};
+var drag=null;
+
+/* =========================================================================
+   3. 파라미터  (★ 모바일 기본값: K·T_h·배속을 낮춤. 나머지는 원본과 동일)
+   ========================================================================= */
+var P={
+  speedMul:6,
+  Th:80, K:160, essTgt:0.10, sigD:15, sigN:0.20, tauC:12,
+  dRate:2.5, sgOn:true, seedsOn:true, multiOn:true,
+  dSafe:160,                        // 안전 반경: 암초·타선 공용 소프트 밴드 폭
+  colreg:true, thHO:15, distField:false,
+  wTerm:15, wCT:3.0, wHDG:0.5, wSPD:0.8, wRUD:0.3, wDRUD:0.6,
+  wSTAT:12, wDYN:18, wDCPA:4, wHIT:1000, wSTB:8, wXA:6, wHOLD:5, wSUBST:3,
+  wAvoid:1.0,                       // 모바일 통합 노브 → wSTAT·wDYN 을 함께 배율
+  curU:0, curDir:180,
+  showCloud:true, showElite:true, showGhost:true,
+  kdraw:60,                         // ★렌더링 상한: 계산은 K 전부, 그리기는 60개
+  autoQ:false, projector:false
+};
+var W={};                       // 실사용 가중치 (P 에서 복사)
+function syncW(){
+  W.TERM=P.wTerm; W.CT=P.wCT; W.HDG=P.wHDG; W.SPD=P.wSPD;
+  W.RUD=P.wRUD; W.DRUD=P.wDRUD; W.STAT=P.wSTAT; W.DYN=P.wDYN;
+  W.DCPA=P.wDCPA; W.HIT=P.wHIT; W.STB=P.wSTB; W.XA=P.wXA;
+  W.HOLD=P.wHOLD; W.SUBST=P.wSUBST;
+}
+function applyAvoid(){ P.wSTAT=12*P.wAvoid; P.wDYN=18*P.wAvoid; }
+
+/* =========================================================================
+   4. MPPI — 버퍼 사전할당
+   ========================================================================= */
+var KMAXB=768, NMAXB=80;
+var TRAJ =new Float32Array(KMAXB*NMAXB*2);
+var EPSD =new Float32Array(KMAXB*NMAXB);
+var EPSN =new Float32Array(KMAXB*NMAXB);
+var COST =new Float32Array(KMAXB);
+var MINC =new Float32Array(KMAXB);      // 샘플별 최근접 이격 [m] — 위험 롤아웃 색 구분용
+var WGT  =new Float32Array(KMAXB);
+var ORD  =new Int32Array(KMAXB);
+var BID  =new Int32Array(KMAXB);
+var OFFS =new Int32Array(KMAXB);
+var Ud   =new Float32Array(NMAXB);      // 공칭 타각 시퀀스
+var Un   =new Float32Array(NMAXB);      // 공칭 rpm 시퀀스
+var UdNew=new Float32Array(NMAXB);
+var UnNew=new Float32Array(NMAXB);
+var GHOST=new Float32Array(NMAXB*2);    // 워밍스타트 고스트 궤적
+var BEST =new Float32Array(NMAXB*2);    // 채택(가중평균) 궤적
+var POOLBITS=16, POOLN=1<<POOLBITS, POOLMASK=POOLN-1;
+var POOL =new Float32Array(POOLN);
+var DTS=[], TSS=[], AR1=[], BR1=[], NSTEP=0;
+
+var MP={ lam:1, ess:0, essR:0, minor:0, esc:0, escHold:0, K:160, kdrawN:0, sd:0 };
+
+var _g2=null;
+function gauss(){
+  if(_g2!==null){ var g=_g2; _g2=null; return g; }
+  var u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  var r=Math.sqrt(-2*Math.log(u)), t=TWO_PI*v;
+  _g2=r*Math.sin(t); return r*Math.cos(t);
+}
+function fillPool(){ for(var i=0;i<POOLN;i++) POOL[i]=gauss(); }
+function reseedOffsets(){ for(var k=0;k<KMAXB;k++) OFFS[k]=(Math.random()*POOLN)|0; }
+
+/* 비균일 격자: 0~20 s 는 1 s, 그 뒤는 2 s. */
+function buildGrid(){
+  DTS.length=0; TSS.length=0; AR1.length=0; BR1.length=0;
+  var t=0, i;
+  for(i=0;i<20 && t<P.Th-1e-9;i++){ DTS.push(1.0); TSS.push(t); t+=1.0; }
+  while(t<P.Th-1e-9 && DTS.length<NMAXB){
+    var d=Math.min(2.0, P.Th-t); DTS.push(d); TSS.push(t); t+=d;
+  }
+  if(t<P.Th-1e-9 && DTS.length>=NMAXB){
+    var extra=(P.Th-20)/(NMAXB-20);
+    t=20; DTS.length=20; TSS.length=20;
+    for(i=20;i<NMAXB;i++){ DTS.push(extra); TSS.push(t); t+=extra; }
+  }
+  NSTEP=DTS.length;
+  for(i=0;i<NSTEP;i++){
+    var a=Math.exp(-DTS[i]/P.tauC);
+    AR1.push(a); BR1.push(Math.sqrt(Math.max(1-a*a,0)));
+  }
+}
+
+/* =========================================================================
+   5. COLREG — solve 시작 시 1회 분류하고 롤아웃 전체에 동결
+   ========================================================================= */
+var TH_OT=112.5*D2R, TH_XA=67.5*D2R;
+var CG=[];               // 동결된 조우 판정 (타선별)
+var CHI0=30*D2R, CHI_MIN=30*D2R;
+
+function cpa(rx,ry,vx,vy){
+  var v2=vx*vx+vy*vy;
+  if(v2<1e-9) return {tcpa:0, dcpa:Math.sqrt(rx*rx+ry*ry)};   // 동속동침 → 평행
+  var t=-(rx*vx+ry*vy)/v2;
+  if(t<=0) return {tcpa:t, dcpa:Math.sqrt(rx*rx+ry*ry)};
+  var px=rx+vx*t, py=ry+vy*t;
+  return {tcpa:t, dcpa:Math.sqrt(px*px+py*py)};
+}
+
+function classify(o, tg){
+  var rx=tg.x-o.x, ry=tg.y-o.y;
+  var rng=Math.sqrt(rx*rx+ry*ry);
+  var relB=wrap(Math.atan2(ry,rx)-o.psi);          // + = 좌현, − = 우현
+  var ownFromTgt=wrap(Math.atan2(-ry,-rx)-tg.psi);
+  var dPsi=wrap(tg.psi-o.psi);
+  var oU=Math.sqrt(o.u*o.u+o.v*o.v);
+  var thHO=P.thHO*D2R;
+
+  // 판정 순서: 추월 → 정면 → 횡단
+  if(Math.abs(ownFromTgt)>TH_OT && Math.abs(dPsi)<TH_OT && oU>tg.U*1.05)
+    return {sit:'OVERTAKE', role:'GIVE', rng:rng, relB:relB};
+  if(Math.abs(relB)>TH_OT && Math.abs(dPsi)<TH_OT && tg.U>oU*1.05)
+    return {sit:'OVERTAKEN', role:'STAND', rng:rng, relB:relB};
+  if(Math.abs(relB)<thHO && Math.abs(Math.abs(dPsi)-PI)<thHO)
+    return {sit:'HEAD_ON', role:'GIVE', rng:rng, relB:relB};
+  if(relB<0 && relB>-TH_OT) return {sit:'CROSS_GW', role:'GIVE', rng:rng, relB:relB};
+  if(relB>0 && relB< TH_OT) return {sit:'CROSS_SO', role:'STAND', rng:rng, relB:relB};
+  return {sit:'NONE', role:'NONE', rng:rng, relB:relB};
+}
+
+var SITNAME={OVERTAKE:'추월(피항)', OVERTAKEN:'피추월(유지)', HEAD_ON:'정면(양측 우현)',
+             CROSS_GW:'횡단·피항선', CROSS_SO:'횡단·유지선', NONE:'—'};
+
+function freezeColreg(){
+  var chi0=Math.atan2(SH.u*Math.sin(SH.psi)+SH.v*Math.cos(SH.psi),
+                      SH.u*Math.cos(SH.psi)-SH.v*Math.sin(SH.psi));
+  var i, prev=CG;
+  CG=[];
+  for(i=0;i<TGTS.length;i++){
+    var tg=TGTS[i];
+    var c=classify(SH,tg);
+    var rx=tg.x-SH.x, ry=tg.y-SH.y;
+    var vx=tg.U*Math.cos(tg.psi)-(SH.u*Math.cos(SH.psi)-SH.v*Math.sin(SH.psi));
+    var vy=tg.U*Math.sin(tg.psi)-(SH.u*Math.sin(SH.psi)+SH.v*Math.cos(SH.psi));
+    var cp=cpa(rx,ry,vx,vy);
+    c.dcpa=cp.dcpa; c.tcpa=cp.tcpa;
+    /* 조우 성립 게이트 — 접근 중이고 실제로 위험할 때만 조우로 본다. */
+    if(!(cp.tcpa>0 && cp.tcpa<1.5*P.Th && cp.dcpa<2*P.dSafe) && c.rng>2*P.dSafe){
+      c.sit='NONE'; c.role='NONE';
+    }
+    // 히스테리시스: 해제는 range > 1.6·dSafe 이거나 tcpa<0 이 3 s 지속될 때만
+    var p=prev[i];
+    if(p && p.sit!=='NONE' && c.sit==='NONE'){
+      if(c.rng<=1.6*P.dSafe && !(cp.tcpa<0 && (p.negT||0)+1>=3)){
+        c.sit=p.sit; c.role=p.role; c.held=true;
+      }
+    }
+    c.negT = (cp.tcpa<0) ? ((p&&p.negT||0)+1) : 0;
+    c.chiRef0 = (p && p.chiRef0!==undefined && c.sit!=='NONE' && p.sit===c.sit) ? p.chiRef0 : chi0;
+    c.psi0 = (p && p.psi0!==undefined && p.sit===c.sit) ? p.psi0 : SH.psi;
+    c.gate = P.colreg && (c.sit==='HEAD_ON'||c.sit==='CROSS_GW'||c.sit==='OVERTAKE');
+    c.hold = P.colreg && (c.sit==='CROSS_SO'||c.sit==='OVERTAKEN');
+    c.risk = (cp.tcpa>0 && cp.tcpa<90 && cp.dcpa<1.5*LPP) ? 2
+           : (cp.tcpa>0 && cp.tcpa<180 && cp.dcpa<3*LPP) ? 1 : 0;
+    CG.push(c);
+  }
+}
+
+/* =========================================================================
+   6. 거리장 (BFS) — 종단비용 대안 (모바일판은 UI 를 뺐고 기본 OFF)
+   ========================================================================= */
+var FCELL=25, FW=0, FH=0, FIELD=null;
+function buildField(){
+  FW=Math.ceil(WORLD.w/FCELL); FH=Math.ceil(WORLD.h/FCELL);
+  FIELD=new Float32Array(FW*FH); FIELD.fill(1e9);
+  var blocked=new Uint8Array(FW*FH), i,j,o;
+  for(j=0;j<FH;j++) for(i=0;i<FW;i++){
+    var cx=(i+0.5)*FCELL, cy=(j+0.5)*FCELL;
+    for(o=0;o<ROCKS.length;o++){
+      var dx=cx-ROCKS[o].x, dy=cy-ROCKS[o].y;
+      if(dx*dx+dy*dy < (ROCKS[o].r+RHULL)*(ROCKS[o].r+RHULL)){ blocked[j*FW+i]=1; break; }
+    }
+  }
+  var n=FW*FH;
+  var gi=clamp(Math.floor(GOAL.x/FCELL),0,FW-1), gj=clamp(Math.floor(GOAL.y/FCELL),0,FH-1);
+  FIELD[gj*FW+gi]=0;
+  var dxs=[1,-1,0,0,1,1,-1,-1], dys=[0,0,1,-1,1,-1,1,-1];
+  var PEN=6, DIAG=FCELL*1.41421356;
+  var changed=true, sweep=0, s, c, d;
+  while(changed && sweep++<300){
+    changed=false;
+    var fwd=((sweep&1)===1);
+    for(s=0;s<n;s++){
+      c = fwd ? s : (n-1-s);
+      var base=FIELD[c]; if(base>=1e9) continue;
+      var ci=c%FW, cj=(c/FW)|0;
+      for(d=0;d<8;d++){
+        var ni=ci+dxs[d], nj=cj+dys[d];
+        if(ni<0||nj<0||ni>=FW||nj>=FH) continue;
+        var idx=nj*FW+ni;
+        var step=((d<4)?FCELL:DIAG)*(blocked[idx]?PEN:1);
+        if(base+step < FIELD[idx]-1e-6){ FIELD[idx]=base+step; changed=true; }
+      }
+    }
+  }
+}
+function fieldAt(x,y){
+  if(!FIELD) return Math.hypot(GOAL.x-x, GOAL.y-y);
+  var i=clamp(Math.floor(x/FCELL),0,FW-1), j=clamp(Math.floor(y/FCELL),0,FH-1);
+  var f=FIELD[j*FW+i];
+  return (f>1e8) ? Math.hypot(GOAL.x-x, GOAL.y-y)*8 : f;   // 이론상 도달 불가
+}
+
+/* =========================================================================
+   7. MPPI solve   ★원본과 완전히 동일
+   ========================================================================= */
+var CBREAK={goal:0,path:0,stat:0,dyn:0,colreg:0,ctrl:0};
+var BRK=new Float32Array(KMAXB*6);     // 샘플별 비용 분해
+var SEEDKIND=[0,1,2,3,4,5,6,7];     // 0=warm 1=+35 2=-35 3=LOS 4=crash 5=+35crash 6=-35crash 7=prev
+
+function lookaheadGoal(x,y){
+  var dx=GOAL.x-x, dy=GOAL.y-y, d=Math.sqrt(dx*dx+dy*dy);
+  var reach=UDES*P.Th;
+  if(d<=reach) return {x:GOAL.x, y:GOAL.y, reach:reach};
+  return {x:x+dx/d*reach, y:y+dy/d*reach, reach:reach};
+}
+
+function solve(){
+  var t0=performance.now();
+  var K=MP.K, Ns=NSTEP, i, k, o, m;
+  syncW(); freezeColreg();
+  MP.u0pre=Ud[0];                    // 갱신 전 공칭값 — 히스토그램의 기준점
+  var LG=lookaheadGoal(SH.x,SH.y);
+  var chiGoal=Math.atan2(GOAL.y-SH.y, GOAL.x-SH.x);
+  // 고정 참조선 (출발점 → 목표) 기준 cross-track
+  var pax=START.x, pay=START.y;
+  var pdx=GOAL.x-pax, pdy=GOAL.y-pay, plen=Math.hypot(pdx,pdy);
+  var pca=pdx/plen, psa=pdy/plen;
+  var eSat=3*LPP;
+  var rateStep=P.dRate*D2R;
+  var nRate=NPMAX/30;
+  for(k=0;k<K;k++){
+    var x=SH.x, y=SH.y, psi=SH.psi, u=SH.u, v=SH.v, r=SH.r, dl=SH.delta, nn=SH.n;
+    var ed=0, en=0, J=0, po=OFFS[k];
+    var seed = (P.seedsOn && k<8) ? SEEDKIND[k] : -1;
+    /* minSrcK: 최근접 이격을 만든 주체 (1=암초 2=타선).
+       DCPA 단말항을 올바른 버킷에 적립하기 위한 것으로 비용값 J 에는 영향이 없다. */
+    var minClrK=1e9, minSrcK=0;
+    var bg=0,bp=0,bs=0,bd=0,bc=0,bu=0;
+    var base=k*NMAXB;
+
+    for(i=0;i<Ns;i++){
+      var dt=DTS[i], tn=TSS[i]+dt;
+      var vd, vn;
+      if(seed>=0){
+        switch(seed){
+          case 0: vd=Ud[i];            vn=Un[i]; break;
+          case 1: vd= DMAX;            vn=Un[i]; break;
+          case 2: vd=-DMAX;            vn=Un[i]; break;
+          case 3: vd=Ud[i]*0;          vn=Un[i]; break;
+          case 4: vd=Ud[i];            vn=-0.4*NPMAX; break;
+          case 5: vd= DMAX;            vn=-0.4*NPMAX; break;
+          case 6: vd=-DMAX;            vn=-0.4*NPMAX; break;
+          default: vd=Ud[i];           vn=Un[i];
+        }
+      }else{
+        ed=AR1[i]*ed + BR1[i]*(P.sigD*D2R)*POOL[(po++)&POOLMASK];
+        en=AR1[i]*en + BR1[i]*(P.sigN*NPMAX)*POOL[(po++)&POOLMASK];
+        vd=Ud[i]+ed; vn=Un[i]+en;
+      }
+      /* 제약: 제어 자체를 클램프하고 유효 eps 를 되쓴다 (eps 클램프 금지) */
+      if(vd> DMAX) vd= DMAX; else if(vd<-DMAX) vd=-DMAX;
+      var rl=rateStep*dt;
+      if(vd>dl+rl) vd=dl+rl; else if(vd<dl-rl) vd=dl-rl;
+      if(vn> NPMAX) vn= NPMAX; else if(vn<-0.4*NPMAX) vn=-0.4*NPMAX;
+      var nl=nRate*dt;
+      if(vn>nn+nl) vn=nn+nl; else if(vn<nn-nl) vn=nn-nl;
+      EPSD[base+i]=vd-Ud[i];
+      EPSN[base+i]=vn-Un[i];
+      var dPrev=dl;
+      dl=vd; nn=vn;
+
+      /* Euler 적분 (롤아웃 전용) */
+      deriv(x,y,psi,u,v,r,dl,nn,_d);
+      x+=_d[0]*dt; y+=_d[1]*dt; psi=wrap(psi+_d[2]*dt);
+      u+=_d[3]*dt; v+=_d[4]*dt; r+=_d[5]*dt;
+
+      TRAJ[(base+i)*2]=x; TRAJ[(base+i)*2+1]=y;
+
+      /* ---- 단계비용 (정규화) ---- */
+      var l=0;
+      var cpsi=Math.cos(psi), spsi=Math.sin(psi);
+
+      // 경로 이탈 (Huber)
+      var ex=x-pax, ey=y-pay;
+      var ecr=Math.abs(-ex*psa+ey*pca);
+      var ct = (ecr<=eSat) ? (ecr*ecr)/(eSat*eSat) : (2*ecr/eSat-1);
+      l += W.CT*ct;  bp += W.CT*ct;
+
+      // 침로 정렬
+      var hd=wrap(Math.atan2(GOAL.y-y, GOAL.x-x)-psi);
+      var hc=W.HDG*(hd/PI)*(hd/PI); l+=hc; bg+=hc;
+
+      // 속력 유지 (감속은 싸게)
+      var Um=Math.sqrt(u*u+v*v), sp=(Um-UDES)/UDES;
+      var spc=W.SPD*(sp<0?0.4:1)*sp*sp; l+=spc; bu+=spc;
+
+      // 제어
+      var rc=W.RUD*(dl/DMAX)*(dl/DMAX);
+      var dc=W.DRUD*((dl-dPrev)/(rl+1e-9))*((dl-dPrev)/(rl+1e-9));
+      l+=rc+dc; bu+=rc+dc;
+
+      // 선체 3원
+      var h0x=x+HULLOFF[0]*cpsi, h0y=y+HULLOFF[0]*spsi;
+      var h1x=x,                 h1y=y;
+      var h2x=x+HULLOFF[2]*cpsi, h2y=y+HULLOFF[2]*spsi;
+
+      // 정적 장애물
+      for(o=0;o<ROCKS.length;o++){
+        var R=ROCKS[o], rr=R.r+RHULL;
+        var gx=x-R.x, gy=y-R.y;
+        if(gx*gx+gy*gy > (R.r+RENC+P.dSafe)*(R.r+RENC+P.dSafe)) continue;
+        var clr=1e9, hx,hy,dd;
+        hx=h0x-R.x; hy=h0y-R.y; dd=Math.sqrt(hx*hx+hy*hy)-rr; if(dd<clr) clr=dd;
+        hx=h1x-R.x; hy=h1y-R.y; dd=Math.sqrt(hx*hx+hy*hy)-rr; if(dd<clr) clr=dd;
+        hx=h2x-R.x; hy=h2y-R.y; dd=Math.sqrt(hx*hx+hy*hy)-rr; if(dd<clr) clr=dd;
+        if(clr<minClrK){ minClrK=clr; minSrcK=1; }
+        if(clr<=0){ var pc=W.HIT*(1+2*(-clr)/rr); l+=pc; bs+=pc; }
+        else if(clr<P.dSafe){ var q=1-clr/P.dSafe, sc=W.STAT*q*q; l+=sc; bs+=sc; }
+      }
+
+      // 이동 장애물 (예측구간 동안 등속직진 가정)
+      for(o=0;o<TGTS.length;o++){
+        var T=TGTS[o];
+        var tx=T.x+T.U*Math.cos(T.psi)*tn, ty=T.y+T.U*Math.sin(T.psi)*tn;
+        var rr2=RHULL*2 + 10;
+        var cl2=1e9, ax,ay,d2;
+        ax=h0x-tx; ay=h0y-ty; d2=Math.sqrt(ax*ax+ay*ay)-rr2; if(d2<cl2) cl2=d2;
+        ax=h1x-tx; ay=h1y-ty; d2=Math.sqrt(ax*ax+ay*ay)-rr2; if(d2<cl2) cl2=d2;
+        ax=h2x-tx; ay=h2y-ty; d2=Math.sqrt(ax*ax+ay*ay)-rr2; if(d2<cl2) cl2=d2;
+        if(cl2<minClrK){ minClrK=cl2; minSrcK=2; }
+        if(cl2<=0){ var pc2=W.HIT*(1+2*(-cl2)/rr2); l+=pc2; bd+=pc2; }
+        else if(cl2<P.dSafe){ var q2=1-cl2/P.dSafe, dcst=W.DYN*q2*q2*q2; l+=dcst; bd+=dcst; }
+
+        /* COLREG — 동결된 판정만 사용 */
+        var cg=CG[o]; if(!cg) continue;
+        if(cg.gate){
+          var portDev=Math.max(0, wrap(psi-cg.chiRef0));   // psi 증가 = 좌현
+          var st=W.STB*(portDev/CHI0)*(portDev/CHI0);
+          l+=st; bc+=st;
+          if(cg.sit==='CROSS_GW'){                          // Rule 15 전방 횡단 금지
+            var fx=Math.cos(T.psi), fy=Math.sin(T.psi);
+            var qx=x-tx, qy=y-ty;
+            var fwd=qx*fx+qy*fy, lat=-qx*fy+qy*fx;
+            if(fwd>0){
+              var wlat=Math.max(0, 1-Math.abs(lat)/(2*P.dSafe));
+              var xa=W.XA*wlat*clamp(fwd/(2*P.dSafe),0,1);
+              l+=xa; bc+=xa;
+            }
+          }
+        }else if(cg.hold){                                   // Rule 17 유지선
+          var g17=1-smoothstep(cg.tcpa, 25, 60);             // in-extremis 해제
+          var dev=wrap(psi-cg.psi0);
+          var hc2=W.HOLD*(1-g17)*(dev/CHI0)*(dev/CHI0);
+          l+=hc2; bc+=hc2;
+        }
+      }
+
+      /* 시간가중 사다리꼴 + 쌍곡 할인 */
+      J += dt*(1/(1+tn/(P.Th/2)))*l;
+    }
+
+    J/=P.Th;
+    /* 단말비용 */
+    var term;
+    if(P.distField && FIELD) term=fieldAt(x,y)/LG.reach;
+    else term=Math.sqrt((x-LG.x)*(x-LG.x)+(y-LG.y)*(y-LG.y))/LG.reach;
+    var tc=W.TERM*term; J+=tc; bg+=tc;
+
+    /* Rule 8(b) substantial action — 소각도 변침 억제 (단말 전용) */
+    for(o=0;o<CG.length;o++) if(CG[o].gate){
+      var dpsiT=Math.abs(wrap(psi-CG[o].psi0));
+      if(dpsiT<CHI_MIN){ var sb=W.SUBST*(1-dpsiT/CHI_MIN)*(1-dpsiT/CHI_MIN); J+=sb; bc+=sb; }
+      break;
+    }
+    /* 최근접 이격 (DCPA 성격의 단말항)
+       — J 는 종전과 완전히 동일하고, 적립 버킷만 '최근접을 만든 주체'로 나눈다.
+         (암초 때문에 생긴 비용이 막대에서 '타선' 색으로 보이던 문제) */
+    if(minClrK<P.dSafe){
+      var mq=1-Math.max(minClrK,0)/P.dSafe;
+      var dq=W.DCPA*mq*mq; J+=dq;
+      if(minSrcK===1) bs+=dq; else bd+=dq;
+    }
+    COST[k]=J;
+    MINC[k]=minClrK;
+    BRK[k*6]=bg; BRK[k*6+1]=bp; BRK[k*6+2]=bs;
+    BRK[k*6+3]=bd; BRK[k*6+4]=bc; BRK[k*6+5]=bu;
+  }
+
+  /* ---- 가중치: ESS 목표로 λ 자동조정 ---- */
+  var rho=Infinity, mean=0;
+  for(k=0;k<K;k++){ if(COST[k]<rho) rho=COST[k]; mean+=COST[k]; }
+  mean/=K;
+  var sd=0; for(k=0;k<K;k++){ var dv=COST[k]-mean; sd+=dv*dv; }
+  sd=Math.sqrt(sd/K); MP.sd=sd;
+
+  if(sd<1e-9){
+    /* 가드: 전 샘플 비용이 같으면 λ 이분법이 0 으로 발산해 개루프가 된다 */
+    for(k=0;k<K;k++) WGT[k]=0;
+    var am=0; for(k=1;k<K;k++) if(COST[k]<COST[am]) am=k;
+    WGT[am]=1; MP.lam=0; MP.ess=1; MP.essR=1/K;
+  }else{
+    var tgt=P.essTgt;
+    function essOf(lam){
+      var s=0,s2=0,e;
+      for(var q=0;q<K;q++){ e=Math.exp(-(COST[q]-rho)/lam); s+=e; s2+=e*e; }
+      return (s*s)/(s2*K);
+    }
+    var lam=sd/Math.sqrt(Math.log(1/tgt)); if(!(lam>0)) lam=sd;
+    var lo=lam, hi=lam, c=0;
+    while(essOf(lo)>tgt && c++<30) lo/=3;
+    c=0; while(essOf(hi)<tgt && c++<30) hi*=3;
+    for(c=0;c<14;c++){
+      var mid=Math.sqrt(lo*hi);
+      if(essOf(mid)<tgt) lo=mid; else hi=mid;
+    }
+    lam=Math.sqrt(lo*hi); MP.lam=lam;
+    var sum=0;
+    for(k=0;k<K;k++){ WGT[k]=Math.exp(-(COST[k]-rho)/lam); sum+=WGT[k]; }
+    var s2=0;
+    for(k=0;k<K;k++){ WGT[k]/=sum; s2+=WGT[k]*WGT[k]; }
+    MP.ess=1/s2; MP.essR=MP.ess/K;
+  }
+
+  /* ---- 다봉성 진단: 첫 타각의 부호로 모드를 판정한다 (delta>0 = 우현). ---- */
+  var mStb=0, u0p=MP.u0pre||0;
+  for(k=0;k<K;k++) if(u0p+EPSD[k*NMAXB]>0) mStb+=WGT[k];
+  MP.minor=Math.min(mStb,1-mStb);
+  if(P.multiOn && MP.minor>0.25){
+    var keepStb=(mStb>=0.5), s3=0;
+    for(k=0;k<K;k++){
+      if(((u0p+EPSD[k*NMAXB])>0)!==keepStb) WGT[k]=0;
+      s3+=WGT[k];
+    }
+    if(s3>1e-12) for(k=0;k<K;k++) WGT[k]/=s3;
+  }
+
+  /* ---- 제어 갱신: 클램프된 유효 eps 의 볼록결합 ---- */
+  for(i=0;i<Ns;i++){
+    var ad=0, an=0;
+    for(k=0;k<K;k++){ var w=WGT[k]; if(w>1e-12){ ad+=w*EPSD[k*NMAXB+i]; an+=w*EPSN[k*NMAXB+i]; } }
+    UdNew[i]=Ud[i]+ad; UnNew[i]=Un[i]+an;
+  }
+  /* ---- Savitzky-Golay 5점 2차 평활 → 반드시 재클램프 ---- */
+  if(P.sgOn && Ns>=5){
+    for(i=0;i<Ns;i++){
+      var i0=clamp(i-2,0,Ns-1), i1=clamp(i-1,0,Ns-1),
+          i3=clamp(i+1,0,Ns-1), i4=clamp(i+2,0,Ns-1);
+      Ud[i]=(-3*UdNew[i0]+12*UdNew[i1]+17*UdNew[i]+12*UdNew[i3]-3*UdNew[i4])/35;
+      Un[i]=(-3*UnNew[i0]+12*UnNew[i1]+17*UnNew[i]+12*UnNew[i3]-3*UnNew[i4])/35;
+    }
+  }else{
+    for(i=0;i<Ns;i++){ Ud[i]=UdNew[i]; Un[i]=UnNew[i]; }
+  }
+  for(i=0;i<Ns;i++){
+    Ud[i]=clamp(Ud[i],-DMAX,DMAX);
+    Un[i]=clamp(Un[i],-0.4*NPMAX,NPMAX);
+  }
+
+  /* ---- 채택 궤적을 공칭 제어로 다시 적분 (그림용) ---- */
+  (function(){
+    var x=SH.x,y=SH.y,psi=SH.psi,u=SH.u,v=SH.v,r=SH.r,dl=SH.delta,nn=SH.n;
+    for(var i2=0;i2<Ns;i2++){
+      var dt=DTS[i2], rl2=rateStep*dt;
+      dl=clamp(Ud[i2], dl-rl2, dl+rl2);
+      nn=clamp(Un[i2], nn-nRate*dt, nn+nRate*dt);
+      deriv(x,y,psi,u,v,r,dl,nn,_d);
+      x+=_d[0]*dt; y+=_d[1]*dt; psi=wrap(psi+_d[2]*dt);
+      u+=_d[3]*dt; v+=_d[4]*dt; r+=_d[5]*dt;
+      BEST[i2*2]=x; BEST[i2*2+1]=y;
+    }
+  })();
+
+  /* ---- 순위 정렬 (구름 버킷용) ---- */
+  for(k=0;k<K;k++) ORD[k]=k;
+  var sub=ORD.subarray(0,K);
+  sub.sort(function(a,b){ return COST[a]-COST[b]; });
+  for(k=0;k<K;k++) BID[sub[k]]=Math.min(7, (k*8/K)|0);
+
+  /* ---- 비용 구성: 가중평균으로 집계한다. ---- */
+  var a6=[0,0,0,0,0,0], z;
+  for(k=0;k<K;k++){
+    var wk=WGT[k]; if(wk<=1e-12) continue;
+    for(z=0;z<6;z++) a6[z]+=wk*BRK[k*6+z];
+  }
+  var tot=a6[0]+a6[1]+a6[2]+a6[3]+a6[4]+a6[5];
+  if(tot>1e-9){
+    CBREAK.goal=a6[0]/tot; CBREAK.path=a6[1]/tot; CBREAK.stat=a6[2]/tot;
+    CBREAK.dyn=a6[3]/tot;  CBREAK.colreg=a6[4]/tot; CBREAK.ctrl=a6[5]/tot;
+  }
+
+  /* ---- 실패 에스컬레이션 ---- */
+  var allBad=(rho > W.HIT*0.5);
+  if(allBad){ MP.esc=Math.min(3,MP.esc+1); MP.escHold=3; }
+  else if(MP.escHold>0){ MP.escHold--; } else { MP.esc=0; }
+
+  SIM.planMs=performance.now()-t0;
+  SIM.solves++;
+  MP.kdrawN=Math.min(P.kdraw,K);
+
+  /* ---- 워밍스타트 시프트 (제어주기 = 첫 격자 dt = 1.0 s → 정확히 1칸) ---- */
+  for(i=0;i<Ns;i++){ GHOST[i*2]=BEST[i*2]; GHOST[i*2+1]=BEST[i*2+1]; }
+  var d0=Ud[0], n0=Un[0];
+  MP.u0=d0;
+  for(i=0;i<Ns-1;i++){ Ud[i]=Ud[i+1]; Un[i]=Un[i+1]; }
+  Ud[Ns-1]=Ud[Ns-2]; Un[Ns-1]=Un[Ns-2];        // 꼬리는 직전 값으로 시드
+  /* 1/8 만 난수 가닥 교체 */
+  for(k=0;k<K;k++) if(((k+SIM.solves)&7)===0) OFFS[k]=(Math.random()*POOLN)|0;
+
+  return {delta:d0, n:n0};
+}
+
+/* =========================================================================
+   8. 플랜트 (RK4 dt=0.1 s) + 타선 전진   ★원본과 동일
+   ========================================================================= */
+var DT_PHYS=0.1;
+var CMD={delta:0, n:NPMAX*0.8};
+
+/** 선체 3원 기준 최근접 이격거리 [m]. 음수면 충돌. */
+function computeClearance(){
+  var cpsi=Math.cos(SH.psi), spsi=Math.sin(SH.psi), o, h, clr=1e9, hx, hy, dd;
+  for(o=0;o<ROCKS.length;o++){
+    var R=ROCKS[o];
+    for(h=0;h<3;h++){
+      hx=SH.x+HULLOFF[h]*cpsi-R.x; hy=SH.y+HULLOFF[h]*spsi-R.y;
+      dd=Math.sqrt(hx*hx+hy*hy)-(R.r+RHULL); if(dd<clr) clr=dd;
+    }
+  }
+  for(o=0;o<TGTS.length;o++){
+    var T2=TGTS[o];
+    for(h=0;h<3;h++){
+      hx=SH.x+HULLOFF[h]*cpsi-T2.x; hy=SH.y+HULLOFF[h]*spsi-T2.y;
+      dd=Math.sqrt(hx*hx+hy*hy)-(RHULL*2+10); if(dd<clr) clr=dd;
+    }
+  }
+  return clr;
+}
+var _k1=[0,0,0,0,0,0], _k2=[0,0,0,0,0,0], _k3=[0,0,0,0,0,0], _k4=[0,0,0,0,0,0];
+
+function plantStep(dt){
+  /* 액추에이터: 레이트 제한 */
+  var rl=P.dRate*D2R*dt;
+  SH.delta = clamp(clamp(CMD.delta,-DMAX,DMAX), SH.delta-rl, SH.delta+rl);
+  var nl=(NPMAX/30)*dt;
+  SH.n = clamp(clamp(CMD.n,-0.4*NPMAX,NPMAX), SH.n-nl, SH.n+nl);
+
+  var x=SH.x,y=SH.y,p=SH.psi,u=SH.u,v=SH.v,r=SH.r, d=SH.delta, n=SH.n, i;
+  deriv(x,y,p,u,v,r,d,n,_k1);
+  deriv(x+_k1[0]*dt/2, y+_k1[1]*dt/2, p+_k1[2]*dt/2, u+_k1[3]*dt/2, v+_k1[4]*dt/2, r+_k1[5]*dt/2, d,n,_k2);
+  deriv(x+_k2[0]*dt/2, y+_k2[1]*dt/2, p+_k2[2]*dt/2, u+_k2[3]*dt/2, v+_k2[4]*dt/2, r+_k2[5]*dt/2, d,n,_k3);
+  deriv(x+_k3[0]*dt,   y+_k3[1]*dt,   p+_k3[2]*dt,   u+_k3[3]*dt,   v+_k3[4]*dt,   r+_k3[5]*dt,   d,n,_k4);
+  SH.x  = x + dt/6*(_k1[0]+2*_k2[0]+2*_k3[0]+_k4[0]);
+  SH.y  = y + dt/6*(_k1[1]+2*_k2[1]+2*_k3[1]+_k4[1]);
+  SH.psi= wrap(p + dt/6*(_k1[2]+2*_k2[2]+2*_k3[2]+_k4[2]));
+  SH.u  = u + dt/6*(_k1[3]+2*_k2[3]+2*_k3[3]+_k4[3]);
+  SH.v  = v + dt/6*(_k1[4]+2*_k2[4]+2*_k3[4]+_k4[4]);
+  SH.r  = r + dt/6*(_k1[5]+2*_k2[5]+2*_k3[5]+_k4[5]);
+
+  for(i=0;i<TGTS.length;i++){
+    var T=TGTS[i];
+    T.x += T.U*Math.cos(T.psi)*dt;
+    T.y += T.U*Math.sin(T.psi)*dt;
+  }
+  SIM.t += dt;
+
+  var clr=computeClearance();
+  SIM.clr=clr;
+  if(clr<SIM.minClr) SIM.minClr=clr;
+  if(clr<=0 && !SIM.hit){ SIM.hit=true; SIM.running=false; syncStatus(); }
+
+  if(Math.hypot(GOAL.x-SH.x, GOAL.y-SH.y) < 100 && !SIM.done){
+    SIM.done=true; SIM.running=false; syncStatus();
+  }
+
+  var tl=SIM.trail[SIM.trail.length-1];
+  if(!tl || Math.hypot(SH.x-tl.x, SH.y-tl.y)>3) SIM.trail.push({x:SH.x,y:SH.y});
+  if(SIM.trail.length>4000) SIM.trail.shift();
+}
+
+/* =========================================================================
+   9. 시나리오 (원본 7개 중 교육 효과가 큰 4개, 좌표는 원본 그대로)
+   ========================================================================= */
+var WORLD={w:2000, h:1125};
+function ship0(x,y,psi){ return {x:x,y:y,psi:psi}; }
+var SCEN={
+'1 개활수역':function(){
+  START=ship0(150,562.5,0); GOAL={x:1850,y:562.5};
+  ROCKS=[{x:625,y:500,r:100},{x:1000,y:750,r:138},{x:1300,y:400,r:113},{x:1600,y:700,r:88}];
+  TGTS=[];
+},
+'2 정면조우':function(){
+  START=ship0(400,562.5,0); GOAL={x:1850,y:562.5};
+  ROCKS=[];
+  TGTS=[{x:1600,y:562.5,psi:PI,U:6.173,name:'T1'}];
+},
+'3 우현 횡단':function(){
+  START=ship0(200,562.5,0); GOAL={x:1850,y:562.5};
+  ROCKS=[];
+  TGTS=[{x:1000,y:82.5,psi:PI/2,U:3.70,name:'T1'}];
+},
+'4 정중앙 암초':function(){
+  START=ship0(450,562.5,0); GOAL={x:1850,y:562.5};
+  ROCKS=[{x:1000,y:562.5,r:150}];
+  TGTS=[];
+}};
+var SCENKEYS=Object.keys(SCEN);
+var curScen=SCENKEYS[0];
+var TGTS0=[];
+function snapTargets(){
+  TGTS0=TGTS.map(function(t){ return {x:t.x,y:t.y,psi:t.psi,U:t.U,name:t.name}; });
+}
+
+function loadScen(name){
+  curScen=name; SCEN[name]();  snapTargets();
+  /* 프리셋 로드 시 핵심 파라미터를 모바일 기본값으로 강제 */
+  P.Th=80; P.essTgt=0.10; P.K=160; P.distField=false;   // dSafe·wAvoid 는 사용자 설정 유지
+  applyQual(); syncUI(); buildGrid(); reset(); fitView();
+}
+
+function reset(){
+  SH.x=START.x; SH.y=START.y; SH.psi=START.psi;
+  SH.u=UDES; SH.v=0; SH.r=0; SH.delta=0; SH.n=NPMAX*0.8;
+  CMD.delta=0; CMD.n=NPMAX*0.8;
+  /* 타선만 초기 위치로 복원한다. 사용자가 옮긴 암초·목표는 유지 */
+  TGTS=TGTS0.map(function(t){ return {x:t.x,y:t.y,psi:t.psi,U:t.U,name:t.name}; });
+  SIM.t=0; SIM.done=false; SIM.hit=false; SIM.trail=[{x:SH.x,y:SH.y}];
+  SIM.hist=[]; SIM.log=[]; SIM.minClr=1e9; SIM.clr=1e9; SIM.solves=0; SIM.nextSolve=0;
+  CG=[]; MP.esc=0; MP.escHold=0;
+  for(var i=0;i<NMAXB;i++){ Ud[i]=0; Un[i]=NPMAX*0.8; }
+  reseedOffsets();
+  buildField();
+  syncStatus();
+  if(view.W>0) fitView();        // 주행 중 넓어졌던 뷰를 초기 축척으로 되돌린다
+}
+
+/* =========================================================================
+   10. 렌더링 (모바일: devicePixelRatio 대응 + 콘텐츠 auto-fit)
+   ========================================================================= */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var view={W:0,H:0,scale:0.5,ox:0,oy:0,dpr:1};
+var QUAL={ aMin:0.05, aMax:0.20, lw:1.1, font:11, dprCap:2 };
+function w2sx(x){ return view.ox + x*view.scale; }
+function w2sy(y){ return view.oy + (WORLD.h-y)*view.scale; }
+function s2wx(px){ return (px-view.ox)/view.scale; }
+function s2wy(py){ return WORLD.h - (py-view.oy)/view.scale; }
+
+var C={}, RAMP=[];
+function readTheme(){
+  var cs=getComputedStyle(document.documentElement);
+  function g(n){ return cs.getPropertyValue(n).trim(); }
+  C={ ink:g('--ink'), ink2:g('--ink-2'), ink4:g('--ink-4'), rule:g('--rule'),
+      fg:g('--text'), fg2:g('--text-2'), fg3:g('--text-3'),
+      track:g('--track'), mark:g('--mark'), hull:g('--hull'), devi:g('--devi'),
+      course:g('--course'), rock:g('--rock'), accent:g('--accent') };
+  buildRamp();
+}
+function hex2rgb(h){
+  h=h.replace('#','');
+  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function buildRamp(){
+  /* track → course → devi 64단계. 매 프레임 문자열을 만들면 GC 가 터진다. */
+  var a=hex2rgb(C.track), b=hex2rgb(C.course), c=hex2rgb(C.devi);
+  RAMP=[];
+  for(var i=0;i<64;i++){
+    var t=i/63, p, q, u;
+    if(t<0.5){ u=t/0.5; p=a; q=b; } else { u=(t-0.5)/0.5; p=b; q=c; }
+    RAMP.push('rgb('+Math.round(p[0]+(q[0]-p[0])*u)+','+
+                     Math.round(p[1]+(q[1]-p[1])*u)+','+
+                     Math.round(p[2]+(q[2]-p[2])*u)+')');
+  }
+}
+
+/* 좁은 화면용 auto-fit: 자선·목표·암초·타선이 모두 들어오는 사각형에 맞춘다 */
+var FIT={x0:0,y0:0,x1:WORLD.w,y1:WORLD.h};
+function fitBox(){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, i;
+  function add(x,y,r){
+    if(x-r<x0) x0=x-r; if(x+r>x1) x1=x+r;
+    if(y-r<y0) y0=y-r; if(y+r>y1) y1=y+r;
+  }
+  add(START.x,START.y,90); add(GOAL.x,GOAL.y,90); add(SH.x,SH.y,90);
+  for(i=0;i<ROCKS.length;i++) add(ROCKS[i].x,ROCKS[i].y,ROCKS[i].r+P.dSafe*0.5);
+  for(i=0;i<TGTS.length;i++)  add(TGTS[i].x,TGTS[i].y,140);
+  for(i=0;i<TGTS0.length;i++) add(TGTS0[i].x,TGTS0[i].y,140);
+  if(!(x1>x0)){ x0=0; x1=WORLD.w; }
+  if(!(y1>y0)){ y0=0; y1=WORLD.h; }
+  var padx=(x1-x0)*0.04+30, pady=(y1-y0)*0.04+30;
+  x0-=padx; x1+=padx; y0-=pady; y1+=pady;
+  var minSpan=480;                       // 너무 확대되어 방향감을 잃지 않게
+  if(x1-x0<minSpan){ var cxm=(x0+x1)/2; x0=cxm-minSpan/2; x1=cxm+minSpan/2; }
+  if(y1-y0<minSpan){ var cym=(y0+y1)/2; y0=cym-minSpan/2; y1=cym+minSpan/2; }
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+function computeFit(){ FIT=fitBox(); FITT=null; }
+
+/* ── 주행 중 뷰 유지 ────────────────────────────────────────────────────
+   타선은 계속 전진하므로 초기 fit 을 그대로 두면 화면 밖으로 나간다.
+   ① 자선·타선이 가장자리 여유 TRIG_M(px) 안쪽으로 들어올 때'만' 재fit 을 예약하고
+   ② 목표 사각형까지 EASE 비율로 이징해 축척이 서서히 바뀌게 한다.
+   ③ 목표 사각형은 모든 대상이 safeM()(px) 이상 안쪽에 오도록 만들므로
+      TRIG_M ↔ safeM() 간격이 히스테리시스가 되어 재fit 이 연달아 걸리지 않는다.
+   캔버스 '높이'(autoHeight)는 손대지 않으므로 sticky 스테이지 레이아웃은 불변. */
+var FITT=null;             // 이징 목표 (없으면 이징 중이 아님)
+var TRIG_M=26;             // 재fit 트리거 여유 [CSS px]
+var SAFE_K=0.15;           // 재fit 후 확보할 여유 = 캔버스 최소변의 비율
+/* 여유를 고정 70px 로 두면 높이 169px 짜리 캔버스에서 세로 가용 대역이 29px 밖에
+   남지 않아 박스가 과도하게 부풀고 축척이 3배 넘게 줄어든다. 캔버스 크기에
+   비례시키되, TRIG_M 보다 확실히 커야 히스테리시스가 성립하므로 하한을 둔다. */
+function safeM(){
+  return Math.max(TRIG_M+14, Math.min(70, Math.min(view.W, view.H)*SAFE_K));
+}
+var EASE=0.06;             // 프레임당 접근율 (≈0.35 s 시정수)
+var MAXRATE=0.012;         // 프레임당 축척 변화 상한 (1.2 %) — 화면 멀미 방지
+
+function viewEscaped(){
+  if(view.W<1||view.H<1) return false;
+  var m=TRIG_M, i, px, py;
+  px=w2sx(SH.x); py=w2sy(SH.y);
+  if(px<m||px>view.W-m||py<m||py>view.H-m) return true;
+  for(i=0;i<TGTS.length;i++){
+    px=w2sx(TGTS[i].x); py=w2sy(TGTS[i].y);
+    if(px<m||px>view.W-m||py<m||py>view.H-m) return true;
+  }
+  return false;
+}
+/* 재fit 목표: 기본 fit 박스를 필요한 만큼만 넓혀 safeM() 여유를 보장한다.
+   (트리거 시에만 호출 — 프레임당 비용이 아니다) */
+function fitBoxRun(){
+  var b=fitBox(), it, i, d, need, worst, sc, sm=safeM();
+  for(it=0; it<3; it++){
+    sc=Math.min(view.W/(b.x1-b.x0), view.H/(b.y1-b.y0));
+    if(!(sc>0)) break;
+    need=sm/sc; worst=0;
+    for(i=-1;i<TGTS.length;i++){
+      var qx=(i<0)?SH.x:TGTS[i].x, qy=(i<0)?SH.y:TGTS[i].y;
+      d=Math.min(qx-b.x0, b.x1-qx, qy-b.y0, b.y1-qy);
+      if(need-d>worst) worst=need-d;
+    }
+    if(worst<=0.5) break;
+    b={x0:b.x0-worst, y0:b.y0-worst, x1:b.x1+worst, y1:b.y1+worst};
+  }
+  return b;
+}
+function scaleOfBox(b){ return Math.min(view.W/(b.x1-b.x0), view.H/(b.y1-b.y0)); }
+function updateView(){
+  if(FITT){
+    /* 접근율 a 를 반씩 줄여 프레임당 축척 변화가 MAXRATE 를 넘지 않게 한다.
+       (지배 축이 가로→세로로 바뀌는 순간 축척이 튀는 것을 막는다) */
+    var s0=view.scale, a=EASE, i, t;
+    for(i=0;i<7;i++){
+      t={ x0:FIT.x0+(FITT.x0-FIT.x0)*a, y0:FIT.y0+(FITT.y0-FIT.y0)*a,
+          x1:FIT.x1+(FITT.x1-FIT.x1)*a, y1:FIT.y1+(FITT.y1-FIT.y1)*a };
+      if(!(s0>0) || Math.abs(scaleOfBox(t)-s0)/s0 <= MAXRATE) break;
+      a*=0.5;
+    }
+    var done=true, ks=['x0','y0','x1','y1'], k;
+    for(i=0;i<4;i++){
+      k=ks[i];
+      if(Math.abs(FITT[k]-FIT[k])>0.5){ done=false; FIT[k]=t[k]; } else FIT[k]=FITT[k];
+    }
+    if(done) FITT=null;
+    layoutView();
+    return;
+  }
+  if(drag) return;                       // 끄는 중에는 축척을 바꾸지 않는다
+  if(viewEscaped()) FITT=fitBoxRun();
+}
+function layoutView(){
+  if(view.W<1||view.H<1) return;
+  var sx=(FIT.x1-FIT.x0), sy=(FIT.y1-FIT.y0);
+  view.scale=Math.min(view.W/sx, view.H/sy);
+  view.ox=(view.W-sx*view.scale)/2 - FIT.x0*view.scale;
+  view.oy=(view.H-sy*view.scale)/2 - (WORLD.h-FIT.y1)*view.scale;
+}
+/* 고정 스테이지의 높이 예산.
+   스테이지(지도+핵심계측+비용막대)가 뷰포트의 45% 를 넘지 않게 캔버스를 줄인다.
+   그래야 스테이지 아래로 컨트롤이 충분히(360×640 기준 200px 이상) 보인다. */
+var STAGE_BUDGET=0.45;
+function stageChrome(){
+  /* 스테이지에서 캔버스를 뺀 나머지(계측 + 비용막대 + 경계선) 실측 높이 */
+  var st=document.getElementById('stage'), ch=cv.parentElement;
+  if(!st||!ch) return 90;
+  var c=st.offsetHeight-ch.offsetHeight;
+  return (c>20 && c<220) ? c : 90;        // 레이아웃 미완 시 보수적 기본값
+}
+function autoHeight(){
+  var el=cv.parentElement, w=el.clientWidth;
+  if(w<1) return;
+  var vh=window.innerHeight||640;
+  var maxH=Math.max(120, vh*STAGE_BUDGET-stageChrome());
+  var need=w*(FIT.y1-FIT.y0)/(FIT.x1-FIT.x0) + 10;   // 콘텐츠 종횡비가 요구하는 높이
+  var h=Math.min(need, maxH);
+  var minH=Math.min(170, maxH);         // 너무 납작해지지 않게 (예산 안에서만)
+  if(h<minH) h=minH;
+  if(Math.abs(el.clientHeight-h)>2) el.style.height=h.toFixed(0)+'px';
+}
+function fitView(){ computeFit(); autoHeight(); resize(); }
+
+function resize(){
+  var dpr=Math.min(window.devicePixelRatio||1, QUAL.dprCap);
+  /* 부모(.chart)는 border-box 라 아래 테두리 1px 이 포함된다.
+     백킹스토어는 캔버스 자신의 실측 CSS 크기에 맞춰야 세로로 늘어나지 않는다. */
+  var r=cv.getBoundingClientRect();
+  if(r.width<1||r.height<1) return;
+  view.dpr=dpr; view.W=r.width; view.H=r.height;      // 그리기 좌표는 CSS 픽셀
+  var nw=Math.round(r.width*dpr), nh=Math.round(r.height*dpr);
+  if(cv.width!==nw) cv.width=nw;
+  if(cv.height!==nh) cv.height=nh;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  layoutView();
+}
+
+function drawWorld(){
+  var x0=w2sx(0), y0=w2sy(WORLD.h), w=WORLD.w*view.scale, h=WORLD.h*view.scale;
+  ctx.fillStyle=C.ink4; ctx.fillRect(0,0,view.W,view.H);
+  ctx.fillStyle=C.ink;  ctx.fillRect(x0,y0,w,h);
+  var step=250, i;
+  ctx.lineWidth=1;
+  for(i=0;i<=WORLD.w;i+=step){
+    ctx.strokeStyle=(i%1000===0)?C.rule:C.ink2;
+    ctx.beginPath(); ctx.moveTo(w2sx(i)+.5,y0); ctx.lineTo(w2sx(i)+.5,y0+h); ctx.stroke();
+  }
+  for(i=0;i<=WORLD.h;i+=step){
+    ctx.strokeStyle=(i%1000===0)?C.rule:C.ink2;
+    ctx.beginPath(); ctx.moveTo(x0,w2sy(i)+.5); ctx.lineTo(x0+w,w2sy(i)+.5); ctx.stroke();
+  }
+  ctx.fillStyle=C.fg3; ctx.font=(QUAL.font)+'px ui-monospace,monospace';
+  for(i=500;i<WORLD.w;i+=500) ctx.fillText(i+' m', w2sx(i)+3, y0+h-4);
+  ctx.strokeStyle=C.rule; ctx.strokeRect(x0+.5,y0+.5,w,h);
+}
+
+function drawRocks(){
+  var i;
+  for(i=0;i<ROCKS.length;i++){
+    var R=ROCKS[i], px=w2sx(R.x), py=w2sy(R.y);
+    ctx.beginPath(); ctx.arc(px,py,R.r*view.scale,0,TWO_PI);
+    ctx.fillStyle=C.rock; ctx.globalAlpha=.55; ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle=C.rock; ctx.lineWidth=1.5; ctx.stroke();
+  }
+}
+
+function drawTargets(){
+  var i;
+  for(i=0;i<TGTS.length;i++){
+    var T=TGTS[i], cg=CG[i];
+    var px=w2sx(T.x), py=w2sy(T.y);
+    var risk=cg?cg.risk:0;
+    var col=(risk===2)?C.devi:(risk===1)?C.mark:C.fg2;
+    /* 예측 침로선 */
+    ctx.strokeStyle=col; ctx.globalAlpha=.35; ctx.lineWidth=1; ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.moveTo(px,py);
+    ctx.lineTo(w2sx(T.x+T.U*Math.cos(T.psi)*P.Th), w2sy(T.y+T.U*Math.sin(T.psi)*P.Th));
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    drawHull(px,py,T.psi,col,.75);
+    if(cg && cg.sit!=='NONE'){
+      ctx.fillStyle=col; ctx.font=(QUAL.font+1)+'px ui-monospace,monospace';
+      ctx.fillText(SITNAME[cg.sit], px+14, py-14);
+    }
+  }
+}
+
+function drawHull(px,py,psi,color,alpha){
+  var sc=view.scale, L=LPP*sc, B=BEAM*sc;
+  if(L<22){ var f=22/L; L*=f; B*=f; }                 // 모바일 최소 가독 크기
+  if(B<5) B=5;
+  ctx.save(); ctx.translate(px,py); ctx.rotate(-psi);
+  ctx.globalAlpha=alpha; ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(L*0.5,0); ctx.lineTo(L*0.22,-B*0.5); ctx.lineTo(-L*0.5,-B*0.5);
+  ctx.lineTo(-L*0.5,B*0.5); ctx.lineTo(L*0.22,B*0.5); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=1; ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+}
+
+/* 롤아웃 구름 — 계산은 K 전부, 그리기는 P.kdraw(=60) 개로 서브샘플링 */
+function drawCloud(){
+  if(!P.showCloud) return;
+  var K=MP.K, Ns=NSTEP, KD=Math.min(MP.kdrawN,K);
+  if(KD<2||Ns<2) return;
+  var stride=(Ns>24)?2:1;
+  var j, k, i, base, pass, risky;
+  var thr=0.25*P.dSafe;                 // 위험 판정: 최근접 이격 < dSafe/4 (기본 40 m)
+  ctx.lineWidth=QUAL.lw;
+  for(pass=0;pass<2;pass++){            // 0=일반(하늘색) 1=충돌위험(붉은색, 위에 덧그림)
+    ctx.beginPath();
+    if(pass===0){ ctx.globalAlpha=QUAL.aMax;                  ctx.strokeStyle=C.track; }
+    else        { ctx.globalAlpha=Math.min(.4,QUAL.aMax*1.5); ctx.strokeStyle=C.devi; }
+    for(j=0;j<KD;j++){
+      k=ORD[(j*(K-1)/(KD-1))|0];
+      risky=MINC[k]<thr;
+      if((pass===1)!==risky) continue;
+      base=k*NMAXB;
+      ctx.moveTo(w2sx(TRAJ[base*2]), w2sy(TRAJ[base*2+1]));
+      for(i=stride;i<Ns;i+=stride) ctx.lineTo(w2sx(TRAJ[(base+i)*2]), w2sy(TRAJ[(base+i)*2+1]));
+      if((Ns-1)%stride!==0) ctx.lineTo(w2sx(TRAJ[(base+Ns-1)*2]), w2sy(TRAJ[(base+Ns-1)*2+1]));
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawBest(){
+  var Ns=NSTEP, i;
+  if(Ns<2) return;
+  ctx.beginPath();                                   // 채택 궤적 — 단일 실선
+  ctx.strokeStyle=C.accent; ctx.globalAlpha=.85; ctx.lineWidth=2.2;
+  ctx.moveTo(w2sx(SH.x), w2sy(SH.y));
+  for(i=0;i<Ns;i++) ctx.lineTo(w2sx(BEST[i*2]), w2sy(BEST[i*2+1]));
+  ctx.stroke(); ctx.globalAlpha=1;
+}
+
+function drawTrail(){
+  var n=SIM.trail.length;
+  if(n<2) return;
+  var st=(n>800)?3:1, i;
+  ctx.beginPath(); ctx.strokeStyle=C.hull; ctx.globalAlpha=.5; ctx.lineWidth=2;
+  ctx.moveTo(w2sx(SIM.trail[0].x), w2sy(SIM.trail[0].y));
+  for(i=st;i<n;i+=st) ctx.lineTo(w2sx(SIM.trail[i].x), w2sy(SIM.trail[i].y));
+  ctx.lineTo(w2sx(SIM.trail[n-1].x), w2sy(SIM.trail[n-1].y));
+  ctx.stroke(); ctx.globalAlpha=1;
+}
+
+function drawGoal(){
+  var px=w2sx(GOAL.x), py=w2sy(GOAL.y);
+  ctx.strokeStyle=C.mark; ctx.lineWidth=2.2; ctx.globalAlpha=.9;
+  ctx.beginPath(); ctx.arc(px,py,11,0,TWO_PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px-16,py); ctx.lineTo(px+16,py);
+  ctx.moveTo(px,py-16); ctx.lineTo(px,py+16); ctx.stroke();
+  ctx.globalAlpha=1;
+  ctx.fillStyle=C.mark; ctx.font=(QUAL.font+1)+'px ui-monospace,monospace';
+  if(px>view.W-52){ ctx.textAlign='right'; ctx.fillText('목표', px-19, py-9); ctx.textAlign='left'; }
+  else ctx.fillText('목표', px+19, py-9);
+}
+
+function draw(){
+  drawWorld(); drawRocks(); drawGoal(); drawTargets();
+  drawTrail(); drawCloud(); drawBest();
+  drawHull(w2sx(SH.x), w2sy(SH.y), SH.psi, C.hull, .95);
+}
+
+/* =========================================================================
+   11. 계측 그리드 · 비용 구성 막대
+   ========================================================================= */
+/* host:'stats'  = 고정 스테이지 안 (슬라이더를 만지며 봐야 하는 핵심 3개)
+   host:'stats2' = 스테이지 밖 (부가 수치) */
+var STATDEF=[
+  {id:'clr',  k:'현재 이격',  host:'stats'},
+  {id:'plan', k:'계획 계산',  host:'stats'},
+  {id:'fps',  k:'FPS',        host:'stats'},
+  {id:'t',    k:'경과 시간',  host:'stats2'},
+  {id:'mclr', k:'최소 이격',  host:'stats2'},
+  {id:'frm',  k:'프레임',     host:'stats2'}
+];
+var SCELL={};
+function buildStats(){
+  STATDEF.forEach(function(c){
+    var host=document.getElementById(c.host||'stats2');
+    if(!host) return;
+    var d=document.createElement('div'); d.className='cell';
+    var kk=document.createElement('span'); kk.className='k'; kk.textContent=c.k;
+    var vv=document.createElement('span'); vv.className='v mono'; vv.textContent='—';
+    d.appendChild(kk); d.appendChild(vv); host.appendChild(d);
+    SCELL[c.id]={cell:d, v:vv};
+  });
+}
+var CBSEG=[];
+function buildCostBar(){
+  var bar=document.getElementById('cbar'), key=document.getElementById('ckey');
+  var defs=[['goal','목표','--mark'],['path','경로','--track'],['stat','암초','--rock'],
+            ['dyn','타선','--devi'],['colreg','COLREG','--course'],['ctrl','제어','--accent']];
+  bar.innerHTML=''; key.innerHTML='';
+  CBSEG=[];
+  defs.forEach(function(d){
+    var s=document.createElement('span'); s.style.background='var('+d[2]+')'; s.style.width='0%';
+    bar.appendChild(s);
+    var t=document.createElement('span');
+    t.innerHTML='<b style="color:var('+d[2]+')">■</b> '+d[1];
+    key.appendChild(t);
+    CBSEG.push({key:d[0], el:s});
+  });
+}
+function updateCostBar(){
+  for(var i=0;i<CBSEG.length;i++){
+    CBSEG[i].el.style.width=(CBREAK[CBSEG[i].key]*100).toFixed(1)+'%';
+  }
+}
+function updateStats(){
+  function set(id,txt,cls){
+    var c=SCELL[id]; if(!c) return;
+    c.v.textContent=txt; c.v.className='v mono'+(cls?' '+cls:'');
+  }
+  set('t', SIM.t.toFixed(1)+' s', SIM.done?'ok':(SIM.hit?'warn':''));
+  var clr=(SIM.clr===undefined||SIM.clr>1e8)?null:SIM.clr;
+  set('clr', clr===null?'—':clr.toFixed(0)+' m',
+      clr!==null&&clr<P.dSafe?(clr<=0?'warn':'caut'):'');
+  set('mclr', SIM.minClr>1e8?'—':SIM.minClr.toFixed(0)+' m', SIM.minClr<=0?'warn':'');
+  set('plan', SIM.planMs.toFixed(1)+' ms', SIM.planMs>25?'caut':'');
+  set('frm', SIM.frameMs.toFixed(1)+' ms', SIM.frameMs>33?'caut':'');
+  set('fps', SIM.fps.toFixed(0), SIM.fps<25?'caut':'');
+  updateCostBar();
+}
+
+/* =========================================================================
+   12. 유효 샘플 수 (모바일은 자동 품질저하를 끄고 K 슬라이더 값을 그대로 쓴다 —
+       "K 를 올리면 계획이 안정되지만 느려진다" 를 학생이 직접 느끼게 하려면
+       뒤에서 몰래 K 를 깎으면 안 된다)
+   ========================================================================= */
+function applyQual(){
+  MP.K=Math.max(32, Math.min(KMAXB, Math.round(P.K)));
+}
+
+/* =========================================================================
+   13. 메인 루프
+   ========================================================================= */
+var acc=0, last=performance.now();
+var fpsN=0, fpsT=performance.now(), uiT=0;
+function loop(now){
+  var fs=performance.now();
+  try{
+    var real=Math.min((now-last)/1000, 0.1); last=now;
+    if(SIM.running){
+      acc=Math.min(acc+real*P.speedMul, 20*DT_PHYS);
+      while(acc>=DT_PHYS){
+        if(SIM.t>=SIM.nextSolve-1e-9){
+          var cmd=solve();
+          CMD.delta=cmd.delta; CMD.n=cmd.n;
+          SIM.nextSolve=SIM.t+1.0;             // 제어주기 1.0 s = 첫 격자 dt
+        }
+        plantStep(DT_PHYS);
+        acc-=DT_PHYS;
+        if(!SIM.running) break;
+      }
+    }else{
+      acc=0;
+      SIM.clr=computeClearance();
+      if(NSTEP>0 && MP.K>0 && SIM.solves===0){
+        var c0=solve(); CMD.delta=c0.delta; CMD.n=c0.n;   // 정지 상태에서도 구름을 보여준다
+      }
+    }
+    updateView();                        // 타선이 화면 밖으로 나가지 않게 (이징 재fit)
+    draw();
+    fpsN++;
+    if(fs-fpsT>500){ SIM.fps=fpsN*1000/(fs-fpsT); fpsN=0; fpsT=fs; }
+    if(fs-uiT>100){ uiT=fs; updateStats(); }
+  } finally {
+    SIM.frameMs=performance.now()-fs;
+    requestAnimationFrame(loop);
+  }
+}
+
+/* =========================================================================
+   14. 터치 인터랙션 (Pointer Events 통합)
+   ========================================================================= */
+var HITR=22;                                     // 히트 반경 [CSS px]
+var mode='move';
+function evPos(e){ var r=cv.getBoundingClientRect(); return {px:e.clientX-r.left, py:e.clientY-r.top}; }
+function pickAt(p){
+  var best=null, bd=1e9, i, d;
+  d=Math.hypot(p.px-w2sx(GOAL.x), p.py-w2sy(GOAL.y));
+  if(d<HITR+4){ bd=d; best={t:'goal'}; }
+  for(i=0;i<TGTS.length;i++){
+    d=Math.hypot(p.px-w2sx(TGTS[i].x), p.py-w2sy(TGTS[i].y));
+    if(d<HITR+4 && d<bd){ bd=d; best={t:'tgt',i:i}; }
+  }
+  for(i=0;i<ROCKS.length;i++){
+    d=Math.hypot(p.px-w2sx(ROCKS[i].x), p.py-w2sy(ROCKS[i].y));
+    if(d<Math.max(ROCKS[i].r*view.scale, HITR) && d<bd){ bd=d; best={t:'rock',i:i}; }
+  }
+  if(!SIM.running){
+    d=Math.hypot(p.px-w2sx(SH.x), p.py-w2sy(SH.y));
+    if(d<HITR+6 && d<=bd){ bd=d; best={t:'ship'}; }
+  }
+  return best;
+}
+var TIPTXT={
+  move:'지도를 끌어 암초·타선·목표를 옮깁니다. 정지 중에는 자선(초록)도 옮길 수 있습니다.',
+  add :'빈 바다를 탭하면 반경 100 m 암초가 놓입니다.',
+  del :'지울 암초나 타선을 탭하세요.'
+};
+function setMode(m){
+  mode=m;
+  document.getElementById('modeMove').classList.toggle('on', m==='move');
+  document.getElementById('modeAdd').classList.toggle('on', m==='add');
+  document.getElementById('modeDel').classList.toggle('on', m==='del');
+  document.getElementById('tip').textContent=TIPTXT[m];
+}
+cv.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  var p=evPos(e), hit=pickAt(p);
+  if(mode==='add'){
+    if(!hit){ ROCKS.push({x:s2wx(p.px), y:s2wy(p.py), r:100}); fitView(); }
+    setMode('move'); return;
+  }
+  if(mode==='del'){
+    if(hit && hit.t==='rock'){ ROCKS.splice(hit.i,1); fitView(); }
+    else if(hit && hit.t==='tgt'){ TGTS.splice(hit.i,1); CG=[]; snapTargets(); fitView(); }
+    setMode('move'); return;
+  }
+  if(hit){
+    drag=hit;
+    try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  }
+}, {passive:false});
+cv.addEventListener('pointermove', function(e){
+  if(!drag) return;
+  e.preventDefault();
+  var p=evPos(e), w={x:s2wx(p.px), y:s2wy(p.py)};
+  if(drag.t==='goal'){ GOAL.x=w.x; GOAL.y=w.y; }
+  else if(drag.t==='rock'){
+    if(drag.i<ROCKS.length){ ROCKS[drag.i].x=w.x; ROCKS[drag.i].y=w.y; } else drag=null;
+  }
+  else if(drag.t==='tgt'){
+    if(drag.i<TGTS.length){ TGTS[drag.i].x=w.x; TGTS[drag.i].y=w.y; } else drag=null;
+  }
+  else if(drag.t==='ship' && !SIM.running){
+    SH.x=w.x; SH.y=w.y; START.x=w.x; START.y=w.y; SIM.trail=[{x:w.x,y:w.y}];
+  }
+}, {passive:false});
+function endDrag(e){
+  if(!drag) return;
+  if(drag.t==='tgt') snapTargets();     // 옮긴 타선을 리셋 기준 위치로 저장
+  drag=null; fitView();
+  if(e && e.pointerId!==undefined){ try{ cv.releasePointerCapture(e.pointerId); }catch(err){} }
+}
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('lostpointercapture', function(){ drag=null; });
+
+/* 데스크톱 미리보기용 최소 단축키 */
+window.addEventListener('keydown', function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  var t=e.target, ty=(t&&t.tagName==='INPUT')?t.type:'';
+  if(!t || t.isContentEditable || t.tagName==='TEXTAREA' || t.tagName==='SELECT' ||
+     ['text','number','search','email','url','password','range'].indexOf(ty)>=0) return;
+  if(e.code==='Space'){ e.preventDefault(); togglePlay(); }
+  else if(e.key==='r'||e.key==='R') reset();
+});
+
+/* =========================================================================
+   15. 컨트롤 (모바일: 슬라이더 7 · 토글 2 · 시나리오 4)
+   ========================================================================= */
+var CTLDEF=[
+  {type:'range', k:'K',  label:'샘플 수 K (롤아웃 개수)', min:32, max:512, step:32, dec:0,
+   after:function(){ applyQual(); }},
+  {type:'range', k:'Th', label:'예측 호라이즌 T_h', min:30, max:120, step:5, unit:'s', dec:0,
+   after:function(){ buildGrid(); }},
+  {type:'range', k:'sigD', label:'탐색 잡음 σ_δ', min:5, max:25, step:1, unit:'°', dec:0},
+  {type:'range', k:'wAvoid', label:'충돌 비용 가중치 w_avoid', min:0, max:3, step:0.1, unit:'×', dec:1,
+   after:function(){ applyAvoid(); }},
+  {type:'check', k:'colreg',    label:'COLREG 준수 (우현 변침 원칙)'}
+];
+
+var syncFns=[];
+function updEnv(){ ENV.cx=P.curU*Math.cos(P.curDir*D2R); ENV.cy=P.curU*Math.sin(P.curDir*D2R); }
+
+function buildPanel(){
+  var host=document.getElementById('panel');
+  CTLDEF.forEach(function(it){ host.appendChild(buildItem(it)); });
+  buildScen();
+  syncUI();
+}
+function buildItem(it){
+  var w=document.createElement('div'); w.className='ctl';
+  if(it.type==='range'){
+    w.innerHTML='<div class="lab"><span class="n">'+it.label+'</span><span class="v mono"></span></div>';
+    var inp=document.createElement('input');
+    inp.type='range'; inp.min=it.min; inp.max=it.max; inp.step=it.step; inp.value=P[it.k];
+    inp.setAttribute('aria-label', it.label);
+    var num=w.querySelector('.v'), dec=(it.dec===undefined)?2:it.dec;
+    var upd=function(){ num.textContent=Number(P[it.k]).toFixed(dec)+(it.unit?' '+it.unit:''); };
+    inp.oninput=function(){ P[it.k]=parseFloat(inp.value); upd(); if(it.after) it.after(); };
+    syncFns.push(function(){ inp.value=P[it.k]; upd(); });
+    w.appendChild(inp); upd();
+  }else if(it.type==='check'){
+    w.innerHTML='<label class="chk"><input type="checkbox"><span>'+it.label+'</span></label>';
+    var ci=w.querySelector('input'); ci.checked=!!P[it.k];
+    ci.onchange=function(){ P[it.k]=ci.checked; if(it.after) it.after(); };
+    syncFns.push(function(){ ci.checked=!!P[it.k]; });
+  }else if(it.type==='note'){
+    w.innerHTML='<div class="note">'+it.html+'</div>';
+  }
+  return w;
+}
+function buildScen(){
+  var host=document.getElementById('scen');
+  SCENKEYS.forEach(function(s){
+    var b=document.createElement('button'); b.textContent=s;
+    b.onclick=function(){ loadScen(s); };
+    syncFns.push(function(){ b.classList.toggle('on', curScen===s); });
+    host.appendChild(b);
+  });
+}
+function syncUI(){ syncFns.forEach(function(f){ f(); }); }
+function syncStatus(){
+  var pill=document.getElementById('statusPill'), b=document.getElementById('btnPlay');
+  var s=SIM.hit?'hit':(SIM.done?'done':(SIM.running?'run':'hold'));
+  pill.dataset.s=s;
+  pill.textContent=(s==='hit')?'충돌':(s==='done')?'도착':(s==='run')?'항해 중':'대기';
+  if(b) b.textContent=SIM.running?'⏸ 일시정지':'▶ 재생';
+}
+function togglePlay(){
+  if(SIM.done||SIM.hit) reset();
+  SIM.running=!SIM.running; syncStatus();
+}
+
+/* ---------- 부트 ---------- */
+try{
+  var mq=matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener) mq.addEventListener('change', readTheme);
+  else if(mq.addListener) mq.addListener(readTheme);
+
+  document.getElementById('btnPlay').onclick=function(){ togglePlay(); };
+  document.getElementById('btnReset').onclick=function(){ reset(); };
+  (function(){        // 하단 고정 배속 슬라이더
+    var spd=document.getElementById('spd'), spdv=document.getElementById('spdv');
+    var upd=function(){ spdv.textContent=Number(P.speedMul).toFixed(0)+' ×'; };
+    spd.value=P.speedMul;
+    spd.oninput=function(){ P.speedMul=parseFloat(spd.value); upd(); };
+    upd();
+  })();
+  document.getElementById('modeMove').onclick=function(){ setMode('move'); };
+  document.getElementById('modeAdd').onclick=function(){ setMode('add'); };
+  document.getElementById('modeDel').onclick=function(){ setMode('del'); };
+
+  fillPool(); reseedOffsets();
+  readTheme(); applyQual(); applyAvoid(); resize();
+  buildStats(); buildCostBar(); buildPanel();
+  setMode('move');
+  syncW(); updEnv(); buildGrid();
+  loadScen(SCENKEYS[0]);
+  resize(); fitView();
+
+  window.addEventListener('resize', function(){ readTheme(); fitView(); });
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){ resize(); fitView(); }, 250);
+  });
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ resize(); }).observe(cv.parentElement);
+  }
+  /* 첫 레이아웃이 확정된 뒤 스테이지 크롬 실측 → 캔버스 높이 재산정 */
+  requestAnimationFrame(function(){ fitView(); });
+  setTimeout(function(){ fitView(); }, 120);
+
+  requestAnimationFrame(function(t){ last=t; loop(t); });
+}catch(err){
+  document.body.insertAdjacentHTML('beforeend',
+    '<p style="padding:16px">시뮬레이터를 시작할 수 없습니다: '+(err&&err.message?err.message:err)+'</p>');
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-lang="ko" data-theme="soft">
+<html lang="ko" data-lang="ko" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -24,14 +24,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <script>
-      (function () {
-        var t = "soft";
-        try { t = localStorage.getItem("sail-appearance") || "soft"; } catch (e) {}
-        if (t !== "dark" && t !== "soft" && t !== "light") t = "soft";
-        document.documentElement.setAttribute("data-theme", t);
-      })();
-    </script>
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -132,14 +124,10 @@
                     <li><a href="#members">Members</a></li>
                     <li><a href="#publications">Publications</a></li>
                     <li><a href="#lecture">Lecture</a></li>
+                    <li><a href="#gallery">Gallery</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <div class="nav-tools">
-                    <div class="chip-switch" role="group" aria-label="Theme">
-                        <button type="button" class="chip-btn" data-theme="dark">Dark</button>
-                        <button type="button" class="chip-btn active" data-theme="soft">Soft</button>
-                        <button type="button" class="chip-btn" data-theme="light">Light</button>
-                    </div>
                     <div class="chip-switch" role="group" aria-label="Language">
                         <button type="button" class="chip-btn lang-btn active" data-lang="ko">KO</button>
                         <button type="button" class="chip-btn lang-btn" data-lang="en">EN</button>
@@ -201,7 +189,6 @@
                         <ul>
                             <li>Control barrier functions</li>
                             <li>Reachability analysis</li>
-                            <li>COLREGs-compliant avoidance</li>
                             <li>Safety-critical planning</li>
                         </ul>
                     </div>
@@ -230,7 +217,6 @@
                         <h3>Marine &amp; Mobile Autonomy</h3>
                         <ul>
                             <li>Autonomous ships &amp; USVs</li>
-                            <li>Underwater vehicles</li>
                             <li>Mobile robots</li>
                             <li>Field experiments</li>
                         </ul>
@@ -255,7 +241,6 @@
                         <ul class="custom-bullet-list">
                             <li>안전 궤적 계획 및 제어 알고리즘 설계</li>
                             <li>MPC / CBF / Reachability 기반 충돌회피</li>
-                            <li>자율운항 선박·USV·UUV 실험</li>
                             <li>학습 기반 동역학 모델링 및 제어</li>
                             <li>필드 실험 및 국제 학술 발표</li>
                         </ul>
@@ -266,7 +251,6 @@
                             <li>제어·로봇·자율주행에 관심이 있는 학부생·대학원생</li>
                             <li>수학/동역학 기초를 실제 시스템에 적용하고 싶은 학생</li>
                             <li>프로그래밍(Python, C++, MATLAB)으로 실험을 해보고 싶은 학생</li>
-                            <li>선박·해양·모빌리티 안전 문제에 호기심이 있는 학생</li>
                         </ul>
                     </div>
                 </div>
@@ -346,15 +330,17 @@
                     <div class="bento-item" onclick="toggleDetails('item-r1')">
                         <div class="bento-content">
                             <span class="bento-badge">Core</span>
-                            <h3>Safe Trajectory Planning &amp; Control</h3>
-                            <p data-i18n="r1_card">CBF·도달가능성 해석 기반 안전 궤적 계획 및 충돌회피</p>
+                            <h3>Multi-modal Obstacle Avoidance Trajectory Planning &amp; Control</h3>
+                            <p data-i18n="r1_card">회전원 CBF로 추종·회피·접안 모드를 안전하게 고르는 멀티모달 계획</p>
                             <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
-                        <div class="details-inner glass-panel" data-i18n="r1_intro">
-                            <span class="topic-intro-title">제어 장벽 함수와 도달가능성 해석으로 <strong class="accent-text">안전 제약</strong>을 제어기에 직접 넣습니다.</span>
-                            선박·비홀로노믹 이동체는 회전반경이 있고, 해상에서는 COLREGs와 같은 규칙도 지켜야 합니다. SAIL은 turning-circle CBF, velocity obstacle, Hamilton–Jacobi reachability를 이용해 충돌회피와 접안 문제를 다룹니다. 목표는 “일단 피하고 나중에 고치는” 제어가 아니라, <strong>계획 단계에서 안전이 보장되는</strong> 궤적을 만드는 것입니다.
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r1_intro">비홀로노믹 이동체의 회전반경을 제약으로 넣고, 하나의 궤적이 아니라 여러 거동 후보 중에서 안전한 모드를 고릅니다.</p>
+                            <div class="video-embed">
+                                <iframe src="https://www.youtube-nocookie.com/embed/_fUdCjV7Lbg" title="Turning Circle-based CBF supplementary video" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -363,14 +349,17 @@
                     <div class="bento-item" onclick="toggleDetails('item-r2')">
                         <div class="bento-content">
                             <span class="bento-badge">Core</span>
-                            <h3>Model Predictive Control</h3>
-                            <p data-i18n="r2_card">Tube-MPC, NMPC, L1 적응을 결합한 강건 제어</p>
+                            <h3>Learning-based Planning &amp; Control</h3>
+                            <p data-i18n="r2_card">딥러닝 기반 MPC와 LLM 항법</p>
                             <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
-                        <div class="details-inner glass-panel" data-i18n="r2_intro">
-                            모델 불확실성, 외란, 구동기 지연이 있는 실제 플랫폼에서 경로를 따라가려면 예측 제어가 필요합니다. Tube-based MPC, cascade tube-MPC, L1-augmented MPC로 접안·경로추종·장애물회피를 하나의 최적화 문제로 풉니다. 신임교수정착연구(2026–2027)에서도 무인이동체를 위한 강건 MPC를 이어가고 있습니다.
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r2_intro">학습으로 동역학을 맞추고, 포항 운하 자율운항과 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
+                            <div class="video-embed">
+                                <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Canal NMPC field experiment" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,14 +368,15 @@
                     <div class="bento-item" onclick="toggleDetails('item-r3')">
                         <div class="bento-content">
                             <span class="bento-badge">Core</span>
-                            <h3>Autonomous Ships &amp; Field Robotics</h3>
-                            <p data-i18n="r3_card">운하·연안 환경에서의 실선 자율운항 실험</p>
+                            <h3>Robust Model Predictive Control</h3>
+                            <p data-i18n="r3_card">Tube-MPC, 접안, 드론, Koopman 모델링</p>
                             <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
-                        <div class="details-inner glass-panel" data-i18n="r3_intro">
-                            포항 운하 등 실제 해상 환경에서 크루즈 보트를 ASV로 개조해 인지–계획–제어를 검증해 왔습니다. LiDAR·카메라·레이더를 쓰는 가항영역 탐지, Pohang Canal Dataset(IJRR), 그리고 Journal of Field Robotics 필드 실험이 이 라인의 결과입니다. 실험으로 끝나지 않고 데이터셋과 알고리즘을 같이 공개하는 쪽을 지향합니다.
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r3_intro">외란과 모델 오차 아래에서도 안전 영역을 지키는 cascade tube-MPC, L1 적응, Koopman 기반 데이터 구동 제어를 다룹니다.</p>
+                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
                         </div>
                     </div>
                 </div>
@@ -394,16 +384,87 @@
                 <div class="bento-wrapper bento-wide" id="item-r4">
                     <div class="bento-item" onclick="toggleDetails('item-r4')">
                         <div class="bento-content">
-                            <span class="bento-badge ongoing">Current Grant</span>
-                            <h3>Reachability-based MPPI</h3>
-                            <p data-i18n="r4_card">멀티모달 안전 궤적 계획을 위한 도달가능성 분석 기반 MPPI (NRF 2026–2029)</p>
+                            <span class="bento-badge">Core</span>
+                            <h3>Control Barrier Function (CBF)</h3>
+                            <p data-i18n="r4_card">접안용 exact-geometry MPC-CBF, 회전원 CBF, COLREGs 충돌회피</p>
                             <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
-                        <div class="details-inner glass-panel" data-i18n="r4_intro">
-                            <span class="topic-intro-title">한국연구재단 신진연구 (RS-2026-25490010), 2026–2029</span>
-                            멀티모달 안전 궤적 계획 및 제어를 위해 도달가능성 분석과 MPPI를 결합합니다. 단일 모드 궤적이 아니라, 상황마다 다른 거동(추종·회피·접안 등)을 안전하게 고르는 것이 목표입니다. 관련 교내 지원: 신임교수정착연구비(모델예측제어를 통한 강건한 무인이동체 제어, 2026–2027), 글로컬대학30사업, 학술연구지원사업.
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r4_intro">좌·우 회전원으로 회피 방향과 선회 능력을 같이 넣고, COLREGs를 지키면서 QP로 빠르게 풉니다.</p>
+                            <div class="video-embed">
+                                <iframe src="https://www.youtube-nocookie.com/embed/HvF8yXl9-hc" title="COLREGs-compliant CBF collision avoidance" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bento-wrapper" id="item-r5">
+                    <div class="bento-item" onclick="toggleDetails('item-r5')">
+                        <div class="bento-content">
+                            <span class="bento-badge">Core</span>
+                            <h3>Mobile Robots</h3>
+                            <p data-i18n="r5_card">AGV 동적 장애물 회피와 배송 로봇 보행자 회피</p>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                        </div>
+                    </div>
+                    <div class="bento-details">
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r5_intro">혼잡한 보행자 공간에서 LEMO 등 모바일 로봇이 사람을 피해 가는 궤적 계획을 연구합니다.</p>
+                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bento-wrapper" id="item-r6">
+                    <div class="bento-item" onclick="toggleDetails('item-r6')">
+                        <div class="bento-content">
+                            <span class="bento-badge">Core</span>
+                            <h3>Marine Vehicles</h3>
+                            <p data-i18n="r6_card">ASV 충돌회피와 포항 운하 자율운항</p>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                        </div>
+                    </div>
+                    <div class="bento-details">
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r6_intro">실선 ASV와 크루즈 보트에서 인지–계획–제어를 검증하고, 운하·연안 데이터셋을 같이 공개합니다.</p>
+                            <div class="video-embed">
+                                <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Pohang Canal autonomous navigation" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bento-wrapper" id="item-r7">
+                    <div class="bento-item" onclick="toggleDetails('item-r7')">
+                        <div class="bento-content">
+                            <span class="bento-badge">Core</span>
+                            <h3>Multi-agent Control</h3>
+                            <p data-i18n="r7_card">자율이동체 formation tracking</p>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                        </div>
+                    </div>
+                    <div class="bento-details">
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r7_intro">베어링 기반 formation tracking으로 여러 이동체가 상대 위치를 유지하며 움직이게 합니다. Co-work: Dr. Quoc Van Tran (HUST).</p>
+                            <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bento-wrapper" id="item-plan">
+                    <div class="bento-item" onclick="toggleDetails('item-plan')">
+                        <div class="bento-content">
+                            <span class="bento-badge plan">Plan</span>
+                            <h3>Physical AI</h3>
+                            <p data-i18n="r_plan_card">실로봇에서 학습과 안전 제어를 붙이는 다음 방향</p>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                        </div>
+                    </div>
+                    <div class="bento-details">
+                        <div class="details-inner glass-panel">
+                            <p data-i18n="r_plan_intro">Physical AI는 시뮬레이터가 아니라 LEMO·해양 플랫폼이 물리 세계와 직접 상호작용하며 배우고 움직이는 것을 목표로 합니다. CBF·reachability 같은 안전 제약을 학습 정책에 넣어, 현장에서 실패해도 안전한 거동을 남기려 합니다.</p>
                         </div>
                     </div>
                 </div>
@@ -415,30 +476,41 @@
                     <li><strong class="accent-text">Current.</strong> 한국연구재단 신진연구, 멀티모달 안전 궤적 계획 및 제어를 위한 도달 가능성 분석 기반 MPPI 알고리즘 개발 (2026–2029)</li>
                     <li><strong class="accent-text">Current.</strong> 국립공주대학교 신임교수정착연구비, 모델예측제어를 통한 강건한 무인이동체 제어 알고리즘 개발 (2026–2027)</li>
                 </ul>
-                <ul class="ack-list small-text">
-                    <li>이 논문은 2026년 국립공주대학교 글로컬대학30사업의 지원을 받아 수행되었음.</li>
-                    <li>이 논문은 2026년 국립공주대학교 학술연구지원사업의 연구지원에 의하여 연구되었음.</li>
-                    <li>이 성과는 정부(과학기술정보통신부)의 재원으로 한국연구재단의 지원을 받아 수행된 연구임 (RS-2026-25490010).</li>
+                <ul class="ack-list">
+                    <li>이 논문은 2026년 국립공주대학교 글로컬대학30사업의 지원을 받아 수행되었음.<br>This work was supported by the Glocal University 30 Project of Kongju National University in 2026.</li>
+                    <li>이 논문은 2026년 국립공주대학교 학술연구지원사업의 연구지원에 의하여 연구되었음.<br>This work was supported by the research grant of Kongju National University in 2026.</li>
+                    <li>이 성과는 정부(과학기술정보통신부)의 재원으로 한국연구재단의 지원을 받아 수행된 연구임 (RS-2026-25490010).<br>This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2026-25490010).</li>
                 </ul>
             </div>
 
             <div class="mt-5">
                 <h3 class="subsection-title">Robots</h3>
-                <p class="small-text" data-i18n="robots_note">플랫폼 사진과 스펙은 초안에서 자리만 잡아 두었습니다. 기존 사이트 이미지를 넣으면 바로 교체할 수 있습니다.</p>
                 <div class="robot-grid mt-30">
+                    <div class="robot-card">
+                        <div class="robot-visual">
+                            <svg class="icon" aria-hidden="true"><use href="#i-platform"></use></svg>
+                        </div>
+                        <h3>LEMO</h3>
+                        <p class="small-text" data-i18n="robot_lemo">실내·보행자 환경용 모바일 로봇. 동적 장애물 회피와 Physical AI 실험 플랫폼.</p>
+                        <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
+                    </div>
                     <div class="robot-card">
                         <div class="robot-visual">
                             <svg class="icon" aria-hidden="true"><use href="#i-asv"></use></svg>
                         </div>
                         <h3>Autonomous Surface Vehicle</h3>
-                        <p class="small-text">운하·연안 자율운항, 접안, COLREGs 충돌회피 실험 플랫폼</p>
+                        <p class="small-text" data-i18n="robot_asv">운하·연안 자율운항, 접안, COLREGs 충돌회피 실험 플랫폼</p>
+                        <div class="video-embed video-pending" data-i18n="video_soon">영상은 구글 사이트 자료를 옮기는 대로 넣겠습니다.</div>
                     </div>
                     <div class="robot-card">
                         <div class="robot-visual">
-                            <svg class="icon" aria-hidden="true"><use href="#i-platform"></use></svg>
+                            <svg class="icon" aria-hidden="true"><use href="#i-marine"></use></svg>
                         </div>
-                        <h3>Marine / Mobile Platforms</h3>
-                        <p class="small-text">UUV 지형추종, 모바일 로봇, 멀티에이전트 formation 실험</p>
+                        <h3>Autonomous Boat</h3>
+                        <p class="small-text" data-i18n="robot_boat">포항 운하 자율운항 실험에 사용한 실선 보트 플랫폼</p>
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="Autonomous boat in Pohang Canal" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -453,7 +525,7 @@
             </div>
             <div class="profile-wrap">
                 <div class="profile-card">
-                    <div class="profile-photo">CL</div>
+                    <div class="profile-photo"><img src="images/members/lck.jpg" alt="Changyu Lee"></div>
                     <h2>Changyu Lee</h2>
                     <p class="accent-text">Assistant Professor</p>
                     <p>이찬규</p>
@@ -577,22 +649,128 @@
             <div class="members-group mt-5">
                 <h3 class="subsection-title">Undergraduate Students</h3>
                 <div class="member-grid">
-                    <div class="member-card">
+                    <a href="#member-im" class="member-card">
                         <div class="avatar">JI</div>
                         <div>
                             <div><span class="member-name">Jaemin Im</span><span class="member-kor">임재민</span></div>
                             <div class="member-role">Undergraduate</div>
                             <div class="member-desc">Joined 2026.03</div>
                         </div>
-                    </div>
-                    <div class="member-card">
+                    </a>
+                    <a href="#member-yu" class="member-card">
                         <div class="avatar">JY</div>
                         <div>
                             <div><span class="member-name">Jaemin Yu</span><span class="member-kor">유재민</span></div>
                             <div class="member-role">Undergraduate</div>
                             <div class="member-desc">Joined 2026.01</div>
                         </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="member-im" class="section page-section hidden-page">
+        <div class="section-container">
+            <a href="#members" class="page-back">← Members</a>
+            <div class="section-header">
+                <h2 class="section-title">Jaemin Im <span class="member-kor">임재민</span></h2>
+                <div class="underline"></div>
+            </div>
+            <div class="profile-wrap">
+                <div class="profile-card">
+                    <div class="profile-photo avatar-fallback">JI</div>
+                    <h2>Jaemin Im</h2>
+                    <p class="accent-text">Undergraduate Student</p>
+                    <p>임재민</p>
+                    <p class="small-text">Division of Mechanical and Automotive Engineering<br>Kongju National University</p>
+                    <div class="contact-mini">
+                        <p><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg> <span data-i18n="email_tba">이메일 추후 업데이트</span></p>
                     </div>
+                </div>
+                <div>
+                    <h3 class="subsection-title">Education</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-content glass-panel">
+                                <div class="timeline-date">2026. 03. – Present</div>
+                                <h4>Undergraduate Researcher, SAIL</h4>
+                                <p class="small-text">Kongju National University</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content glass-panel">
+                                <div class="timeline-date">In progress</div>
+                                <h4>B.S., Mechanical and Automotive Engineering</h4>
+                                <p class="small-text">Kongju National University</p>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="subsection-title mt-5">Research Interests</h3>
+                    <div class="glass-panel">
+                        <ul class="custom-bullet-list">
+                            <li>Safe trajectory planning for mobile robots</li>
+                            <li>Control barrier functions</li>
+                            <li>Physical AI on real platforms</li>
+                        </ul>
+                    </div>
+                    <h3 class="subsection-title mt-5">Publications</h3>
+                    <div class="glass-panel">
+                        <p class="small-text" data-i18n="no_pub_yet">아직 등록된 논문이 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="member-yu" class="section page-section hidden-page">
+        <div class="section-container">
+            <a href="#members" class="page-back">← Members</a>
+            <div class="section-header">
+                <h2 class="section-title">Jaemin Yu <span class="member-kor">유재민</span></h2>
+                <div class="underline"></div>
+            </div>
+            <div class="profile-wrap">
+                <div class="profile-card">
+                    <div class="profile-photo avatar-fallback">JY</div>
+                    <h2>Jaemin Yu</h2>
+                    <p class="accent-text">Undergraduate Student</p>
+                    <p>유재민</p>
+                    <p class="small-text">Division of Mechanical and Automotive Engineering<br>Kongju National University</p>
+                    <div class="contact-mini">
+                        <p><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg> <span data-i18n="email_tba">이메일 추후 업데이트</span></p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="subsection-title">Education</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-content glass-panel">
+                                <div class="timeline-date">2026. 01. – Present</div>
+                                <h4>Undergraduate Researcher, SAIL</h4>
+                                <p class="small-text">Kongju National University</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content glass-panel">
+                                <div class="timeline-date">In progress</div>
+                                <h4>B.S., Mechanical and Automotive Engineering</h4>
+                                <p class="small-text">Kongju National University</p>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="subsection-title mt-5">Research Interests</h3>
+                    <div class="glass-panel">
+                        <ul class="custom-bullet-list">
+                            <li>Adaptive control barrier functions</li>
+                            <li>Path tracking and obstacle avoidance</li>
+                            <li>Safe control of mobile robots</li>
+                        </ul>
+                    </div>
+                    <h3 class="subsection-title mt-5">Publications</h3>
+                    <ul class="pub-list">
+                        <li>유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," 제어로봇시스템학회 학술대회, 2026.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -605,7 +783,7 @@
                 <div class="underline"></div>
             </div>
             <p class="author-legend"><strong>*</strong> : Corresponding author</p>
-            <p class="update-note">Last updated: 2026. 08. 19. · Draft imported from the previous Google Site.</p>
+            <p class="update-note">Last updated: 2026. 08. 19.</p>
 
             <div class="major-block glass-panel">
                 <h3 class="subsection-title">Selected Journals</h3>
@@ -627,21 +805,22 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="openTab(event, 'under-review')">Under Review</button>
+                <button class="tab-btn active" onclick="openTab(event, 'preprint')">Preprint</button>
                 <button class="tab-btn" onclick="openTab(event, 'journal')">International Journal</button>
                 <button class="tab-btn" onclick="openTab(event, 'conference')">International Conference</button>
-                <button class="tab-btn" onclick="openTab(event, 'domestic')">Domestic</button>
+                <button class="tab-btn" onclick="openTab(event, 'domestic-journal')">Domestic Journal</button>
+                <button class="tab-btn" onclick="openTab(event, 'domestic-conference')">Domestic Conference</button>
             </div>
 
-            <div id="under-review" class="tab-content">
+            <div id="preprint" class="tab-content">
                 <ul class="pub-list">
                     <li><strong>Changyu Lee</strong>, Kiyong Park, Jinwhan Kim*, "Dynamic Tube-based MPC with L1 Adaptation for Improved Uncertainty Compensation", In Prep.</li>
                     <li>Kiyong Park, <strong>Changyu Lee</strong>, Donghoon Kim, Woongki Lee, Jiwan Kim, Junhyuk Choi, Jinwhan Kim*, "Safe USV Recovery Using Disturbance-Aware Predictive Control with Control Barrier Functions", In Prep.</li>
                     <li><strong>Changyu Lee*</strong>, Byungkwan Lee, "Physics-Consistent Behavior Cloning of Nonlinear Model Predictive Control for Surface Vehicle Trajectory Tracking", In Prep.</li>
-                    <li>"Three-Dimensional Turning-Circle Control Barrier Function for Obstacle Avoidance of Unmanned Underwater Vehicles", Submitted.</li>
-                    <li>"Reducing Conservatism in Robust Quadrotor Trajectory Planning via Cascade Tube-based Model Predictive Control", Submitted.</li>
-                    <li>"Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based Control Barrier Function", Submitted.</li>
-                    <li>"Safe Waypoint Tracking and Obstacle Avoidance for Surface Vehicles using Tube-based MPC", Submitted.</li>
+                    <li><strong>Changyu Lee</strong>, "Three-Dimensional Turning-Circle Control Barrier Function for Obstacle Avoidance of Unmanned Underwater Vehicles", Submitted.</li>
+                    <li><strong>Changyu Lee</strong>, "Reducing Conservatism in Robust Quadrotor Trajectory Planning via Cascade Tube-based Model Predictive Control", Submitted.</li>
+                    <li><strong>Changyu Lee</strong>, "Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based Control Barrier Function", Submitted.</li>
+                    <li><strong>Changyu Lee</strong>, "Safe Waypoint Tracking and Obstacle Avoidance for Surface Vehicles using Tube-based MPC", Submitted.</li>
                     <li>Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Model Predictive Control with Actuation Dead-Time Compensation for Trajectory Tracking of Autonomous Surface Vessels", Under Revision.</li>
                     <li>Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Hand Position-based L1-Model Predictive Control for Robust Trajectory Tracking of Underactuated Surface Vehicles", Under Revision.</li>
                     <li>Jinwook Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Collision Avoidance for Autonomous Ships with Enhanced COLREGs Compliance Using Hamilton-Jacobi Reachability", Under Revision.</li>
@@ -673,37 +852,56 @@
             <div id="conference" class="tab-content" style="display:none;">
                 <h4 class="year-heading">KNU ~</h4>
                 <ul class="pub-list">
-                    <li>[C9] <strong>Changyu Lee</strong>, Jinwook Park, Jinwhan Kim*, "Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function," <em>IFAC World Congress</em>, Accepted, 2026.</li>
-                    <li>[C8] Quoc Van Tran*, <strong>Changyu Lee</strong>, Xin Yuan, Hyosung Ahn, "Control Barrier Function-Based Bearing-Only Formation Tracking of Mobile Agents with Obstacle Avoidance," <em>IFAC World Congress</em>, Accepted, 2026.</li>
+                    <li>[9] <strong>Changyu Lee</strong>, Jinwook Park, Jinwhan Kim*, "Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function," <em>IFAC World Congress</em>, Accepted, 2026.</li>
+                    <li>[8] Quoc Van Tran*, <strong>Changyu Lee</strong>, Xin Yuan, Hyosung Ahn, "Control Barrier Function-Based Bearing-Only Formation Tracking of Mobile Agents with Obstacle Avoidance," <em>IFAC World Congress</em>, Accepted, 2026.</li>
                 </ul>
                 <h4 class="year-heading">Before KNU</h4>
                 <ul class="pub-list">
-                    <li>[C7] Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Trajectory Tracking for Surface Vehicles via L1-Augmented Model Predictive Control," <em>OCEANS</em>, 2025.</li>
-                    <li>[C6] <strong>Changyu Lee</strong>, Kiyong Park, Jinwhan Kim*, <a href="https://arxiv.org/abs/2309.10278" target="_blank" rel="noopener">"Parameter-Varying Koopman Operator for Nonlinear System Modeling and Control,"</a> <em>IEEE CDC</em>, Dec 2023.</li>
-                    <li>[C5] Jinwook Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Ship Berthing Control with Wind Disturbance Compensation using Reachability Analysis," <em>IFAC World Congress</em>, July 2023.</li>
-                    <li>[C4] Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Path Tracking and Obstacle Avoidance of Autonomous Ship using Stochastic Model Predictive Control," <em>UR</em>, 2023.</li>
-                    <li>[C3] <strong>Changyu Lee</strong>, Quoc Van Tran, Jinwhan Kim*, <a href="https://doi.org/10.1016/j.ifacol.2022.10.446" target="_blank" rel="noopener">"Robust Path Tracking and Obstacle Avoidance Using Tube-Based Model Predictive Control for Surface Vehicles,"</a> <em>IFAC CAMS</em>, Sep 2022.</li>
-                    <li>[C2] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Energy Efficient Control for Electric Ship Propulsion Considering Thrust Fluctuation in Regular Waves," <em>IFAC CAMS</em>, Sep 2021.</li>
-                    <li>[C1] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Nonlinear Model Predictive Control of an Autonomous Underwater Vehicle for Terrain Profile Tracking," <em>UR</em>, June 2019.</li>
+                    <li>[7] Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Trajectory Tracking for Surface Vehicles via L1-Augmented Model Predictive Control," <em>OCEANS</em>, 2025.</li>
+                    <li>[6] <strong>Changyu Lee</strong>, Kiyong Park, Jinwhan Kim*, <a href="https://arxiv.org/abs/2309.10278" target="_blank" rel="noopener">"Parameter-Varying Koopman Operator for Nonlinear System Modeling and Control,"</a> <em>IEEE CDC</em>, Dec 2023.</li>
+                    <li>[5] Jinwook Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Ship Berthing Control with Wind Disturbance Compensation using Reachability Analysis," <em>IFAC World Congress</em>, July 2023.</li>
+                    <li>[4] Kiyong Park, <strong>Changyu Lee</strong>, Jinwhan Kim*, "Robust Path Tracking and Obstacle Avoidance of Autonomous Ship using Stochastic Model Predictive Control," <em>UR</em>, 2023.</li>
+                    <li>[3] <strong>Changyu Lee</strong>, Quoc Van Tran, Jinwhan Kim*, <a href="https://doi.org/10.1016/j.ifacol.2022.10.446" target="_blank" rel="noopener">"Robust Path Tracking and Obstacle Avoidance Using Tube-Based Model Predictive Control for Surface Vehicles,"</a> <em>IFAC CAMS</em>, Sep 2022.</li>
+                    <li>[2] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Energy Efficient Control for Electric Ship Propulsion Considering Thrust Fluctuation in Regular Waves," <em>IFAC CAMS</em>, Sep 2021.</li>
+                    <li>[1] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Nonlinear Model Predictive Control of an Autonomous Underwater Vehicle for Terrain Profile Tracking," <em>UR</em>, June 2019.</li>
                 </ul>
             </div>
 
-            <div id="domestic" class="tab-content" style="display:none;">
-                <h4 class="year-heading">Domestic Journal</h4>
+            <div id="domestic-journal" class="tab-content" style="display:none;">
+                <h4 class="year-heading">KNU ~</h4>
                 <ul class="pub-list">
-                    <li>[D4] Jinwook Park, <strong>Changyu Lee</strong>, Jinyong Choi, Jinwhan Kim*, "A Ship Collision Avoidance Algorithm Using Control Barrier Functions Based on Velocity Obstacles with Consideration of COLREGs," <em>Journal of Institute of Control, Robotics and Systems</em>, 2025.</li>
-                    <li>[D3] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Trajectory Optimization for Autonomous Berthing of a Twin-Propeller Twin-Rudder Ship," <em>Journal of Ocean Engineering and Technology</em>, June 2023.</li>
-                    <li>[D2] <strong>Changyu Lee</strong>, Kyungseo Kim, Jinwhan Kim*, "2023 MBZIRC Maritime Grand Challenge 대회 소개," <em>로봇과 인간</em>, April 2022.</li>
-                    <li>[D1] <strong>Changyu Lee</strong>, Junwoo Jang, Jinwhan Kim*, "Stochastic model predictive control for motion control of an underactuated underwater vehicle," <em>Journal of Institute of Control, Robotics and Systems</em>, May 2020.</li>
+                    <li>[4] Jinwook Park, <strong>Changyu Lee</strong>, Jinyong Choi, Jinwhan Kim*, "A Ship Collision Avoidance Algorithm Using Control Barrier Functions Based on Velocity Obstacles with Consideration of COLREGs," <em>Journal of Institute of Control, Robotics and Systems</em> (제어·로봇·시스템학회 논문지), 2025.</li>
                 </ul>
-                <h4 class="year-heading">Domestic Conference</h4>
+                <h4 class="year-heading">Before KNU</h4>
+                <ul class="pub-list">
+                    <li>[3] <strong>Changyu Lee</strong>, Jinwhan Kim*, "Trajectory Optimization for Autonomous Berthing of a Twin-Propeller Twin-Rudder Ship," <em>Journal of Ocean Engineering and Technology</em> (한국해양공학회지), June 2023.</li>
+                    <li>[2] <strong>Changyu Lee</strong>, Kyungseo Kim, Jinwhan Kim*, "2023 MBZIRC Maritime Grand Challenge 대회 소개," <em>로봇과 인간</em>, April 2022.</li>
+                    <li>[1] <strong>Changyu Lee</strong>, Junwoo Jang, Jinwhan Kim*, "Stochastic model predictive control for motion control of an underactuated underwater vehicle," <em>Journal of Institute of Control, Robotics and Systems</em> (제어로봇시스템학회지), May 2020.</li>
+                </ul>
+            </div>
+
+            <div id="domestic-conference" class="tab-content" style="display:none;">
+                <h4 class="year-heading">KNU ~</h4>
                 <ul class="pub-list">
                     <li>[16] 유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," 제어로봇시스템학회 학술대회, 2026.</li>
                     <li>[15] 이찬규*, "회전원 기반 제어 장벽 함수를 이용한 멀티모달 경로 계획," 제어로봇시스템학회 학술대회, 2026.</li>
                     <li>[14] 신영하, 이찬규, 김진환*, "유무인 상호작용을 고려한 대형 언어모델 기반 자율 운항 선박 질의응답 프레임워크," 한국해양과학기술협의회 춘계 공동학술대회, 2026.</li>
                     <li>[13] 이찬규*, 박진욱, 김진환, "제어 장벽함수를 활용한 효율적인 국제해상충돌예방규칙 준수 충돌회피 알고리즘," 한국 수중수상로봇기술연구회 추계학술대회, 2025.</li>
+                </ul>
+                <h4 class="year-heading">Before KNU</h4>
+                <ul class="pub-list">
                     <li>[12] 김응현, 이찬규, 김진환*, "혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획," 한국로봇종합학술대회, 2024. (Most Outstanding Paper Award)</li>
-                    <li class="venue-note">이전 국내 학술대회 발표(2018–2023)는 기존 사이트와 동일하게 유지하며, 필요하면 이어서 정리하겠습니다.</li>
+                    <li>[11] 정동하, 김종휘, 이찬규, 김진환*, "자율운항 연구를 위한 다중 센서 데이터 소개," 한국해양공학회, 2023.</li>
+                    <li>[10] 김종휘, 정동하, 이찬규, 김진환*, "가항영역 탐지를 통한 운하 환경에서의 자율 경로 생성," 대한조선학회, 2023.</li>
+                    <li>[9] 박기용, 이찬규, 김진환*, "비선형 모델 예측 제어 기법을 이용한 두 개의 전방향 추진기를 갖는 선박의 자동 접안," 한국로봇종합학술대회, 2023. 02.</li>
+                    <li>[8] 이찬규, 김진환*, "선박을 위한 강인한 모델예측제어기반 경로 추종 및 장애물 회피," 제어로봇시스템학회, 2022. 06.</li>
+                    <li>[7] 이찬규, 김진환*, "불규칙파 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2022. 06.</li>
+                    <li>[6] 이찬규, 정동하, 김종휘, 조용훈, 김진환*, 최휘용, 이준식, "포항 운하에서의 자율 운항 실험을 위한 최적 경로 추종," 대한조선학회 추계학술대회, 2021. 11.</li>
+                    <li>[5] 김종휘, 정동하, 이찬규, 조용훈, 김진환*, 장왕석, 박세용, "포항 운하에서의 자율 운항 실험을 위한 다중 센서 융합," 한국해양공학회 추계학술대회, 2021. 10.</li>
+                    <li>[4] 이찬규, 김진환*, "파랑 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2021. 05.</li>
+                    <li>[3] 이찬규, 김진환*, "쌍축 쌍타 선박의 자동접안을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2020. 07. (Outstanding Student Paper Presentation Award)</li>
+                    <li>[2] 장준우, 이찬규, 김진환*, "표적 운동 추정 과정에서의 다중모델 기반 필터의 모호성 해결," 제어로봇시스템학회, 2019. 05.</li>
+                    <li>[1] 김종휘, 김근환, 이찬규, 김진환*, 이필엽, "단안 카메라 영상을 이용한 합성곱 신경망 기반 선박 탐지 및 추적," 한국해양공학회 추계학술대회, 2018. 11.</li>
                 </ul>
             </div>
         </div>
@@ -715,46 +913,96 @@
                 <h2 class="section-title">Lecture</h2>
                 <div class="underline"></div>
             </div>
-            <div class="lecture-grid">
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Fall</div>
-                    <h3>미래첨단기술의이해 II</h3>
-                    <p class="small-text">Undergraduate · <a href="https://leechangyu95.github.io/Understanding-Future-Advanced-Technology/" target="_blank" rel="noopener">Course site</a></p>
+            <div class="lecture-year">
+                <h3 class="subsection-title">2026 Fall</h3>
+                <div class="lecture-grid">
+                    <a href="#lecture-future" class="lecture-card lecture-card-link">
+                        <div class="lecture-term">2026 Fall</div>
+                        <h3>미래첨단기술의이해 II</h3>
+                        <p class="small-text">Undergraduate · 실습 시뮬레이터 포함</p>
+                    </a>
+                    <div class="lecture-card">
+                        <div class="lecture-term">2026 Fall</div>
+                        <h3>메카트로닉스</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
+                    <div class="lecture-card">
+                        <div class="lecture-term">2026 Fall</div>
+                        <h3>기계진동학</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
+                    <div class="lecture-card">
+                        <div class="lecture-term">2026 Fall</div>
+                        <h3>임베디드시스템 실습</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
                 </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Fall</div>
-                    <h3>메카트로닉스</h3>
-                    <p class="small-text">Undergraduate</p>
+            </div>
+            <div class="lecture-year mt-5">
+                <h3 class="subsection-title">2026 Spring</h3>
+                <div class="lecture-grid">
+                    <div class="lecture-card">
+                        <div class="lecture-term">2026 Spring</div>
+                        <h3>기전공학기초</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
+                    <div class="lecture-card">
+                        <div class="lecture-term">2026 Spring</div>
+                        <h3>딥러닝 기계학습</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
                 </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Fall</div>
-                    <h3>기계진동학</h3>
-                    <p class="small-text">Undergraduate</p>
+            </div>
+            <div class="lecture-year mt-5">
+                <h3 class="subsection-title">2025 Fall</h3>
+                <div class="lecture-grid">
+                    <div class="lecture-card">
+                        <div class="lecture-term">2025 Fall</div>
+                        <h3>로봇공학특론</h3>
+                        <p class="small-text">Graduate</p>
+                    </div>
+                    <div class="lecture-card">
+                        <div class="lecture-term">2025 Fall</div>
+                        <h3>메카트로닉스 / 생산공정설계</h3>
+                        <p class="small-text">Undergraduate</p>
+                    </div>
                 </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Fall</div>
-                    <h3>임베디드시스템 실습</h3>
-                    <p class="small-text">Undergraduate</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="lecture-future" class="section page-section hidden-page">
+        <div class="section-container course-wrap">
+            <a href="#lecture" class="page-back">← Lecture</a>
+            <iframe class="course-frame" src="lecture/future-tech/index.html" title="미래첨단기술의이해 II 실습 시뮬레이터"></iframe>
+        </div>
+    </section>
+
+    <section id="gallery" class="section page-section hidden-page">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Gallery</h2>
+                <div class="underline"></div>
+            </div>
+            <div class="gallery-group">
+                <h3 class="subsection-title">2026 제어로봇시스템학회 (ICROS)</h3>
+                <div class="gallery-grid">
+                    <div class="gallery-slot">Photos coming soon</div>
+                    <div class="gallery-slot">Photos coming soon</div>
                 </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Spring</div>
-                    <h3>기전공학기초</h3>
-                    <p class="small-text">Undergraduate</p>
+            </div>
+            <div class="gallery-group mt-5">
+                <h3 class="subsection-title">2025 대한기계학회 추계학술대회</h3>
+                <div class="gallery-grid">
+                    <div class="gallery-slot">Photos coming soon</div>
+                    <div class="gallery-slot">Photos coming soon</div>
                 </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2026 Spring</div>
-                    <h3>딥러닝 기계학습</h3>
-                    <p class="small-text">Undergraduate</p>
-                </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2025 Fall</div>
-                    <h3>로봇공학특론</h3>
-                    <p class="small-text">Graduate</p>
-                </div>
-                <div class="lecture-card">
-                    <div class="lecture-term">2025 Fall</div>
-                    <h3>메카트로닉스 / 생산공정설계</h3>
-                    <p class="small-text">Undergraduate</p>
+            </div>
+            <div class="gallery-group mt-5">
+                <h3 class="subsection-title">2025 수중수상로봇기술연구회 추계학술대회</h3>
+                <div class="gallery-grid">
+                    <div class="gallery-slot">Photos coming soon</div>
+                    <div class="gallery-slot">Photos coming soon</div>
                 </div>
             </div>
         </div>
@@ -788,7 +1036,7 @@
 
     <script src="script.js" defer></script>
     <script
-      color="15,138,130"
+      color="12,122,115"
       opacity="0.7"
       zIndex="0"
       count="120"
@@ -801,17 +1049,31 @@
         "banner_title": `Now recruiting undergraduate and graduate students`,
         "banner_desc": `SAIL is looking for motivated students to work on <strong>safe autonomy for ships, marine vehicles, and mobile robots</strong>.`,
         "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and robot control.</p>`,
-        "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Experiments on autonomous ships, USVs, and UUVs</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
-        "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li><li>Anyone curious about safety problems in ships, marine systems, and mobility</li></ul>`,
-        "r1_card": `Safe trajectory planning and collision avoidance with CBFs and reachability`,
-        "r2_card": `Robust control that combines tube-MPC, NMPC, and L1 adaptation`,
-        "r3_card": `Full-scale autonomous navigation experiments in canals and nearshore waters`,
-        "r4_card": `Reachability-based MPPI for multimodal safe trajectory planning (NRF 2026-2029)`,
-        "r1_intro": `<span class="topic-intro-title">We put <strong class="accent-text">safety constraints</strong> into the controller using control barrier functions and reachability analysis.</span>Ships and nonholonomic vehicles have a turning radius, and at sea they must also follow rules such as COLREGs. SAIL uses turning-circle CBFs, velocity obstacles, and Hamilton-Jacobi reachability for collision avoidance and berthing. The aim is not to dodge first and fix later, but to generate trajectories that are <strong>safe at the planning stage</strong>.`,
-        "r2_intro": `Predictive control is needed when the real platform has model uncertainty, disturbance, and actuator delay. We treat berthing, path tracking, and obstacle avoidance as one optimization problem through tube-based MPC, cascade tube-MPC, and L1-augmented MPC. The KNU settlement grant (2026-2027) continues this line for unmanned vehicles.`,
-        "r3_intro": `We have converted a cruise boat into an ASV and tested perception-planning-control in real waters such as the Pohang Canal. This line includes navigable-area detection with LiDAR and cameras, the Pohang Canal Dataset (IJRR), and a Journal of Field Robotics field study. We prefer work that leaves both algorithms and data behind.`,
-        "r4_intro": `<span class="topic-intro-title">NRF Early-Career Grant (RS-2026-25490010), 2026-2029</span>We combine reachability analysis with MPPI for multimodal safe trajectory planning and control. The point is not a single-mode trajectory, but safely choosing among behaviors (tracking, avoidance, berthing) as the situation changes. Related campus support: faculty settlement grant (robust MPC for unmanned vehicles, 2026-2027), Glocal University 30, and the KNU research grant.`,
-        "robots_note": `Photos and specs are placeholders in this draft. We can drop in the images from the current Google Site next.`
+        "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
+        "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li></ul>`,
+        "r1_card": `Multimodal planning that chooses tracking, avoidance, or berthing with turning-circle CBFs`,
+        "r2_card": `Deep learning-based MPC and LLM navigation`,
+        "r3_card": `Tube-MPC, berthing, drones, and Koopman modeling`,
+        "r4_card": `Exact-geometry MPC-CBF for docking, turning-circle CBF, and COLREGs avoidance`,
+        "r5_card": `Dynamic obstacle avoidance for AGVs and pedestrian-aware delivery robots`,
+        "r6_card": `ASV collision avoidance and Pohang Canal autonomous navigation`,
+        "r7_card": `Formation tracking of autonomous vehicles`,
+        "r_plan_card": `The next step: learning and safe control on real robots`,
+        "r1_intro": `We treat the turning radius of nonholonomic vehicles as a constraint, and choose among several behavior modes instead of a single trajectory.`,
+        "r2_intro": `We learn dynamics models, connect them to canal-scale navigation, and use LLM question answering (MARQA) for ship operations.`,
+        "r3_intro": `Cascade tube-MPC, L1 adaptation, and Koopman models keep a safe region under disturbance and model error.`,
+        "r4_intro": `Left and right turning circles encode both avoidance direction and turning capability, then a QP enforces COLREGs-compliant motion.`,
+        "r5_intro": `We plan pedestrian-aware trajectories for mobile robots such as LEMO in crowded indoor spaces.`,
+        "r6_intro": `We validate perception–planning–control on full-scale ASVs and cruise boats, and release canal and nearshore datasets with the algorithms.`,
+        "r7_intro": `Bearing-based formation tracking keeps multiple vehicles in relative formation. Co-work: Dr. Quoc Van Tran (HUST).`,
+        "r_plan_intro": `Physical AI means LEMO and marine platforms learn and move by interacting with the real world. We fold CBF and reachability constraints into learned policies so failures in the field still leave a safe behavior.`,
+        "video_soon": `Videos will be added as we move them over from the Google Site.`,
+        "robot_lemo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance and Physical AI experiments.`,
+        "robot_asv": `Canal and nearshore autonomy, berthing, and COLREGs collision-avoidance platform`,
+        "robot_boat": `Full-scale boat used for Pohang Canal autonomous navigation experiments`,
+        "email_tba": `Email to be added`,
+        "no_pub_yet": `No publications listed yet.`,
+        "course_intro": `This undergraduate course teaches control, robotics, and autonomy through interactive simulators. The demos below were brought over from the previous course site and now live on this homepage.`
       };
       var origKO = {};
       function cacheKO() {

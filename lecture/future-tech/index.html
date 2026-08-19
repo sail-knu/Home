@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>미래첨단기술의이해 II — 실습 시뮬레이터</title>
+<style>
+:root{
+  --bg:#07121c; --card:#0d1c29; --line:#1d3547;
+  --text:#dbe9f2; --text2:#8ba9bd; --accent:#2dd4bf;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#e7eef2; --card:#ffffff; --line:#cfdde5;
+    --text:#0b2130; --text2:#42606f; --accent:#0d9488;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:560px;margin:0 auto;padding:28px 16px calc(28px + env(safe-area-inset-bottom))}
+.kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:800}
+h1{font-size:20px;margin:4px 0 4px}
+.sub{color:var(--text2);font-size:13px;margin:0 0 20px}
+a.card{
+  display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px;text-decoration:none;color:inherit;
+}
+a.card:active{border-color:var(--accent)}
+.card b{display:block;font-size:16px;margin-bottom:2px}
+.card span{color:var(--text2);font-size:12.5px}
+.card .go{float:right;color:var(--accent);font-weight:800}
+footer{margin-top:24px;color:var(--text2);font-size:11.5px}
+.back{display:inline-block;margin-bottom:16px;color:var(--accent);font-size:13px;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kicker">Interactive Demos</span>
+  <h1>미래첨단기술의이해 II — 실습 시뮬레이터</h1>
+  <p class="sub">스마트폰 세로 화면에 맞춰 설계되었습니다. 항목을 누르면 시뮬레이터가 열립니다.</p>
+
+  <a class="back" href="../../index.html#lecture">← SAIL Lecture</a>
+
+  <a class="card" href="inverted-pendulum-pid_Mobile.html" target="_top">
+    <span class="go">→</span>
+    <b>역진자 PID 제어</b>
+    <span>k_P · k_I · k_D 튜닝, 외란 밀기, 위치 제어 켜기</span>
+  </a>
+
+  <a class="card" href="Straight_Path_Following_Controller_Mobile.html" target="_top">
+    <span class="go">→</span>
+    <b>직선 경로 추종 제어기</b>
+    <span>횡방향 오차 · 방위 오차 피드백으로 배를 직선 경로에 붙이기</span>
+  </a>
+
+  <a class="card" href="LOS_Guidance_Simulator_Mobile.html" target="_top">
+    <span class="go">→</span>
+    <b>LOS 유도 — 웨이포인트 추종</b>
+    <span>전방주시거리 Δ 튜닝, 웨이포인트 편집, 유도 법칙 비교</span>
+  </a>
+
+  <a class="card" href="MPPI_Ship_Collision_Avoidance_Mobile.html" target="_top">
+    <span class="go">→</span>
+    <b>MPPI 선박 충돌 회피</b>
+    <span>샘플링 기반 모델 예측 제어로 장애물 피해 가기</span>
+  </a>
+
+  <footer>국립공주대학교 · 미래첨단기술의이해 II (2026)</footer>
+</div>
+</body>
+</html>
