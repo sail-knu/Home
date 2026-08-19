@@ -1297,13 +1297,105 @@ a.member-card:hover {
   margin: -8px 0 12px;
 }
 
-.course-frame {
-  width: 100%;
-  height: min(88vh, 820px);
-  min-height: 640px;
+.course-embed {
+  --bg: transparent;
+  --accent: var(--primary-color);
+  --accent-ink: var(--on-primary);
+  --text: var(--copy-color);
+  --muted: var(--muted-text);
+  margin-top: 8px;
+  padding: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+  color: var(--copy-color);
+  font-family: inherit;
+}
+
+.course-embed header,
+.course-embed .hero,
+.course-embed footer,
+.course-embed .theme-btn,
+.course-embed [id$="themeBtn"],
+.course-embed .container > h1,
+.course-embed .container > .subtitle,
+.course-embed .container > .tag,
+.course-embed .container > div:has(> .tag) {
+  display: none !important;
+}
+
+.course-embed .wrap,
+.course-embed .wrap.wide,
+.course-embed .container {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.course-hint {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
   border: 1px solid var(--surface-border);
-  border-radius: 16px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--surface));
+  color: var(--copy-color);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.course-hint b {
+  color: var(--primary-color);
+}
+
+.course-embed canvas {
+  max-width: 100%;
+  display: block;
+}
+
+.course-embed .demo-stage-canvas {
+  position: relative;
+}
+
+.course-embed .demo-toolbar {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+  padding: 10px 0 0;
+}
+
+.course-embed .demo-toolbar.has-3 {
+  grid-template-columns: 1.2fr 1fr 1fr;
+}
+
+.course-embed .demo-toolbar button {
+  min-height: 46px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .course-embed .demo-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    display: flex;
+    width: auto;
+    grid-template-columns: none;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: color-mix(in srgb, #fff 92%, transparent);
+    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
+  }
+  .course-embed .demo-toolbar button,
+  .course-embed .demo-toolbar .btn {
+    min-height: 36px;
+    min-width: 88px;
+    width: auto;
+    flex: none;
+    padding: 7px 14px;
+    font-size: 14px;
+  }
 }
 
 .demo-app {
