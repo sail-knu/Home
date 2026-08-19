@@ -234,7 +234,7 @@
       simNav: "mech-sim-nav",
       title: "mech-title",
       desc: "mech-desc",
-      host: "mech-host",
+      frame: "mech-frame",
       lectures: [
         { id: "1", name: "1강 · 파이프라인" },
         { id: "2", name: "2강 · 센서·샘플링" },
@@ -304,7 +304,7 @@
       simNav: "vib-sim-nav",
       title: "vib-title",
       desc: "vib-desc",
-      host: "vib-host",
+      frame: "vib-frame",
       lectures: [
         { id: "1", name: "1강 · 개요" },
         { id: "2", name: "2강 · 자유진동" },
@@ -362,234 +362,13 @@
     }
   };
 
-  const courseGens = {};
-  const courseLoads = {};
-  const COURSE_TRANSPORT_IDS = {
-    startBtn: 1, stopBtn: 1, resetBtn: 1, play: 1, reset: 1,
-    btnPlay: 1, btnReset: 1, btnStart: 1, btnStop: 1, btnRun: 1
-  };
-
-  function nextCourseGen(hostId) {
-    courseGens[hostId] = (courseGens[hostId] || 0) + 1;
-    return courseGens[hostId];
-  }
-
-  function matchBrace(css, openIdx) {
-    let depth = 0;
-    for (let i = openIdx; i < css.length; i += 1) {
-      if (css[i] === "{") depth += 1;
-      else if (css[i] === "}") {
-        depth -= 1;
-        if (depth === 0) return i;
-      }
-    }
-    return css.length - 1;
-  }
-
-  function stripDarkMedia(css) {
-    let out = "";
-    let i = 0;
-    while (i < css.length) {
-      if (css[i] === "@" && css.slice(i, i + 6).toLowerCase() === "@media") {
-        const brace = css.indexOf("{", i);
-        if (brace === -1) break;
-        const header = css.slice(i, brace);
-        const end = matchBrace(css, brace);
-        if (/prefers-color-scheme\s*:\s*dark/i.test(header)) {
-          i = end + 1;
-          continue;
-        }
-      }
-      out += css[i];
-      i += 1;
-    }
-    return out;
-  }
-
-  function prefixCourseSelector(sel, scope) {
-    const text = sel.trim();
-    if (!text) return text;
-    if (/^(@|from\b|to\b|\d)/.test(text)) return text;
-    if (/^(:root|html|body)(\b|$|\[|#|\.|:)/.test(text)) {
-      return text.replace(/^:root/, scope).replace(/^html\b/, scope).replace(/^body\b/, scope);
-    }
-    if (text === "*") return scope + ", " + scope + " *";
-    if (text.startsWith("*")) return scope + " " + text;
-    return scope + " " + text;
-  }
-
-  function prefixCourseCss(css, scope) {
-    let out = "";
-    let i = 0;
-    while (i < css.length) {
-      if (css[i] === "@") {
-        const brace = css.indexOf("{", i);
-        if (brace === -1) {
-          out += css.slice(i);
-          break;
-        }
-        const header = css.slice(i, brace).trim();
-        const end = matchBrace(css, brace);
-        const inner = css.slice(brace + 1, end);
-        if (/^@(media|supports|layer)\b/i.test(header)) {
-          out += header + "{" + prefixCourseCss(inner, scope) + "}";
-        } else {
-          out += css.slice(i, end + 1);
-        }
-        i = end + 1;
-        continue;
-      }
-      if (/\s/.test(css[i])) {
-        out += css[i];
-        i += 1;
-        continue;
-      }
-      const brace = css.indexOf("{", i);
-      if (brace === -1) {
-        out += css.slice(i);
-        break;
-      }
-      const selectors = css.slice(i, brace);
-      const end = matchBrace(css, brace);
-      const body = css.slice(brace, end + 1);
-      out += selectors.split(",").map((sel) => prefixCourseSelector(sel, scope)).join(",") + body;
-      i = end + 1;
-    }
-    return out;
-  }
-
-  function scopeCourseCss(css, scope) {
-    return prefixCourseCss(stripDarkMedia(css.replace(/\/\*[\s\S]*?\*\//g, "")), scope);
-  }
-
-  function collectTransportButtons(host) {
-    const found = [];
-    host.querySelectorAll("button[id]").forEach((btn) => {
-      if (COURSE_TRANSPORT_IDS[btn.id]) found.push(btn);
-    });
-    if (found.length) return found;
-    host.querySelectorAll(".btn-row button, button.btn-acc").forEach((btn) => {
-      const text = (btn.textContent || "").replace(/\s+/g, "");
-      if (/시작|정지|초기화|재생|일시정지|계속/.test(text) && text.length < 18) found.push(btn);
-    });
-    return found;
-  }
-
-  function dressCourseDemo(host) {
-    const canvas = host.querySelector("canvas#cv, canvas.sim, canvas");
-    if (!canvas) return;
-    let stage = canvas.closest(".demo-stage-canvas");
-    if (!stage) {
-      stage = document.createElement("div");
-      stage.className = "demo-stage-canvas";
-      canvas.parentNode.insertBefore(stage, canvas);
-      stage.appendChild(canvas);
-    }
-    const buttons = collectTransportButtons(host);
-    if (!buttons.length) return;
-    let bar = stage.querySelector(":scope > .demo-toolbar");
-    if (!bar) {
-      bar = document.createElement("div");
-      bar.className = "demo-toolbar";
-      stage.appendChild(bar);
-    }
-    buttons.forEach((btn) => bar.appendChild(btn));
-    if (buttons.length >= 3) bar.classList.add("has-3");
-    host.querySelectorAll(".btn-row, .button-row").forEach((row) => {
-      if (!row.querySelector("button")) row.remove();
-    });
-  }
-
-  function runCourseScript(code, host, hostId, gen) {
-    const patched = code
-      .replace(/document\.documentElement/g, "COURSE_ROOT")
-      .replace(/window\.addEventListener/g, "courseWinOn");
-    const courseWinOn = function (type, fn, opt) {
-      const wrapped = function () {
-        if (courseGens[hostId] !== gen) return;
-        return fn.apply(this, arguments);
-      };
-      window.addEventListener(type, wrapped, opt);
-    };
-    const requestAnimationFrame = function (cb) {
-      return window.requestAnimationFrame(function (t) {
-        if (courseGens[hostId] !== gen) return;
-        cb(t);
-      });
-    };
-    const setInterval = function (cb, ms) {
-      const id = window.setInterval(function () {
-        if (courseGens[hostId] !== gen) {
-          window.clearInterval(id);
-          return;
-        }
-        cb();
-      }, ms);
-      return id;
-    };
-    const fn = new Function(
-      "COURSE_ROOT",
-      "requestAnimationFrame",
-      "setInterval",
-      "courseWinOn",
-      patched
-    );
-    fn(host, requestAnimationFrame, setInterval, courseWinOn);
-  }
-
-  function mountCourseDemo(host, html) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const rawCss = [...doc.querySelectorAll("style")].map((el) => el.textContent).join("\n");
-    const scripts = [...doc.querySelectorAll("script")].map((el) => el.textContent).filter(Boolean);
-    const lede = doc.querySelector(".lede") || doc.querySelector(".subtitle");
-    const ledeHtml = lede ? lede.innerHTML : "";
-    doc.querySelectorAll("header, footer, script, style, .hero").forEach((el) => el.remove());
-    const scope = "#" + host.id;
-    const chrome =
-      scope + ".course-embed{--bg:transparent;--accent:var(--primary-color);--accent-ink:var(--on-primary);background:transparent!important;min-height:0!important;padding:0!important;color:var(--copy-color);font-family:inherit}";
-    host.innerHTML =
-      "<style>" + scopeCourseCss(rawCss, scope) + chrome + "</style>" +
-      (ledeHtml ? '<p class="course-hint">' + ledeHtml + "</p>" : "") +
-      '<div class="course-embed-body">' + doc.body.innerHTML + "</div>";
-    return scripts;
-  }
-
-  function loadCourseEmbed(host, src) {
-    if (!host) return;
-    const hostId = host.id;
-    const gen = nextCourseGen(hostId);
-    const seq = (courseLoads[hostId] = (courseLoads[hostId] || 0) + 1);
-    host.innerHTML = '<p class="course-hint">데모를 불러오는 중…</p>';
-    fetch(encodeURI(src)).then((res) => {
-      if (!res.ok) throw new Error("demo fetch failed");
-      return res.text();
-    }).then((html) => {
-      if (courseLoads[hostId] !== seq) return;
-      const scripts = mountCourseDemo(host, html);
-      scripts.forEach((code) => {
-        try {
-          runCourseScript(code, host, hostId, gen);
-        } catch (err) {
-          console.error(src, err);
-        }
-      });
-      dressCourseDemo(host);
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        window.dispatchEvent(new Event("resize"));
-      }));
-    }).catch(() => {
-      if (courseLoads[hostId] !== seq) return;
-      host.innerHTML = '<p class="course-hint">데모를 불러오지 못했습니다. 페이지를 새로고침해 주세요.</p>';
-    });
-  }
-
   function initCourseDemos(key, data) {
     const lecNav = document.getElementById(data.lecNav);
     const simNav = document.getElementById(data.simNav);
     const titleEl = document.getElementById(data.title);
     const descEl = document.getElementById(data.desc);
-    const host = document.getElementById(data.host);
-    if (!lecNav || !simNav || !titleEl || !descEl || !host) return;
+    const frame = document.getElementById(data.frame);
+    if (!lecNav || !simNav || !titleEl || !descEl || !frame) return;
 
     const state = { lec: data.lectures[0].id, src: "" };
 
@@ -636,7 +415,8 @@
       state.src = demo.src;
       titleEl.textContent = demo.title;
       descEl.textContent = lectureName(demo.lec);
-      loadCourseEmbed(host, demo.src);
+      frame.title = demo.title;
+      frame.src = encodeURI(demo.src);
       renderLectures();
       renderDemos();
     }
@@ -647,8 +427,7 @@
 
     function unload() {
       state.src = "";
-      nextCourseGen(host.id);
-      host.innerHTML = "";
+      frame.removeAttribute("src");
     }
 
     renderLectures();

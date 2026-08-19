@@ -732,7 +732,9 @@ button,
 
 .bento-content p {
   color: var(--muted-text);
-  margin-top: 6px;
+  margin-top: 8px;
+  max-width: 72ch;
+  line-height: 1.55;
 }
 
 .bento-action {
@@ -842,10 +844,10 @@ a.project-page {
 }
 
 .collab-logo-hust {
-  width: 220px;
+  width: 44px;
   height: 56px;
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
 }
 
 .project-grid {
@@ -1295,6 +1297,15 @@ a.member-card:hover {
 
 .sim-block .small-text {
   margin: -8px 0 12px;
+}
+
+.course-frame {
+  width: 100%;
+  height: min(88vh, 820px);
+  min-height: 640px;
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  background: var(--surface);
 }
 
 .course-embed {
