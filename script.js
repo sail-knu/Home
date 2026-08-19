@@ -78,6 +78,9 @@
       window.history.pushState(null, "", targetId);
     }
     syncCourseDemos(targetId);
+    if (targetId === "#lecture-future" && typeof window.refreshPidDemo === "function") {
+      requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
+    }
   }
 
   window.addEventListener("popstate", () => {
@@ -179,6 +182,9 @@
     const frame = panel.querySelector("iframe");
     if (frame && frame.dataset.src && !frame.getAttribute("src")) {
       frame.src = frame.dataset.src;
+    }
+    if (id === "sim-pid" && typeof window.refreshPidDemo === "function") {
+      requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
     }
   }
 
