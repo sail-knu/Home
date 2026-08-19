@@ -802,14 +802,8 @@ button,
   max-width: none;
 }
 
-.project-page {
-  margin: 12px 0 0;
-}
-
-.project-page a {
-  color: var(--primary-color);
-  font-weight: 600;
-  font-size: 0.9rem;
+a.project-page {
+  white-space: nowrap;
 }
 
 .rep-pub-title {
@@ -1247,12 +1241,22 @@ a.member-card:hover {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 18px;
+  justify-items: center;
+  align-items: center;
+}
+
+.gallery-grid:has(> :only-child) .gallery-slot {
+  grid-column: 2;
 }
 
 .gallery-slot {
   margin: 0;
-  min-height: 0;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--surface-border);
@@ -1261,9 +1265,12 @@ a.member-card:hover {
 
 .gallery-slot img {
   display: block;
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 .lecture-term {
@@ -1399,6 +1406,7 @@ a.member-card:hover {
   .video-stack { grid-template-columns: 1fr; }
   .robot-media { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
+  .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
 }
 
 @media (hover: hover) and (pointer: fine) {
