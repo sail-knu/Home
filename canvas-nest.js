@@ -4,9 +4,9 @@
   var pointColor = (tag && tag.getAttribute("pointColor")) || color;
   var opacity = parseFloat((tag && tag.getAttribute("opacity")) || "0.7");
   var zIndex = (tag && tag.getAttribute("zIndex")) || "0";
-  var count = parseInt((tag && tag.getAttribute("count")) || "120", 10);
+  var count = parseInt((tag && tag.getAttribute("count")) || "600", 10);
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (window.innerWidth < 720) count = Math.min(count, 70);
+  if (window.innerWidth < 720) count = Math.min(count, 350);
 
   var canvas = document.createElement("canvas");
   canvas.id = "nestCanvas";
