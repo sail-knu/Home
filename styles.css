@@ -211,8 +211,13 @@ button,
 }
 
 .logo-header {
-  font-size: 1.125rem;
   line-height: 1;
+}
+
+.nav-sail {
+  display: block;
+  height: 40px;
+  width: auto;
 }
 
 .logo-mark {
@@ -237,10 +242,10 @@ button,
 
 .univ-seal {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
-  vertical-align: -3px;
+  vertical-align: -8px;
   flex: none;
 }
 
@@ -350,8 +355,8 @@ button,
 }
 
 .univ-lockup .univ-seal {
-  width: 18px;
-  height: 18px;
+  width: 36px;
+  height: 36px;
 }
 
 .hero h1 {
@@ -554,23 +559,44 @@ button,
 }
 
 .research-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   color: var(--primary-color);
-  background: var(--chip-bg);
+  transition: transform var(--transition), background var(--transition);
+  background:
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 22%, #fff), transparent 58%),
+    var(--chip-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
+}
+
+.research-icon-predict {
+  color: var(--secondary-color);
+  background:
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 20%, #fff), transparent 58%),
+    var(--chip-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--secondary-color) 16%, transparent);
 }
 
 .research-icon .icon {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   vertical-align: top;
 }
 
 .research-card:hover .research-icon {
-  background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+  transform: translateY(-1px);
+  background:
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 30%, #fff), transparent 60%),
+    color-mix(in srgb, var(--primary-color) 12%, #fff);
+}
+
+.research-card:hover .research-icon-predict {
+  background:
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 28%, #fff), transparent 60%),
+    color-mix(in srgb, var(--secondary-color) 10%, #fff);
 }
 
 .research-card ul,
@@ -642,8 +668,17 @@ button,
   gap: 16px;
 }
 
-#research-algorithm .bento-grid {
+#research .section-container {
+  max-width: 1180px;
+}
+
+#research .bento-grid {
   grid-template-columns: 1fr;
+}
+
+#research .bento-wrapper,
+#research .bento-item {
+  width: 100%;
 }
 
 .bento-wide {
@@ -1210,9 +1245,10 @@ a.lecture-card-link:hover {
 }
 
 .footer-credit .univ-seal {
-  width: 14px;
-  height: 14px;
-  margin: 0 2px 0 1px;
+  width: 28px;
+  height: 28px;
+  margin: 0 4px 0 2px;
+  vertical-align: -8px;
 }
 
 .contact-details {
@@ -1312,6 +1348,7 @@ a.lecture-card-link:hover {
   .hero h2 { font-size: 1.05rem; }
   .logo-header { font-size: 1.05rem; }
   .logo-mark { width: 18px; height: 18px; }
+  .nav-sail { height: 32px; }
   .section { padding: 72px 0 56px; }
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }
