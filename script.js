@@ -29,6 +29,7 @@
     hamburger.addEventListener("click", () => {
       const open = navLinks.classList.toggle("active");
       hamburger.setAttribute("aria-expanded", open ? "true" : "false");
+      hamburger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
     });
   }
 
@@ -56,7 +57,10 @@
     }
 
     if (navLinks) navLinks.classList.remove("active");
-    if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+    if (hamburger) {
+      hamburger.setAttribute("aria-expanded", "false");
+      hamburger.setAttribute("aria-label", "Open menu");
+    }
 
     if (!fromHistory && window.location.hash !== targetId) {
       window.history.pushState(null, "", targetId);

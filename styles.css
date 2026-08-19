@@ -144,6 +144,22 @@ button,
   font-family: inherit;
 }
 
+.svg-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.16em;
+  fill: none;
+  stroke: currentColor;
+}
+
 .hidden-page {
   display: none !important;
 }
@@ -219,7 +235,7 @@ button,
   border: 0;
   background: transparent;
   color: var(--switch-fg);
-  font: 600 0.72rem/1 Outfit, sans-serif;
+  font: 600 0.72rem/1 Sora, sans-serif;
   letter-spacing: .04em;
   padding: 5px 10px;
   border-radius: 999px;
@@ -231,15 +247,28 @@ button,
   color: var(--on-primary);
 }
 
-.logo-header {
-  font-family: "Outfit", sans-serif;
+.logo-header,
+.footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Sora", sans-serif;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
 }
 
-.logo-header .sail { color: var(--primary-color); }
-.logo-header .lab { color: var(--heading-color); }
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: var(--primary-color);
+}
+
+.logo-header .sail,
+.footer-logo .sail {
+  color: var(--heading-color);
+}
 
 .nav-links {
   display: flex;
@@ -278,11 +307,45 @@ button,
 
 .hamburger {
   display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   background: none;
   border: 0;
   color: var(--heading-color);
-  font-size: 1.4rem;
   cursor: pointer;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.hamburger span {
+  display: block;
+  height: 1.6px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: var(--transition);
+  transform-origin: center;
+}
+
+.hamburger span:nth-child(1) { width: 18px; }
+.hamburger span:nth-child(2) { width: 13px; }
+.hamburger span:nth-child(3) { width: 9px; }
+
+.hamburger[aria-expanded="true"] span:nth-child(1) {
+  width: 18px;
+  transform: translateY(6.6px) rotate(45deg);
+}
+
+.hamburger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+  width: 18px;
+}
+
+.hamburger[aria-expanded="true"] span:nth-child(3) {
+  width: 18px;
+  transform: translateY(-6.6px) rotate(-45deg);
 }
 
 .hero {
@@ -310,7 +373,7 @@ button,
 }
 
 .hero h1 {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-size: clamp(3.2rem, 8vw, 6.4rem);
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -354,17 +417,17 @@ button,
   margin-bottom: 8px;
 }
 
-.pulse-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  box-shadow: 0 0 0 0 var(--primary-glow);
-  animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-  70% { box-shadow: 0 0 0 10px transparent; }
+.status-flag {
+  flex: none;
+  font-family: "Sora", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 42%, transparent);
+  border-radius: 4px;
+  padding: 3px 7px;
 }
 
 .banner-title {
@@ -395,33 +458,36 @@ button,
   filter: brightness(1.08);
 }
 
+.btn-primary .icon {
+  width: 15px;
+  height: 15px;
+}
+
 .scroll-indicator {
   margin-top: 48px;
   color: var(--muted-text);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
-.mouse {
-  width: 22px;
-  height: 34px;
-  border: 2px solid color-mix(in srgb, var(--heading-color) 28%, transparent);
-  border-radius: 12px;
+.scroll-chevron {
+  width: 28px;
+  height: 28px;
   margin: 0 auto 8px;
-  position: relative;
+  color: var(--primary-color);
+  animation: drift 1.6s ease-in-out infinite;
 }
 
-.wheel {
-  width: 3px;
-  height: 8px;
-  background: var(--primary-color);
-  border-radius: 3px;
-  margin: 7px auto 0;
-  animation: wheel 1.4s infinite;
+.scroll-chevron .icon {
+  width: 28px;
+  height: 28px;
+  vertical-align: top;
 }
 
-@keyframes wheel {
-  0% { transform: translateY(0); opacity: 1; }
-  100% { transform: translateY(10px); opacity: 0; }
+@keyframes drift {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(7px); opacity: 1; }
 }
 
 .section {
@@ -441,17 +507,16 @@ button,
 }
 
 .section-title {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-size: 2.2rem;
   font-weight: 700;
 }
 
 .underline {
-  width: 56px;
-  height: 3px;
-  background: var(--primary-color);
-  margin-top: 10px;
-  border-radius: 3px;
+  width: 84px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  margin-top: 12px;
 }
 
 .research-grid,
@@ -483,20 +548,45 @@ button,
 .research-card h3,
 .robot-card h3,
 .lecture-card h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   margin-bottom: 12px;
 }
 
+.research-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.research-index {
+  font-family: "Sora", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted-text);
+}
+
 .research-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  margin-bottom: 16px;
-  background: var(--chip-bg);
   color: var(--primary-color);
-  font-size: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+  background: transparent;
+}
+
+.research-icon .icon {
+  width: 30px;
+  height: 30px;
+  vertical-align: top;
+}
+
+.research-card:hover .research-icon {
+  border-color: var(--primary-color);
+  background: var(--chip-bg);
 }
 
 .research-card ul,
@@ -508,13 +598,23 @@ button,
 
 .research-card li,
 .custom-bullet-list li {
+  position: relative;
   color: var(--muted-text);
   margin: 7px 0;
+  padding-left: 16px;
 }
 
-.research-card li i,
+.research-card li::before,
 .custom-bullet-list li::before {
-  color: var(--primary-color);
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.58em;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--primary-color);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
 }
 
 .overview-copy p {
@@ -528,7 +628,16 @@ button,
 }
 
 .details-list h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.details-list h3 .icon {
+  width: 1.15em;
+  height: 1.15em;
+  color: var(--primary-color);
 }
 
 .disclaimer-box {
@@ -593,7 +702,7 @@ button,
 .bento-badge.completed { background: #94a3b8; color: #0b1220; }
 
 .bento-content h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-size: 1.35rem;
 }
 
@@ -603,9 +712,22 @@ button,
 }
 
 .bento-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 14px;
   color: var(--accent-soft);
   font-size: 0.88rem;
+}
+
+.bento-action .icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.25s ease;
+}
+
+.bento-wrapper.expanded .bento-action .icon {
+  transform: rotate(180deg);
 }
 
 .bento-details {
@@ -645,7 +767,12 @@ button,
     radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--secondary-color) 20%, transparent), transparent 40%),
     var(--photo-to);
   color: var(--secondary-color);
-  font-size: 2rem;
+}
+
+.robot-visual .icon {
+  width: 88px;
+  height: 56px;
+  vertical-align: top;
 }
 
 .profile-wrap {
@@ -662,14 +789,14 @@ button,
   place-items: center;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 16px;
 }
 
 .profile-card h2 {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
 }
 
 .contact-mini {
@@ -686,7 +813,7 @@ button,
 }
 
 .subsection-title {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-size: 1.25rem;
   margin-bottom: 16px;
 }
@@ -753,7 +880,7 @@ button,
   place-items: center;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   font-weight: 700;
 }
 
@@ -830,7 +957,7 @@ button,
 }
 
 .major-block h4 {
-  font-family: "Outfit", sans-serif;
+  font-family: "Sora", sans-serif;
   margin-bottom: 8px;
 }
 
@@ -866,12 +993,14 @@ button,
 }
 
 .footer-logo {
-  font-family: "Outfit", sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
-.footer-logo .sail { color: var(--primary-color); }
+.footer-logo .logo-mark {
+  width: 32px;
+  height: 32px;
+}
 
 .contact-details {
   margin-top: 18px;
@@ -882,8 +1011,19 @@ button,
 }
 
 .contact-details p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 8px 0;
   color: var(--copy-color);
+}
+
+.contact-details .icon {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+  margin-top: 0.28em;
+  color: var(--primary-color);
 }
 
 .contact-details a:hover {
@@ -915,7 +1055,7 @@ button,
 
 @media (max-width: 768px) {
   .chip-btn { padding: 5px 8px; }
-  .hamburger { display: block; }
+  .hamburger { display: flex; }
   .nav-links {
     display: block;
     position: absolute;

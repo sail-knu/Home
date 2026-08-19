@@ -22,7 +22,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap"
         rel="stylesheet">
     <script>
       (function () {
@@ -32,15 +32,93 @@
         document.documentElement.setAttribute("data-theme", t);
       })();
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" class="svg-sprite" aria-hidden="true">
+        <symbol id="i-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3.5 23.2c3.4-2.1 6.8-2.1 10.2 0s6.8 2.1 10.2 0 6.8-2.1 10.2 0"/>
+            <path d="M15 6.8l8.2 14.6H9.6z"/>
+            <path d="M7.4 18.6c3.2-6 8.2-8.8 14.4-8.4"/>
+            <circle cx="15.6" cy="16.2" r="1.35" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-safe" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M36.5 10.5c5.2 6.4 6 16.8 1.2 24.4-3.2 5-8.8 8.2-15.2 8.6"/>
+            <path d="M8 31c6.2-1.4 11.4-6.2 16.8-16.8"/>
+            <circle cx="16.2" cy="28.6" r="2" fill="currentColor" stroke="none"/>
+            <path d="M22 22.5c3.4-2.2 7.6-1.4 10.2 1.6"/>
+        </symbol>
+        <symbol id="i-predict" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 33c6-2 10-9 14-13"/>
+            <path d="M20 20c5-5 10-7 16-6" stroke-dasharray="3 3"/>
+            <ellipse cx="28" cy="20" rx="11" ry="6.5" transform="rotate(-28 28 20)" opacity=".55"/>
+            <circle cx="14" cy="27" r="1.7" fill="currentColor" stroke="none"/>
+            <circle cx="22" cy="19" r="1.4"/>
+            <circle cx="30" cy="15.5" r="1.2"/>
+            <circle cx="38" cy="14.2" r="1"/>
+        </symbol>
+        <symbol id="i-marine" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 34c4.2-2.4 8.4-2.4 12.6 0s8.4 2.4 12.6 0 8.4-2.4 12.6 0"/>
+            <path d="M8 38.5c4.2-2.2 8.4-2.2 12.6 0s8.4 2.2 12.6 0 8.4-2.2 12.6 0"/>
+            <path d="M23 8.5l11 18H14z"/>
+            <path d="M23 8.5v20.5"/>
+            <path d="M12.5 31.5c2.6 2.2 7.4 3.4 10.5 3.4s8-1.2 10.6-3.4"/>
+        </symbol>
+        <symbol id="i-scope" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="16" cy="16" r="10"/>
+            <path d="M16 6v3.2M16 22.8V26M6 16h3.2M22.8 16H26"/>
+            <path d="M16 12.2l2.8 6.4-6.6-2.4z" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-helm" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="16" cy="16" r="4.2"/>
+            <circle cx="16" cy="16" r="9"/>
+            <path d="M16 7v4.8M16 20.2V25M7 16h4.8M20.2 16H25M9.6 9.6l3.4 3.4M19 19l3.4 3.4M22.4 9.6l-3.4 3.4M13 19l-3.4 3.4"/>
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12h13"/>
+            <path d="M12 6l7 6-7 6"/>
+            <path d="M20 5v14" opacity=".45"/>
+        </symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9l6 6 6-6"/>
+        </symbol>
+        <symbol id="i-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="3.1"/>
+            <path d="M5.4 19c1.2-3.4 3.5-5 6.6-5s5.4 1.6 6.6 5"/>
+        </symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.2" y="5.5" width="17.6" height="13" rx="2"/>
+            <path d="M4.4 7.2L12 13l7.6-5.8"/>
+        </symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 4.8h3.2l1.1 3.2-1.8 1.2a10.4 10.4 0 0 0 4.3 4.3l1.2-1.8 3.2 1.1v3.2c0 .9-.7 1.8-1.6 1.9-6.2.7-11.8-4.9-11.1-11.1.1-.9 1-1.6 1.5-1.6z"/>
+        </symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21s-6.2-6.1-6.2-10.2A6.2 6.2 0 0 1 12 4.6a6.2 6.2 0 0 1 6.2 6.2C18.2 14.9 12 21 12 21z"/>
+            <circle cx="12" cy="10.6" r="1.9"/>
+        </symbol>
+        <symbol id="i-asv" viewBox="0 0 64 40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 28c6-3.2 12-3.2 18 0s12 3.2 18 0 12-3.2 18 0"/>
+            <path d="M14 24.5c3 3 10 4.6 18 4.6s15-1.6 18-4.6"/>
+            <path d="M31 6l13 16H20z"/>
+            <path d="M31 6v17"/>
+        </symbol>
+        <symbol id="i-platform" viewBox="0 0 64 40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 30c6-3 12-3 18 0s12 3 18 0 12-3 18 0"/>
+            <rect x="20" y="14" width="24" height="12" rx="2.5"/>
+            <circle cx="26" cy="20" r="2"/>
+            <circle cx="38" cy="20" r="2"/>
+            <path d="M24 14V9h16v5"/>
+        </symbol>
+    </svg>
 
     <nav id="navbar">
         <div class="nav-container">
-            <a href="#home" class="logo-header"><span class="sail">SAIL</span> <span class="lab">Lab</span></a>
+            <a href="#home" class="logo-header">
+                <svg class="logo-mark" aria-hidden="true"><use href="#i-mark"></use></svg>
+                <span class="sail">SAIL</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="#home" class="active">Overview</a></li>
                 <li><a href="#news">News</a></li>
@@ -63,7 +141,7 @@
                 </div>
             </div>
             <button type="button" class="hamburger" aria-label="Open menu" aria-expanded="false">
-                <i class="fas fa-bars"></i>
+                <span></span><span></span><span></span>
             </button>
         </div>
     </nav>
@@ -83,20 +161,22 @@
             <div class="recruitment-banner my-40">
                 <div class="banner-content">
                     <div class="banner-content-header">
-                        <span class="pulse-dot"></span>
+                        <span class="status-flag">Recruiting</span>
                         <h3 class="banner-title" data-i18n="banner_title">학부생 및 대학원생 상시 모집</h3>
                     </div>
                     <p class="banner-desc" data-i18n="banner_desc">
                         SAIL에서 <strong>안전 자율주행·자율운항 연구</strong>를 함께할 열정적인 학생을 찾습니다.
                     </p>
                     <a href="#contact" class="btn btn-primary">
-                        Join SAIL <i class="fas fa-paper-plane ml-5"></i>
+                        Join SAIL <svg class="icon ml-5" aria-hidden="true"><use href="#i-arrow"></use></svg>
                     </a>
                 </div>
             </div>
             <div class="scroll-indicator">
-                <div class="mouse"><div class="wheel"></div></div>
-                <p>Scroll Down</p>
+                <div class="scroll-chevron" aria-hidden="true">
+                    <svg class="icon"><use href="#i-chevron"></use></svg>
+                </div>
+                <p>Explore</p>
             </div>
         </section>
 
@@ -108,33 +188,48 @@
                 </div>
                 <div class="research-grid">
                     <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
-                        <div class="research-icon"><i class="fas fa-shield-halved"></i></div>
+                        <div class="research-top">
+                            <span class="research-index">01</span>
+                            <div class="research-icon">
+                                <svg class="icon" aria-hidden="true"><use href="#i-safe"></use></svg>
+                            </div>
+                        </div>
                         <h3>Safe Control</h3>
                         <ul>
-                            <li><i class="fas fa-check-circle"></i> Control barrier functions</li>
-                            <li><i class="fas fa-check-circle"></i> Reachability analysis</li>
-                            <li><i class="fas fa-check-circle"></i> COLREGs-compliant avoidance</li>
-                            <li><i class="fas fa-check-circle"></i> Safety-critical planning</li>
+                            <li>Control barrier functions</li>
+                            <li>Reachability analysis</li>
+                            <li>COLREGs-compliant avoidance</li>
+                            <li>Safety-critical planning</li>
                         </ul>
                     </div>
                     <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
-                        <div class="research-icon"><i class="fas fa-diagram-project"></i></div>
+                        <div class="research-top">
+                            <span class="research-index">02</span>
+                            <div class="research-icon">
+                                <svg class="icon" aria-hidden="true"><use href="#i-predict"></use></svg>
+                            </div>
+                        </div>
                         <h3>Predictive Control</h3>
                         <ul>
-                            <li><i class="fas fa-check-circle"></i> Model predictive control</li>
-                            <li><i class="fas fa-check-circle"></i> Tube-based robust MPC</li>
-                            <li><i class="fas fa-check-circle"></i> MPPI / sampling-based planning</li>
-                            <li><i class="fas fa-check-circle"></i> Data-driven modeling</li>
+                            <li>Model predictive control</li>
+                            <li>Tube-based robust MPC</li>
+                            <li>MPPI / sampling-based planning</li>
+                            <li>Data-driven modeling</li>
                         </ul>
                     </div>
                     <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
-                        <div class="research-icon"><i class="fas fa-ship"></i></div>
+                        <div class="research-top">
+                            <span class="research-index">03</span>
+                            <div class="research-icon">
+                                <svg class="icon" aria-hidden="true"><use href="#i-marine"></use></svg>
+                            </div>
+                        </div>
                         <h3>Marine &amp; Mobile Autonomy</h3>
                         <ul>
-                            <li><i class="fas fa-check-circle"></i> Autonomous ships &amp; USVs</li>
-                            <li><i class="fas fa-check-circle"></i> Underwater vehicles</li>
-                            <li><i class="fas fa-check-circle"></i> Mobile robots</li>
-                            <li><i class="fas fa-check-circle"></i> Field experiments</li>
+                            <li>Autonomous ships &amp; USVs</li>
+                            <li>Underwater vehicles</li>
+                            <li>Mobile robots</li>
+                            <li>Field experiments</li>
                         </ul>
                     </div>
                 </div>
@@ -148,12 +243,12 @@
                     <div class="underline"></div>
                 </div>
                 <div class="overview-copy" data-i18n="lab_overview">
-                    <p><strong>SAIL</strong>(안전 자율·지능연구실)은 이동로봇·모바일로봇 등 자율이동체가 <strong>안전을 보장하면서</strong> 복잡한 환경에서 움직이도록 만드는 제어·계획 알고리즘을 연구합니다. 이론적으로 안전성을 증명할 수 있는 제어기와, 실제 로봇에서 동작하는 피지컬 AI 시스템을 함께 만듭니다.</p>
-                    <p>핵심 도구는 <strong>모델예측제어(MPC)</strong>, <strong>제어 장벽 함수(CBF)</strong>, <strong>도달가능성 해석(Reachability Analysis)</strong>, 그리고 학습·데이터 기반 모델링입니다. 실내·실외 환경에서의 자율주행, 충돌회피, 피지컬 AI 기반 로봇 제어까지 실험을 통해 검증합니다.</p>
+                    <p><strong>SAIL</strong>(안전 자율·지능연구실)은 이동로봇·모바일로봇 등 자율이동체가 <strong>안전을 보장하면서</strong> 복잡한 환경에서 움직이도록 만드는 제어·계획 알고리즘을 연구합니다. 이론적으로 안전성을 증명할 수 있는 제어기와, 실제 로봇에서 동작하는 시스템을 함께 만듭니다.</p>
+                    <p>핵심 도구는 <strong>모델예측제어(MPC)</strong>, <strong>제어 장벽 함수(CBF)</strong>, <strong>도달가능성 해석(Reachability Analysis)</strong>, 그리고 학습·데이터 기반 모델링입니다. 실내·실외 환경에서의 자율주행, 충돌회피, 로봇 제어까지 실험을 통해 검증합니다.</p>
                 </div>
                 <div class="details-grid">
                     <div class="details-list glass-panel" data-i18n="do_block">
-                        <h3><i class="fas fa-laptop-code"></i> SAIL에서 무엇을 하나요?</h3>
+                        <h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> SAIL에서 무엇을 하나요?</h3>
                         <ul class="custom-bullet-list">
                             <li>안전 궤적 계획 및 제어 알고리즘 설계</li>
                             <li>MPC / CBF / Reachability 기반 충돌회피</li>
@@ -163,7 +258,7 @@
                         </ul>
                     </div>
                     <div class="details-list glass-panel" data-i18n="career_block">
-                        <h3><i class="fas fa-briefcase"></i> 이런 학생을 찾습니다</h3>
+                        <h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> 이런 학생을 찾습니다</h3>
                         <ul class="custom-bullet-list">
                             <li>제어·로봇·자율주행에 관심이 있는 학부생·대학원생</li>
                             <li>수학/동역학 기초를 실제 시스템에 적용하고 싶은 학생</li>
@@ -250,7 +345,7 @@
                             <span class="bento-badge">Core</span>
                             <h3>Safe Trajectory Planning &amp; Control</h3>
                             <p data-i18n="r1_card">CBF·도달가능성 해석 기반 안전 궤적 계획 및 충돌회피</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
@@ -267,7 +362,7 @@
                             <span class="bento-badge">Core</span>
                             <h3>Model Predictive Control</h3>
                             <p data-i18n="r2_card">Tube-MPC, NMPC, L1 적응을 결합한 강건 제어</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
@@ -283,7 +378,7 @@
                             <span class="bento-badge">Core</span>
                             <h3>Autonomous Ships &amp; Field Robotics</h3>
                             <p data-i18n="r3_card">운하·연안 환경에서의 실선 자율운항 실험</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
@@ -299,7 +394,7 @@
                             <span class="bento-badge ongoing">Current Grant</span>
                             <h3>Reachability-based MPPI</h3>
                             <p data-i18n="r4_card">멀티모달 안전 궤적 계획을 위한 도달가능성 분석 기반 MPPI (NRF 2026–2029)</p>
-                            <div class="bento-action"><span class="action-text">View Details</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
                         </div>
                     </div>
                     <div class="bento-details">
@@ -329,12 +424,16 @@
                 <p class="small-text" data-i18n="robots_note">플랫폼 사진과 스펙은 초안에서 자리만 잡아 두었습니다. 기존 사이트 이미지를 넣으면 바로 교체할 수 있습니다.</p>
                 <div class="robot-grid mt-30">
                     <div class="robot-card">
-                        <div class="robot-visual"><i class="fas fa-ship"></i></div>
+                        <div class="robot-visual">
+                            <svg class="icon" aria-hidden="true"><use href="#i-asv"></use></svg>
+                        </div>
                         <h3>Autonomous Surface Vehicle</h3>
                         <p class="small-text">운하·연안 자율운항, 접안, COLREGs 충돌회피 실험 플랫폼</p>
                     </div>
                     <div class="robot-card">
-                        <div class="robot-visual"><i class="fas fa-water"></i></div>
+                        <div class="robot-visual">
+                            <svg class="icon" aria-hidden="true"><use href="#i-platform"></use></svg>
+                        </div>
                         <h3>Marine / Mobile Platforms</h3>
                         <p class="small-text">UUV 지형추종, 모바일 로봇, 멀티에이전트 formation 실험</p>
                     </div>
@@ -665,13 +764,16 @@
                 <div class="underline"></div>
             </div>
             <div class="footer-container">
-                <div class="footer-logo"><span class="sail">SAIL</span> <span class="lab">Lab</span></div>
+                <div class="footer-logo">
+                    <svg class="logo-mark" aria-hidden="true"><use href="#i-mark"></use></svg>
+                    <span class="sail">SAIL</span>
+                </div>
                 <div class="contact-details">
-                    <p><i class="fas fa-user"></i> <strong>Prof. Changyu Lee</strong></p>
-                    <p><i class="fas fa-envelope"></i> <a href="mailto:leeck@kongju.ac.kr"><strong>leeck@kongju.ac.kr</strong></a></p>
-                    <p><i class="fas fa-phone-alt"></i> <a href="tel:+82415219248"><strong>041-521-9248</strong></a></p>
-                    <p><i class="fas fa-map-marker-alt"></i> <strong>Engineering Building #1, 609</strong><br>
-                        1223-24, Cheonan-daero, Seobuk-gu, Cheonan-si, Chungcheongnam-do, Republic of Korea</p>
+                    <p><svg class="icon" aria-hidden="true"><use href="#i-person"></use></svg> <strong>Prof. Changyu Lee</strong></p>
+                    <p><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg> <a href="mailto:leeck@kongju.ac.kr"><strong>leeck@kongju.ac.kr</strong></a></p>
+                    <p><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg> <a href="tel:+82415219248"><strong>041-521-9248</strong></a></p>
+                    <p><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg> <span><strong>Engineering Building #1, 609</strong><br>
+                        1223-24, Cheonan-daero, Seobuk-gu, Cheonan-si, Chungcheongnam-do, Republic of Korea</span></p>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -694,9 +796,9 @@
         "hero_subtitle": `Division of Mechanical and Automotive Engineering, KNU`,
         "banner_title": `Now recruiting undergraduate and graduate students`,
         "banner_desc": `SAIL is looking for motivated students to work on <strong>safe autonomy for ships, marine vehicles, and mobile robots</strong>.`,
-        "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and Physical AI systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and Physical AI–based robot control.</p>`,
-        "do_block": `<h3><i class="fas fa-laptop-code"></i> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Experiments on autonomous ships, USVs, and UUVs</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
-        "career_block": `<h3><i class="fas fa-briefcase"></i> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li><li>Anyone curious about safety problems in ships, marine systems, and mobility</li></ul>`,
+        "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and robot control.</p>`,
+        "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Experiments on autonomous ships, USVs, and UUVs</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
+        "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li><li>Anyone curious about safety problems in ships, marine systems, and mobility</li></ul>`,
         "r1_card": `Safe trajectory planning and collision avoidance with CBFs and reachability`,
         "r2_card": `Robust control that combines tube-MPC, NMPC, and L1 adaptation`,
         "r3_card": `Full-scale autonomous navigation experiments in canals and nearshore waters`,
