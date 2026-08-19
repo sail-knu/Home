@@ -2062,73 +2062,46 @@ a.member-card:hover {
 
   .sail-cursor.is-on { opacity: 1; }
 
-  .sail-cursor-scan,
-  .sail-cursor-robot {
+  .sail-cursor-obstacle {
     position: fixed;
     top: 0;
     left: 0;
-    will-change: transform;
-  }
-
-  .sail-cursor-scan {
-    width: 48px;
-    height: 48px;
-    margin: -24px 0 0 -24px;
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
     border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+    border: 2px dashed color-mix(in srgb, var(--primary-color) 70%, transparent);
     background:
-      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary-color) 18%, transparent) 0 34%, transparent 70%);
-    transition: width 0.22s ease, height 0.22s ease, margin 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+      radial-gradient(circle at 50% 50%,
+        color-mix(in srgb, var(--primary-color) 42%, transparent) 0 38%,
+        color-mix(in srgb, var(--primary-color) 16%, transparent) 62%,
+        transparent 74%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 18%, transparent);
+    will-change: transform;
+    transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, background 0.2s ease;
   }
 
-  .sail-cursor-robot {
-    width: 42px;
-    height: 32px;
-    margin: -16px 0 0 -21px;
-    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--primary-color) 40%, transparent));
+  .sail-cursor-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: var(--primary-color);
   }
 
-  .sail-cursor-robot svg {
-    display: block;
-    width: 100%;
-    height: 100%;
+  .sail-cursor.is-hover .sail-cursor-obstacle {
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
   }
 
-  .sail-cursor-robot .robot-body { fill: var(--primary-color); }
-  .sail-cursor-robot .robot-wheel { fill: #1a2330; }
-  .sail-cursor-robot .robot-lidar {
-    fill: color-mix(in srgb, var(--primary-color) 35%, #ffffff);
-    stroke: var(--on-primary);
-    stroke-width: 1.2;
-  }
-  .sail-cursor-robot .robot-lidar-core { fill: var(--on-primary); }
-  .sail-cursor-robot .robot-nose { fill: var(--secondary-color); }
-
-  .sail-cursor.is-hover .sail-cursor-scan {
-    width: 58px;
-    height: 58px;
-    margin: -29px 0 0 -29px;
-    border-color: color-mix(in srgb, var(--primary-color) 55%, transparent);
-    background:
-      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary-color) 22%, transparent) 0 34%, transparent 70%);
-  }
-
-  .sail-cursor.is-hover .sail-cursor-robot {
-    width: 48px;
-    height: 36px;
-    margin: -18px 0 0 -24px;
-  }
-
-  .sail-cursor.is-down .sail-cursor-scan {
-    width: 40px;
-    height: 40px;
-    margin: -20px 0 0 -20px;
-  }
-
-  .sail-cursor.is-down .sail-cursor-robot {
+  .sail-cursor.is-down .sail-cursor-obstacle {
     width: 36px;
-    height: 28px;
-    margin: -14px 0 0 -18px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
   }
 }
 

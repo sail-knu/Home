@@ -696,30 +696,16 @@
     root.className = "sail-cursor";
     root.setAttribute("aria-hidden", "true");
     root.innerHTML =
-      '<div class="sail-cursor-scan"></div>' +
-      '<div class="sail-cursor-robot">' +
-        '<svg viewBox="0 0 48 36" fill="none">' +
-          '<rect class="robot-wheel" x="10" y="1" width="18" height="6" rx="2"/>' +
-          '<rect class="robot-wheel" x="10" y="29" width="18" height="6" rx="2"/>' +
-          '<rect class="robot-body" x="8" y="7" width="28" height="22" rx="5"/>' +
-          '<circle class="robot-lidar" cx="28" cy="18" r="5"/>' +
-          '<circle class="robot-lidar-core" cx="28" cy="18" r="2"/>' +
-          '<path class="robot-nose" d="M36 12v12l8-6z"/>' +
-        '</svg>' +
+      '<div class="sail-cursor-obstacle">' +
+        '<div class="sail-cursor-core"></div>' +
       '</div>';
     document.body.appendChild(root);
     document.documentElement.classList.add("has-sail-cursor");
 
-    const scan = root.querySelector(".sail-cursor-scan");
-    const robot = root.querySelector(".sail-cursor-robot");
+    const obstacle = root.querySelector(".sail-cursor-obstacle");
     const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
-    let rx = x;
-    let ry = y;
-    let heading = 0;
-    let prevX = x;
-    let prevY = y;
 
     window.addEventListener("mousemove", (e) => {
       x = e.clientX;
@@ -735,15 +721,7 @@
     document.addEventListener("mouseenter", () => root.classList.add("is-on"));
 
     function tick() {
-      const dx = x - prevX;
-      const dy = y - prevY;
-      if (dx * dx + dy * dy > 0.35) heading = Math.atan2(dy, dx);
-      prevX = x;
-      prevY = y;
-      rx += (x - rx) * 0.18;
-      ry += (y - ry) * 0.18;
-      robot.style.transform = "translate3d(" + x + "px," + y + "px,0) rotate(" + heading + "rad)";
-      scan.style.transform = "translate3d(" + rx + "px," + ry + "px,0)";
+      obstacle.style.transform = "translate3d(" + x + "px," + y + "px,0)";
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
