@@ -732,7 +732,8 @@ html[data-lang="ko"] .univ-lockup {
   background: var(--primary-color);
 }
 
-.bento-grid:has(.bento-wrapper.expanded) .bento-wrapper:not(.expanded) .bento-item {
+.bento-grid:has(.bento-wrapper.expanded) .bento-wrapper:not(.expanded):not(:hover) .bento-item,
+.bento-grid:has(.bento-item:hover:not(.project-card)) .bento-wrapper:not(:hover):not(.expanded) .bento-item {
   opacity: 0.38;
 }
 
