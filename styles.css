@@ -407,12 +407,13 @@ button,
   border: 1px solid var(--surface-border);
   border-radius: 18px;
   padding: 28px 30px;
-  text-align: left;
+  text-align: center;
 }
 
 .banner-content-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   margin-bottom: 8px;
 }
