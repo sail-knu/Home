@@ -215,13 +215,6 @@ button,
   font-size: 1.15rem;
 }
 
-.nav-sail {
-  display: block;
-  height: 24px;
-  width: auto;
-  object-fit: contain;
-}
-
 .logo-mark {
   display: block;
   width: 20px;
@@ -1399,7 +1392,6 @@ a.member-card:hover {
   .hero h2 { font-size: 1.05rem; }
   .logo-header { font-size: 1.05rem; }
   .logo-mark { width: 18px; height: 18px; }
-  .nav-sail { height: 22px; }
   .section { padding: 72px 0 56px; }
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }
