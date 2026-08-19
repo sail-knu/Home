@@ -1188,7 +1188,7 @@ a.member-card:hover {
 }
 
 .course-wrap-wide {
-  max-width: 960px;
+  max-width: 1120px;
 }
 
 .sim-lec-nav {
@@ -1269,6 +1269,61 @@ a.member-card:hover {
   background: var(--surface);
 }
 
+.demo-app {
+  margin-top: 8px;
+}
+
+.demo-app .demo-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-app .stage-canvas {
+  position: relative;
+}
+
+.demo-app .demo-toolbar {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+}
+
+.demo-app .demo-toolbar button {
+  min-height: 46px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .demo-app .demo-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .demo-app .demo-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    display: flex;
+    width: auto;
+    grid-template-columns: none;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--rule, var(--surface-border));
+    border-radius: 12px;
+    background: color-mix(in srgb, #fff 92%, transparent);
+    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
+  }
+  .demo-app .demo-toolbar button {
+    min-height: 36px;
+    min-width: 88px;
+    width: auto;
+    padding: 7px 14px;
+    font-size: 14px;
+  }
+}
+
 .demo-pid {
   --demo-line: var(--surface-border);
   --demo-ink: var(--copy-color);
@@ -1321,6 +1376,12 @@ a.member-card:hover {
   padding: 14px 16px 16px;
 }
 
+.demo-pid .demo-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .demo-pid .stagewrap {
   position: sticky;
   top: 72px;
@@ -1334,7 +1395,11 @@ a.member-card:hover {
   margin-bottom: 0;
 }
 
-.demo-pid #stage {
+.demo-pid .stage-canvas {
+  position: relative;
+}
+
+.demo-pid #pid-stage {
   width: 100%;
   height: 240px;
   display: block;
@@ -1439,7 +1504,7 @@ a.member-card:hover {
   font-family: var(--demo-mono);
 }
 
-.demo-pid #btnPos.on {
+.demo-pid #pid-btnPos.on {
   background: var(--demo-ok);
   border-color: var(--demo-ok);
   color: #fff;
@@ -1551,7 +1616,7 @@ a.member-card:hover {
   line-height: 1.5;
 }
 
-.demo-pid #chart {
+.demo-pid #pid-chart {
   width: 100%;
   height: 200px;
   display: block;
@@ -1596,17 +1661,61 @@ a.member-card:hover {
   font-family: var(--demo-mono);
 }
 
-.demo-pid .dock {
+.demo-pid .demo-toolbar {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 10px;
-  margin: 4px 0 8px;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--demo-line);
+  background: var(--surface);
 }
 
-.demo-pid .dock button {
-  min-height: 48px;
-  font-size: 1rem;
-  border-radius: 12px;
+.demo-pid .demo-toolbar button {
+  min-height: 46px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 0.92rem;
+  border-radius: 10px;
+}
+
+@media (min-width: 900px) {
+  .demo-pid .demo-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .demo-pid .stagewrap {
+    position: static;
+    margin-bottom: 10px;
+    padding-bottom: 0;
+    background: transparent;
+  }
+  .demo-pid #pid-stage {
+    height: 320px;
+  }
+  .demo-pid .demo-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    width: auto;
+    grid-template-columns: none;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--demo-line);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
+  }
+  .demo-pid .demo-toolbar button {
+    min-height: 36px;
+    min-width: 88px;
+    width: auto;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    box-shadow: none;
+  }
 }
 
 .gallery-grid {

@@ -169,6 +169,41 @@
     });
   });
 
+  const futureEmbeds = {
+    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html", js: "lecture/future-tech/path_embed.js", refresh: "refresh_path_demo" },
+    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html", js: "lecture/future-tech/los_embed.js", refresh: "refresh_los_demo" },
+    "sim-mppi": { host: "mppi-host", html: "lecture/future-tech/mppi_embed.html", js: "lecture/future-tech/mppi_embed.js", refresh: "refresh_mppi_demo" }
+  };
+  const futureLoaded = {};
+
+  function loadFutureEmbed(id) {
+    const spec = futureEmbeds[id];
+    if (!spec) return;
+    const host = document.getElementById(spec.host);
+    if (!host) return;
+    if (futureLoaded[id]) {
+      if (typeof window[spec.refresh] === "function") window[spec.refresh]();
+      return;
+    }
+    futureLoaded[id] = true;
+    fetch(spec.html).then((res) => res.text()).then((html) => {
+      host.innerHTML = html;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = spec.js;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    }).then(() => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (typeof window[spec.refresh] === "function") window[spec.refresh]();
+      }));
+    }).catch(() => {
+      futureLoaded[id] = false;
+    });
+  }
+
   function showSim(id) {
     const panel = document.getElementById(id);
     if (!panel) return;
@@ -186,6 +221,7 @@
     if (id === "sim-pid" && typeof window.refreshPidDemo === "function") {
       requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
     }
+    if (futureEmbeds[id]) loadFutureEmbed(id);
   }
 
   document.querySelectorAll(".sim-nav-btn").forEach((btn) => {

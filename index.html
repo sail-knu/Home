@@ -1157,53 +1157,69 @@
                 <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 외란 밀기, 위치 제어</p>
                 <div class="demo-pid" id="demo-pid">
                     <p class="tip"><b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요. 화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다. 아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다.</p>
-                    <div class="stagewrap" id="stageWrap">
+                    <div class="demo-layout">
+                    <div class="demo-stage-col">
+                    <div class="stagewrap" id="pid-stageWrap">
                         <div class="card">
-                            <canvas id="stage"></canvas>
-                            <div class="robar" id="roBar">
-                                <div class="readout">
-                                    <div class="cell c-t"><span class="k">t</span><span class="val" id="rT">0.00</span><span class="u">s</span></div>
-                                    <div class="cell c-th"><span class="k">θ</span><span class="val" id="rTh">0.350</span><span class="sub" id="rThDeg">20.1°</span></div>
-                                    <div class="cell c-x"><span class="k">x</span><span class="val" id="rX">0.000</span><span class="u">m</span></div>
-                                    <div class="cell c-f"><span class="k">F</span><span class="val" id="rF">0.00</span><span class="u">N</span></div>
+                            <div class="stage-canvas">
+                                <canvas id="pid-stage"></canvas>
+                                <div class="demo-toolbar">
+                                    <button type="button" id="pid-btnRun" class="primary">시작</button>
+                                    <button type="button" id="pid-btnReset">초기화</button>
                                 </div>
-                                <div class="fbar"><u></u><i id="fBar"></i></div>
+                            </div>
+                            <div class="robar" id="pid-roBar">
+                                <div class="readout">
+                                    <div class="cell c-t"><span class="k">t</span><span class="val" id="pid-rT">0.00</span><span class="u">s</span></div>
+                                    <div class="cell c-th"><span class="k">θ</span><span class="val" id="pid-rTh">0.350</span><span class="sub" id="pid-rThDeg">20.1°</span></div>
+                                    <div class="cell c-x"><span class="k">x</span><span class="val" id="pid-rX">0.000</span><span class="u">m</span></div>
+                                    <div class="cell c-f"><span class="k">F</span><span class="val" id="pid-rF">0.00</span><span class="u">N</span></div>
+                                </div>
+                                <div class="fbar"><u></u><i id="pid-fBar"></i></div>
                             </div>
                         </div>
                     </div>
+                    <div class="card" id="pid-chartCard">
+                        <h2>응답 그래프 (최근 30초)</h2>
+                        <div class="legend" id="pid-legend"></div>
+                        <canvas id="pid-chart"></canvas>
+                        <div class="chartfoot" id="pid-chartInfo">–</div>
+                    </div>
+                    </div>
+                    <div class="demo-ctrl-col">
                     <div class="card">
                         <h2>PID 게인 (실행 중에도 조절 가능)</h2>
                         <div class="body">
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="vPt">100</span></div>
-                                <input type="range" id="kPt" min="0" max="300" step="1" value="100">
+                                <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="pid-vPt">100</span></div>
+                                <input type="range" id="pid-kPt" min="0" max="300" step="1" value="100">
                             </div>
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">k<sub>I</sub></span><span class="sl-desc">적분 — 남은 오차 제거</span><span class="sl-val" id="vIt">0</span></div>
-                                <input type="range" id="kIt" min="0" max="150" step="1" value="0">
+                                <div class="sl-top"><span class="sl-name">k<sub>I</sub></span><span class="sl-desc">적분 — 남은 오차 제거</span><span class="sl-val" id="pid-vIt">0</span></div>
+                                <input type="range" id="pid-kIt" min="0" max="150" step="1" value="0">
                             </div>
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="vDt">20</span></div>
-                                <input type="range" id="kDt" min="0" max="100" step="0.5" value="20">
+                                <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="pid-vDt">20</span></div>
+                                <input type="range" id="pid-kDt" min="0" max="100" step="0.5" value="20">
                             </div>
-                            <div class="note" id="hint"></div>
+                            <div class="note" id="pid-hint"></div>
                             <p class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω &nbsp;(각도만 제어하면 진자는 서지만 카트는 멈추지 않고 계속 흘러갑니다 — 아래 <b>위치 제어</b>를 켜 보세요)</p>
                         </div>
                     </div>
                     <div class="card">
                         <h2>위치 제어 (카트를 x = 0으로 되돌리기)</h2>
                         <div class="body">
-                            <button type="button" id="btnPos" style="width:100%" aria-controls="posBody" aria-expanded="false">위치 제어 켜기</button>
-                            <div id="posBody" hidden>
+                            <button type="button" id="pid-btnPos" aria-controls="pid-posBody" aria-expanded="false">위치 제어 켜기</button>
+                            <div id="pid-posBody" hidden>
                                 <div class="sl" style="margin-top:10px">
-                                    <div class="sl-top"><span class="sl-name">k<sub>Px</sub></span><span class="sl-desc">위치 — x = 0으로 되돌림</span><span class="sl-val" id="vPx">2.0</span></div>
-                                    <input type="range" id="kPx" min="0" max="10" step="0.1" value="2">
+                                    <div class="sl-top"><span class="sl-name">k<sub>Px</sub></span><span class="sl-desc">위치 — x = 0으로 되돌림</span><span class="sl-val" id="pid-vPx">2.0</span></div>
+                                    <input type="range" id="pid-kPx" min="0" max="10" step="0.1" value="2">
                                 </div>
                                 <div class="sl">
-                                    <div class="sl-top"><span class="sl-name">k<sub>Dx</sub></span><span class="sl-desc">속도 — 카트 속도 감쇠</span><span class="sl-val" id="vDx">4.0</span></div>
-                                    <input type="range" id="kDx" min="0" max="15" step="0.1" value="4">
+                                    <div class="sl-top"><span class="sl-name">k<sub>Dx</sub></span><span class="sl-desc">속도 — 카트 속도 감쇠</span><span class="sl-val" id="pid-vDx">4.0</span></div>
+                                    <input type="range" id="pid-kDx" min="0" max="15" step="0.1" value="4">
                                 </div>
-                                <div class="note" id="posNote"></div>
+                                <div class="note" id="pid-posNote"></div>
                                 <p class="hintline">위치항은 F에 <b>+ k<sub>Px</sub>·x + k<sub>Dx</sub>·v</b> 로 <b>더해집니다</b>(부호가 +). 카트가 오른쪽(x&gt;0)에 있으면 힘을 오히려 오른쪽으로 줘서 진자를 왼쪽으로 살짝 기울이고, 각도 루프가 진자를 세우는 과정에서 카트가 왼쪽(목표 쪽)으로 끌려갑니다.</p>
                             </div>
                         </div>
@@ -1212,42 +1228,34 @@
                         <h2>초기 각도 · 외란</h2>
                         <div class="body">
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">θ₀</span><span class="sl-desc">시작할 때 기운 정도</span><span class="sl-val" id="vTh">0.35</span></div>
-                                <input type="range" id="sth" min="-0.60" max="0.60" step="0.01" value="0.35">
+                                <div class="sl-top"><span class="sl-name">θ₀</span><span class="sl-desc">시작할 때 기운 정도</span><span class="sl-val" id="pid-vTh">0.35</span></div>
+                                <input type="range" id="pid-sth" min="-0.60" max="0.60" step="0.01" value="0.35">
                             </div>
                             <div class="grid2" style="margin-top:8px">
-                                <button type="button" class="purple" id="btnPushL">← 밀기</button>
-                                <button type="button" class="purple" id="btnPushR">밀기 →</button>
+                                <button type="button" class="purple" id="pid-btnPushL">← 밀기</button>
+                                <button type="button" class="purple" id="pid-btnPushR">밀기 →</button>
                             </div>
                             <p class="hintline">밀기 버튼은 짧은 충격(25 N × 0.1 s), 화면을 길게 누르면 누르는 동안 계속 힘이 가해집니다.</p>
                         </div>
                     </div>
-                    <div class="card" id="chartCard">
-                        <h2>응답 그래프 (최근 30초)</h2>
-                        <div class="legend" id="legend"></div>
-                        <canvas id="chart"></canvas>
-                        <div class="chartfoot" id="chartInfo">–</div>
                     </div>
-                    <div class="dock">
-                        <button type="button" id="btnRun" class="primary">시뮬레이션 시작</button>
-                        <button type="button" id="btnReset">초기화</button>
                     </div>
                 </div>
             </article>
             <article class="sim-block is-hidden" id="sim-path">
                 <h3 class="subsection-title">직선 경로 추종 제어기</h3>
                 <p class="small-text">횡방향 오차 · 방위 오차 피드백으로 배를 직선 경로에 붙이기</p>
-                <iframe class="course-frame" data-src="lecture/future-tech/Straight_Path_Following_Controller_Mobile.html" title="직선 경로 추종 제어기" allow="accelerometer"></iframe>
+                <div id="path-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-los">
                 <h3 class="subsection-title">LOS 유도 — 웨이포인트 추종</h3>
                 <p class="small-text">전방주시거리 Δ 튜닝, 웨이포인트 편집, 유도 법칙 비교</p>
-                <iframe class="course-frame" data-src="lecture/future-tech/LOS_Guidance_Simulator_Mobile.html" title="LOS 유도 웨이포인트 추종" allow="accelerometer"></iframe>
+                <div id="los-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-mppi">
                 <h3 class="subsection-title">MPPI 선박 충돌 회피</h3>
                 <p class="small-text">샘플링 기반 모델 예측 제어로 장애물 피해 가기</p>
-                <iframe class="course-frame" data-src="lecture/future-tech/MPPI_Ship_Collision_Avoidance_Mobile.html" title="MPPI 선박 충돌 회피" allow="accelerometer"></iframe>
+                <div id="mppi-host"></div>
             </article>
         </div>
     </section>

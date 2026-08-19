@@ -1,0 +1,985 @@
+(function () {
+'use strict';
+function demoVisible() {
+  var page = document.getElementById('lecture-future');
+  var block = document.getElementById('sim-path');
+  return !!(page && block && !page.classList.contains('hidden-page') && !block.classList.contains('is-hidden'));
+}
+window.refresh_path_demo = function () {
+  if (typeof resize === 'function' && demoVisible()) resize();
+};
+
+/* =========================================================================
+   직선 경로 추종(Straight-Path Following) 제어기 설계 실습기 — 모바일 판
+   -------------------------------------------------------------------------
+   원본: Straight_Path_Following_Controller.html
+   운동 모델·제어 법칙·적분기·시간 스텝은 원본과 동일(수식 무변경).
+   구조는 병렬 합산(Parallel)으로 고정하고, 레이아웃/입력 UI/표시 항목만
+   세로 모드 한 손 조작에 맞게 재구성했다.
+   ref) T.I.Fossen, Marine Craft Hydrodynamics and Motion Control, Ch.10
+   ========================================================================= */
+
+/* ---------- 수학 유틸 (원본 그대로) ---------- */
+const PI=Math.PI, D2R=PI/180, R2D=180/PI, hypot=Math.hypot;
+const wrap  = a => Math.atan2(Math.sin(a), Math.cos(a));
+const clamp = (v,a,b) => v<a?a:(v>b?b:v);
+let _g2=null;
+function gauss(){                                    // Box–Muller
+  if(_g2!==null){ const g=_g2; _g2=null; return g; }
+  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  const r=Math.sqrt(-2*Math.log(u)), t=2*PI*v;
+  _g2=r*Math.sin(t); return r*Math.cos(t);
+}
+
+/* ---------- 파라미터 (원본과 동일한 키 · 모바일에서 노출되는 것만 슬라이더) ---------- */
+const P={
+  /* 시뮬레이션 */
+  speedMul:1, dt:0.01,
+  /* 제어 구조 · 피드백 항 선택(복수 선택) */
+  struct:'par',            // 모바일 판은 병렬 합산 고정
+  useCTE:false, useHead:true,      // 초기에는 방위 오차만 잡는다
+
+  /* 횡방향 오차 루프 PID */
+  kpe:0.40, kie:0.00, kde:0.00, iLimE:6.0,
+  /* 방위 오차 루프 PID */
+  kph:1.40, kih:0.00, kdh:0.00, iLimH:1.5,
+  /* 종속 LOS 외루프(모바일 미노출 · 해석식 호환용) */
+  delta:3.0, kappa:0.0,
+  /* 공통 제어 */
+  wmax:90, tau:0.15, dfc:0.08, awu:true,
+  /* 차량 */
+  vmax:1.5, slow:true,
+  /* 경로 · 초기조건 */
+  alpha:12, plen:30, e0:1.5, psi0:0,
+  /* 센서 잡음 */
+  noiseP:0.0, noiseA:0.0,
+  /* 판정 */
+  tol:0.15,
+  /* 표시(모바일은 고정) */
+  showGrid:true, showTrail:true, showAid:true, showRec:true, recFull:true
+};
+
+/* ---------- 상태 (원본 그대로) ---------- */
+const S={
+  mid:{x:16,y:10},
+  x:0, y:0, yaw:0, v:0, omega:0,
+  t:0, done:false, running:false, first:true,
+  ie:0, ih:0, eDot:0, ehDot:0, ePrev:0, ehPrev:0, yint:0,
+  uc:0, uh:0, wcmd:0, chid:0, e:0, eh:0, s:0,
+  trail:[], hist:[],
+  sumE2:0, nE:0, maxE:0, eMinS:0, eMaxS:0, tViol:0, dist:0
+};
+
+/* ---------- 뷰(월드↔스크린) — CSS 픽셀 기준 + auto-fit 오프셋 ---------- */
+const view={W:0,H:0,scale:12,ox:0,oy:0,cx:16,cy:10,dpr:1};
+const w2sx = x => (x-view.ox)*view.scale;
+const w2sy = y => view.H-(y-view.oy)*view.scale;
+const s2wx = px => px/view.scale+view.ox;
+const s2wy = py => (view.H-py)/view.scale+view.oy;
+
+let acc=0, last=0, drag=null;
+
+/* =========================================================================
+   1. 직선 경로 기하 (원본 그대로)
+     α : 경로 방위각,  s : along-track,  e : cross-track (좌현 +)
+   ========================================================================= */
+const pathDir = () => { const a=P.alpha*D2R; return {a, ca:Math.cos(a), sa:Math.sin(a)}; };
+function pathA(){ const {ca,sa}=pathDir(); return {x:S.mid.x-P.plen/2*ca, y:S.mid.y-P.plen/2*sa}; }
+function pathB(){ const {ca,sa}=pathDir(); return {x:S.mid.x+P.plen/2*ca, y:S.mid.y+P.plen/2*sa}; }
+function pathErr(x,y){
+  const {a,ca,sa}=pathDir(), A=pathA(), dx=x-A.x, dy=y-A.y;
+  return { a, ca, sa, A, s: dx*ca+dy*sa, e: -dx*sa+dy*ca };
+}
+
+/* =========================================================================
+   3. 제어기 — 한 스텝 (원본 그대로)
+     [병렬 합산]  ω_cmd = u_CTE + u_ψ
+        u_CTE = −( K_p,e·e + K_i,e·∫e dt + K_d,e·ė )     ← CTE 항 선택 시
+        u_ψ   = + K_p,ψ·ψ̃ + K_i,ψ·∫ψ̃ dt + K_d,ψ·ψ̃̇       ← 방위 항 선택 시
+        ψ̃ = wrap(α − ψ)
+   ========================================================================= */
+function controller(e, myaw, dt){
+  const a=P.alpha*D2R;
+  let eh, chid=a, uc=0, uh=0;
+
+  /* ---- 외루프: 목표 침로 산출(종속 구조) ---- */
+  if(P.struct==='cas'){
+    if(P.useCTE){
+      const eEff=e+P.kappa*S.yint;
+      chid=a+Math.atan2(-eEff, Math.max(P.delta,0.05));
+      if(P.kappa>0){
+        const D=Math.max(P.delta,0.05);
+        S.yint += dt*(D*e)/(D*D+eEff*eEff);            // ILOS anti-windup 적분
+      }
+    }
+    eh=wrap(chid-myaw);
+  }else{
+    eh=wrap(a-myaw);
+  }
+
+  /* ---- 미분항: 1차 저역통과(잡음 증폭 억제) ---- */
+  if(S.first){ S.ePrev=e; S.ehPrev=eh; S.eDot=0; S.ehDot=0; S.first=false; }
+  else{
+    const dE =(e -S.ePrev )/dt, dH=wrap(eh-S.ehPrev)/dt;
+    const k=dt/(dt+Math.max(P.dfc,1e-3));
+    S.eDot  += (dE-S.eDot )*k;
+    S.ehDot += (dH-S.ehDot)*k;
+  }
+  S.ePrev=e; S.ehPrev=eh;
+
+  /* ---- PID 합성(적분기 갱신 전 시험 계산 → 조건부 적분) ---- */
+  const wmaxR=P.wmax*D2R;
+  const calc=()=>{
+    let a1=0,a2=0;
+    if(P.struct!=='cas' && P.useCTE) a1=-(P.kpe*e + P.kie*S.ie + P.kde*S.eDot);
+    if(P.useHead)                    a2= (P.kph*eh+ P.kih*S.ih + P.kdh*S.ehDot);
+    return [a1,a2];
+  };
+  let [c0,h0]=calc();
+  const satur = Math.abs(c0+h0) > wmaxR;
+  if(!(P.awu && satur)){
+    if(P.struct!=='cas' && P.useCTE) S.ie=clamp(S.ie+e *dt, -P.iLimE, P.iLimE);
+    if(P.useHead)                    S.ih=clamp(S.ih+eh*dt, -P.iLimH, P.iLimH);
+  }
+  [uc,uh]=calc();
+
+  const wcmd=clamp(uc+uh, -wmaxR, wmaxR);
+  return {uc, uh, wcmd, eh, chid, sat:satur};
+}
+
+/* =========================================================================
+   4. 한 스텝 (측정 → 제어 → 차량 모델 → 지표) — 원본 그대로
+   ========================================================================= */
+function step(dt){
+  if(S.done) return;
+
+  /* (0) 센서 측정 — 잡음 주입(제어기는 '측정값'만 본다) */
+  const mx  = S.x   + P.noiseP*gauss();
+  const my  = S.y   + P.noiseP*gauss();
+  const myaw= S.yaw + P.noiseA*D2R*gauss();
+  const mErr= pathErr(mx,my);
+
+  /* (1) 제어기 */
+  const u = controller(mErr.e, myaw, dt);
+  S.uc=u.uc; S.uh=u.uh; S.wcmd=u.wcmd; S.chid=u.chid; S.eh=u.eh;
+
+  /* (2) 속도 지령 — 방위 오차가 크면 감속 */
+  let vCmd=P.vmax;
+  if(P.slow) vCmd*=Math.max(0.15, Math.cos(u.eh));
+
+  /* (3) 1차 액추에이터 지연 */
+  const k=1-Math.exp(-dt/Math.max(P.tau,1e-3));
+  S.omega += (u.wcmd-S.omega)*k;
+  S.v     += (vCmd  -S.v    )*k;
+
+  /* (4) 유니사이클 운동학 */
+  S.x  += S.v*Math.cos(S.yaw)*dt;
+  S.y  += S.v*Math.sin(S.yaw)*dt;
+  S.yaw = wrap(S.yaw + S.omega*dt);
+  S.t  += dt;
+  S.dist += Math.abs(S.v)*dt;
+
+  /* (5) 참값 기준 지표 */
+  const tr=pathErr(S.x,S.y); S.e=tr.e; S.s=tr.s;
+  const ae=Math.abs(tr.e);
+  S.sumE2+=tr.e*tr.e; S.nE++;
+  if(ae>S.maxE) S.maxE=ae;
+  if(tr.e<S.eMinS) S.eMinS=tr.e;
+  if(tr.e>S.eMaxS) S.eMaxS=tr.e;
+  if(ae>P.tol) S.tViol=S.t;                       // 마지막으로 허용대를 벗어난 시각
+
+  /* (6) 기록 */
+  const tl=S.trail[S.trail.length-1];
+  if(!tl || hypot(S.x-tl.x,S.y-tl.y)>0.05) S.trail.push({x:S.x,y:S.y});
+  if(S.trail.length>9000) S.trail.shift();
+  S.hist.push({t:S.t, e:tr.e, ep:u.eh*R2D, chi:wrap(u.chid-P.alpha*D2R)*R2D,
+               uc:u.uc*R2D, uh:u.uh*R2D, w:S.omega*R2D, v:S.v});
+  if(S.hist.length>40000) S.hist.shift();
+
+  /* (7) 완주 판정 */
+  if(tr.s>=P.plen){ S.done=true; S.running=false; syncStatus(); }
+}
+
+/* =========================================================================
+   5. 리셋 (원본 그대로)
+   ========================================================================= */
+function reset(keepPose){
+  S.running=false; acc=0; drag=null;
+  S.t=0; S.done=false; S.first=true;
+  S.ie=0; S.ih=0; S.eDot=0; S.ehDot=0; S.yint=0;
+  S.v=0; S.omega=0; S.uc=0; S.uh=0; S.wcmd=0;
+  S.trail=[]; S.hist=[];
+  S.sumE2=0; S.nE=0; S.maxE=0; S.eMinS=0; S.eMaxS=0; S.tViol=0; S.dist=0;
+  if(!keepPose){
+    const {a,ca,sa}=pathDir(), A=pathA();
+    S.x=A.x - P.e0*sa;                 // along-track 0 지점에서 e₀ 만큼 옆으로
+    S.y=A.y + P.e0*ca;
+    S.yaw=wrap(a + P.psi0*D2R);
+  }
+  /* 첫 스텝 전에도 화면이 올바르게 보이도록 오차·목표 침로를 미리 산출 */
+  const tr=pathErr(S.x,S.y); S.e=tr.e; S.s=tr.s;
+  const a=P.alpha*D2R;
+  S.chid = (P.struct==='cas' && P.useCTE)
+         ? a+Math.atan2(-tr.e, Math.max(P.delta,0.05)) : a;
+  S.eh   = wrap(S.chid - S.yaw);
+  S.uc=0; S.uh=0; S.wcmd=0;
+  S.trail.push({x:S.x,y:S.y});
+  syncStatus();
+}
+
+/* =========================================================================
+   6. 렌더링 — DPR 대응 · 좁은 화면 auto-fit
+   ========================================================================= */
+const cv=document.getElementById('path-cv'), ctx=cv.getContext('2d');
+const rc=document.getElementById('path-rec'), rctx=rc.getContext('2d');
+let recW=0, recH=0;
+let C={};
+function demoRoot(){ return document.getElementById('demo-path') || document.documentElement; }
+function readTheme(){
+  const cs=getComputedStyle(demoRoot()), g=n=>cs.getPropertyValue(n).trim();
+  C={ bg:g('--ink')||'#e7eef2', bg2:g('--ink-2')||'#ffffff', grid:g('--grid')||'#dae7ee', gridM:g('--grid-major')||'#bed4e0',
+      fg:g('--text')||'#0b2130', fg2:g('--text-2')||'#42606f', fg3:g('--text-3')||'#6b8798', rule:g('--rule')||'#cfdde5',
+      track:g('--track')||'#0369a1', mark:g('--mark')||'#b45309', markH:g('--mark-hot')||'#92400e', hull:g('--hull')||'#15803d',
+      devi:g('--devi')||'#be123c', sight:g('--sight')||'#4d7c0f', course:g('--course')||'#6d28d9',
+      accent:g('--accent')||'#0c7a73' };
+}
+/* 고정 무대 높이 예산 — MPPI 판과 동일: 무대(캔버스+핵심 수치) ≤ 뷰포트의 45% */
+const STAGE_BUDGET=0.45;
+function fitStage(){
+  const vh=window.innerHeight||640;
+  const st=document.getElementById('path-stage');
+  let chrome=44;                                  // 레이아웃 확정 전 폴백
+  const c=st.offsetHeight-cv.parentElement.offsetHeight;   // 무대 − 캔버스 = 핵심 수치 높이
+  if(c>20 && c<260) chrome=c;
+  const wide=window.matchMedia('(min-width:900px)').matches;
+  const h=wide
+    ? Math.round(Math.max(280, Math.min(400, vh*0.40-chrome)))
+    : Math.round(Math.max(150, Math.min(360, vh*STAGE_BUDGET-chrome)));
+  const root=demoRoot();
+  if(root.style.getPropertyValue('--chartH')!==h+'px') root.style.setProperty('--chartH', h+'px');
+}
+/** 캔버스 2장 모두 devicePixelRatio 대응. 그리기는 CSS 픽셀 좌표계. */
+function resize(){
+  fitStage();
+  const dpr=window.devicePixelRatio||1; view.dpr=dpr;
+  const r=cv.parentElement.getBoundingClientRect();
+  view.W=Math.max(1,r.width); view.H=Math.max(1,r.height);
+  cv.width =Math.max(1,Math.round(view.W*dpr));
+  cv.height=Math.max(1,Math.round(view.H*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  /* 부모(#recwrap)에는 상·하 1px 테두리가 있어 border-box 높이가 캔버스보다 2px 크다.
+     backing store 는 캔버스 자신의 CSS 크기로 잡아야 스트립 차트가 눌리지 않는다. */
+  const r2=rc.getBoundingClientRect();
+  recW=Math.max(1,r2.width); recH=Math.max(1,r2.height);
+  rc.width =Math.max(1,Math.round(recW*dpr));
+  rc.height=Math.max(1,Math.round(recH*dpr));
+  rctx.setTransform(dpr,0,0,dpr,0,0);
+
+  fitView(true);
+}
+/** 경로 + 배 + 자취가 모두 들어오도록 축척·중심을 맞춘다(스냅 또는 완만한 추종). */
+function fitView(snap){
+  const A=pathA(), B=pathB();
+  let x0=Math.min(A.x,B.x,S.x), x1=Math.max(A.x,B.x,S.x);
+  let y0=Math.min(A.y,B.y,S.y), y1=Math.max(A.y,B.y,S.y);
+  const tl=S.trail, stp=Math.max(1, tl.length>>8);
+  for(let i=0;i<tl.length;i+=stp){
+    const p=tl[i];
+    if(p.x<x0)x0=p.x; if(p.x>x1)x1=p.x;
+    if(p.y<y0)y0=p.y; if(p.y>y1)y1=p.y;
+  }
+  const padX=Math.max(1.6,(x1-x0)*0.07), padY=Math.max(2.2,(y1-y0)*0.14);
+  x0-=padX; x1+=padX; y0-=padY; y1+=padY;
+  const tScale=clamp(Math.min(view.W/Math.max(x1-x0,1e-3), view.H/Math.max(y1-y0,1e-3)), 1.2, 90);
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  if(snap){ view.scale=tScale; view.cx=cx; view.cy=cy; }
+  else{
+    const k=0.09;
+    view.scale += (tScale-view.scale)*k;
+    view.cx    += (cx-view.cx)*k;
+    view.cy    += (cy-view.cy)*k;
+  }
+  view.ox=view.cx-view.W/(2*view.scale);
+  view.oy=view.cy-view.H/(2*view.scale);
+}
+
+const MONO='12px ui-monospace,"SF Mono",Consolas,monospace';
+const dash=on=>ctx.setLineDash(on?[5,4]:[]);
+function arrowHead(x,y,ang,sz){
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(x-sz*Math.cos(ang-0.42), y+sz*Math.sin(ang-0.42));
+  ctx.lineTo(x-sz*Math.cos(ang+0.42), y+sz*Math.sin(ang+0.42));
+  ctx.closePath(); ctx.fill();
+}
+
+function drawGrid(){
+  if(!P.showGrid) return;
+  const x0=view.ox, x1=view.ox+view.W/view.scale;
+  const y0=view.oy, y1=view.oy+view.H/view.scale;
+  const stp = view.scale<9 ? 5 : (view.scale<18 ? 2 : 1);
+  const maj = stp*5;
+  ctx.lineWidth=1;
+  for(let i=Math.ceil(x0/stp); i*stp<=x1; i++){
+    const xw=i*stp, X=Math.round(w2sx(xw))+.5;
+    ctx.strokeStyle=(xw%maj===0)?C.gridM:C.grid;
+    ctx.beginPath(); ctx.moveTo(X,0); ctx.lineTo(X,view.H); ctx.stroke();
+  }
+  for(let i=Math.ceil(y0/stp); i*stp<=y1; i++){
+    const yw=i*stp, Y=Math.round(w2sy(yw))+.5;
+    ctx.strokeStyle=(yw%maj===0)?C.gridM:C.grid;
+    ctx.beginPath(); ctx.moveTo(0,Y); ctx.lineTo(view.W,Y); ctx.stroke();
+  }
+  ctx.fillStyle=C.fg3; ctx.font=MONO;
+  for(let i=Math.ceil(x0/maj); i*maj<=x1; i++)
+    ctx.fillText(i*maj+'m', w2sx(i*maj)+3, view.H-4);
+  for(let i=Math.ceil(y0/maj); i*maj<=y1; i++)
+    ctx.fillText(i*maj+'m', 4, w2sy(i*maj)-4);
+}
+
+/* 직선 경로 + 허용 오차대 + 시·종점 마커 */
+function drawPath(){
+  const A=pathA(), B=pathB(), {ca,sa}=pathDir();
+  const ax=w2sx(A.x), ay=w2sy(A.y), bx=w2sx(B.x), by=w2sy(B.y);
+
+  /* 경로 연장선(보조) */
+  ctx.strokeStyle=C.track; ctx.globalAlpha=.18; ctx.lineWidth=1; dash(true);
+  ctx.beginPath();
+  ctx.moveTo(ax-ca*600, ay+sa*600); ctx.lineTo(bx+ca*600, by-sa*600); ctx.stroke();
+  dash(false); ctx.globalAlpha=1;
+
+  /* 허용 오차대 ±tol */
+  const off=P.tol*view.scale;
+  ctx.strokeStyle=C.accent; ctx.globalAlpha=.35; ctx.lineWidth=1; dash(true);
+  for(const sg of [1,-1]){
+    ctx.beginPath();
+    ctx.moveTo(ax-sg*off*sa, ay-sg*off*ca);
+    ctx.lineTo(bx-sg*off*sa, by-sg*off*ca);
+    ctx.stroke();
+  }
+  dash(false); ctx.globalAlpha=1;
+
+  /* 본선 */
+  ctx.strokeStyle=C.track; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+
+  /* 진행 방향 화살표 */
+  ctx.fillStyle=C.track; ctx.globalAlpha=.75;
+  for(let f=0.18; f<0.95; f+=0.22){
+    const px=ax+(bx-ax)*f, py=ay+(by-ay)*f;
+    arrowHead(px,py, pathDir().a, 7);
+  }
+  ctx.globalAlpha=1;
+
+  /* 시·종점 */
+  for(const [p,lab] of [[{x:ax,y:ay},'A'],[{x:bx,y:by},'B']]){
+    ctx.beginPath(); ctx.arc(p.x,p.y,6,0,2*PI);
+    ctx.fillStyle=C.mark; ctx.fill();
+    ctx.strokeStyle=C.bg; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=C.fg3; ctx.font=MONO; ctx.fillText(lab, p.x+9, p.y+17);   // 아래쪽 — e 라벨과 겹치지 않게
+  }
+}
+
+function drawTrail(){
+  if(!P.showTrail || S.trail.length<2) return;
+  ctx.strokeStyle=C.hull; ctx.lineWidth=2.1; ctx.globalAlpha=.6;
+  ctx.beginPath(); ctx.moveTo(w2sx(S.trail[0].x), w2sy(S.trail[0].y));
+  for(let i=1;i<S.trail.length;i++) ctx.lineTo(w2sx(S.trail[i].x), w2sy(S.trail[i].y));
+  ctx.stroke(); ctx.globalAlpha=1;
+}
+
+/* 오차 보조선: e(횡방향) · ψ̃(방위) · χ_d(목표 침로)
+   화면이 좁으므로 보조선 길이는 월드 길이가 아니라 화면 픽셀 기준으로 잡는다. */
+function drawAids(){
+  if(!P.showAid) return;
+  const {a,ca,sa}=pathDir(), A=pathA();
+  const rx=w2sx(S.x), ry=w2sy(S.y);
+  const foot={x:A.x+S.s*ca, y:A.y+S.s*sa};
+  const fx=w2sx(foot.x), fy=w2sy(foot.y);
+  const Lr=clamp(Math.min(view.W,view.H)*0.28, 58, 112);
+
+  /* ── 횡방향 오차 e ── */
+  ctx.strokeStyle=C.devi; ctx.lineWidth=2; ctx.globalAlpha=P.useCTE?1:.5; dash(true);
+  ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(fx,fy); ctx.stroke(); dash(false);
+  ctx.beginPath(); ctx.arc(fx,fy,3.4,0,2*PI); ctx.fillStyle=C.devi; ctx.fill();
+  ctx.font=MONO; ctx.fillStyle=C.devi;
+  ctx.fillText('e '+S.e.toFixed(2)+'m', (rx+fx)/2+8, (ry+fy)/2+3);
+  ctx.globalAlpha=1;
+
+  /* ── 경로 평행선(방위 기준) + 방위 오차 호 ── */
+  ctx.strokeStyle=C.track; ctx.globalAlpha=.6; ctx.lineWidth=1.2; dash(true);
+  ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx+Lr*ca, ry-Lr*sa); ctx.stroke();
+  dash(false); ctx.globalAlpha=1;
+
+  /* 화면좌표는 y가 아래로 향하므로 월드각 a ↔ 화면각 −a.
+     ψ̃ = wrap(ref − ψ) 이므로 화면각으로는 d1 = d0 + ψ̃ — 항상 짧은 호가 된다. */
+  const ref=a, d0=-ref, d1=d0+S.eh, r0=Lr*0.62;
+  ctx.strokeStyle=C.course; ctx.lineWidth=2.2; ctx.globalAlpha=P.useHead?.95:.45;
+  ctx.beginPath(); ctx.arc(rx,ry,r0, Math.min(d0,d1), Math.max(d0,d1)); ctx.stroke();
+  ctx.globalAlpha=1;
+  const dm=(d0+d1)/2;
+  ctx.fillStyle=C.course; ctx.font=MONO;
+  ctx.fillText('ψ̃ '+(S.eh*R2D).toFixed(0)+'°',
+               rx+(r0+10)*Math.cos(dm), ry+(r0+10)*Math.sin(dm));
+
+  /* ── 목표 침로 χ_d ── */
+  ctx.strokeStyle=C.sight; ctx.lineWidth=2.2; ctx.globalAlpha=.95; dash(true);
+  ctx.beginPath(); ctx.moveTo(rx,ry);
+  ctx.lineTo(rx+Lr*Math.cos(ref), ry-Lr*Math.sin(ref)); ctx.stroke();
+  dash(false);
+  ctx.fillStyle=C.sight; arrowHead(rx+Lr*Math.cos(ref), ry-Lr*Math.sin(ref), ref, 8);
+  ctx.globalAlpha=1;
+}
+
+/* 자세 조정 핸들의 화면 위치(정지 중에만 표시 · 터치 대상) */
+const HANDLE_PX=52;
+function handlePt(){
+  const rx=w2sx(S.x), ry=w2sy(S.y);
+  return {x:rx+HANDLE_PX*Math.cos(S.yaw), y:ry-HANDLE_PX*Math.sin(S.yaw)};
+}
+function drawRobot(){
+  const rx=w2sx(S.x), ry=w2sy(S.y);
+  const sc=clamp(view.scale*1.5, 24, 46);              // 축척이 작아도 배가 보이도록
+  ctx.save(); ctx.translate(rx,ry); ctx.rotate(-S.yaw);
+  const bl=0.55*sc, bw=0.34*sc;
+  ctx.fillStyle=C.hull; ctx.globalAlpha=.92;
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(-bl*.75,-bw, bl*1.5, bw*2, 4);
+  else ctx.rect(-bl*.75,-bw, bl*1.5, bw*2);
+  ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle=C.bg;                                   // 좌우 구동륜
+  ctx.fillRect(-bl*.35,-bw-3, bl*.7, 3);
+  ctx.fillRect(-bl*.35, bw,   bl*.7, 3);
+  ctx.strokeStyle=C.bg; ctx.lineWidth=2;                // 선수 방향
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(bl*.7,0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bl*.72,0); ctx.lineTo(bl*.42,-4); ctx.lineTo(bl*.42,4);
+  ctx.closePath(); ctx.fillStyle=C.bg; ctx.fill();
+  ctx.restore();
+
+  if(!S.running){                                       // 자세 조정 핸들
+    const h=handlePt();
+    ctx.strokeStyle=C.hull; ctx.globalAlpha=.45; ctx.lineWidth=1.2; dash(true);
+    ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(h.x,h.y); ctx.stroke(); dash(false);
+    ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(h.x,h.y,8,0,2*PI);
+    ctx.fillStyle=C.hull; ctx.fill(); ctx.strokeStyle=C.bg; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+
+function draw(){
+  if(!drag) fitView(false);         // 경로·자취가 화면 밖으로 나가면 완만히 축척 조정
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,view.W,view.H);
+  drawGrid(); drawPath(); drawTrail();
+  drawAids(); drawRobot();
+}
+
+/* =========================================================================
+   7. 레코더(스트립 차트) — 계열 3개, 범례 칩으로 on/off
+   ========================================================================= */
+const SER={e:true, ep:true, w:true, v:true};
+const SERDEF=[
+  ['e', '오차 e [m]',   'devi'],
+  ['ep','방위 ψ̃ [°]',  'course'],
+  ['w', 'ω [°/s]',     'hull'],
+  ['v', '속도 v [m/s]', 'mark']
+];
+function recRows(){
+  const rows=[];
+  if(SER.e) rows.push({keys:[{k:'e', c:C.devi, lab:'e [m]'}], floor:0.5, band:P.tol});
+  const r2=[];
+  if(SER.ep) r2.push({k:'ep', c:C.course, lab:'ψ̃ [°]'});
+  if(SER.w ) r2.push({k:'w',  c:C.hull,   lab:'ω [°/s]'});
+  if(r2.length) rows.push({keys:r2, floor:5});
+  if(SER.v) rows.push({keys:[{k:'v', c:C.mark, lab:'v [m/s]'}], floor:1, pos:true});
+  return rows;
+}
+function drawRecorder(){
+  if(!P.showRec) return;
+  const W=recW, H=recH;
+  rctx.clearRect(0,0,W,H);
+  const rows=recRows();
+  if(!rows.length){
+    rctx.fillStyle=C.fg3; rctx.font='12px ui-monospace,Consolas,monospace';
+    rctx.fillText('표시할 계열을 선택하세요', 14, H/2);
+    return;
+  }
+  const pad={l:34,r:10,t:22,b:15}, gap=10;
+  const ph=(H-pad.t-pad.b-gap*(rows.length-1))/rows.length;
+
+  /* 시간축: 전체 구간 보기 */
+  let t0=0, t1;
+  if(P.recFull) t1=Math.max(10, Math.ceil(S.t/5)*5);
+  else{ const win=20; t1=Math.max(S.t,win); t0=t1-win; }
+  const xOf=t=>pad.l+(t-t0)/Math.max(t1-t0,1e-6)*(W-pad.l-pad.r);
+
+  const poly=(data,key,yOf,y0,y1,col,alpha,wdt)=>{
+    if(data.length<2) return;
+    const stp=Math.max(1, Math.floor(data.length/900));
+    rctx.strokeStyle=col; rctx.lineWidth=wdt; rctx.globalAlpha=alpha; rctx.beginPath();
+    let n=0;
+    for(let i=0;i<data.length;i+=stp){
+      const h=data[i]; if(h.t<t0) continue;
+      const X=xOf(h.t), Y=clamp(yOf(h[key]),y0,y1);
+      n++ ? rctx.lineTo(X,Y) : rctx.moveTo(X,Y);
+    }
+    rctx.stroke(); rctx.globalAlpha=1;
+  };
+
+  const cur=S.hist;
+  rows.forEach((row,ri)=>{
+    const ry=pad.t+ri*(ph+gap);
+    let m=1e-6;
+    for(const kk of row.keys) for(const h of cur){ const val=Math.abs(h[kk.k]); if(val>m) m=val; }
+    m=Math.max(m*1.22, row.floor);
+    /* pos 행(속도처럼 음수가 없는 계열)은 0 을 바닥에 두고 행 전체를 쓴다 */
+    const yOf = row.pos ? (v=>ry+ph-(v/m)*ph) : (v=>ry+ph/2-(v/m)*(ph/2));
+
+    rctx.strokeStyle=C.rule; rctx.lineWidth=1;
+    rctx.strokeRect(pad.l+.5, ry+.5, W-pad.l-pad.r, ph);
+    rctx.setLineDash([3,3]);
+    rctx.strokeStyle=C.rule;
+    rctx.beginPath(); rctx.moveTo(pad.l,yOf(0)); rctx.lineTo(W-pad.r,yOf(0)); rctx.stroke();
+    if(row.band){                                   /* 허용 오차대 */
+      rctx.strokeStyle=C.accent; rctx.globalAlpha=.4;
+      for(const sg of [1,-1]){
+        const Y=clamp(yOf(sg*row.band),ry,ry+ph);
+        rctx.beginPath(); rctx.moveTo(pad.l,Y); rctx.lineTo(W-pad.r,Y); rctx.stroke();
+      }
+      rctx.globalAlpha=1;
+    }
+    rctx.setLineDash([]);
+    rctx.fillStyle=C.fg3; rctx.font='10px ui-monospace,monospace';
+    rctx.fillText(m.toFixed(m<10?1:0),   3, ry+9);
+    rctx.fillText('0',                   3, yOf(0)+3);
+    if(!row.pos) rctx.fillText((-m).toFixed(m<10?1:0),3, ry+ph);
+
+    for(const kk of row.keys) poly(cur,kk.k,yOf,ry,ry+ph,kk.c,1,1.7);
+
+    let lx=pad.l;
+    rctx.font='11px ui-monospace,monospace';
+    for(const kk of row.keys){
+      rctx.fillStyle=kk.c; rctx.fillText(kk.lab, lx+6, ry-5);
+      lx+=rctx.measureText(kk.lab).width+14;
+    }
+  });
+  rctx.fillStyle=C.fg3; rctx.font='10px ui-monospace,monospace';
+  rctx.fillText(t0.toFixed(0)+'s', pad.l, H-3);
+  rctx.fillText(t1.toFixed(0)+'s', W-pad.r-22, H-3);
+  rctx.fillText('t = '+S.t.toFixed(1)+'s', W/2-26, H-3);
+}
+
+/* =========================================================================
+   8. 선형화 해석 — 왜 그 항이 필요한가
+     ė = v·sin(ψ−α) ≈ −v·ψ̃ ,   ψ̃̇ = −ω  ⇒  ë = v·ω
+     ë + (v·K_d,e + K_p,ψ)·ė + v·K_p,e·e + v·K_i,e·∫e = 0
+     ω_n = √(v·K_p,e),  ζ = (v·K_d,e + K_p,ψ)/(2ω_n)
+   ========================================================================= */
+/* -------------------------------------------------------------------------
+   [A-1] 적분항을 포함한 폐루프의 선형 안정 한계 — Routh–Hurwitz
+
+   평형점 (e=0, ψ̃=0, ω=0) 근방에서 §4 의 식을 그대로 선형화한다.
+   횡방향 동역학은 정확히 ė = −v·sin ψ̃ 이고, 평형이 ψ̃=0 이므로 감속 로직을
+   포함해도 기울기는 g ≡ v_max 다. ψ̃̇ = −ω, τ·ω̇ = ω_cmd − ω, d(∫e)/dt = e,
+        ω_cmd = −(K_p,e·e + K_i,e·∫e + K_d,e·ė) + K_p,ψ·ψ̃
+   를 대입하고 δ(∫e) 를 소거하려 한 번 더 미분하면
+
+        τ·e⁗ + e⃛ + (g·K_d,e + K_p,ψ)·ë + g·K_p,e·ė + g·K_i,e·e = 0
+        a₄=τ, a₃=1, a₂=g·K_d,e+K_p,ψ, a₁=g·K_p,e, a₀=g·K_i,e
+
+   4차 Routh–Hurwitz :  (i) 모든 계수 > 0
+                        (ii) a₃·a₂·a₁ > a₄·a₁² + a₃²·a₀
+        ⇒  K_i,e  <  K_p,e·(g·K_d,e + K_p,ψ) − τ·g·K_p,e²      … (★)
+
+   액추에이터 지연을 무시(τ→0)하면 3차가 되고 조건은 K_i,e < K_p,e·(g·K_d,e + K_p,ψ)
+   로 (★)의 첫 항과 같다. 여기서는 실제 모델에 τ = 0.15 s 의 1차 지연이 들어
+   있으므로 더 엄격한 (★)를 쓴다.
+   ------------------------------------------------------------------------- */
+function intLimit(){
+  const v=Math.max(P.vmax,1e-6), kph=(P.useHead?P.kph:0);
+  const g = v;
+  const a2 = g*P.kde + kph;
+  const kieLim = P.kpe*a2 - Math.max(P.tau,0)*g*P.kpe*P.kpe;
+  return {g, a2, kieLim, ok:(a2>0 && P.kpe>0 && P.kie<kieLim)};
+}
+
+/* -------------------------------------------------------------------------
+   [A-2] 대규모 신호(large-signal) 수치 검증 — 끌림 영역(ROA) 확인
+
+   (★)는 평형 '근방'만 본다. 초기 오차가 크면 각속도 포화·적분 와인드업이 겹친
+   과도응답 때문에 선형 판정과 실제 거동이 달라질 수 있다.
+
+   그래서 (e, ψ̃) 축소 모델을 §3·§4 와 완전히 같은 식·같은 순서로 직접 적분한다.
+   이는 근사가 아니다 — e·ψ̃ 동역학은 절대 위치 (x,y) 와 무관하게 닫혀 있고,
+   제어기도 e·ψ̃ 만 본다. 시뮬레이션 상태 S 는 전혀 건드리지 않는다(표시 전용).
+   ------------------------------------------------------------------------- */
+const PROBE_T=400;                                   // 검증 구간 [s]
+function probeRun(T){
+  const dt=Math.max(P.dt,1e-3), N=Math.round(T/dt);
+  const wmaxR=P.wmax*D2R;
+  const kf=dt/(dt+Math.max(P.dfc,1e-3));             // 미분 저역통과
+  const kl=1-Math.exp(-dt/Math.max(P.tau,1e-3));     // 1차 액추에이터 지연
+  let e=P.e0, eh=wrap(-P.psi0*D2R), om=0, v=0;
+  let ie=0, ih=0, eDot=0, ehDot=0, ePrev=e, ehPrev=eh, first=true;
+  const q1=Math.round(N*0.25), q2=Math.round(N*0.50), q3=Math.round(N*0.75);
+  let M1=0, M2=0, blew=false;
+  for(let i=0;i<N;i++){
+    if(first){ ePrev=e; ehPrev=eh; eDot=0; ehDot=0; first=false; }
+    else{
+      eDot  += ((e-ePrev)/dt        - eDot )*kf;
+      ehDot += (wrap(eh-ehPrev)/dt  - ehDot)*kf;
+    }
+    ePrev=e; ehPrev=eh;
+    const c0 = P.useCTE ? -(P.kpe*e + P.kie*ie + P.kde*eDot) : 0;
+    const h0 = P.useHead?  (P.kph*eh+ P.kih*ih + P.kdh*ehDot): 0;
+    if(!(P.awu && Math.abs(c0+h0)>wmaxR)){           // 조건부 적분(anti-windup)
+      if(P.useCTE ) ie=clamp(ie+e *dt, -P.iLimE, P.iLimE);
+      if(P.useHead) ih=clamp(ih+eh*dt, -P.iLimH, P.iLimH);
+    }
+    const uc = P.useCTE ? -(P.kpe*e + P.kie*ie + P.kde*eDot) : 0;
+    const uh = P.useHead?  (P.kph*eh+ P.kih*ih + P.kdh*ehDot): 0;
+    const wcmd=clamp(uc+uh, -wmaxR, wmaxR);
+    let vC=P.vmax; if(P.slow) vC*=Math.max(0.15, Math.cos(eh));
+    om += (wcmd-om)*kl;  v += (vC-v)*kl;
+    const eN = e + (-v*Math.sin(eh))*dt;             // ė = −v·sin ψ̃
+    eh = wrap(eh - om*dt);                           // ψ̃̇ = −ω
+    e  = eN;
+    const ae=Math.abs(e);
+    if(!isFinite(ae) || ae>1e5){ blew=true; break; }
+    if(i>=q1 && i<q2){ if(ae>M1) M1=ae; }
+    else if(i>=q3)   { if(ae>M2) M2=ae; }
+  }
+  /* 뒤쪽 1/4 구간의 최대 |e| 가 중간 구간보다 뚜렷이 커지면 = 발산.
+     구간 최댓값을 쓰므로 지속 진동(진폭 일정)은 발산으로 오판하지 않는다. */
+  const diverge = blew || (M2>4 && M2 > 1.5*M1 + 0.5);
+  return {diverge, M1, M2, blew, eEnd:Math.abs(e)};
+}
+let _pbKey='', _pbRes={diverge:false,M1:0,M2:0,blew:false,eEnd:0};
+function probeStability(){
+  const k=[P.kpe,P.kie,P.kde,P.kph,P.kih,P.kdh,P.iLimE,P.iLimH,P.vmax,P.slow?1:0,
+           P.wmax,P.tau,P.dfc,P.awu?1:0,P.e0,P.psi0,P.useCTE?1:0,P.useHead?1:0,P.dt].join('|');
+  if(k!==_pbKey){ _pbKey=k; _pbRes=probeRun(PROBE_T); }
+  return _pbRes;
+}
+
+function analysis(){
+  const v=Math.max(P.vmax,1e-6), cas=(P.struct==='cas');
+  const A={wn:null, zeta:null, diverge:false, open:false, eq:'', tip:'', tag:'', cls:'',
+           divTip:'', kieLim:null};
+
+  if(cas){
+    if(!P.useHead){ A.open=true; A.eq='내루프 없음 → ω = 0'; }
+    else if(!P.useCTE){ A.eq='χ_d = α  (외루프 우회)'; }
+    else{
+      A.wn=Math.sqrt(v*P.kph/Math.max(P.delta,.05));
+      A.zeta=P.kph/(2*A.wn);
+      A.eq='ë + K_p,ψ·ė + (v·K_p,ψ/Δ)·e = 0';
+    }
+  }else{
+    if(!P.useCTE && !P.useHead){
+      A.open=true; A.eq='ω = 0  (개루프)';
+      A.tip='피드백 항을 하나 이상 켜 주세요 — 지금은 초기 침로 그대로 직진합니다.';
+      /* 개루프에서는 초기 방위 오차가 조금만 있어도 e 가 무한히 밀린다 */
+      if(probeStability().diverge) A.diverge=true;
+    }
+    else if(!P.useCTE){
+      A.eq='ψ̃̇ = −(K_p,ψ·ψ̃ + …) → ψ → α';
+      A.tip='방위 오차만 0으로 만듭니다. e 에 대한 복원력이 없어 초기 오프셋이 그대로 남습니다.';
+    }else if(P.kpe<=1e-6){
+      A.eq='K_p,e = 0 → e 복원력 없음';
+      A.tip='CTE 항을 켰지만 K_p,e 가 0 입니다.';
+      if(P.kie>1e-6){
+        /* a₁ = g·K_p,e = 0 → Routh 필요조건(모든 계수 > 0) 위반. 적분만으로는 못 잡는다. */
+        A.diverge=true;
+        A.divTip='K_p,e = 0 이면 특성다항식의 ė 계수 a₁ = v·K_p,e 가 0 이라 '
+                +'Routh–Hurwitz 필요조건(모든 계수 > 0)을 위반합니다 — 적분항만으로는 '
+                +'어떤 K_i,e 를 써도 안정될 수 없습니다. K_p,e 를 올리세요.';
+      }
+    }else{
+      A.wn=Math.sqrt(v*P.kpe);
+      A.zeta=(v*P.kde + (P.useHead?P.kph:0))/(2*A.wn);
+      A.eq='ë + (v·K_d,e + K_p,ψ)·ė + v·K_p,e·e = 0';
+
+      /* ── 적분 분기의 안정성 확인 ────────────────────────────────────────
+         (1) 선형 한계 (★) : Routh–Hurwitz
+         (2) 대규모 신호 : 포화·와인드업 과도응답에 의한 발산
+         둘 중 하나라도 걸리면 '수렴'을 단언하지 않는다.                    */
+      const L = intLimit();
+      A.kieLim = L.kieLim;
+      if(P.kie>1e-6 && !L.ok){
+        A.diverge=true;
+        A.divTip='Routh–Hurwitz 한계 초과 — K_i,e = '+P.kie.toFixed(2)+' ≥ '
+                +Math.max(L.kieLim,0).toFixed(2)+' 이라 적분 폐루프의 극이 우반면으로 '
+                +'넘어갑니다(τ·e⁗ + e⃛ + (g·K_d,e+K_p,ψ)·ë + g·K_p,e·ė + g·K_i,e·e = 0, '
+                +'g = '+L.g.toFixed(2)+'). K_i,e 를 낮추거나 K_p,ψ 를 올리세요.';
+      }
+      if(!A.diverge && probeStability().diverge){
+        A.diverge=true;
+        A.divTip = (P.kie>1e-6)
+          ? '선형 안정 한계 (K_i,e < '+Math.max(A.kieLim||0,0).toFixed(2)+') 안쪽이지만, '
+           +'각속도 포화·적분 와인드업이 겹친 과도응답이 수렴을 깨뜨립니다. '
+           +'K_i,e 를 낮추거나 초기 오차 e₀ 를 줄이세요.'
+          : '과도응답이 수렴을 깨뜨립니다(각속도 포화). 게인을 낮추거나 초기 오차 e₀ 를 줄이세요.';
+      }
+    }
+  }
+  if(A.zeta!==null){
+    const z=A.zeta;
+    if(z<0.05){ A.tag='무감쇠 — 지속 진동'; A.cls='t-bad';
+                A.tip='감쇠항이 없습니다. K_d,e 를 올리거나 방위 오차 피드백을 함께 켜 보세요.'; }
+    else if(z<0.55){ A.tag='부족감쇠 — 오버슈트'; A.cls='t-warn';
+                A.tip='경로를 한두 번 넘나든 뒤 수렴합니다. K_p,ψ 를 올리면 오버슈트가 줄어듭니다.'; }
+    else if(z<1.25){ A.tag='적정 감쇠'; A.cls='t-ok';
+                A.tip='강성은 K_p,e 가, 감쇠는 K_p,ψ(또는 K_d,e)가 담당하는 표준 구성입니다.'; }
+    else{ A.tag='과감쇠 — 느린 수렴'; A.cls='t-warn';
+                A.tip='진동은 없지만 경로에 붙는 데 오래 걸립니다. K_p,e 를 올리거나 K_p,ψ 를 낮춰 보세요.'; }
+  }
+  /* 발산은 감쇠비(선형 성질)와 무관한 별개 원인이므로 안내 문구를 우선한다 */
+  if(A.divTip) A.tip=A.divTip;
+  return A;
+}
+
+/* =========================================================================
+   9. 상태 수치 그리드
+     core = 고정 무대 안(4열, 슬라이더를 만지며 봐야 하는 값)
+     aux  = 무대 밖 보조 수치(2열)
+   ========================================================================= */
+const MSTAT=[
+  {id:'t',    k:'시간 t [s]',  host:'path-cells'},
+  {id:'e',    k:'오차 e [m]',  host:'path-cells'},
+  {id:'eh',   k:'방위 ψ̃ [°]', host:'path-cells'},
+  {id:'zeta', k:'감쇠비 ζ',    host:'path-cells'},
+  {id:'w',    k:'각속도 ω',    host:'path-cellsAux'},
+  {id:'mx',   k:'최대 |e|',    host:'path-cellsAux'}
+];
+const RC={};
+function buildStats(){
+  MSTAT.forEach(c=>{
+    const host=document.getElementById(c.host); if(!host) return;
+    const d=document.createElement('div'); d.className='cell';
+    const k=document.createElement('span'); k.className='k';      k.textContent=c.k;
+    const v=document.createElement('span'); v.className='v mono'; v.textContent='—';
+    d.append(k,v); host.append(d);
+    RC[c.id]={k, v};
+  });
+}
+function rset(id, txt, cls){
+  const c=RC[id]; if(!c) return;
+  if(c.v.textContent!==txt) c.v.textContent=txt;
+  const cn='v mono'+(cls?' '+cls:'');
+  if(c.v.className!==cn) c.v.className=cn;
+}
+function drawStats(){
+  const A=analysis();
+  /* core — 단위는 라벨에 있으므로 값은 숫자만(좁은 4열에 맞춤) */
+  rset('t',    S.t.toFixed(1), S.done?'ok':'');
+  rset('e',    S.e.toFixed(2), Math.abs(S.e)>P.tol?'warn':'ok');
+  rset('eh',   (S.eh*R2D).toFixed(0));
+  rset('zeta', A.zeta===null?'—':A.zeta.toFixed(2), A.cls);
+  /* aux */
+  rset('w',    (S.omega*R2D).toFixed(0)+'°/s',
+               Math.abs(S.wcmd)>=P.wmax*D2R*0.995?'warn':'');
+  rset('mx',   S.maxE.toFixed(2)+' m');
+}
+
+/* =========================================================================
+   10. 메인 루프 (원본 그대로)
+   ========================================================================= */
+function loop(now){
+  const real=Math.min((now-last)/1000, .1); last=now;
+  if(S.running){
+    acc+=real*P.speedMul;
+    let n=0; while(acc>=P.dt && n<800){ step(P.dt); acc-=P.dt; n++; }
+  }else acc=0;
+  drawStats(); draw(); drawRecorder();
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================================
+   11. 캔버스 인터랙션 — Pointer Events 통합(터치/마우스 공용)
+       정지 중 배 본체 = 초기 위치, 앞쪽 원 = 초기 침로. 히트 반경 ≥ 22 CSS px.
+   ========================================================================= */
+const HIT=24;
+const evPos=e=>{const r=cv.getBoundingClientRect(); return {px:e.clientX-r.left, py:e.clientY-r.top};};
+
+cv.addEventListener('pointerdown', e=>{
+  if(S.running) return;
+  const {px,py}=evPos(e), h=handlePt();
+  if(hypot(px-h.x, py-h.y)<HIT)                      drag={t:'yaw'};
+  else if(hypot(px-w2sx(S.x), py-w2sy(S.y))<HIT+6)   drag={t:'robot'};
+  if(drag){
+    e.preventDefault();
+    try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+  }
+});
+cv.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  e.preventDefault();
+  const {px,py}=evPos(e), w={x:s2wx(px), y:s2wy(py)};
+  if(drag.t==='robot'){
+    S.x=w.x; S.y=w.y;
+    /* 슬라이더 범위(|e₀| ≤ 10 m) 밖으로는 끌지 못하게 막는다 —
+       아래에서 P.e0 를 클램프하면 실제 자세와 어긋나 판정이 달라지기 때문 */
+    const t0=pathErr(S.x,S.y), ec=clamp(t0.e,-10,10);
+    if(ec!==t0.e){ S.x-=t0.sa*(ec-t0.e); S.y+=t0.ca*(ec-t0.e); }
+  }
+  else{ S.yaw=Math.atan2(w.y-S.y, w.x-S.x); }
+  const tr=pathErr(S.x,S.y); S.e=tr.e; S.s=tr.s;
+  S.chid=P.alpha*D2R; S.eh=wrap(S.chid-S.yaw);
+  S.trail=[{x:S.x,y:S.y}];
+  /* 슬라이더 값도 실제 자세에 맞춰 둔다 — 반올림하면 화면 판정(probeRun 은 P.e0/P.psi0 를
+     초기조건으로 쓴다)과 실제 주행 자세가 최대 0.125 m · 2.5° 어긋나 ROA 경계에서
+     판정이 뒤집힌다. 그래서 눈금에 맞추지 않고 참 자세를 그대로 싣는다. */
+  P.e0  = tr.e;
+  P.psi0= wrap(S.yaw-P.alpha*D2R)*R2D;
+  syncUI();
+});
+const dragEnd=e=>{
+  if(!drag) return;
+  drag=null;
+  try{ cv.releasePointerCapture(e.pointerId); }catch(_){}
+};
+cv.addEventListener('pointerup', dragEnd);
+cv.addEventListener('pointercancel', dragEnd);
+
+window.addEventListener('keydown', e=>{
+  if(e.target && e.target.tagName==='INPUT') return;
+  if(e.code==='Space'){ e.preventDefault(); togglePlay(); }
+  else if(e.key==='r'||e.key==='R') reset(false);
+});
+
+/* =========================================================================
+   13. 콘솔 패널 정의 — 개념 이해에 필요한 항목만
+   ========================================================================= */
+const CONTROLS=[
+{ title:'제어 게인', open:true, items:[
+  {type:'pick'},
+  {type:'range', k:'kpe', label:'K<sub>p,e</sub> — 복원력(강성)', aria:'Kp,e 복원력',
+   min:0, max:2, step:0.01, dec:2, show:()=>P.useCTE},
+  {type:'range', k:'kde', label:'K<sub>d,e</sub> — 감쇠(위치 미분)', aria:'Kd,e 감쇠',
+   min:0, max:4, step:0.05, dec:2, show:()=>P.useCTE},
+  {type:'range', k:'kie', label:'K<sub>i,e</sub> — 적분항', aria:'Ki,e 적분',
+   min:0, max:1, step:0.01, dec:2, show:()=>P.useCTE},
+  {type:'range', k:'kph', label:'K<sub>p,ψ</sub> — 방위 피드백(감쇠)', aria:'Kp,psi 방위 이득',
+   min:0, max:8, step:0.05, dec:2, show:()=>P.useHead}
+]},
+
+{ title:'초기 오차 · 배', open:true, items:[
+  {type:'range', k:'e0',   label:'초기 횡방향 오차 e₀', aria:'초기 횡방향 오차',
+   min:-10, max:10, step:0.25, unit:'m', dec:2, after:()=>{ reset(false); fitView(true); }},
+  {type:'range', k:'psi0', label:'초기 방위 오차 ψ₀', aria:'초기 방위 오차',
+   min:-180, max:180, step:5, unit:'°', dec:0, after:()=>{ reset(false); fitView(true); }},
+  {type:'range', k:'vmax', label:'선속 v', aria:'선속',
+   min:0.2, max:5, step:0.1, unit:'m/s', dec:1},
+  {type:'range', k:'wmax', label:'선회 각속도 제한 ω_max', aria:'각속도 제한',
+   min:10, max:300, step:5, unit:'°/s', dec:0},
+  {type:'note', html:'정지 상태에서 캔버스의 <b>배</b>를 끌면 초기 위치가, 배 앞의 <b>초록 점</b>을 끌면 초기 침로가 바뀝니다(슬라이더도 함께 움직입니다).'}
+]}
+];
+
+/* =========================================================================
+   14. 패널 빌드
+   ========================================================================= */
+const visRules=[], syncFns=[];
+function buildPanel(){
+  const panel=document.getElementById('path-panel');
+  CONTROLS.forEach(sec=>{
+    const el=document.createElement('section'); el.className='sec'+(sec.open?'':' closed');
+    const h=document.createElement('button'); h.className='sec-h'; h.type='button';
+    h.innerHTML=`<span class="t">${sec.title}</span><span class="ln"></span><span class="car">▼</span>`;
+    h.onclick=()=>el.classList.toggle('closed');
+    const b=document.createElement('div'); b.className='sec-b';
+    el.append(h,b); panel.append(el);
+    sec.items.forEach(it=>b.append(buildItem(it)));
+  });
+  refreshVis(); syncUI();
+}
+function buildItem(it){
+  const w=document.createElement('div'); w.className='ctl';
+  if(it.show) visRules.push({el:w, fn:it.show});
+
+  if(it.type==='range'){
+    w.innerHTML=`<div class="lab"><span class="n">${it.label}</span><span class="v mono"></span></div>`;
+    const inp=document.createElement('input');
+    inp.type='range'; inp.min=it.min; inp.max=it.max; inp.step=it.step; inp.value=P[it.k];
+    inp.setAttribute('aria-label', it.aria||it.k);
+    const num=w.querySelector('.v');
+    const upd=()=>{ num.textContent=Number(P[it.k]).toFixed(it.dec??2)+(it.unit?' '+it.unit:''); };
+    inp.oninput=()=>{ P[it.k]=parseFloat(inp.value); upd(); refreshVis(); it.after&&it.after(); };
+    syncFns.push(()=>{ inp.value=P[it.k]; upd(); });
+    w.append(inp); upd();
+
+  }else if(it.type==='pick'){
+    w.innerHTML=
+      `<div class="pick">
+         <label id="pk_cte"><input type="checkbox" id="ck_cte">
+           <span><span class="tt">횡방향 오차 e</span>
+           <span class="ss">위치를 되돌리는 <b>복원력</b></span></span></label>
+         <label id="pk_hd"><input type="checkbox" id="ck_hd">
+           <span><span class="tt">방위 오차 ψ̃</span>
+           <span class="ss">흔들림을 잡는 <b>감쇠</b></span></span></label>
+       </div>`;
+    const a=w.querySelector('#ck_cte'), b=w.querySelector('#ck_hd');
+    a.onchange=()=>{ P.useCTE=a.checked; S.ie=0; S.yint=0; refreshVis(); syncUI(); };
+    b.onchange=()=>{ P.useHead=b.checked; S.ih=0; refreshVis(); syncUI(); };
+    syncFns.push(()=>{
+      a.checked=P.useCTE; b.checked=P.useHead;
+      w.querySelector('#pk_cte').classList.toggle('on', P.useCTE);
+      w.querySelector('#pk_hd').classList.toggle('on', P.useHead);
+    });
+
+  }else if(it.type==='note'){
+    w.innerHTML=`<div class="note ${it.cls||''}">${it.html}</div>`;
+  }
+  return w;
+}
+function refreshVis(){ visRules.forEach(r=>r.el.classList.toggle('off', !r.fn())); }
+function syncUI(){ syncFns.forEach(f=>f()); }
+
+/* ---------- 범례 칩 ---------- */
+function buildChips(){
+  const host=document.getElementById('path-chips');
+  SERDEF.forEach(([key,lab,tok])=>{
+    const b=document.createElement('button'); b.type='button';
+    b.innerHTML=`<span class="sw" style="background:var(--${tok})"></span><span>${lab}</span>`;
+    b.setAttribute('aria-pressed', String(SER[key]));
+    const upd=()=>{ b.classList.toggle('on', SER[key]); b.setAttribute('aria-pressed', String(SER[key])); };
+    b.onclick=()=>{ SER[key]=!SER[key]; upd(); };
+    upd(); host.append(b);
+  });
+}
+
+/* ---------- 하단 고정 바 · 상태 ---------- */
+const pillEl =document.getElementById('path-statusPill');
+const playEl =document.getElementById('path-playBtn');
+const resetEl=document.getElementById('path-resetBtn');
+function syncStatus(){
+  const s=S.done?'done':(S.running?'run':'hold');
+  pillEl.dataset.s=s;
+  pillEl.textContent = s==='done'?'완주':(s==='run'?'주행 중':'대기');
+  playEl.textContent = S.running?'정지':'시작';
+  playEl.className = S.running?'danger':'pri';
+}
+function togglePlay(){
+  if(S.done) reset(false);
+  S.running=!S.running; syncStatus();
+}
+playEl.onclick =()=>togglePlay();
+resetEl.onclick=()=>{ reset(false); fitView(true); };
+
+const themeBtn=document.getElementById('path-themeBtn');
+if(themeBtn) themeBtn.onclick=function(){};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>readTheme());
+
+/* ---------- 부트 ---------- */
+readTheme(); buildStats(); buildChips(); buildPanel(); resize();
+reset(false); fitView(true);
+
+let rzT=0;
+const onResize=()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ readTheme(); resize(); }, 90); };
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', onResize);
+if(window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+
+requestAnimationFrame(t=>{ last=t; loop(t); });
+
+})();

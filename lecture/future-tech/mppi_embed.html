@@ -1,0 +1,268 @@
+<style>
+#mppi-host, #mppi-host * { box-sizing: border-box; }
+.demo-app.demo-mppi {
+  --ink: #e7eef2; --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #d3dfe7;
+  --rule: #cfdde5; --rule-2: #a9c1cf;
+  --text: #0b2130; --text-2: #42606f; --text-3: #6b8798;
+  --accent: #0c7a73; --accent-deep: #0c7a73; --accent-on: #ffffff;
+  --grid: #dae7ee; --grid-major: #bed4e0;
+  --track: #0369a1; --mark: #b45309; --hull: #15803d;
+  --devi: #be123c; --course: #6d28d9; --rock: #8a7443;
+  --warn: #be123c;
+  --shadow: 0 6px 20px rgba(20, 50, 70, .12);
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+#mppi-host .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+#mppi-host :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+#mppi-host button { font-family: inherit; touch-action: manipulation; }
+#mppi-host header { display: none; }
+
+#mppi-host .guide {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--accent) 8%, var(--ink-2));
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+#mppi-host .guide b { color: var(--accent); font-weight: 700; }
+
+#mppi-host .stage {
+  position: sticky;
+  top: 72px;
+  z-index: 8;
+  background: var(--ink-2);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+#mppi-host .stage-canvas { position: relative; }
+#mppi-host .chart { position: relative; width: 100%; height: 240px; background: var(--ink-4); }
+#mppi-host #mppi-cv { width: 100%; height: 100%; display: block; touch-action: none; }
+
+#mppi-host .rd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 6px 12px 0; }
+#mppi-host .rd .cell {
+  background: var(--ink-2); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 3px 7px; min-width: 0;
+}
+#mppi-host .rd .k {
+  display: block; font-size: 9px; letter-spacing: .04em; font-weight: 700;
+  color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#mppi-host .rd .v {
+  display: block; font-size: 14px; line-height: 1.3; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+#mppi-host .tools { display: flex; gap: 6px; margin-bottom: 8px; }
+#mppi-host .tools button {
+  flex: 1; min-height: 44px; background: var(--ink-2); border: 1px solid var(--rule);
+  color: var(--text-2); border-radius: 9px; font-size: 12.5px; cursor: pointer;
+}
+#mppi-host .tools button.on { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); font-weight: 800; }
+#mppi-host .tip { padding: 0 0 10px; font-size: 12px; color: var(--text-3); }
+
+#mppi-host .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+#mppi-host .stats .cell {
+  background: var(--ink-2); border: 1px solid var(--rule); border-radius: 9px;
+  padding: 6px 8px; min-width: 0;
+}
+#mppi-host .stats .k {
+  display: block; font-size: 9.5px; letter-spacing: .06em; font-weight: 700;
+  color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#mppi-host .stats .v {
+  display: block; font-size: 15px; color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#mppi-host .stats .v.warn, #mppi-host .rd .v.warn { color: var(--devi); }
+#mppi-host .stats .v.caut, #mppi-host .rd .v.caut { color: var(--mark); }
+#mppi-host .stats .v.ok, #mppi-host .rd .v.ok { color: var(--accent); }
+
+#mppi-host .costwrap { padding: 6px 12px 10px; }
+#mppi-host .costwrap .bar {
+  display: flex; height: 9px; border-radius: 5px; overflow: hidden;
+  background: var(--ink-3); border: 1px solid var(--rule);
+}
+#mppi-host .costwrap .bar span { height: 100%; }
+#mppi-host .costwrap .kyrow { display: flex; align-items: baseline; gap: 7px; margin-top: 3px; }
+#mppi-host .costwrap .lbl { font-size: 9px; letter-spacing: .06em; color: var(--text-3); font-weight: 700; white-space: nowrap; flex: none; }
+#mppi-host .costwrap .ky { display: flex; flex-wrap: wrap; gap: 1px 7px; font-size: 9.5px; line-height: 1.35; color: var(--text-3); min-width: 0; }
+#mppi-host .costwrap .ky b { font-weight: 400; }
+
+#mppi-host .sec {
+  padding: 14px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--ink-2);
+  margin-bottom: 12px;
+}
+#mppi-host .sec > .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+#mppi-host .sec > .h .t { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; color: var(--text-3); }
+#mppi-host .sec > .h .ln { flex: 1; height: 1px; background: var(--rule); }
+
+#mppi-host .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+#mppi-host .seg button {
+  flex: 1 1 46%; min-height: 44px; background: var(--ink-3); border: 1px solid var(--rule);
+  color: var(--text-2); border-radius: 9px; font-size: 12.5px; cursor: pointer;
+}
+#mppi-host .seg button.on { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); font-weight: 800; }
+
+#mppi-host .ctl { margin: 2px 0 10px; }
+#mppi-host .ctl.off { display: none; }
+#mppi-host .ctl .lab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+#mppi-host .ctl .lab .n { color: var(--text-2); font-size: 12.5px; }
+#mppi-host .ctl .lab .v { color: var(--accent); font-size: 15px; font-weight: 700; }
+#mppi-host input[type=range] {
+  -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px;
+  background: transparent; margin: 0; cursor: pointer; touch-action: none;
+}
+#mppi-host input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: var(--rule-2); }
+#mppi-host input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; margin-top: -11px;
+  background: var(--accent); border: 3px solid var(--ink-2);
+  box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgba(0,0,0,.18);
+}
+#mppi-host input[type=range]::-moz-range-track { height: 6px; border-radius: 6px; background: var(--rule-2); }
+#mppi-host input[type=range]::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+  border: 3px solid var(--ink-2); box-shadow: 0 0 0 1px var(--accent);
+}
+#mppi-host label.chk { display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-2); font-size: 13px; min-height: 44px; }
+#mppi-host label.chk input { accent-color: var(--accent); width: 22px; height: 22px; flex: none; }
+#mppi-host .note {
+  color: var(--text-3); font-size: 11.5px; line-height: 1.65; background: var(--ink-3);
+  border-left: 2px solid var(--rule-2); padding: 9px 11px; border-radius: 0 8px 8px 0; margin: 4px 0 0;
+}
+#mppi-host .note b { color: var(--text-2); font-weight: 700; }
+#mppi-host .note code { color: var(--accent); font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
+
+#mppi-host .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 4px 0 8px; font-size: 11px; color: var(--text-2); }
+#mppi-host .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+#mppi-host .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+#mppi-host .foot { padding: 4px 0 8px; font-size: 10.5px; color: var(--text-3); line-height: 1.6; }
+
+#mppi-host .speedrow {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--ink-2);
+  margin-bottom: 12px;
+}
+#mppi-host .speedrow .lab { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--text-3); }
+#mppi-host .speedrow input[type=range] { flex: 1; min-width: 0; }
+#mppi-host .speedrow .val {
+  flex: none; min-width: 56px; text-align: right; color: var(--accent);
+  font-size: 14px; font-weight: 700;
+  font-family: ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums;
+}
+
+#mppi-host .demo-toolbar {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--rule);
+  background: var(--ink-2);
+}
+#mppi-host .demo-toolbar button {
+  min-height: 46px; width: 100%; border-radius: 11px; border: 1px solid var(--rule);
+  background: var(--ink-3); color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer;
+}
+#mppi-host .demo-toolbar #mppi-btnPlay { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); }
+#mppi-host .demo-toolbar #mppi-btnPlay.danger { background: var(--warn); border-color: var(--warn); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  #mppi-host, #mppi-host * { transition: none !important; }
+}
+
+@media (min-width: 900px) {
+  #mppi-host .stage { position: static; }
+  #mppi-host .chart { height: 320px; }
+  #mppi-host .demo-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    display: flex;
+    width: auto;
+    grid-template-columns: none;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: color-mix(in srgb, #fff 92%, transparent);
+    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
+  }
+  #mppi-host .demo-toolbar button {
+    min-height: 36px;
+    min-width: 88px;
+    width: auto;
+    padding: 7px 14px;
+    font-size: 14px;
+  }
+}
+</style>
+<div class="demo-app demo-mppi" id="demo-mppi">
+<header>
+  <span class="kicker">MPPI</span>
+  <h1>선박 충돌회피 시뮬레이터</h1>
+  <span class="pill" id="mppi-statusPill">대기</span>
+</header>
+
+<p class="guide">지도를 <b>끌어</b> 암초·타선·목표를 옮기고, <b>샘플 수 K</b>·<b>잡음 σ</b>를 바꿔 회피 경로가 어떻게 달라지는지 보세요.</p>
+
+<div class="demo-layout">
+  <div class="demo-stage-col">
+    <div class="stage" id="mppi-stage">
+      <div class="stage-canvas">
+        <div class="chart" id="mppi-chart"><canvas id="mppi-cv"></canvas></div>
+        <div class="demo-toolbar">
+          <button type="button" id="mppi-btnPlay">시작</button>
+          <button type="button" id="mppi-btnReset">초기화</button>
+        </div>
+      </div>
+      <div class="rd" id="mppi-stats"></div>
+      <div class="costwrap">
+        <span class="bar" id="mppi-cbar"></span>
+        <div class="kyrow"><span class="lbl">비용 구성</span><span class="ky" id="mppi-ckey"></span></div>
+      </div>
+    </div>
+    <div class="tools">
+      <button type="button" id="mppi-modeMove" class="on">✥ 이동</button>
+      <button type="button" id="mppi-modeAdd">＋ 암초</button>
+      <button type="button" id="mppi-modeDel">✕ 삭제</button>
+    </div>
+    <div class="tip" id="mppi-tip"></div>
+    <div class="stats" id="mppi-stats2"></div>
+  </div>
+  <div class="demo-ctrl-col">
+    <div class="speedrow">
+      <span class="lab">배속</span>
+      <input type="range" id="mppi-spd" min="1" max="15" step="1" aria-label="배속 (시뮬 시간)">
+      <span class="val" id="mppi-spdv">—</span>
+    </div>
+    <div class="sec">
+      <div class="h"><span class="t">시나리오</span><span class="ln"></span></div>
+      <div class="seg" id="mppi-scen"></div>
+      <div class="note" style="margin-top:8px">
+        <b>4 정중앙 암초</b>는 좌·우 두 무리로 롤아웃이 갈리는 <b>다봉(多峰)</b> 상황입니다 —
+        평균이 골짜기(암초 정중앙)에 꽂히지 않는지 보세요.
+      </div>
+    </div>
+    <div class="sec">
+      <div class="h"><span class="t">MPPI 파라미터</span><span class="ln"></span></div>
+      <div id="mppi-panel"></div>
+    </div>
+  </div>
+</div>
+</div>

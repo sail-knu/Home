@@ -17,7 +17,7 @@ const CTRL_HZ   = 100;    // 제어 주기 [Hz] — ZOH
 const LOG_HZ    = 50;     // 데이터 기록 주기 [Hz]
 const LOG_MAX   = 1500;   // 그래프에 남기는 최근 샘플 수 (50 Hz × 30 s)
 
-const $ = id => document.getElementById(id);
+const $ = id => document.getElementById('pid-' + id);
 
 /* ============================================================
  *  1. 물리 모델  — 질량 없는 막대 + 끝점 질량 (cart-pole)
@@ -321,7 +321,7 @@ function stop() {
   mode = 'paused';
   clearPush();
   $('sth').disabled = false;
-  $('btnRun').textContent = '이어서 실행';
+  $('btnRun').textContent = '계속';
   $('btnRun').className = 'primary';
   drawChart();
 }
@@ -334,7 +334,7 @@ function reset() {
   ctrl.reset(); clearLog();
   camX = S[0];
   $('sth').disabled = false;
-  $('btnRun').textContent = '시뮬레이션 시작';
+  $('btnRun').textContent = '시작';
   $('btnRun').className = 'primary';
   drawChart();
 }
@@ -378,8 +378,9 @@ function sizeCanvases() {
   // 하한 132 px — drawStage() 가 진자 전체(막대 + 추)를 담으면서도 1 m = 22 px 이상을
   // 유지할 수 있는 최소 높이. 이보다 낮으면 그림이 알아보기 힘들 만큼 작아진다.
   // (아주 낮은 가로 모드에서는 이 하한이 45 % 예산보다 우선한다)
-  stage.style.height = Math.max(132, Math.min(300, budget)) + 'px';
-  chart.style.height = Math.max(140, Math.min(230, Math.round(vh * 0.26))) + 'px';
+  const wide = (window.innerWidth || 0) >= 900;
+  stage.style.height = Math.max(wide ? 240 : 132, Math.min(wide ? 380 : 300, budget)) + 'px';
+  chart.style.height = Math.max(wide ? 180 : 140, Math.min(wide ? 260 : 230, Math.round(vh * (wide ? 0.22 : 0.26)))) + 'px';
   drawStage();
   drawChart();
 }
