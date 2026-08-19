@@ -32,6 +32,7 @@
     for (var h = 0; h < beamCount; h++) robots[i].hits[h] = { ang: 0, dist: 0, kind: 0, x: 0, y: 0 };
   }
   var raf = 0;
+  var activeCount = (!window.location.hash || window.location.hash === "#home") ? 2 : 1;
 
   function size() {
     viewW = window.innerWidth;
@@ -105,8 +106,10 @@
         var md = rayCircle(ox, oy, dx, dy, mouse.x, mouse.y, mouse.r, dist);
         if (md < dist) { dist = md; kind = 1; }
       }
-      var bd = rayCircle(ox, oy, dx, dy, other.x, other.y, robotR, dist);
-      if (bd < dist) { dist = bd; kind = 2; }
+      if (activeCount > 1) {
+        var bd = rayCircle(ox, oy, dx, dy, other.x, other.y, robotR, dist);
+        if (bd < dist) { dist = bd; kind = 2; }
+      }
       var hit = hits[i];
       hit.ang = ang;
       hit.dist = dist;
@@ -175,7 +178,13 @@
     if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, "passMouse", false);
     else bot.passMouse = 0;
     var other = bot === robots[0] ? robots[1] : robots[0];
-    avoidPoint(other.x, other.y, robotR, "passBot", true);
+    var nearBot = lidarRange;
+    if (activeCount > 1) {
+      avoidPoint(other.x, other.y, robotR, "passBot", true);
+      nearBot = Math.hypot(bot.x - other.x, bot.y - other.y) - robotR * 2;
+    } else {
+      bot.passBot = 0;
+    }
 
     var desired = Math.atan2(vy, vx);
     if (!locked && front < lidarRange * 0.72) {
@@ -185,7 +194,6 @@
 
     var err = wrap(desired - bot.th);
     if (err < 0.04 && err > -0.04) err = 0;
-    var nearBot = Math.hypot(bot.x - other.x, bot.y - other.y) - robotR * 2;
     var wMax = bot.cool > 0 ? 0.04 : (nearBot < 70 || headOn > 0.6 ? 0.12 : 0.09);
     var wCmd = err * 0.14;
     if (wCmd > wMax) wCmd = wMax;
@@ -316,18 +324,31 @@
     if (document.hidden) return;
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
-    var a = scanLidar(robots[0]);
-    var b = scanLidar(robots[1]);
-    steer(robots[0], a);
-    steer(robots[1], b);
-    drawTrail(robots[0]);
-    drawTrail(robots[1]);
-    drawLidar(robots[0], a);
-    drawLidar(robots[1], b);
-    drawRobot(robots[0]);
-    drawRobot(robots[1]);
+      var n = activeCount;
+      var k;
+      for (k = 0; k < n; k++) robots[k].hits = scanLidar(robots[k]);
+      for (k = 0; k < n; k++) steer(robots[k], robots[k].hits);
+      for (k = 0; k < n; k++) {
+        drawTrail(robots[k]);
+        drawLidar(robots[k], robots[k].hits);
+        drawRobot(robots[k]);
+      }
     raf = window.requestAnimationFrame(tick);
   }
+
+  window.setSailVehiclePage = function (targetId) {
+    var next = (!targetId || targetId === "#home") ? 2 : 1;
+    if (next === 2 && activeCount < 2) {
+      robots[1].x = viewW * 0.78;
+      robots[1].y = viewH * 0.72;
+      robots[1].th = 3.5;
+      robots[1].trail = [];
+      robots[1].ti = 0;
+      robots[1].passMouse = 0;
+      robots[1].passBot = 0;
+    }
+    activeCount = next;
+  };
 
   window.CanvasNestSetColor = function (rgb) {
     color = rgb;

@@ -82,6 +82,7 @@
       requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
     }
     if (typeof window.setSailCursorPage === "function") window.setSailCursorPage(targetId);
+    if (typeof window.setSailVehiclePage === "function") window.setSailVehiclePage(targetId);
   }
 
   window.addEventListener("popstate", () => {
