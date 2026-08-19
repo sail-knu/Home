@@ -5,12 +5,12 @@
   --bg-elevated: #ffffff;
   --surface: #ffffff;
   --surface-border: rgba(20, 32, 48, 0.1);
-  --primary-color: #0c7a73;
-  --primary-glow: rgba(12, 122, 115, 0.2);
-  --secondary-color: #1d4e89;
+  --primary-color: #1d4e89;
+  --primary-glow: rgba(29, 78, 137, 0.22);
+  --secondary-color: #0d2644;
   --text-color: #1a2330;
   --muted-text: #5a6776;
-  --accent-soft: #0c7a73;
+  --accent-soft: #1d4e89;
   --heading-color: #121a24;
   --copy-color: #2a3544;
   --on-primary: #ffffff;
@@ -18,20 +18,20 @@
   --nav-mobile: #ffffff;
   --banner-bg: #ffffff;
   --footer-bg: #eef1f4;
-  --bento-from: #eef4f3;
-  --bento-to: #e8eef6;
+  --bento-from: #eef1f6;
+  --bento-to: #e6ebf2;
   --photo-from: #dce7ef;
-  --photo-to: #e8f1ef;
-  --chip-bg: rgba(12, 122, 115, 0.1);
+  --photo-to: #e6edf4;
+  --chip-bg: rgba(29, 78, 137, 0.1);
   --switch-border: rgba(18, 26, 36, 0.12);
   --switch-bg: #ffffff;
   --switch-fg: rgba(18, 26, 36, 0.5);
-  --theme-primary-r: 12;
-  --theme-primary-g: 122;
-  --theme-primary-b: 115;
-  --theme-secondary-r: 29;
-  --theme-secondary-g: 78;
-  --theme-secondary-b: 137;
+  --theme-primary-r: 29;
+  --theme-primary-g: 78;
+  --theme-primary-b: 137;
+  --theme-secondary-r: 13;
+  --theme-secondary-g: 38;
+  --theme-secondary-b: 68;
   --transition: 0.25s ease;
 }
 
@@ -1309,6 +1309,43 @@ a.member-card:hover {
 
 .lecture-grid {
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.lecture-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition);
+}
+
+.lecture-card:hover:not(.selected) {
+  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
+}
+
+.lecture-card.selected {
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
+    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+.lecture-card.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+}
+
+#lecture:has(.lecture-card:hover) .lecture-card:not(:hover):not(.selected),
+#lecture:has(.lecture-card.selected) .lecture-card:not(.selected):not(:hover) {
+  opacity: 0.38;
 }
 
 .lecture-year + .lecture-year {

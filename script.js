@@ -131,6 +131,16 @@
     collapseResearchCards();
   }
 
+  document.querySelectorAll("#lecture .lecture-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const on = card.classList.contains("selected");
+      document.querySelectorAll("#lecture .lecture-card.selected").forEach((c) => {
+        c.classList.remove("selected");
+      });
+      if (!on) card.classList.add("selected");
+    });
+  });
+
   function toggleDetails(wrapperId) {
     const wrapper = document.getElementById(wrapperId);
     if (!wrapper) return;
@@ -681,6 +691,26 @@
     if (details) details.style.maxHeight = details.scrollHeight + "px";
   }
 
+  function setYoutubeThumb(img, id) {
+    const files = ["hq720.jpg", "sddefault.jpg", "hqdefault.jpg", "mqdefault.jpg", "0.jpg"];
+    let i = 0;
+    function apply() {
+      img.src = "https://i.ytimg.com/vi/" + id + "/" + files[i];
+    }
+    function next() {
+      if (i < files.length - 1) {
+        i += 1;
+        apply();
+      }
+    }
+    img.addEventListener("error", next);
+    img.addEventListener("load", function () {
+      // Missing high-res thumbs often return a 120x90 placeholder with HTTP 200.
+      if (img.naturalWidth <= 120) next();
+    });
+    apply();
+  }
+
   function initYoutubeLite() {
     document.querySelectorAll(".video-embed iframe[src*='youtube']").forEach((iframe) => {
       const id = youtubeIdFromSrc(iframe.src);
@@ -693,12 +723,7 @@
       btn.setAttribute("aria-label", "Play " + title);
       const thumb = document.createElement("img");
       thumb.alt = "";
-      thumb.loading = "lazy";
-      thumb.src = "https://i.ytimg.com/vi/" + id + "/hq720.jpg";
-      thumb.addEventListener("error", function onErr() {
-        thumb.removeEventListener("error", onErr);
-        thumb.src = "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
-      });
+      setYoutubeThumb(thumb, id);
       const play = document.createElement("span");
       play.className = "yt-lite-play";
       play.setAttribute("aria-hidden", "true");
@@ -725,9 +750,9 @@
     if (typeof window.CanvasNestSetColor !== "function") return;
     var styles = getComputedStyle(document.documentElement);
     var rgb = [
-      styles.getPropertyValue("--theme-primary-r").trim() || "12",
-      styles.getPropertyValue("--theme-primary-g").trim() || "122",
-      styles.getPropertyValue("--theme-primary-b").trim() || "115"
+      styles.getPropertyValue("--theme-primary-r").trim() || "29",
+      styles.getPropertyValue("--theme-primary-g").trim() || "78",
+      styles.getPropertyValue("--theme-primary-b").trim() || "137"
     ].join(",");
     window.CanvasNestSetColor(rgb);
   };

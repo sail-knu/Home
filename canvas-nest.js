@@ -1,7 +1,7 @@
 (function () {
   var tag = document.currentScript || document.getElementsByTagName("script")[document.getElementsByTagName("script").length - 1];
-  var color = (tag && tag.getAttribute("color")) || "15,138,130";
-  var colorB = "29,78,137";
+  var color = (tag && tag.getAttribute("color")) || "29,78,137";
+  var colorB = "13,38,68";
   var opacity = parseFloat((tag && tag.getAttribute("opacity")) || "0.32");
   var zIndex = (tag && tag.getAttribute("zIndex")) || "0";
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
