@@ -1220,6 +1220,12 @@ a.member-card:hover {
   background: var(--surface);
 }
 
+@media (min-width: 900px) {
+  .sim-nav:not(.sim-nav-dense) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .sim-nav-dense {
   margin-top: 10px;
 }

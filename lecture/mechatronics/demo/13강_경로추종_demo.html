@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자전거 모델 경로 추종 — 13강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 13강 · 인터랙티브 데모</p>
+  <h1>자전거 모델 경로 추종 — 라이브</h1>
+  <p class="lede">경로에서 2 m 벗어난 차량이 달립니다. <b>K<sub>p</sub></b>·<b>K<sub>d</sub></b>·<b>속도 v</b>를 바꾸고 [시작]을 누르면 궤적이 수렴·진동·발산으로 갈립니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  x += v&middot;cos&theta;&middot;&Delta;t, &nbsp; y += v&middot;sin&theta;&middot;&Delta;t, &nbsp; &theta; += (v/L)&middot;tan&delta;&middot;&Delta;t
+  &nbsp;·&nbsp; CTE = y &nbsp;→&nbsp; <b>&delta;</b> = &minus;(K<sub>p</sub>&middot;CTE + K<sub>d</sub>&middot;dCTE/dt), &nbsp;|&delta;| &le; 30&deg;
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>기준 경로 y = 0</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>수렴 밴드 &plusmn;0.1 m</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>차량 궤적</span>
+        <span class="lg" style="color:var(--accent)"><i class="o"></i>차량 (헤딩 &theta;)</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>현재 CTE</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>비례 게인 K<sub>p</sub> <span class="value" id="kpV">0.60</span></label>
+        <input type="range" id="kpS" min="0" max="3" step="0.05" value="0.60">
+      </div>
+
+      <div class="ctl-box">
+        <label>미분 게인 K<sub>d</sub> <span class="value" id="kdV">1.20</span></label>
+        <input type="range" id="kdS" min="0" max="4" step="0.05" value="1.20">
+      </div>
+
+      <div class="ctl-box">
+        <label>속도 v (m/s) <span class="value" id="vV">5.0</span></label>
+        <input type="range" id="vS" min="1" max="12" step="0.5" value="5.0">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="stopBtn" class="btn">■ 정지</button>
+        <button id="resetBtn" class="btn">↻ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="pdOff" class="btn">K<sub>d</sub> = 0</button>
+        <button id="pdOn" class="btn">PD 조합</button>
+        <button id="fast" class="btn">고속 v = 12</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">현재 CTE</div><div class="v" id="cteV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">RMS CTE</div><div class="v" id="rmsV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">조향각 &delta;</div><div class="v" id="delV">—</div></div>
+          <div class="stat"><div class="k">주행 거리 x</div><div class="v" id="distV" style="color:var(--muted)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • K<sub>p</sub>만 크면 지나쳐서 <b>진동</b><br>
+        • K<sub>d</sub>는 접근 속도에 브레이크<br>
+        • v가 커지면 한 스텝 회전량도 커짐<br>
+        • 조향은 &plusmn;30&deg;에서 잘려 있음<br>
+        • 초록 밴드 안에 들면 수렴 판정
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 13강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function (id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+var M = { l: 56, r: 24, t: 30, b: 44 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* 물리 상수 (13강 §4.2) */
+var L = 2.5;                      /* 휠베이스 (m) */
+var DT = 0.05;                    /* 시간 스텝 (s) */
+var DMAX = 30 * Math.PI / 180;    /* 조향 클램프 ±30° */
+var Y0 = 2.0;                     /* 초기 오프셋 (m) */
+var XMAX = 90;                    /* x 표시 범위 (m) */
+var YRANGE = 4.5;                 /* y 표시 반경 (m) */
+var TOL = 0.1;                    /* 수렴 판정 밴드 (m) */
+
+var state = {
+  Kp: 0.60, Kd: 1.20, v: 5.0,
+  x: 0, y: Y0, theta: 0, prevCTE: Y0,
+  traj: [], sumSq: 0, count: 0,
+  running: false, raf: null,
+  status: 'idle', diverged: false,
+  peakAfterCross: 0, crossed: false,
+  lastCTE: Y0, lastDelta: 0
+};
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+function xToPx(x){ return M.l + (x / XMAX) * plotW; }
+function yToPx(y){ return M.t + plotH / 2 - (y / YRANGE) * (plotH / 2); }
+function clampYView(y){ return y > YRANGE ? YRANGE : (y < -YRANGE ? -YRANGE : y); }
+
+function reset(){
+  stop();
+  state.x = 0; state.y = Y0; state.theta = 0; state.prevCTE = Y0;
+  state.traj = [{ x: 0, y: Y0 }];
+  state.sumSq = 0; state.count = 0;
+  state.diverged = false; state.crossed = false; state.peakAfterCross = 0;
+  state.status = 'idle';
+  state.lastCTE = Y0; state.lastDelta = 0;
+  draw();
+  updateStats(Y0, 0);
+  setVerdict(Y0, Math.abs(Y0), 0);
+}
+
+/* 한 스텝 전진 (자전거 모델, 오일러 적분) */
+function step(){
+  var cte = state.y;                                /* 경로 y=0 → CTE = y */
+  var dCTE = (cte - state.prevCTE) / DT;
+  state.prevCTE = cte;
+
+  var delta = -(state.Kp * cte + state.Kd * dCTE);
+  if (delta > DMAX) delta = DMAX;
+  if (delta < -DMAX) delta = -DMAX;
+
+  var v = state.v;
+  state.x += v * Math.cos(state.theta) * DT;
+  state.y += v * Math.sin(state.theta) * DT;
+  state.theta += (v / L) * Math.tan(delta) * DT;
+
+  state.traj.push({ x: state.x, y: state.y });
+  state.sumSq += cte * cte;
+  state.count += 1;
+
+  if (!state.crossed && Math.sign(cte) !== Math.sign(Y0)) state.crossed = true;
+  if (state.crossed) state.peakAfterCross = Math.max(state.peakAfterCross, Math.abs(cte));
+
+  if (Math.abs(state.y) > 200 || !isFinite(state.y)) state.diverged = true;
+
+  return delta;
+}
+
+function updateStats(cte, delta){
+  var rms = state.count > 0 ? Math.sqrt(state.sumSq / state.count) : Math.abs(Y0);
+  $('cteV').textContent = cte.toFixed(3) + ' m';
+  $('rmsV').textContent = rms.toFixed(3) + ' m';
+  $('delV').textContent = (delta * 180 / Math.PI).toFixed(1) + '°';
+  $('distV').textContent = state.x.toFixed(1) + ' m';
+  var dEl = $('delV');
+  dEl.style.color = Math.abs(delta) >= DMAX - 1e-9 ? 'var(--bad)' : 'var(--text)';
+  return rms;
+}
+
+function draw(){
+  var C = palette(), gx, gy, i;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (gx = 0; gx <= XMAX; gx += 10){
+    var pxg = xToPx(gx);
+    ctx.beginPath(); ctx.moveTo(pxg, M.t); ctx.lineTo(pxg, M.t + plotH); ctx.stroke();
+  }
+  for (gy = -4; gy <= 4; gy += 1){
+    var pyg = yToPx(gy);
+    ctx.beginPath(); ctx.moveTo(M.l, pyg); ctx.lineTo(M.l + plotW, pyg); ctx.stroke();
+  }
+
+  /* 수렴 판정 밴드 ±0.1 m */
+  ctx.globalAlpha = 0.18; ctx.fillStyle = C.band;
+  ctx.fillRect(M.l, yToPx(TOL), plotW, yToPx(-TOL) - yToPx(TOL));
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (gy = -4; gy <= 4; gy += 2) ctx.fillText(gy.toFixed(0), M.l - 8, yToPx(gy) + 4);
+  ctx.textAlign = 'center';
+  for (gx = 0; gx <= XMAX; gx += 20) ctx.fillText(gx.toFixed(0), xToPx(gx), M.t + plotH + 18);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'start';
+  ctx.fillText('가로 위치 y (m)', 8, M.t - 12);
+  ctx.textAlign = 'end';
+  ctx.fillText('전진 거리 x (m) →', W - M.r, H - 12);
+
+  /* 기준 경로 y = 0 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var y0px = yToPx(0);
+  ctx.beginPath(); ctx.moveTo(M.l, y0px); ctx.lineTo(M.l + plotW, y0px); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('기준 경로 y = 0', M.l + 8, y0px - 6);
+
+  /* 차량 궤적 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  var started = false;
+  for (i = 0; i < state.traj.length; i++){
+    var p = state.traj[i];
+    if (p.x > XMAX) break;
+    var px = xToPx(p.x), py = yToPx(clampYView(p.y));
+    if (!started){ ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  /* 현재 차량 & CTE */
+  var cur = state.traj[state.traj.length - 1];
+  if (cur && cur.x <= XMAX){
+    var cpx = xToPx(cur.x), cpy = yToPx(clampYView(cur.y));
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 1.6; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(cpx, cpy); ctx.lineTo(cpx, yToPx(0)); ctx.stroke();
+    ctx.setLineDash([]);
+    drawCar(cpx, cpy, state.theta, C);
+  }
+}
+
+function drawCar(px, py, theta, C){
+  var a = -theta, size = 11;   /* 캔버스 y축이 아래로 증가 → 화면 각도는 -theta */
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(a);
+  ctx.fillStyle = C.accent;
+  ctx.strokeStyle = C.surface;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(size, 0);
+  ctx.lineTo(-size * 0.7, size * 0.7);
+  ctx.lineTo(-size * 0.7, -size * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function setVerdict(cte, rms, delta){
+  var vd = $('verdict'), cls, msg;
+
+  if (state.status === 'idle'){
+    cls = 'mid';
+    msg = '초기 오프셋 y<sub>0</sub> = 2 m. [시작]을 누르면 CTE를 조향으로 되먹여 경로로 복귀합니다.';
+  } else if (state.diverged){
+    cls = 'bad';
+    msg = '<b>발산</b> — 되먹임이 너무 강해 가로 오차가 터졌습니다 (K<sub>p</sub> = ' + state.Kp.toFixed(2) +
+      ', v = ' + state.v.toFixed(1) + ' m/s). K<sub>p</sub>를 낮추거나 K<sub>d</sub>를 키우세요.';
+  } else {
+    var absCTE = Math.abs(cte), peak = state.peakAfterCross;
+    if (peak > 0.6 && absCTE > 0.15){
+      cls = 'mid';
+      msg = '<b>진동</b> — 경로를 지나쳐 반대편으로 최대 ' + peak.toFixed(2) + ' m 튀었습니다. 현재 CTE ' +
+        cte.toFixed(2) + ' m, RMS ' + rms.toFixed(2) + ' m. K<sub>d</sub>를 키우면 오버슈트가 줄어듭니다.';
+    } else if (absCTE < TOL){
+      cls = 'good';
+      msg = '<b>수렴</b> — 초록 밴드 안에 안착했습니다. CTE ' + cte.toFixed(3) + ' m, RMS ' + rms.toFixed(3) +
+        ' m (K<sub>p</sub> = ' + state.Kp.toFixed(2) + ', K<sub>d</sub> = ' + state.Kd.toFixed(2) + ').';
+    } else {
+      cls = 'mid';
+      msg = '<b>복귀 중</b> — CTE ' + cte.toFixed(2) + ' m, RMS ' + rms.toFixed(2) + ' m, 조향 ' +
+        (delta * 180 / Math.PI).toFixed(1) + '°.';
+    }
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+function frame(){
+  if (!state.running) return;
+  var i;
+  for (i = 0; i < 3; i++){
+    state.lastCTE = state.y;
+    state.lastDelta = step();
+    if (state.diverged || state.x > XMAX) break;
+  }
+  draw();
+  var rms = updateStats(state.lastCTE, state.lastDelta);
+  setVerdict(state.lastCTE, rms, state.lastDelta);
+
+  if (state.diverged || state.x > XMAX){ stop(); return; }
+  state.raf = requestAnimationFrame(frame);
+}
+
+function start(){
+  if (state.running) return;
+  if (state.x > XMAX || state.diverged) reset();
+  state.running = true;
+  state.status = 'run';
+  $('startBtn').classList.add('on');
+  state.raf = requestAnimationFrame(frame);
+}
+function stop(){
+  state.running = false;
+  if (state.raf){ cancelAnimationFrame(state.raf); state.raf = null; }
+  $('startBtn').classList.remove('on');
+}
+
+$('kpS').addEventListener('input', function(){
+  state.Kp = parseFloat(this.value); $('kpV').textContent = state.Kp.toFixed(2);
+});
+$('kdS').addEventListener('input', function(){
+  state.Kd = parseFloat(this.value); $('kdV').textContent = state.Kd.toFixed(2);
+});
+$('vS').addEventListener('input', function(){
+  state.v = parseFloat(this.value); $('vV').textContent = state.v.toFixed(1);
+});
+$('startBtn').addEventListener('click', start);
+$('stopBtn').addEventListener('click', stop);
+$('resetBtn').addEventListener('click', reset);
+
+function applyPreset(kp, kd, v){
+  state.Kp = kp; state.Kd = kd; state.v = v;
+  $('kpS').value = kp; $('kdS').value = kd; $('vS').value = v;
+  $('kpV').textContent = kp.toFixed(2);
+  $('kdV').textContent = kd.toFixed(2);
+  $('vV').textContent = v.toFixed(1);
+  reset();
+}
+$('pdOff').addEventListener('click', function(){ applyPreset(1.20, 0.00, 5.0); });
+$('pdOn').addEventListener('click', function(){ applyPreset(0.60, 1.20, 5.0); });
+$('fast').addEventListener('click', function(){ applyPreset(state.Kp, state.Kd, 12.0); });
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+
+reset();
+})();
+</script>
+</body>
+</html>

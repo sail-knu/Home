@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>진자 선형화 — 6강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.ctl-box .note{font-size:11.5px;color:var(--faint);margin-top:4px}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 6강 · 인터랙티브 데모</p>
+  <h1>진자 선형화 — sin&theta; ≈ &theta;는 언제 유효한가</h1>
+  <p class="lede">초기각 <b>&theta;<sub>0</sub></b>와 길이 <b>L</b>을 바꾸고 [시작]을 누르세요. 실제(비선형)와 선형 근사가 언제부터 벌어지는지 보입니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  비선형 <b>&theta;&#776; + (g/L)sin&theta; = 0</b> &nbsp;→&nbsp; &theta;=0에서 sin&theta; ≈ &theta;
+  &nbsp;→&nbsp; 선형 <b>&theta;&#776; + (g/L)&theta; = 0</b>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">&omega;<sub>n</sub> = √(g/L)</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>비선형 (실제 진자, RK4)</span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>선형 근사 sin&theta;≈&theta;</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>두 곡선의 차이</span>
+        <span class="lg" style="color:var(--bad)"><i class="d"></i>벌어짐 시작</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>초기각 &theta;<sub>0</sub> <span class="value" id="th0V">15°</span></label>
+        <input type="range" id="th0S" min="5" max="90" step="1" value="15">
+      </div>
+
+      <div class="ctl-box">
+        <label>진자 길이 L (m) <span class="value" id="lV">1.00</span></label>
+        <input type="range" id="lS" min="0.5" max="2.0" step="0.05" value="1.00">
+      </div>
+
+      <div class="ctl-box">
+        <label>중력 가속도 g <span class="value">9.81</span></label>
+        <div class="note">고정값 (지표면 표준중력, m/s²)</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">&#9654; 시작</button>
+        <button id="resetBtn" class="btn">&#8635; 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="p15" class="btn">&theta;<sub>0</sub> = 15°</button>
+        <button id="p60" class="btn">&theta;<sub>0</sub> = 60°</button>
+        <button id="diffBtn" class="btn on">차이 곡선</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">&theta;<sub>0</sub> (라디안)</div><div class="v" id="radV">—</div></div>
+          <div class="stat"><div class="k">sin&theta;<sub>0</sub> 대비 상대오차</div><div class="v" id="errV">—</div></div>
+          <div class="stat"><div class="k">선형 주기 T = 2&pi;√(L/g)</div><div class="v" id="perV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">벌어짐이 보이는 시점</div><div class="v" id="drV" style="color:var(--bad)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict good" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • &theta;<sub>0</sub> &lt; 15°면 상대오차 약 1% 이내<br>
+        • 각이 커지면 실제 주기가 <b>길어짐</b><br>
+        • 벌어짐은 <b>여러 주기 누적</b>으로 뚜렷해짐<br>
+        • 회색 차이 곡선이 점점 부풀어 오름<br>
+        • 선형화는 <b>작은 각에서만</b> 유효
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 6강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+
+var PIV = { x: 210, y: 120 };
+var GX = 430, GY = 44, GW = W - GX - 28, GH = H - GY - 62;
+var G = 9.81, dt = 0.004, DRIFT_THRESH = 0.08;
+
+var state = {
+  theta0deg: 15, L: 1.00,
+  thN: 0, wN: 0, thL: 0, wL: 0,
+  t: 0, running: false, showDiff: true,
+  histN: [], histL: [], histT: [],
+  driftT: null, tMax: 0
+};
+var curMaxA = 1, rafId = null;
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent')
+  };
+}
+
+/* ── RK4 한 스텝: y = [theta, omega] ───────────────
+   비선형 f = [omega, -(g/L) sin(theta)] / 선형 f = [omega, -(g/L) theta]  */
+function accel(theta, linear){
+  var gl = G / state.L;
+  return linear ? -gl * theta : -gl * Math.sin(theta);
+}
+function rk4Step(theta, omega, linear){
+  var k1t = omega,                  k1w = accel(theta, linear);
+  var k2t = omega + 0.5 * dt * k1w, k2w = accel(theta + 0.5 * dt * k1t, linear);
+  var k3t = omega + 0.5 * dt * k2w, k3w = accel(theta + 0.5 * dt * k2t, linear);
+  var k4t = omega + dt * k3w,       k4w = accel(theta + dt * k3t, linear);
+  return { theta: theta + (dt / 6) * (k1t + 2 * k2t + 2 * k3t + k4t),
+           omega: omega + (dt / 6) * (k1w + 2 * k2w + 2 * k3w + k4w) };
+}
+function period(){ return 2 * Math.PI * Math.sqrt(state.L / G); }
+
+function resetSim(){
+  var th0 = state.theta0deg * Math.PI / 180;
+  state.thN = th0; state.wN = 0;
+  state.thL = th0; state.wL = 0;
+  state.t = 0;
+  state.histN = [th0]; state.histL = [th0]; state.histT = [0];
+  state.driftT = null;
+  state.tMax = Math.max(period() * 5, 4);
+}
+function stepPhysics(){
+  var spf = Math.round((1 / 60) / dt), i;
+  for (i = 0; i < spf; i++){
+    var n = rk4Step(state.thN, state.wN, false);
+    var l = rk4Step(state.thL, state.wL, true);
+    state.thN = n.theta; state.wN = n.omega;
+    state.thL = l.theta; state.wL = l.omega;
+    state.t += dt;
+    if (state.driftT === null && Math.abs(state.thN - state.thL) > DRIFT_THRESH) state.driftT = state.t;
+  }
+  state.histN.push(state.thN);
+  state.histL.push(state.thL);
+  state.histT.push(state.t);
+  if (state.t >= state.tMax) state.running = false;
+}
+
+function gx(t){ return GX + (t / state.tMax) * GW; }
+function gy(theta, maxA){ return GY + GH / 2 - (theta / maxA) * (GH / 2 - 8); }
+
+function drawGridAndAxes(C, maxA){
+  var t, a;
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (t = 0; t <= state.tMax + 1e-6; t += 1){
+    ctx.beginPath(); ctx.moveTo(gx(t), GY); ctx.lineTo(gx(t), GY + GH); ctx.stroke();
+  }
+  var aStepDeg = maxA * 180 / Math.PI > 60 ? 30 : (maxA * 180 / Math.PI > 30 ? 15 : 10);
+  var aStep = aStepDeg * Math.PI / 180;
+  for (a = -Math.floor(maxA / aStep) * aStep; a <= maxA + 1e-6; a += aStep){
+    ctx.beginPath(); ctx.moveTo(GX, gy(a, maxA)); ctx.lineTo(GX + GW, gy(a, maxA)); ctx.stroke();
+  }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(GX, GY); ctx.lineTo(GX, GY + GH); ctx.lineTo(GX + GW, GY + GH); ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(GX, gy(0, maxA)); ctx.lineTo(GX + GW, gy(0, maxA)); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('θ (°)', GX - 2, GY - 12);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (s) →', GX + GW, GY + GH + 34);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (a = -Math.floor(maxA / aStep) * aStep; a <= maxA + 1e-6; a += aStep){
+    ctx.fillText(Math.round(a * 180 / Math.PI) + '°', GX - 6, gy(a, maxA) + 4);
+  }
+  ctx.textAlign = 'center';
+  var tStep = state.tMax > 8 ? 2 : 1;
+  for (t = 0; t <= state.tMax + 1e-6; t += tStep) ctx.fillText(t.toFixed(0), gx(t), GY + GH + 16);
+}
+
+function drawCurve(hist, color, width){
+  var i;
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.beginPath();
+  for (i = 0; i < hist.length; i++){
+    var px = gx(state.histT[i]), py = gy(hist[i], curMaxA);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function drawPendulum(theta, color, alpha){
+  var Lpx = 30 + state.L * 78;
+  var bx = PIV.x + Lpx * Math.sin(theta), by = PIV.y + Lpx * Math.cos(theta);
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(PIV.x, PIV.y); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(bx, by, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function draw(){
+  var C = palette(), i, hx;
+  ctx.clearRect(0, 0, W, H);
+
+  /* ── 좌: 진자 ── */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(GX - 18, 30); ctx.lineTo(GX - 18, H - 24); ctx.stroke();
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(PIV.x - 46, PIV.y); ctx.lineTo(PIV.x + 46, PIV.y); ctx.stroke();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (hx = -42; hx <= 42; hx += 12){
+    ctx.beginPath(); ctx.moveTo(PIV.x + hx, PIV.y); ctx.lineTo(PIV.x + hx - 8, PIV.y - 8); ctx.stroke();
+  }
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.moveTo(PIV.x, PIV.y); ctx.lineTo(PIV.x, PIV.y + 30 + state.L * 78 + 26); ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawPendulum(state.thL, C.alias, 0.85);
+  drawPendulum(state.thN, C.avg, 0.95);
+
+  ctx.fillStyle = C.axis;
+  ctx.beginPath(); ctx.arc(PIV.x, PIV.y, 5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = C.muted; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('진자 운동 (두 모델 겹침)', PIV.x, 24);
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = C.avg;
+  ctx.fillText('비선형 θ = ' + (state.thN * 180 / Math.PI).toFixed(1) + '°', PIV.x, H - 30);
+  ctx.fillStyle = C.alias;
+  ctx.fillText('선형 θ = ' + (state.thL * 180 / Math.PI).toFixed(1) + '°', PIV.x, H - 14);
+
+  /* ── 우: θ(t) 그래프 ── */
+  curMaxA = state.theta0deg * Math.PI / 180 * 1.15;
+  drawGridAndAxes(C, curMaxA);
+
+  if (state.showDiff){
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (i = 0; i < state.histT.length; i++){
+      var px = gx(state.histT[i]), py = gy(state.histN[i] - state.histL[i], curMaxA);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  drawCurve(state.histL, C.alias, 2.4);
+  drawCurve(state.histN, C.avg, 2.6);
+
+  if (state.driftT !== null && state.driftT <= state.tMax){
+    var dpx = gx(state.driftT);
+    ctx.strokeStyle = C.bad; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(dpx, GY); ctx.lineTo(dpx, GY + GH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.bad; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('벌어짐 시작', dpx + 4, GY + 14);
+  }
+
+  ctx.fillStyle = C.muted; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('θ(t) — 비선형 vs 선형 근사', GX, GY - 26);
+
+  updateStats();
+}
+
+function updateStats(){
+  var th0 = state.theta0deg * Math.PI / 180;
+  var relErr = (th0 - Math.sin(th0)) / Math.sin(th0) * 100;
+  var T = period(), deg = state.theta0deg;
+
+  $('radV').textContent = th0.toFixed(3);
+  var errEl = $('errV');
+  errEl.textContent = relErr.toFixed(2) + ' %';
+  errEl.style.color = relErr < 1 ? 'var(--ok)' : (relErr < 5 ? 'var(--warn)' : 'var(--bad)');
+  $('perV').textContent = T.toFixed(2) + ' s';
+
+  var drEl = $('drV');
+  if (state.driftT !== null){
+    drEl.textContent = state.driftT.toFixed(1) + ' s (~' + (state.driftT / T).toFixed(1) + '주기)';
+  } else if (state.t > 0 && !state.running && state.t >= state.tMax){
+    drEl.textContent = '5주기 내 미검출';
+  } else {
+    drEl.textContent = '—';
+  }
+
+  var vd = $('verdict'), cls, msg;
+  if (deg < 15){
+    cls = 'good';
+    msg = '&theta;<sub>0</sub> = ' + deg + '°에서 상대오차 <b>' + relErr.toFixed(2) +
+      '%</b> (약 1% 이내). 두 곡선이 거의 겹칩니다 — 선형화 <b>유효</b>.';
+  } else if (deg < 40){
+    cls = 'mid';
+    msg = '&theta;<sub>0</sub> = ' + deg + '°에서 상대오차 <b>' + relErr.toFixed(2) +
+      '%</b>. 초반은 비슷하지만 실제 주기가 길어져 ' +
+      (state.driftT !== null ? '약 ' + state.driftT.toFixed(1) + 's부터 ' : '여러 주기 뒤 ') + '어긋납니다.';
+  } else {
+    cls = 'bad';
+    msg = '&theta;<sub>0</sub> = ' + deg + '°에서 상대오차 <b>' + relErr.toFixed(2) +
+      '%</b>. 실제 주기가 뚜렷이 길어져 두 곡선이 빠르게 벌어집니다 — 선형화는 <b>작은 각에서만</b> 유효.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+function loop(){
+  if (!state.running) return;
+  stepPhysics();
+  draw();
+  if (state.running) rafId = requestAnimationFrame(loop);
+  else { setStartLabel(false); draw(); }
+}
+function setStartLabel(running){
+  var b = $('startBtn');
+  b.innerHTML = running ? '&#10073;&#10073; 정지' : '&#9654; 시작';
+  if (running) b.classList.add('on'); else b.classList.remove('on');
+}
+function stopAndReset(){
+  state.running = false;
+  setStartLabel(false);
+  if (rafId) cancelAnimationFrame(rafId);
+  resetSim();
+  draw();
+}
+
+$('startBtn').addEventListener('click', function(){
+  if (state.running){
+    state.running = false;
+    setStartLabel(false);
+    if (rafId) cancelAnimationFrame(rafId);
+  } else {
+    if (state.t >= state.tMax) resetSim();
+    state.running = true;
+    setStartLabel(true);
+    rafId = requestAnimationFrame(loop);
+  }
+});
+$('resetBtn').addEventListener('click', stopAndReset);
+
+$('th0S').addEventListener('input', function(){
+  state.theta0deg = parseInt(this.value, 10);
+  $('th0V').textContent = state.theta0deg + '°';
+  stopAndReset();
+});
+$('lS').addEventListener('input', function(){
+  state.L = parseFloat(this.value);
+  $('lV').textContent = state.L.toFixed(2);
+  stopAndReset();
+});
+function setTheta(d){
+  state.theta0deg = d;
+  $('th0S').value = d;
+  $('th0V').textContent = d + '°';
+  stopAndReset();
+}
+$('p15').addEventListener('click', function(){ setTheta(15); });
+$('p60').addEventListener('click', function(){ setTheta(60); });
+$('diffBtn').addEventListener('click', function(){
+  state.showDiff = !state.showDiff;
+  if (state.showDiff) this.classList.add('on'); else this.classList.remove('on');
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+resetSim();
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1013,6 +1013,11 @@ try{
     ro.observe(document.getElementById('los-recwrap'));   // 레코더 CSS 크기도 항상 최신으로
   }
   requestAnimationFrame(function(t){ last=t; loop(t); });
+  window.refresh_los_demo = function () {
+    if (!demoVisible()) return;
+    readTheme();
+    resize();
+  };
 }catch(err){
   document.body.insertAdjacentHTML('beforeend',
     '<p style="padding:16px;font-size:14px">브라우저가 이 시뮬레이터를 실행할 수 없습니다: '+

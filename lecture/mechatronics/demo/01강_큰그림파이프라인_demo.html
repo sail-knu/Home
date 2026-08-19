@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>계측·모델링·제어 파이프라인 — 1강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block;cursor:pointer}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bname{font-size:16.5px;font-weight:800;color:var(--accent);margin-top:3px;line-height:1.3}
+.brole{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:4px}
+.tag{display:inline-block;font-size:11px;font-weight:800;color:var(--surface);
+  background:var(--muted);border-radius:999px;padding:2px 10px;margin-top:8px}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 1강 · 인터랙티브 데모</p>
+  <h1>계측·모델링·제어 파이프라인</h1>
+  <p class="lede">블록도의 상자를 <b>클릭</b>하면 그 블록의 역할과 배우는 주차가 오른쪽에 뜹니다. 예시를 바꾸고 신호를 돌려 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  목표 <b>r</b> → ⊗ → 제어기 → 액추에이터 → 플랜트 → 센서 → 필터 → 모델 ↺
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">오차 e = r − y</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i></i>목표값 r</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>앞으로 가는 경로</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>되먹임 경로</span>
+        <span class="lg" style="color:var(--accent)"><i class="o"></i>신호 펄스</span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>배우는 주차 태그</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 신호 돌리기</button>
+        <button id="stopBtn" class="btn">⏹ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="ex0" class="btn on">자율주행차</button>
+        <button id="ex1" class="btn">드론</button>
+        <button id="ex2" class="btn">크루즈</button>
+      </div>
+      <div class="btn-row">
+        <button id="nextBtn" class="btn">⏭ 다음 블록 보기</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>선택한 블록</label>
+        <div class="bname" id="cName">블록을 클릭하세요</div>
+        <div class="brole" id="cRole">상자에 마우스를 올리거나 클릭하면 역할이 여기에 표시됩니다.</div>
+        <span class="tag" id="cWeek">루프 전체</span>
+      </div>
+
+      <div class="ctl-box">
+        <label>이 예시에서는</label>
+        <div class="brole" id="cExample">예시 버튼(자율주행차 · 드론 · 크루즈)을 눌러 보세요.</div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 위쪽 = 명령이 나가는 경로<br>
+        • 아래쪽 = 측정이 돌아오는 되먹임 경로<br>
+        • 센서·필터 <b>P1</b> → 모델 <b>P2</b> → 제어기 <b>P3</b><br>
+        • 예시를 바꾸면 블록별 대응이 바뀜<br>
+        • [▶]로 신호가 도는 순서를 확인
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 1강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), surface2: cvar('--surface2'), soft: cvar('--accent-soft'), text: cvar('--text'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), band: cvar('--c-band'),
+    alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+/* 상단 행(왼→오): 비교 → 제어기 → 액추에이터 → 플랜트
+   하단 행(오→왼): 센서 → 필터 → 모델 → (비교로 되먹임) */
+var blocks = {
+  sum: { label:'⊗ 비교', kind:'sum', x:150, y:120, w:62, h:62, part:false, tag:'', name:'⊗ 비교기 (합산점)',
+    week:'오늘 개념 (7.4절)', role:'목표 r에서 되먹임된 y를 빼서 <b>오차 e = r − y</b>를 만듭니다.' },
+  controller: { label:'제어기', kind:'box', x:300, y:108, w:130, h:86, part:true, tag:'P3 · 11~12주',
+    name:'제어기 (Controller)', week:'P3 · 11~12주 (PID)', role:'오차 e를 보고 <b>얼마나 세게 조절할지</b> 명령을 만듭니다.' },
+  actuator: { label:'액추에이터', kind:'box', x:490, y:108, w:130, h:86, part:false, tag:'구성요소',
+    name:'액추에이터 (Actuator)', week:'구성 요소 (6절)', role:'명령을 <b>실제 움직임</b>으로 바꿉니다. 모터·바퀴·프로펠러.' },
+  plant: { label:'실제 시스템\n(플랜트)', kind:'box', x:680, y:108, w:140, h:86, part:false, tag:'제어 대상',
+    name:'실제 시스템 (플랜트)', week:'제어 대상 (6·7.1절)', role:'제어의 <b>대상</b>. 입력이 들어가면 출력 y가 나옵니다.' },
+  sensor: { label:'센서·계측', kind:'box', x:680, y:350, w:140, h:86, part:true, tag:'P1 · 2주',
+    name:'센서 · 계측 (Sensor)', week:'P1 · 2주', role:'물리량을 <b>전기 신호 = 숫자</b>로 읽는 눈·귀입니다.' },
+  filter: { label:'필터', kind:'box', x:490, y:350, w:130, h:86, part:true, tag:'P1 · 3~5주',
+    name:'필터 (Filter)', week:'P1 · 3~5주', role:'<b>측정 = 참값 + 노이즈</b>에서 노이즈를 걸러냅니다.' },
+  model: { label:'모델·추정', kind:'box', x:300, y:350, w:130, h:86, part:true, tag:'P2 · 6~10주',
+    name:'모델 · 추정 (Model)', week:'P2 · 6~10주', role:'입력→출력 관계를 <b>수식</b>으로 써서 다음 상태를 예측합니다.' }
+};
+var loopOrder = ['sum','controller','actuator','plant','sensor','filter','model'];
+var examples = {
+  0: { title:'자율주행차', sum:'목표 경로와 현재 위치의 차이(횡방향 오차)를 계산', controller:'조향각을 얼마나 꺾을지 결정 (판단)',
+    actuator:'조향·구동 모터가 바퀴를 움직임 (동작)', plant:'차량 본체 — 조향에 따라 실제로 이동',
+    sensor:'카메라·라이다·GPS로 위치를 측정 (인식)', filter:'노이즈 낀 GPS를 칼만 필터로 평활', model:'차량 운동을 수식으로 예측' },
+  1: { title:'드론', sum:'목표 자세(수평)와 현재 기울기의 차이를 계산', controller:'각 프로펠러 출력을 얼마나 바꿀지 결정 (판단)',
+    actuator:'4개 모터가 회전수를 바꿔 추력 생성 (동작)', plant:'기체 — 추력 차이에 따라 기울고 이동',
+    sensor:'IMU(자이로·가속도계)로 자세를 측정 (인식)', filter:'흔들리는 IMU 신호를 필터로 안정화', model:'기체 회전운동을 수식으로 예측' },
+  2: { title:'크루즈 컨트롤', sum:'설정 속도와 현재 속도의 차이를 계산', controller:'가속·감속을 얼마나 줄지 결정 (판단)',
+    actuator:'스로틀(엔진 출력)을 조절 (동작)', plant:'차량 — 출력에 따라 속도가 변함',
+    sensor:'휠 인코더로 현재 속도를 측정 (인식)', filter:'속도 측정값의 잔떨림을 평균으로 정리', model:'가속도-속도 관계를 수식으로 예측' }
+};
+var state = { selected:null, hover:null, ex:0, running:false, t:0, raf:null, lastTs:0 };
+function center(b){ return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; }
+function tagColor(key, C){ return blocks[key].part ? C.alias : C.muted; }
+function roundRect(x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function arrow(x1, y1, x2, y2, color, dash){
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
+  ctx.setLineDash(dash ? dash : []);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+  var ang = Math.atan2(y2 - y1, x2 - x1), s = 9;
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - s * Math.cos(ang - 0.4), y2 - s * Math.sin(ang - 0.4));
+  ctx.lineTo(x2 - s * Math.cos(ang + 0.4), y2 - s * Math.sin(ang + 0.4));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+/* 두 블록을 잇는 꺾은선 좌표 */
+function segPath(fromKey, toKey){
+  var a = blocks[fromKey], b = blocks[toKey], ca = center(a), cb = center(b), leftX = 90;
+  if (fromKey === 'plant' && toKey === 'sensor') return [{ x: cb.x, y: a.y + a.h }, { x: cb.x, y: b.y }];
+  if (fromKey === 'model' && toKey === 'sum')
+    return [{ x: a.x, y: ca.y }, { x: leftX, y: ca.y }, { x: leftX, y: ca.y - 120 },
+            { x: leftX, y: cb.y }, { x: b.x, y: cb.y }];
+  if (Math.abs(ca.y - cb.y) < 5){
+    if (cb.x > ca.x) return [{ x: a.x + a.w, y: ca.y }, { x: b.x, y: cb.y }];
+    return [{ x: a.x, y: ca.y }, { x: b.x + b.w, y: cb.y }];
+  }
+  return [{ x: ca.x, y: ca.y }, { x: cb.x, y: cb.y }];
+}
+function pointOnPath(pts, p){
+  var total = 0, segs = [], i, dx, dy, target, acc = 0, local;
+  for (i = 0; i < pts.length - 1; i++){
+    dx = pts[i + 1].x - pts[i].x; dy = pts[i + 1].y - pts[i].y;
+    segs.push(Math.sqrt(dx * dx + dy * dy)); total += segs[i];
+  }
+  target = p * total;
+  for (i = 0; i < segs.length; i++){
+    if (acc + segs[i] >= target || i === segs.length - 1){
+      local = segs[i] === 0 ? 0 : (target - acc) / segs[i];
+      return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * local,
+               y: pts[i].y + (pts[i + 1].y - pts[i].y) * local };
+    }
+    acc += segs[i];
+  }
+  return pts[pts.length - 1];
+}
+function drawConnector(fromKey, toKey, C){
+  var pts = segPath(fromKey, toKey), i, color, dash;
+  var isFb = (toKey === 'sum') || (fromKey === 'plant' && toKey === 'sensor')
+    || fromKey === 'sensor' || fromKey === 'filter' || fromKey === 'model';
+  color = isFb ? C.meas : C.avg; dash = isFb ? [7, 5] : null;
+  for (i = 0; i < pts.length - 1; i++){
+    if (i === pts.length - 2){ arrow(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, color, dash); continue; }
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash ? dash : []);
+    ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
+    ctx.restore();
+  }
+  return pts;
+}
+function wrapText(text, x, y, lh){
+  var lines = text.split('\n'), yy = y - (lines.length - 1) * lh / 2, i;
+  for (i = 0; i < lines.length; i++){ ctx.fillText(lines[i], x, yy); yy += lh; }
+}
+function draw(){
+  var C = palette(), i, key, b, c, active, tw;
+  ctx.clearRect(0, 0, W, H);
+  ctx.textBaseline = 'alphabetic';
+  var sum = blocks.sum, sc = center(sum);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('목표값 r', 40, sc.y - 14);
+  arrow(20, sc.y, sum.x, sc.y, C.tru, null);
+  var plant = blocks.plant;
+  ctx.fillStyle = C.avg; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y', plant.x + plant.w + 10, center(plant).y - 60);
+  var connPaths = {};
+  for (i = 0; i < loopOrder.length; i++) connPaths[i] = drawConnector(loopOrder[i], loopOrder[(i + 1) % loopOrder.length], C);
+  ctx.fillStyle = C.bad; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('오차 e', (sum.x + sum.w + blocks.controller.x) / 2, sc.y - 10);
+  for (i = 0; i < loopOrder.length; i++){
+    key = loopOrder[i]; b = blocks[key]; c = center(b);
+    active = (state.selected === key) || (state.hover === key);
+    ctx.fillStyle = active ? C.soft : C.surface2;
+    ctx.strokeStyle = active ? C.accent : C.axis;
+    if (b.kind === 'sum'){
+      ctx.lineWidth = active ? 3 : 2;
+      ctx.beginPath(); ctx.arc(c.x, c.y, b.w / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = C.text; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(c.x - 8, c.y - 8); ctx.lineTo(c.x + 8, c.y - 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c.x, c.y - 14); ctx.lineTo(c.x, c.y - 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c.x - 8, c.y + 9); ctx.lineTo(c.x + 8, c.y + 9); ctx.stroke();
+      ctx.fillStyle = active ? C.accent : C.muted; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('비교', c.x, c.y + b.h / 2 + 16);
+      continue;
+    }
+    ctx.lineWidth = active ? 3 : 1.6;
+    roundRect(b.x, b.y, b.w, b.h, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = active ? C.accent : C.text; ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    wrapText(b.label, c.x, c.y - 8, 18);
+    ctx.font = 'bold 11px sans-serif'; tw = ctx.measureText(b.tag).width + 14;
+    roundRect(c.x - tw / 2, b.y + b.h - 24, tw, 17, 8);
+    ctx.fillStyle = tagColor(key, C); ctx.fill();
+    ctx.fillStyle = C.surface; ctx.fillText(b.tag, c.x, b.y + b.h - 15.5);
+    ctx.textBaseline = 'alphabetic';
+  }
+  ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillStyle = C.avg; ctx.fillText('앞으로 가는 경로 (제어 명령)', 300, 68);
+  ctx.fillStyle = C.meas; ctx.fillText('되먹임 경로 (측정 → 필터 → 모델)', 300, 490);
+  if (state.running || state.t > 0){
+    var pts = connPaths[Math.floor(state.t) % loopOrder.length];
+    if (pts){
+      var pos = pointOnPath(pts, state.t - Math.floor(state.t));
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = C.accent; ctx.fill();
+      ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+}
+function updateCard(){
+  var C = palette(), key = state.selected || state.hover, b;
+  if (!key){
+    $('cName').textContent = '블록을 클릭하세요';
+    $('cRole').innerHTML = '상자에 마우스를 올리거나 클릭하면 역할이 여기에 표시됩니다.';
+    $('cWeek').textContent = '루프 전체'; $('cWeek').style.background = C.muted;
+    $('cExample').textContent = '지금 예시: ' + examples[state.ex].title;
+    return;
+  }
+  b = blocks[key];
+  $('cName').textContent = b.name; $('cRole').innerHTML = b.role;
+  $('cWeek').textContent = b.week; $('cWeek').style.background = tagColor(key, C);
+  $('cExample').textContent = examples[state.ex][key];
+}
+function updateVerdict(){
+  var vd = $('verdict'), key = state.selected, cls = 'good', msg;
+  if (!key){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '지금 예시: <b>' + examples[state.ex].title + '</b> — 블록을 눌러 루프를 따라가 보세요.';
+    return;
+  }
+  if (key === 'sensor' || key === 'filter') msg = '인식 단계. 파트 <b>P1</b>에서 다룹니다.';
+  else if (key === 'model') msg = '예측의 기초. 파트 <b>P2</b>에서 다룹니다.';
+  else if (key === 'controller') msg = '판단 → 동작. 파트 <b>P3</b>(PID)에서 다룹니다.';
+  else { cls = 'mid'; msg = '오늘 소개하는 루프 구성 요소입니다.'; }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = '<b>' + blocks[key].name + '</b> — ' + msg;
+}
+function hitTest(mx, my){
+  var i, key, b, c, dx, dy;
+  for (i = 0; i < loopOrder.length; i++){
+    key = loopOrder[i]; b = blocks[key];
+    if (b.kind === 'sum'){
+      c = center(b); dx = mx - c.x; dy = my - c.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= b.w / 2 + 4) return key;
+    } else if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) return key;
+  }
+  return null;
+}
+function canvasPos(evt){
+  var rect = cv.getBoundingClientRect();
+  var sx = cv.width / rect.width, sy = cv.height / rect.height;
+  return { x: (evt.clientX - rect.left) * sx, y: (evt.clientY - rect.top) * sy };
+}
+cv.addEventListener('mousemove', function(e){
+  var p = canvasPos(e), key = hitTest(p.x, p.y);
+  if (key !== state.hover){
+    state.hover = key; cv.style.cursor = key ? 'pointer' : 'default';
+    updateCard(); draw();
+  }
+});
+cv.addEventListener('mouseleave', function(){
+  if (state.hover !== null){ state.hover = null; updateCard(); draw(); }
+});
+cv.addEventListener('click', function(e){
+  var p = canvasPos(e), key = hitTest(p.x, p.y);
+  state.selected = (state.selected === key) ? null : key;
+  updateCard(); updateVerdict(); draw();
+});
+function tick(ts){
+  if (!state.lastTs) state.lastTs = ts;
+  var dt = Math.min(0.05, (ts - state.lastTs) / 1000);
+  state.lastTs = ts;
+  if (!state.running) return;
+  state.t += dt * 0.9;                      /* 초당 약 0.9 구간 진행 */
+  if (state.t >= loopOrder.length) state.t -= loopOrder.length;
+  draw();
+  state.raf = requestAnimationFrame(tick);
+}
+$('startBtn').addEventListener('click', function(){
+  if (state.running) return;
+  state.running = true; state.lastTs = 0; this.classList.add('on');
+  state.raf = requestAnimationFrame(tick);
+});
+$('stopBtn').addEventListener('click', function(){
+  state.running = false; $('startBtn').classList.remove('on');
+  if (state.raf) cancelAnimationFrame(state.raf);
+});
+$('resetBtn').addEventListener('click', function(){
+  state.running = false; state.t = 0; state.lastTs = 0;
+  $('startBtn').classList.remove('on');
+  if (state.raf) cancelAnimationFrame(state.raf);
+  draw();
+});
+$('nextBtn').addEventListener('click', function(){
+  var idx = state.selected ? loopOrder.indexOf(state.selected) : -1;
+  state.selected = loopOrder[(idx + 1) % loopOrder.length];
+  updateCard(); updateVerdict(); draw();
+});
+var exBtns = [$('ex0'), $('ex1'), $('ex2')];
+function bindEx(i){
+  exBtns[i].addEventListener('click', function(){
+    var j; state.ex = i;
+    for (j = 0; j < exBtns.length; j++) exBtns[j].classList.toggle('on', j === i);
+    updateCard(); updateVerdict(); draw();
+  });
+}
+for (var bi = 0; bi < exBtns.length; bi++) bindEx(bi);
+function repaint(){ updateCard(); draw(); }
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', repaint);
+  else if (mq.addListener) mq.addListener(repaint);
+}
+if (window.MutationObserver){
+  new MutationObserver(repaint).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+updateCard(); updateVerdict(); draw();
+})();
+</script>
+</body>
+</html>

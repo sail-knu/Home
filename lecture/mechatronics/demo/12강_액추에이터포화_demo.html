@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>액추에이터 포화 — 12강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 12강 · 인터랙티브 데모</p>
+  <h1>액추에이터 포화 — 게인을 무한정 못 키우는 이유</h1>
+  <p class="lede"><b>K<sub>p</sub></b>·<b>K<sub>i</sub></b>·<b>F<sub>max</sub></b>를 움직이면 요청 힘 u가 어디서 잘리는지, 속도 응답이 포화 없는 이상 응답에서 얼마나 벌어지는지 보입니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  차량 <b>m&middot;v&#775; = F &minus; b&middot;v</b> (m=1000, b=50)
+  &nbsp;·&nbsp; 요청 <b>u</b> = K<sub>p</sub>e + K<sub>i</sub>&int;e dt
+  &nbsp;→&nbsp; 인가 <b>F</b> = clip(u, &minus;F<sub>max</sub>, +F<sub>max</sub>)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="560"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>목표 v<sub>ref</sub> = 10 m/s</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>실제 응답 v · 인가 힘 F</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>이상 응답 (포화 없음)</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>요청 힘 u</span>
+        <span class="lg" style="color:var(--bad)"><i class="d"></i>&plusmn;F<sub>max</sub> · 포화 구간</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>비례 게인 K<sub>p</sub> <span class="value" id="kpV">800</span></label>
+        <input type="range" id="kpS" min="100" max="3000" step="50" value="800">
+      </div>
+
+      <div class="ctl-box">
+        <label>적분 게인 K<sub>i</sub> <span class="value" id="kiV">40</span></label>
+        <input type="range" id="kiS" min="0" max="200" step="5" value="40">
+      </div>
+
+      <div class="ctl-box">
+        <label>최대 힘 F<sub>max</sub> (N) <span class="value" id="fmV">4000</span></label>
+        <input type="range" id="fmS" min="1000" max="20000" step="250" value="4000">
+      </div>
+
+      <div class="btn-row">
+        <button id="playBtn" class="btn">▶ 시작</button>
+        <button id="pauseBtn" class="btn">❚❚ 정지</button>
+        <button id="resetBtn" class="btn">↻ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="kp2Btn" class="btn">K<sub>p</sub> 2배</button>
+        <button id="idealBtn" class="btn on">이상 응답: 표시</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">포화 지속 시간</div><div class="v" id="satV" style="color:var(--bad)">—</div></div>
+          <div class="stat"><div class="k">현재 요청 u</div><div class="v" id="uV" style="color:var(--c-meas)">—</div></div>
+          <div class="stat"><div class="k">%OS 실제 (포화)</div><div class="v" id="osRealV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">%OS 이상 (무포화)</div><div class="v" id="osIdealV" style="color:var(--c-alias)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 출발 요청 u = K<sub>p</sub>&times;10, 절반이 잘림<br>
+        • K<sub>p</sub> 2배여도 초반 인가 힘은 그대로<br>
+        • 포화 중 I는 계속 쌓임 = <b>와인드업</b><br>
+        • 포화가 풀리면 오버슈트가 커짐<br>
+        • F<sub>max</sub>를 키우면 실선이 점선에 겹침
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 12강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function (id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+
+/* 세로 서브플롯 2개: 위(속도 v), 아래(제어 힘 u/F) */
+var M = { l: 66, r: 22, t: 36, b: 44 };
+var GAP = 34;
+var plotW = W - M.l - M.r;
+var topH = 300, topY = M.t;
+var botY = M.t + topH + GAP;
+var botH = H - botY - M.b;
+
+/* 강의 모델 수치 (12강 §5) */
+var MASS = 1000, DAMP = 50, VREF = 10, T_END = 12, DT = 0.002;
+var N = Math.round(T_END / DT);
+
+var state = { Kp: 800, Ki: 40, Fmax: 4000, ideal: true };
+var tArr, vReal, vIdeal, uReq, fApp, satMask;
+var osReal = 0, osIdeal = 0, satTime = 0;
+var playIdx = 0, running = false, rafId = null;
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+function clip(u, lo, hi){ return u < lo ? lo : (u > hi ? hi : u); }
+
+/* 포화 있음(실제) / 포화 없음(이상) 두 계열을 동시에 RK4 적분.
+   I는 포화 중에도 계속 누적한다 (anti-windup 없음 → 와인드업 재현). */
+function simulate(){
+  tArr = new Float64Array(N + 1); vReal = new Float64Array(N + 1); vIdeal = new Float64Array(N + 1);
+  uReq = new Float64Array(N + 1); fApp = new Float64Array(N + 1); satMask = new Uint8Array(N + 1);
+  var Kp = state.Kp, Ki = state.Ki, Fmax = state.Fmax;
+  var v = 0, Iacc = 0, vI = 0, IaccI = 0, k;
+
+  for (k = 0; k <= N; k++){
+    tArr[k] = k * DT;
+    var e = VREF - v;
+    var u = Kp * e + Ki * Iacc;
+    var F = clip(u, -Fmax, Fmax);
+    uReq[k] = u; fApp[k] = F; vReal[k] = v;
+    satMask[k] = (u > Fmax + 1e-9 || u < -Fmax - 1e-9) ? 1 : 0;
+
+    var eI = VREF - vI;
+    var uI = Kp * eI + Ki * IaccI;
+    vIdeal[k] = vI;
+
+    if (k < N){
+      var f1 = (F - DAMP * v) / MASS, f2 = (F - DAMP * (v + 0.5 * DT * f1)) / MASS;
+      var f3 = (F - DAMP * (v + 0.5 * DT * f2)) / MASS, f4 = (F - DAMP * (v + DT * f3)) / MASS;
+      v = v + (DT / 6) * (f1 + 2 * f2 + 2 * f3 + f4);
+      Iacc += e * DT;
+      var g1 = (uI - DAMP * vI) / MASS, g2 = (uI - DAMP * (vI + 0.5 * DT * g1)) / MASS;
+      var g3 = (uI - DAMP * (vI + 0.5 * DT * g2)) / MASS, g4 = (uI - DAMP * (vI + DT * g3)) / MASS;
+      vI = vI + (DT / 6) * (g1 + 2 * g2 + 2 * g3 + g4);
+      IaccI += eI * DT;
+    }
+  }
+
+  var peakR = 0, peakI = 0, satCnt = 0;
+  for (k = 0; k <= N; k++){
+    if (vReal[k] > peakR) peakR = vReal[k];
+    if (vIdeal[k] > peakI) peakI = vIdeal[k];
+    if (satMask[k]) satCnt++;
+  }
+  osReal = Math.max(0, (peakR - VREF) / VREF * 100);
+  osIdeal = Math.max(0, (peakI - VREF) / VREF * 100);
+  satTime = satCnt * DT;
+}
+
+function xToPx(t){ return M.l + (t / T_END) * plotW; }
+function vMaxScale(){
+  var pk = VREF, k;
+  for (k = 0; k <= N; k++){ if (vReal[k] > pk) pk = vReal[k]; if (vIdeal[k] > pk) pk = vIdeal[k]; }
+  return Math.max(VREF * 1.25, pk * 1.08);
+}
+function vToPy(v, vmax){ return topY + topH - (v / vmax) * topH; }
+function uMaxScale(){
+  var mx = state.Fmax, k;
+  for (k = 0; k <= N; k++){ var a = Math.abs(uReq[k]); if (a > mx) mx = a; }
+  return mx * 1.1;
+}
+function uToPy(u, usc){ return botY + botH / 2 - (u / usc) * (botH / 2); }
+
+/* 시계열 한 줄 그리기 (clampBot=true면 아래 서브플롯 밖으로 나간 값을 가장자리에 붙인다) */
+function poly(upTo, arr, ymap, clampBot){
+  var k, px, py;
+  ctx.beginPath();
+  for (k = 0; k <= upTo; k++){
+    px = xToPx(tArr[k]); py = ymap(arr[k]);
+    if (clampBot) py = Math.max(botY, Math.min(botY + botH, py));
+    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function drawGridV(C, vmax){
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'end';
+  var step = vmax > 14 ? 4 : 2, v;
+  for (v = 0; v <= vmax; v += step){
+    var py = vToPy(v, vmax);
+    ctx.beginPath(); ctx.moveTo(M.l, py); ctx.lineTo(M.l + plotW, py); ctx.stroke();
+    ctx.fillText(v.toFixed(0), M.l - 8, py + 4);
+  }
+}
+function drawGridU(C, usc){
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'end';
+  var rawStep = usc / 3;
+  var mag = Math.pow(10, Math.floor(Math.log(rawStep) / Math.LN10 + 1e-12));
+  var step = Math.ceil(rawStep / mag) * mag;
+  if (step <= 0) step = 2000;
+  var u;
+  for (u = -Math.floor(usc / step) * step; u <= usc; u += step){
+    var py = uToPy(u, usc);
+    ctx.beginPath(); ctx.moveTo(M.l, py); ctx.lineTo(M.l + plotW, py); ctx.stroke();
+    ctx.fillText((u / 1000).toFixed(u === 0 ? 0 : 1) + 'k', M.l - 8, py + 4);
+  }
+}
+
+function draw(){
+  var C = palette(), k;
+  var vmax = vMaxScale(), usc = uMaxScale();
+  var upTo = (running || playIdx > 0) ? Math.min(playIdx, N) : N;
+
+  ctx.clearRect(0, 0, W, H);
+  drawGridV(C, vmax);
+
+  /* 포화 구간 세로 음영 (두 서브플롯 모두) */
+  ctx.globalAlpha = 0.14; ctx.fillStyle = C.bad;
+  var inSat = false, segStart = 0;
+  for (k = 0; k <= upTo; k++){
+    if (satMask[k] && !inSat){ inSat = true; segStart = k; }
+    if ((!satMask[k] || k === upTo) && inSat){
+      var x0 = xToPx(tArr[segStart]), x1 = xToPx(tArr[k]);
+      ctx.fillRect(x0, topY, Math.max(1, x1 - x0), topH);
+      ctx.fillRect(x0, botY, Math.max(1, x1 - x0), botH);
+      inSat = false;
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  /* 목표선 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var yref = vToPy(VREF, vmax);
+  ctx.beginPath(); ctx.moveTo(M.l, yref); ctx.lineTo(M.l + plotW, yref); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('목표 10 m/s', M.l + 8, yref - 6);
+
+  var vMap = function(a){ return vToPy(a, vmax); };
+  if (state.ideal){                                  /* 이상 응답 (포화 없음) */
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 2.2; ctx.setLineDash([7, 5]);
+    poly(upTo, vIdeal, vMap, false);
+    ctx.setLineDash([]);
+  }
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.8;      /* 실제 응답 (포화 있음) */
+  poly(upTo, vReal, vMap, false);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, topY); ctx.lineTo(M.l, topY + topH); ctx.lineTo(M.l + plotW, topY + topH); ctx.stroke();
+  ctx.fillStyle = C.muted; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('속도 v (m/s)', M.l + 4, topY - 12);
+
+  /* ── 아래: 제어 힘 ── */
+  drawGridU(C, usc);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+  var y0 = uToPy(0, usc);
+  ctx.beginPath(); ctx.moveTo(M.l, y0); ctx.lineTo(M.l + plotW, y0); ctx.stroke();
+
+  ctx.strokeStyle = C.bad; ctx.lineWidth = 1.8; ctx.setLineDash([8, 4]);
+  var yFp = uToPy(state.Fmax, usc), yFn = uToPy(-state.Fmax, usc);
+  ctx.beginPath(); ctx.moveTo(M.l, yFp); ctx.lineTo(M.l + plotW, yFp); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.l, yFn); ctx.lineTo(M.l + plotW, yFn); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.bad; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'end';
+  ctx.fillText('+Fmax ' + state.Fmax, M.l + plotW - 6, yFp - 5);
+  ctx.fillText('−Fmax', M.l + plotW - 6, yFn + 14);
+
+  var uMap = function(a){ return uToPy(a, usc); };
+  ctx.strokeStyle = C.meas; ctx.lineWidth = 2.2;     /* 요청 힘 u(t) — 한계 밖으로 튀는 원본 */
+  poly(upTo, uReq, uMap, true);
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.4;      /* 실제 인가 힘 F(t) — 잘린 값 */
+  poly(upTo, fApp, uMap, false);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, botY); ctx.lineTo(M.l, botY + botH); ctx.lineTo(M.l + plotW, botY + botH); ctx.stroke();
+  ctx.fillStyle = C.muted; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('제어 힘 (N):  요청 u / 인가 F', M.l + 4, botY - 12);
+
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  var t;
+  for (t = 0; t <= T_END; t += 2) ctx.fillText(t.toFixed(0), xToPx(t), botY + botH + 16);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s) →', W - M.r, H - 8);
+
+  updateStats(upTo);
+}
+
+function updateStats(upTo){
+  $('satV').textContent = satTime.toFixed(2) + ' s';
+  var uNow = uReq[Math.min(upTo, N)];
+  var uEl = $('uV');
+  uEl.textContent = Math.round(uNow) + ' N';
+  uEl.style.color = Math.abs(uNow) > state.Fmax + 1e-6 ? 'var(--bad)' : 'var(--c-meas)';
+  $('osRealV').textContent = osReal.toFixed(1) + ' %';
+  $('osIdealV').textContent = osIdeal.toFixed(1) + ' %';
+
+  var vd = $('verdict'), cls, msg;
+  var startReq = state.Kp * VREF;            /* 출발 순간 요청 (e=10, I=0) */
+  var startSat = startReq > state.Fmax;
+  var satCause = startSat
+    ? '출발 요청 u = ' + Math.round(startReq) + ' N이 F<sub>max</sub> ' + state.Fmax + '에서 잘립니다'
+    : 'I가 오차를 쌓아 요청이 F<sub>max</sub> ' + state.Fmax + '을(를) 넘겨 잘립니다';
+
+  if (satTime < 0.05){
+    cls = 'good';
+    msg = '<b>포화 없음</b> — 요청이 한계 안에 머물러 실제 응답이 이상 응답과 거의 겹칩니다. 오버슈트 ' + osReal.toFixed(1) + '%.';
+  } else if (osReal > osIdeal + 3){
+    cls = 'bad';
+    msg = '<b>와인드업</b> — ' + satCause + '. 포화 ' + satTime.toFixed(2) + '초 동안 I가 계속 쌓여 실제 %OS ' +
+      osReal.toFixed(1) + '%가 이상값 ' + osIdeal.toFixed(1) + '%를 넘었습니다.';
+  } else {
+    cls = 'mid';
+    msg = '<b>포화 ' + satTime.toFixed(2) + '초</b> — ' + satCause + '. ' +
+      (startSat ? '초반 가속은 ' + state.Fmax + ' N에 고정 — K<sub>p</sub>를 키워도 빨라지지 않습니다. ' : '') +
+      '실제 %OS ' + osReal.toFixed(1) + '% vs 이상 ' + osIdeal.toFixed(1) + '%.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+function stepAnim(){
+  if (!running) return;
+  playIdx += Math.max(1, Math.round(0.05 / DT));
+  if (playIdx >= N){ playIdx = N; running = false; }
+  draw();
+  if (running) rafId = requestAnimationFrame(stepAnim);
+}
+function pauseAnim(){ running = false; if (rafId) cancelAnimationFrame(rafId); }
+
+function recompute(){ simulate(); playIdx = N; draw(); }
+
+$('kpS').addEventListener('input', function(){
+  state.Kp = parseInt(this.value, 10); $('kpV').textContent = state.Kp; recompute();
+});
+$('kiS').addEventListener('input', function(){
+  state.Ki = parseInt(this.value, 10); $('kiV').textContent = state.Ki; recompute();
+});
+$('fmS').addEventListener('input', function(){
+  state.Fmax = parseInt(this.value, 10); $('fmV').textContent = state.Fmax; recompute();
+});
+$('playBtn').addEventListener('click', function(){
+  if (running) return;
+  if (playIdx >= N) playIdx = 0;
+  running = true; rafId = requestAnimationFrame(stepAnim);
+});
+$('pauseBtn').addEventListener('click', pauseAnim);
+$('resetBtn').addEventListener('click', function(){ pauseAnim(); playIdx = 0; draw(); });
+$('kp2Btn').addEventListener('click', function(){
+  state.Kp = Math.min(3000, state.Kp * 2);
+  $('kpS').value = state.Kp; $('kpV').textContent = state.Kp;
+  pauseAnim(); recompute();
+});
+$('idealBtn').addEventListener('click', function(){
+  state.ideal = !state.ideal;
+  this.textContent = state.ideal ? '이상 응답: 표시' : '이상 응답: 숨김';
+  this.classList.toggle('on', state.ideal);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+
+simulate();
+playIdx = N;
+draw();
+})();
+</script>
+</body>
+</html>

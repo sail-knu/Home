@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPF 주파수 응답 — 주파수별 이득 — 4강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 4강 · 인터랙티브 데모</p>
+  <h1>LPF 주파수 응답 — 무엇이 통과하고 무엇이 잘리나</h1>
+  <p class="lede">Δt = 0.01 s로 샘플링한 사인파를 LPF에 통과시킵니다. <b>α</b>와 입력 주파수 <b>f</b>를 움직여 출력 진폭(이득)이 어떻게 변하는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  LPF <b>x̄<sub>k</sub></b> = α · x̄<sub>k−1</sub> + (1 − α) · x<sub>k</sub>
+  &nbsp;·&nbsp; 이득 = 출력 진폭 / 입력 진폭
+  &nbsp;·&nbsp; 차단 주파수 <b>f<sub>c</sub></b> ≈ (1 − α) / (2π·α·Δt)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-meas)"><i></i>입력 sin(2πf·t)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>LPF 출력</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>이득 곡선</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>차단 주파수 f<sub>c</sub></span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>가중치 α <span class="value" id="aV">0.85</span></label>
+        <input type="range" id="aS" min="0.50" max="0.98" step="0.01" value="0.85">
+      </div>
+
+      <div class="ctl-box">
+        <label>입력 주파수 f (Hz) <span class="value" id="fV">2.0</span></label>
+        <input type="range" id="fS" min="0.5" max="40" step="0.1" value="2.0">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="stopBtn" class="btn">⏸ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="fcBtn" class="btn">🎯 f를 f<sub>c</sub>로 맞추기</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">이득 (f = <span id="fEcho">2.0</span> Hz)</div><div class="v" id="gainV" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">감쇠량</div><div class="v" id="attV">—</div></div>
+          <div class="stat"><div class="k">차단 주파수 f<sub>c</sub></div><div class="v" id="fcV" style="color:var(--c-true)">—</div></div>
+          <div class="stat"><div class="k">f<sub>c</sub>에서의 이득</div><div class="v" id="gcV" style="color:var(--muted)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • f가 낮으면 이득 ≈ 1 — 거의 그대로 통과<br>
+        • f가 높으면 진폭이 줄고 위상이 밀림<br>
+        • 이득 0.707(−3 dB) 지점이 f<sub>c</sub><br>
+        • α를 키우면 f<sub>c</sub>가 왼쪽으로 이동<br>
+        • 고주파(≈노이즈)만 잘림 → Low-Pass
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 4강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+var DT = 0.01;   /* 샘플링 간격 (s) 고정 */
+var state = { alpha: 0.85, f: 2.0, running: false };
+
+/* 상단: 입력/출력 파형, 하단: 이득 vs f 곡선 */
+var topM = { l: 66, r: 28, t: 40, b: 34 };
+var topH = 240;
+var botM = { l: 66, r: 28, t: 40, b: 44 };
+var botTop = topM.t + topH + 44;
+var botH = H - botTop - botM.b;
+var topPlotW = W - topM.l - topM.r;
+var botPlotW = W - botM.l - botM.r;
+
+var sampleIndex = 0;   /* 애니메이션 위상 (샘플 인덱스) */
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), band: cvar('--c-band')
+  };
+}
+
+/* 정상상태 이득: sin(2πf t)를 이산 LPF에 넣었을 때 출력 진폭 / 입력 진폭 */
+function steadyGain(f, alpha){
+  var w = 2 * Math.PI * f * DT, y = 0, k;
+  var settle = Math.min(60000, Math.max(2000, Math.ceil(20 * alpha / (1 - alpha)) + 2000));
+  for (k = 1; k <= settle; k++) y = alpha * y + (1 - alpha) * Math.sin(w * k);
+  var ymin = Infinity, ymax = -Infinity;
+  var measure = Math.max(4000, Math.ceil(20 * (2 * Math.PI) / Math.max(w, 1e-6)));
+  for (k = settle + 1; k <= settle + measure; k++){
+    y = alpha * y + (1 - alpha) * Math.sin(w * k);
+    if (y < ymin) ymin = y;
+    if (y > ymax) ymax = y;
+  }
+  return Math.max(0, Math.min(1, (ymax - ymin) / 2));
+}
+
+var F_MIN = 0.5, F_MAX = 40, F_STEPS = 160;
+var gainCurve = [], cachedAlpha = null;
+function buildGainCurve(alpha){
+  if (cachedAlpha === alpha) return;
+  gainCurve = [];
+  for (var i = 0; i <= F_STEPS; i++){
+    var f = F_MIN + (F_MAX - F_MIN) * i / F_STEPS;
+    gainCurve.push({ f: f, g: steadyGain(f, alpha) });
+  }
+  cachedAlpha = alpha;
+}
+function fcOf(alpha){ return (1 - alpha) / (2 * Math.PI * alpha * DT); }
+function gainAt(f){
+  if (f <= F_MIN) return gainCurve[0].g;
+  if (f >= F_MAX) return gainCurve[gainCurve.length - 1].g;
+  var pos = (f - F_MIN) / (F_MAX - F_MIN) * F_STEPS;
+  var i0 = Math.floor(pos), i1 = Math.min(F_STEPS, i0 + 1), t = pos - i0;
+  return gainCurve[i0].g * (1 - t) + gainCurve[i1].g * t;
+}
+
+/* 정상상태 위상 지연 φ (rad): 출력 최대점 시각을 입력과 비교 */
+var phaseCache = {};
+function phaseAt(f, alpha){
+  var key = f.toFixed(2) + '_' + alpha.toFixed(2);
+  if (phaseCache[key] !== undefined) return phaseCache[key];
+  var w = 2 * Math.PI * f * DT, y = 0, k;
+  var settle = Math.min(60000, Math.max(2000, Math.ceil(20 * alpha / (1 - alpha)) + 2000));
+  for (k = 1; k <= settle; k++) y = alpha * y + (1 - alpha) * Math.sin(w * k);
+  var period = Math.max(4, Math.round((2 * Math.PI) / Math.max(w, 1e-6)));
+  var bestY = -Infinity, bestK = settle + 1;
+  for (k = settle + 1; k <= settle + period; k++){
+    y = alpha * y + (1 - alpha) * Math.sin(w * k);
+    if (y > bestY){ bestY = y; bestK = k; }
+  }
+  var inputPhaseAtPeak = (w * bestK) % (2 * Math.PI);
+  var phi = inputPhaseAtPeak - (Math.PI / 2);
+  phi = ((phi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  phaseCache[key] = phi;
+  return phi;
+}
+
+function topY(v){ return topM.t + topH / 2 - v * (topH / 2 - 8); }
+function botX(f){ return botM.l + (f - F_MIN) / (F_MAX - F_MIN) * botPlotW; }
+function botY(g){ return botTop + botH - g * botH; }
+
+function draw(){
+  var C = palette();
+  var alpha = state.alpha, f = state.f, lv, g, ff, px, i;
+  buildGainCurve(alpha);
+  ctx.clearRect(0, 0, W, H);
+
+  /* ===== 상단: 입력/출력 파형 ===== */
+  var winT = Math.max(0.12, 3.2 / f);
+  var tLo = sampleIndex * DT, tHi = tLo + winT;
+  var w = 2 * Math.PI * f;
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (lv = -1; lv <= 1.0001; lv += 0.5){
+    ctx.beginPath(); ctx.moveTo(topM.l, topY(lv)); ctx.lineTo(topM.l + topPlotW, topY(lv)); ctx.stroke();
+  }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(topM.l, topM.t); ctx.lineTo(topM.l, topM.t + topH);
+  ctx.lineTo(topM.l + topPlotW, topM.t + topH); ctx.stroke();
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.moveTo(topM.l, topY(0)); ctx.lineTo(topM.l + topPlotW, topY(0)); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('① 시간영역 — 입력과 LPF 출력', topM.l, topM.t - 16);
+  ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s) →', W - topM.r, topM.t + topH + 24);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (lv = -1; lv <= 1.0001; lv += 0.5) ctx.fillText(lv.toFixed(1), topM.l - 8, topY(lv) + 4);
+
+  var G = gainAt(f), phi = phaseAt(f, alpha);
+  var NPX = Math.round(topPlotW), t, v;
+
+  ctx.strokeStyle = C.meas; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (px = 0; px <= NPX; px++){
+    t = tLo + (tHi - tLo) * px / NPX; v = Math.sin(w * t);
+    if (px === 0) ctx.moveTo(topM.l + px, topY(v)); else ctx.lineTo(topM.l + px, topY(v));
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (px = 0; px <= NPX; px++){
+    t = tLo + (tHi - tLo) * px / NPX; v = G * Math.sin(w * t - phi);
+    if (px === 0) ctx.moveTo(topM.l + px, topY(v)); else ctx.lineTo(topM.l + px, topY(v));
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 1; ctx.globalAlpha = 0.45; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(topM.l, topY(G)); ctx.lineTo(topM.l + topPlotW, topY(G)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(topM.l, topY(-G)); ctx.lineTo(topM.l + topPlotW, topY(-G)); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.fillStyle = C.avg; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'start';
+  ctx.fillText('출력 진폭 = ' + G.toFixed(3), topM.l + 8, topY(G) - 6);
+
+  /* ===== 하단: 이득 vs 주파수 ===== */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (g = 0; g <= 1.0001; g += 0.25){
+    ctx.beginPath(); ctx.moveTo(botM.l, botY(g)); ctx.lineTo(botM.l + botPlotW, botY(g)); ctx.stroke();
+  }
+  for (ff = 5; ff <= F_MAX; ff += 5){
+    ctx.beginPath(); ctx.moveTo(botX(ff), botTop); ctx.lineTo(botX(ff), botTop + botH); ctx.stroke();
+  }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(botM.l, botTop); ctx.lineTo(botM.l, botTop + botH);
+  ctx.lineTo(botM.l + botPlotW, botTop + botH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('② 주파수 응답 — 이득 = 출력 진폭 / 입력 진폭', botM.l, botTop - 16);
+  ctx.textAlign = 'end';
+  ctx.fillText('주파수 f (Hz) →', W - botM.r, botTop + botH + 30);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (g = 0; g <= 1.0001; g += 0.25) ctx.fillText(g.toFixed(2), botM.l - 8, botY(g) + 4);
+  ctx.textAlign = 'center';
+  for (ff = 5; ff <= F_MAX; ff += 5) ctx.fillText(String(ff), botX(ff), botTop + botH + 16);
+  ctx.fillText('0.5', botX(F_MIN), botTop + botH + 16);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+  var y707 = botY(0.7071);
+  ctx.beginPath(); ctx.moveTo(botM.l, y707); ctx.lineTo(botM.l + botPlotW, y707); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('0.707 (−3 dB)', botM.l + 6, y707 - 5);
+
+  ctx.strokeStyle = C.band; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (i = 0; i < gainCurve.length; i++){
+    if (i === 0) ctx.moveTo(botX(gainCurve[0].f), botY(gainCurve[0].g));
+    else ctx.lineTo(botX(gainCurve[i].f), botY(gainCurve[i].g));
+  }
+  ctx.stroke();
+
+  var fcVal = fcOf(alpha);
+  if (fcVal >= F_MIN && fcVal <= F_MAX){
+    ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(botX(fcVal), botTop); ctx.lineTo(botX(fcVal), botTop + botH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('f_c ≈ ' + fcVal.toFixed(1) + ' Hz', botX(fcVal), botTop + 14);
+  }
+
+  var mx = botX(f), my = botY(G);
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 1; ctx.globalAlpha = 0.45; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(mx, botTop + botH); ctx.lineTo(mx, my); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.fillStyle = C.avg;
+  ctx.beginPath(); ctx.arc(mx, my, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('이득 = ' + G.toFixed(3), mx, my < botTop + 24 ? my + 22 : my - 12);
+
+  /* ===== 수치 · 판정 ===== */
+  var attPct = (1 - G) * 100;
+  $('gainV').textContent = G.toFixed(3);
+  $('fEcho').textContent = f.toFixed(1);
+  var attEl = $('attV');
+  attEl.textContent = attPct.toFixed(1) + ' %';
+  attEl.style.color = G > 0.9 ? 'var(--ok)' : (G > 0.5 ? 'var(--warn)' : 'var(--bad)');
+  $('fcV').textContent = fcVal.toFixed(1) + ' Hz';
+  $('gcV').textContent = gainAt(fcVal).toFixed(3);
+
+  var vd = $('verdict'), cls, msg;
+  if (G >= 0.9){
+    cls = 'good';
+    msg = 'f = ' + f.toFixed(1) + ' Hz는 f<sub>c</sub> ≈ ' + fcVal.toFixed(1) + ' Hz보다 한참 아래입니다. 이득 ' +
+      G.toFixed(3) + ' — 입력이 거의 그대로 <b>통과</b>합니다.';
+  } else if (G >= 0.5){
+    cls = 'mid';
+    msg = 'f = ' + f.toFixed(1) + ' Hz는 f<sub>c</sub> ≈ ' + fcVal.toFixed(1) + ' Hz 부근입니다. 이득 ' +
+      G.toFixed(3) + '로 진폭이 ' + attPct.toFixed(1) + '% 줄었습니다.';
+  } else {
+    cls = 'bad';
+    msg = 'f = ' + f.toFixed(1) + ' Hz는 고주파입니다. 이득 ' + G.toFixed(3) + ' — 진폭이 ' +
+      attPct.toFixed(1) + '%나 <b>차단</b>됩니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ===== 애니메이션 ===== */
+var rafId = null;
+function tick(){
+  var winT = Math.max(0.12, 3.2 / state.f);
+  sampleIndex += Math.max(1, Math.round(winT / DT / 120));
+  draw();
+  if (state.running) rafId = requestAnimationFrame(tick);
+}
+function start(){
+  if (state.running) return;
+  state.running = true;
+  $('startBtn').classList.add('on');
+  rafId = requestAnimationFrame(tick);
+}
+function stop(){
+  state.running = false;
+  $('startBtn').classList.remove('on');
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+}
+function reset(){ stop(); sampleIndex = 0; draw(); }
+
+/* ===== 컨트롤 ===== */
+var aS = $('aS'), fS = $('fS');
+aS.addEventListener('input', function(){
+  state.alpha = parseFloat(this.value);
+  $('aV').textContent = state.alpha.toFixed(2);
+  for (var kk in phaseCache){ if (phaseCache.hasOwnProperty(kk)) delete phaseCache[kk]; }
+  draw();
+});
+function setF(v){
+  state.f = v; fS.value = v; $('fV').textContent = v.toFixed(1); draw();
+}
+fS.addEventListener('input', function(){ setF(parseFloat(this.value)); });
+$('startBtn').addEventListener('click', start);
+$('stopBtn').addEventListener('click', stop);
+$('resetBtn').addEventListener('click', reset);
+$('fcBtn').addEventListener('click', function(){
+  var v = fcOf(state.alpha);
+  v = Math.round(Math.max(F_MIN, Math.min(F_MAX, v)) * 10) / 10;
+  setF(v);
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

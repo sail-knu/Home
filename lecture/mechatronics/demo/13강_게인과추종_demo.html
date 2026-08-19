@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게인과 추종 성능 — 세 시나리오 비교 · 13강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+.log{margin-top:14px}
+.log-t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:0 0 7px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:right;color:var(--faint);font-size:11.5px;letter-spacing:.03em}
+th,td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 13강 · 인터랙티브 데모</p>
+  <h1>게인과 추종 성능 — 세 시나리오 비교</h1>
+  <p class="lede">직선 경로에서 2 m 벗어나 출발한 차량입니다. [3 시나리오 실행]으로 세 궤적을 겹쳐 본 뒤, <b>K<sub>p</sub></b>·<b>K<sub>d</sub></b>를 움직여 내 궤적을 끼워 넣어 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  조향 <b>δ</b> = −( K<sub>p</sub>·CTE + K<sub>d</sub>·dCTE/dt ), |δ| ≤ 30°
+  &nbsp;·&nbsp; <b>RMS CTE</b> = √( mean(CTE<sup>2</sup>) )
+  &nbsp;<span style="color:var(--muted);font-size:.86em">작을수록 좋음</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>기준 경로 (y = 0)</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>낮은 게인</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>적정 게인</span>
+        <span class="lg" style="color:var(--bad)"><i></i>과한 게인</span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>내 게인</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="runBtn" class="btn">▶ 3 시나리오 실행</button>
+      </div>
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 재생</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="soloBtn" class="btn">내 궤적만</button>
+        <button id="copyBtn" class="btn">적정 게인 불러오기</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>내 게인 K<sub>p</sub> <span class="value" id="kpV">0.30</span></label>
+        <input type="range" id="kpS" min="0.02" max="1.60" step="0.01" value="0.30">
+      </div>
+      <div class="ctl-box">
+        <label>내 게인 K<sub>d</sub> <span class="value" id="kdV">0.40</span></label>
+        <input type="range" id="kdS" min="0.00" max="2.00" step="0.01" value="0.40">
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 낮은 게인: 천천히 수렴 → RMS 큼<br>
+        • 적정 게인: 진동 없이 빠르게 수렴<br>
+        • 과한 게인: 경로를 넘나드는 지그재그<br>
+        • K<sub>d</sub>를 키우면 진동이 눌린다<br>
+        • 목표 RMS CTE ≈ 0.5 ~ 1.5 m
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <p class="log-t">RMS CTE 비교 — K 슬라이더를 움직이면 [내 게인] 행이 즉시 갱신</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>시나리오</th><th>K<sub>p</sub></th><th>K<sub>d</sub></th><th>RMS CTE (m)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lg" style="color:var(--c-meas)"><i class="o"></i>낮은 게인</span></td>
+            <td id="lowKp">—</td><td id="lowKd">—</td><td id="lowRms" style="color:var(--c-meas)">—</td></tr>
+        <tr><td><span class="lg" style="color:var(--c-avg)"><i class="o"></i>적정 게인</span></td>
+            <td id="okKp">—</td><td id="okKd">—</td><td id="okRms" style="color:var(--c-avg)">—</td></tr>
+        <tr><td><span class="lg" style="color:var(--bad)"><i class="o"></i>과한 게인</span></td>
+            <td id="hiKp">—</td><td id="hiKd">—</td><td id="hiRms" style="color:var(--bad)">—</td></tr>
+        <tr class="cur"><td><span class="lg" style="color:var(--c-alias)"><i class="o"></i>내 게인</span></td>
+            <td id="myKpT">—</td><td id="myKdT">—</td><td id="myRms" style="color:var(--c-alias)">—</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 13강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 56, r: 24, t: 40, b: 50 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* ── 물리 파라미터 (13-1과 동일) ── */
+var L = 2.5;                          /* 휠베이스 (m) */
+var DT = 0.05;                        /* 적분 스텝 (s) */
+var V = 5.0;                          /* 고정 속도 (m/s) */
+var Y0 = 2.0;                         /* 초기 오프셋 (m) */
+var STEER_LIM = 30 * Math.PI / 180;   /* 조향 포화 ±30° */
+var T_END = 8.0;
+var STEPS = Math.round(T_END / DT);
+var X_MAX = V * T_END;
+
+/* 직선 경로 y = 0 → CTE = 차량의 y (부호 있는 가로 오차) */
+var SCEN = {
+  low: { Kp: 0.06, Kd: 0.05, key: 'meas' },
+  ok:  { Kp: 0.35, Kd: 0.50, key: 'avg' },
+  hi:  { Kp: 1.40, Kd: 0.02, key: 'bad' }
+};
+
+var state = { myKp: 0.30, myKd: 0.40, ran: false, results: null, solo: false };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent')
+  };
+}
+
+/* ── 자전거 모델 한 스텝 (RK4) ── */
+function deriv(s, delta){
+  return { x: V * Math.cos(s.th), y: V * Math.sin(s.th), th: V / L * Math.tan(delta) };
+}
+function stepRK4(s, delta){
+  var k1 = deriv(s, delta);
+  var s2 = { x: s.x + 0.5 * DT * k1.x, y: s.y + 0.5 * DT * k1.y, th: s.th + 0.5 * DT * k1.th };
+  var k2 = deriv(s2, delta);
+  var s3 = { x: s.x + 0.5 * DT * k2.x, y: s.y + 0.5 * DT * k2.y, th: s.th + 0.5 * DT * k2.th };
+  var k3 = deriv(s3, delta);
+  var s4 = { x: s.x + DT * k3.x, y: s.y + DT * k3.y, th: s.th + DT * k3.th };
+  var k4 = deriv(s4, delta);
+  return {
+    x: s.x + DT / 6 * (k1.x + 2 * k2.x + 2 * k3.x + k4.x),
+    y: s.y + DT / 6 * (k1.y + 2 * k2.y + 2 * k3.y + k4.y),
+    th: s.th + DT / 6 * (k1.th + 2 * k2.th + 2 * k3.th + k4.th)
+  };
+}
+
+function simulate(Kp, Kd){
+  var s = { x: 0, y: Y0, th: 0 };
+  var traj = [{ x: s.x, y: s.y }];
+  var prevCte = s.y, sumSq = 0, i;
+  for (i = 0; i < STEPS; i++){
+    var cte = s.y;
+    var dcte = (cte - prevCte) / DT;
+    var delta = -(Kp * cte + Kd * dcte);
+    if (delta > STEER_LIM) delta = STEER_LIM;
+    if (delta < -STEER_LIM) delta = -STEER_LIM;
+    prevCte = cte;
+    s = stepRK4(s, delta);
+    traj.push({ x: s.x, y: s.y });
+    sumSq += cte * cte;
+  }
+  return { traj: traj, rms: Math.sqrt(sumSq / STEPS) };
+}
+
+function runAll(){
+  state.results = {
+    low: simulate(SCEN.low.Kp, SCEN.low.Kd),
+    ok:  simulate(SCEN.ok.Kp, SCEN.ok.Kd),
+    hi:  simulate(SCEN.hi.Kp, SCEN.hi.Kd),
+    my:  simulate(state.myKp, state.myKd)
+  };
+  state.ran = true;
+}
+
+/* ── 좌표 변환 ── */
+var yLo = -3.2, yHi = 3.2;
+function xToPx(x){ return M.l + x / X_MAX * plotW; }
+function yToPx(y){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+function clampY(y){ return Math.max(yLo, Math.min(yHi, y)); }
+
+function drawGrid(C){
+  var y, x, xStep = 5;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = -3; y <= 3; y += 1){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y)); ctx.lineTo(M.l + plotW, yToPx(y)); ctx.stroke();
+  }
+  for (x = 0; x <= X_MAX + 0.01; x += xStep){
+    ctx.beginPath(); ctx.moveTo(xToPx(x), M.t); ctx.lineTo(xToPx(x), M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('가로 오차 y [m]', 12, M.t - 14);
+  ctx.textAlign = 'end'; ctx.fillText('진행 방향 x [m] →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.textAlign = 'end';
+  for (y = -3; y <= 3; y += 1) ctx.fillText(y.toFixed(0), M.l - 8, yToPx(y) + 4);
+  ctx.textAlign = 'center';
+  for (x = 0; x <= X_MAX + 0.01; x += xStep) ctx.fillText(x.toFixed(0), xToPx(x), M.t + plotH + 18);
+
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(xToPx(0), yToPx(0)); ctx.lineTo(xToPx(X_MAX), yToPx(0)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('기준 경로 (직선)', M.l + 8, yToPx(0) - 6);
+
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'start';
+  ctx.beginPath(); ctx.arc(xToPx(0), yToPx(Y0), 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillText('출발 (오프셋 ' + Y0.toFixed(0) + ' m)', xToPx(0) + 8, yToPx(Y0) - 6);
+}
+
+function drawTraj(traj, color, width, count){
+  if (!traj || traj.length < 2) return;
+  var n = Math.min(count, traj.length), i;
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.beginPath();
+  for (i = 0; i < n; i++){
+    var px = xToPx(traj[i].x), py = yToPx(clampY(traj[i].y));
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  if (n >= 1 && n < traj.length){
+    var p = traj[n - 1];
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(xToPx(p.x), yToPx(clampY(p.y)), 4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function render(count){
+  var C = palette();
+  drawGrid(C);
+  if (!state.ran || !state.results) return;
+  var r = state.results;
+  if (!state.solo){
+    drawTraj(r.low.traj, C[SCEN.low.key], 2.2, count);
+    drawTraj(r.hi.traj, C[SCEN.hi.key], 2.2, count);
+    drawTraj(r.ok.traj, C[SCEN.ok.key], 2.6, count);
+  }
+  drawTraj(r.my.traj, C.alias, 2.6, count);
+}
+
+/* ── 표·판정 ── */
+function updateTable(){
+  if (!state.results) return;
+  var r = state.results;
+  $('lowKp').textContent = SCEN.low.Kp.toFixed(2);
+  $('lowKd').textContent = SCEN.low.Kd.toFixed(2);
+  $('lowRms').textContent = r.low.rms.toFixed(3);
+  $('okKp').textContent = SCEN.ok.Kp.toFixed(2);
+  $('okKd').textContent = SCEN.ok.Kd.toFixed(2);
+  $('okRms').textContent = r.ok.rms.toFixed(3);
+  $('hiKp').textContent = SCEN.hi.Kp.toFixed(2);
+  $('hiKd').textContent = SCEN.hi.Kd.toFixed(2);
+  $('hiRms').textContent = r.hi.rms.toFixed(3);
+  $('myKpT').textContent = state.myKp.toFixed(2);
+  $('myKdT').textContent = state.myKd.toFixed(2);
+  $('myRms').textContent = r.my.rms.toFixed(3);
+}
+
+function zeroCrossings(traj){
+  var c = 0, i;
+  for (i = 2; i < traj.length; i++){
+    if ((traj[i].y > 0 && traj[i - 1].y < 0) || (traj[i].y < 0 && traj[i - 1].y > 0)) c++;
+  }
+  return c;
+}
+
+function updateVerdict(){
+  var vd = $('verdict'), cls, msg;
+  if (!state.results){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '[▶ 3 시나리오 실행]을 눌러 세 궤적을 겹쳐 보세요.';
+    return;
+  }
+  var r = state.results;
+  var myRms = r.my.rms, okRms = r.ok.rms;
+  var cross = zeroCrossings(r.my.traj);
+  var g = 'K<sub>p</sub> = ' + state.myKp.toFixed(2) + ', K<sub>d</sub> = ' + state.myKd.toFixed(2);
+
+  if (cross >= 3 || myRms > r.hi.rms * 0.8){
+    cls = 'bad';
+    msg = '내 게인(' + g + ')은 <b>과한 게인</b> 쪽입니다. 경로를 ' + cross +
+      '번 넘나드는 진동으로 RMS CTE = <b>' + myRms.toFixed(3) + ' m</b>. K<sub>p</sub>↓ 또는 K<sub>d</sub>↑.';
+  } else if (myRms <= okRms * 1.25 && myRms <= 1.5){
+    cls = 'good';
+    msg = '내 게인(' + g + ')은 <b>적정 게인</b> 성격입니다. 진동 없이 수렴해 RMS CTE = <b>' +
+      myRms.toFixed(3) + ' m</b> (적정 ' + okRms.toFixed(3) + ' m). 목표 범위 안입니다.';
+  } else {
+    cls = 'mid';
+    msg = '내 게인(' + g + ')은 <b>낮은 게인</b> 쪽입니다. 진동은 없지만 천천히 붙어 RMS CTE = <b>' +
+      myRms.toFixed(3) + ' m</b> (적정 ' + okRms.toFixed(3) + ' m보다 큼). K<sub>p</sub>를 키워 보세요.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+var anim = null, animCount = 0;
+var totalPts = STEPS + 1;
+
+function stopAnim(){
+  if (anim){ cancelAnimationFrame(anim); anim = null; }
+  var b = $('startBtn');
+  b.classList.remove('on');
+  b.textContent = '▶ 재생';
+}
+function tick(){
+  animCount += 6;
+  if (animCount >= totalPts){
+    animCount = totalPts;
+    render(animCount); stopAnim(); return;
+  }
+  render(animCount);
+  anim = requestAnimationFrame(tick);
+}
+function startAnim(){
+  if (!state.ran) runAll();
+  updateTable(); updateVerdict();
+  if (anim){ stopAnim(); return; }
+  if (animCount >= totalPts) animCount = 0;
+  var b = $('startBtn');
+  b.classList.add('on'); b.textContent = '❚❚ 정지';
+  anim = requestAnimationFrame(tick);
+}
+
+/* ── 컨트롤 ── */
+$('runBtn').addEventListener('click', function(){
+  stopAnim(); runAll(); updateTable(); updateVerdict();
+  animCount = 0; startAnim();
+});
+$('startBtn').addEventListener('click', startAnim);
+$('resetBtn').addEventListener('click', function(){
+  stopAnim(); animCount = 0; render(0);
+});
+
+function onMyGain(){
+  if (state.ran){
+    state.results.my = simulate(state.myKp, state.myKd);
+    updateTable(); updateVerdict();
+    render(totalPts);
+    animCount = totalPts;
+    stopAnim();
+  }
+}
+$('kpS').addEventListener('input', function(){
+  state.myKp = parseFloat(this.value);
+  $('kpV').textContent = state.myKp.toFixed(2);
+  onMyGain();
+});
+$('kdS').addEventListener('input', function(){
+  state.myKd = parseFloat(this.value);
+  $('kdV').textContent = state.myKd.toFixed(2);
+  onMyGain();
+});
+$('soloBtn').addEventListener('click', function(){
+  state.solo = !state.solo;
+  this.classList.toggle('on', state.solo);
+  render(state.ran ? Math.max(animCount, 1) : 0);
+});
+$('copyBtn').addEventListener('click', function(){
+  state.myKp = SCEN.ok.Kp; state.myKd = SCEN.ok.Kd;
+  $('kpS').value = state.myKp; $('kdS').value = state.myKd;
+  $('kpV').textContent = state.myKp.toFixed(2);
+  $('kdV').textContent = state.myKd.toFixed(2);
+  onMyGain();
+});
+
+function redraw(){ render(state.ran ? Math.max(animCount, 1) : 0); }
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', redraw);
+  else if (mq.addListener) mq.addListener(redraw);
+}
+if (window.MutationObserver){
+  new MutationObserver(redraw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+updateVerdict();
+render(0);
+})();
+</script>
+</body>
+</html>

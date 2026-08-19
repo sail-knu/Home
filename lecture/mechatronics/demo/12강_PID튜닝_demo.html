@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자동차 속도 PID 단계 튜닝 — 12강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.lg i.b{height:10px;border-radius:3px;opacity:.35}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 12강 · 인터랙티브 데모</p>
+  <h1>자동차 속도 PID — 단계 튜닝</h1>
+  <p class="lede">정지한 1톤 차량을 10 m/s로 올립니다. <b>P → PI → PID</b> 프리셋과 게인 슬라이더를 움직여 오버슈트·정착시간·정상상태 오차가 어떻게 바뀌는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  m·v̇ + b·v = F(t) <span style="color:var(--muted);font-size:.86em">(m = 1000 kg, b = 50 N·s/m)</span>
+  &nbsp;|&nbsp; <b>u = K<sub>p</sub>e + K<sub>i</sub>∫e dt + K<sub>d</sub>ė</b>
+  &nbsp;|&nbsp; F = clip(u, −F<sub>max</sub>, +F<sub>max</sub>)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="560"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>속도 v(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>목표 v<sub>ref</sub> = 10 m/s</span>
+        <span class="lg" style="color:var(--c-band)"><i class="b"></i>±2% 정착 밴드</span>
+        <span class="lg" style="color:var(--bad)"><i class="d"></i>%OS 상한 +10% / ±F<sub>max</sub></span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>요청 u(t)</span>
+        <span class="lg" style="color:var(--accent)"><i></i>인가 힘 F(t)</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="presetP" class="btn">P만</button>
+        <button id="presetPI" class="btn">PI</button>
+        <button id="presetPID" class="btn">PID</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>K<sub>p</sub> · 비례 <span class="value" id="kpV">800</span></label>
+        <input type="range" id="kpS" min="0" max="2500" step="10" value="800">
+      </div>
+      <div class="ctl-box">
+        <label>K<sub>i</sub> · 적분 <span class="value" id="kiV">0</span></label>
+        <input type="range" id="kiS" min="0" max="200" step="1" value="0">
+      </div>
+      <div class="ctl-box">
+        <label>K<sub>d</sub> · 미분 <span class="value" id="kdV">0</span></label>
+        <input type="range" id="kdS" min="0" max="200" step="1" value="0">
+      </div>
+      <div class="ctl-box">
+        <label>액추에이터 한계 F<sub>max</sub> (N) <span class="value" id="fmV">12000</span></label>
+        <input type="range" id="fmS" min="2000" max="16000" step="100" value="12000">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="pauseBtn" class="btn">❚❚ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="satBtn" class="btn">포화 실험 · F<sub>max</sub> = 4000 N</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">오버슈트 %OS</div><div class="v" id="osV">—</div></div>
+          <div class="stat"><div class="k">정착시간 t<sub>s</sub> (±2%)</div><div class="v" id="tsV">—</div></div>
+          <div class="stat"><div class="k">정상상태 오차 e<sub>ss</sub></div><div class="v" id="essV">—</div></div>
+          <div class="stat"><div class="k">포화 비율</div><div class="v" id="satV" style="color:var(--c-alias)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 사양: t<sub>s</sub> &lt; 5 s, %OS &lt; 10%, e<sub>ss</sub> &lt; 2%<br>
+        • P만 → 오차 약 6% 잔류, 사양 미달<br>
+        • +I → e<sub>ss</sub> → 0, 대신 오버슈트 증가<br>
+        • +D → 진동을 눌러 세 사양 모두 충족<br>
+        • F<sub>max</sub> 4000 N → 보라선이 잘려 사양 붕괴
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 12강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ── 모델 파라미터 (12강 §5) ── */
+var M_CAR = 1000, B_CAR = 50, VREF = 10;
+var T_END = 12, DT = 0.002, N_STEP = Math.round(T_END / DT);
+
+/* 사양 */
+var OS_LIMIT = 10, ESS_LIMIT = 2, TS_LIMIT = 5, BAND = 0.02;
+
+/* 두 플롯 영역 (상: 속도, 하: 제어입력) */
+var M = { l: 62, r: 24, t: 34, b: 30 };
+var gap = 40, topH = 330;
+var botH = H - M.t - topH - gap - M.b;
+var topY = M.t, botY = M.t + topH + gap;
+var plotW = W - M.l - M.r;
+
+var state = {
+  Kp: 800, Ki: 0, Kd: 0, Fmax: 12000,
+  v: [], u: [], t: [], stats: null,
+  playIdx: 0, running: false, raf: null
+};
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), avg: cvar('--c-avg'), band: cvar('--c-band'),
+    alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+/* ── RK4 차량 동역학 + 매 스텝 PID 갱신. dv/dt = (F - b·v)/m ── */
+function simulate(){
+  var Kp = state.Kp, Ki = state.Ki, Kd = state.Kd, Fmax = state.Fmax;
+  var vArr = new Float64Array(N_STEP + 1);
+  var uArr = new Float64Array(N_STEP + 1);
+  var tArr = new Float64Array(N_STEP + 1);
+  var v = 0, integral = 0, prevErr = VREF - 0, satCount = 0, k;
+
+  function deriv(vv, F){ return (F - B_CAR * vv) / M_CAR; }
+
+  for (k = 0; k <= N_STEP; k++){
+    var t = k * DT;
+    var err = VREF - v;
+    var dErr = (err - prevErr) / DT;
+    prevErr = err;
+    var tentInt = integral + err * DT;
+    var u = Kp * err + Ki * tentInt + Kd * dErr;
+
+    /* 액추에이터 포화 F = clip(u, -Fmax, +Fmax) */
+    var F = u, saturated = false;
+    if (F > Fmax){ F = Fmax; saturated = true; }
+    else if (F < -Fmax){ F = -Fmax; saturated = true; }
+    if (saturated) satCount++;
+
+    /* 적분 포화방지: 포화 중 같은 방향으로 더 밀 때만 적분 동결 */
+    var pushing = (u > Fmax && err > 0) || (u < -Fmax && err < 0);
+    if (!(saturated && pushing)) integral = tentInt;
+
+    vArr[k] = v; uArr[k] = u; tArr[k] = t;
+
+    var k1 = deriv(v, F);
+    var k2 = deriv(v + 0.5 * DT * k1, F);
+    var k3 = deriv(v + 0.5 * DT * k2, F);
+    var k4 = deriv(v + DT * k3, F);
+    v = v + (DT / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+  }
+
+  /* ── 성능 지표 ── */
+  var tailStart = Math.floor(N_STEP * 0.95), vss = 0, cnt = 0;
+  for (k = tailStart; k <= N_STEP; k++){ vss += vArr[k]; cnt++; }
+  vss /= cnt;
+  var ess = Math.abs(VREF - vss) / VREF * 100;
+
+  var vmax = 0;
+  for (k = 0; k <= N_STEP; k++) if (vArr[k] > vmax) vmax = vArr[k];
+  var os = vmax > VREF ? (vmax - VREF) / VREF * 100 : 0;
+
+  var lo = VREF * (1 - BAND), hi = VREF * (1 + BAND), ts = NaN;
+  for (k = N_STEP; k >= 0; k--){
+    if (vArr[k] < lo || vArr[k] > hi){ ts = (k + 1) * DT; break; }
+  }
+  if (isNaN(ts)) ts = 0;
+  var everSettled = (vss >= lo && vss <= hi);
+  if (!everSettled) ts = Infinity;
+
+  var satRatio = satCount / (N_STEP + 1) * 100;
+
+  state.v = vArr; state.u = uArr; state.t = tArr;
+  state.stats = { ess:ess, os:os, ts:ts, vss:vss, vmax:vmax, satRatio:satRatio, everSettled:everSettled };
+}
+
+function tToPx(t){ return M.l + t / T_END * plotW; }
+function vToPx(v, vLo, vHi){ return topY + topH - (v - vLo) / (vHi - vLo) * topH; }
+function uToPx(u, uLo, uHi){ return botY + botH - (u - uLo) / (uHi - uLo) * botH; }
+
+function draw(){
+  var C = palette(), S = state.stats, k, x, y, vv, tt;
+  ctx.clearRect(0, 0, W, H);
+  if (!S) return;
+
+  var vPeak = Math.max(S.vmax, VREF * 1.15);
+  var vHi = Math.max(vPeak * 1.05, 11.5), vLo = 0;
+
+  var uPeak = state.Fmax;
+  for (k = 0; k <= N_STEP; k++) uPeak = Math.max(uPeak, Math.abs(state.u[k]));
+  var uHi = uPeak * 1.08, uLo = -uHi * 0.25;
+
+  var upto = state.running ? state.playIdx : N_STEP;
+
+  /* ===== 상단: 속도 응답 ===== */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (vv = 0; vv <= vHi; vv += 2){
+    y = vToPx(vv, vLo, vHi);
+    ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(M.l + plotW, y); ctx.stroke();
+  }
+  for (tt = 0; tt <= T_END; tt += 2){
+    x = tToPx(tt);
+    ctx.beginPath(); ctx.moveTo(x, topY); ctx.lineTo(x, topY + topH); ctx.stroke();
+  }
+
+  /* ±2% 정착 밴드 */
+  var bandLo = VREF * (1 - BAND), bandHi = VREF * (1 + BAND);
+  ctx.globalAlpha = 0.12; ctx.fillStyle = C.band;
+  ctx.fillRect(M.l, vToPx(bandHi, vLo, vHi), plotW, vToPx(bandLo, vLo, vHi) - vToPx(bandHi, vLo, vHi));
+  ctx.globalAlpha = 0.5; ctx.strokeStyle = C.band; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(M.l, vToPx(bandHi, vLo, vHi)); ctx.lineTo(M.l + plotW, vToPx(bandHi, vLo, vHi)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.l, vToPx(bandLo, vLo, vHi)); ctx.lineTo(M.l + plotW, vToPx(bandLo, vLo, vHi)); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+  /* %OS 상한선 (+10%) */
+  var osLine = VREF * (1 + OS_LIMIT / 100);
+  ctx.strokeStyle = C.bad; ctx.lineWidth = 1.5; ctx.setLineDash([7, 4]);
+  ctx.beginPath();
+  ctx.moveTo(M.l, vToPx(osLine, vLo, vHi)); ctx.lineTo(M.l + plotW, vToPx(osLine, vLo, vHi)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.bad; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('%OS 상한 +10%', M.l + 6, vToPx(osLine, vLo, vHi) - 5);
+
+  /* 목표선 v_ref */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.moveTo(M.l, vToPx(VREF, vLo, vHi)); ctx.lineTo(M.l + plotW, vToPx(VREF, vLo, vHi)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'end';
+  ctx.fillText('v_ref = 10 m/s', M.l + plotW - 6, vToPx(VREF, vLo, vHi) - 6);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, topY); ctx.lineTo(M.l, topY + topH); ctx.lineTo(M.l + plotW, topY + topH); ctx.stroke();
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (vv = 0; vv <= vHi; vv += 2) ctx.fillText(vv.toFixed(0), M.l - 8, vToPx(vv, vLo, vHi) + 4);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'start';
+  ctx.fillText('속도 (m/s)', 10, topY - 12);
+
+  /* 속도 곡선 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (k = 0; k <= upto; k++){
+    x = tToPx(state.t[k]); y = vToPx(state.v[k], vLo, vHi);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  var mx = tToPx(state.t[upto]), my = vToPx(state.v[upto], vLo, vHi);
+  ctx.fillStyle = C.avg;
+  ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+
+  /* 정착시간 세로선 */
+  if (isFinite(S.ts) && S.ts > 0 && S.ts <= T_END){
+    var tx = tToPx(S.ts);
+    ctx.globalAlpha = 0.6; ctx.strokeStyle = C.avg; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(tx, topY); ctx.lineTo(tx, topY + topH); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.avg; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('t_s = ' + S.ts.toFixed(1) + ' s', tx, topY + topH - 8);
+  }
+
+  /* ===== 하단: 제어입력 u(t) / 인가 힘 F(t) ===== */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (tt = 0; tt <= T_END; tt += 2){
+    x = tToPx(tt);
+    ctx.beginPath(); ctx.moveTo(x, botY); ctx.lineTo(x, botY + botH); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(M.l, uToPx(0, uLo, uHi)); ctx.lineTo(M.l + plotW, uToPx(0, uLo, uHi)); ctx.stroke();
+
+  /* 포화 한계선 ±Fmax */
+  ctx.strokeStyle = C.bad; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(M.l, uToPx(state.Fmax, uLo, uHi)); ctx.lineTo(M.l + plotW, uToPx(state.Fmax, uLo, uHi)); ctx.stroke();
+  if (-state.Fmax > uLo){
+    ctx.beginPath(); ctx.moveTo(M.l, uToPx(-state.Fmax, uLo, uHi)); ctx.lineTo(M.l + plotW, uToPx(-state.Fmax, uLo, uHi)); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.bad; ctx.font = '11px sans-serif'; ctx.textAlign = 'end';
+  ctx.fillText('+F_max = ' + state.Fmax, M.l + plotW - 6, uToPx(state.Fmax, uLo, uHi) - 4);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, botY); ctx.lineTo(M.l, botY + botH); ctx.lineTo(M.l + plotW, botY + botH); ctx.stroke();
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('제어입력 u, 인가 힘 F (N)', 10, botY - 8);
+  ctx.fillStyle = C.faint; ctx.textAlign = 'center';
+  for (tt = 0; tt <= T_END; tt += 2) ctx.fillText(tt.toFixed(0), tToPx(tt), botY + botH + 16);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s)', W - M.r, botY + botH + 16);
+
+  /* 요청 u(t) */
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for (k = 0; k <= upto; k++){
+    var uc = Math.max(uLo, Math.min(uHi, state.u[k]));
+    x = tToPx(state.t[k]); y = uToPx(uc, uLo, uHi);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  /* 실제 인가 힘 F(t) = clip */
+  ctx.strokeStyle = C.accent; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  for (k = 0; k <= upto; k++){
+    var Fv = state.u[k];
+    if (Fv > state.Fmax) Fv = state.Fmax; else if (Fv < -state.Fmax) Fv = -state.Fmax;
+    x = tToPx(state.t[k]); y = uToPx(Fv, uLo, uHi);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillStyle = C.alias; ctx.fillText('— 요청 u', M.l + 6, botY + 14);
+  ctx.fillStyle = C.accent; ctx.fillText('— 인가 F (포화 후)', M.l + 70, botY + 14);
+}
+
+function updatePanel(){
+  var S = state.stats;
+  $('osV').textContent  = S.os.toFixed(1) + ' %';
+  $('essV').textContent = S.ess.toFixed(1) + ' %';
+  $('tsV').textContent  = isFinite(S.ts) ? S.ts.toFixed(1) + ' s' : '미정착';
+  $('satV').textContent = S.satRatio.toFixed(0) + ' %';
+
+  var okOS = S.os <= OS_LIMIT;
+  var okESS = S.ess <= ESS_LIMIT;
+  var okTS = isFinite(S.ts) && S.ts <= TS_LIMIT && S.everSettled;
+
+  $('osV').style.color  = okOS  ? 'var(--ok)' : 'var(--bad)';
+  $('essV').style.color = okESS ? 'var(--ok)' : 'var(--bad)';
+  $('tsV').style.color  = okTS  ? 'var(--ok)' : 'var(--bad)';
+
+  var fail = [];
+  if (!okTS)  fail.push('정착시간(' + (isFinite(S.ts) ? S.ts.toFixed(1) + 's' : '밴드 미진입') + ' &gt; 5s)');
+  if (!okOS)  fail.push('오버슈트(' + S.os.toFixed(1) + '% &gt; 10%)');
+  if (!okESS) fail.push('정상상태 오차(' + S.ess.toFixed(1) + '% &gt; 2%)');
+
+  var vd = $('verdict'), cls, msg;
+  if (okOS && okESS && okTS){
+    cls = 'good';
+    msg = '<b>세 사양 모두 충족</b> — %OS ' + S.os.toFixed(1) + '%, t<sub>s</sub> ' + S.ts.toFixed(1) +
+          's, e<sub>ss</sub> ' + S.ess.toFixed(1) + '%. ' +
+          (state.Kd > 0 ? 'D가 진동을 눌러 매끄럽게 수렴합니다.' : 'I가 오차를 0으로 만들었습니다.');
+  } else if (fail.length === 1){
+    cls = 'mid';
+    msg = '미달 항목 하나: <b>' + fail[0] + '</b>. ' +
+          (!okESS ? 'K<sub>i</sub>를 켜거나 키우세요.' :
+           !okOS  ? 'K<sub>d</sub>를 키워 오버슈트를 누르세요.' :
+                    'K<sub>p</sub>를 키우되 포화를 확인하세요.');
+  } else {
+    cls = 'bad';
+    msg = '사양 미달: <b>' + fail.join(', ') + '</b>. ' +
+          (state.Ki === 0 ? 'P만으로는 오차가 약 6% 남습니다 — I를 추가하세요.' :
+           state.Kd === 0 ? 'PI는 오차를 없애지만 오버슈트가 큽니다 — D를 추가하세요.' :
+                            '게인을 조정하거나 F<sub>max</sub>를 확인하세요.');
+  }
+  if (S.satRatio > 8){
+    msg += ' <b>포화 ' + S.satRatio.toFixed(0) + '%</b> — 요청 힘이 F<sub>max</sub> = ' + state.Fmax +
+           ' N에서 잘립니다.';
+    if (cls === 'good') cls = 'mid';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+function stopAnim(){
+  state.running = false;
+  if (state.raf){ cancelAnimationFrame(state.raf); state.raf = null; }
+}
+function recompute(){
+  stopAnim();
+  simulate();
+  state.playIdx = N_STEP;
+  draw();
+  updatePanel();
+}
+function startAnim(){
+  if (!state.stats) simulate();
+  if (state.playIdx >= N_STEP) state.playIdx = 0;
+  state.running = true;
+  var stepPerFrame = Math.max(1, Math.round(N_STEP / 360));
+  function loop(){
+    if (!state.running) return;
+    state.playIdx = Math.min(N_STEP, state.playIdx + stepPerFrame);
+    draw();
+    if (state.playIdx >= N_STEP){
+      state.running = false; state.raf = null;
+      updatePanel(); draw();
+      return;
+    }
+    state.raf = requestAnimationFrame(loop);
+  }
+  state.raf = requestAnimationFrame(loop);
+}
+
+function syncSliders(){
+  $('kpS').value = state.Kp; $('kiS').value = state.Ki;
+  $('kdS').value = state.Kd; $('fmS').value = state.Fmax;
+  $('kpV').textContent = state.Kp; $('kiV').textContent = state.Ki;
+  $('kdV').textContent = state.Kd; $('fmV').textContent = state.Fmax;
+}
+function markPreset(name){
+  var ids = ['presetP', 'presetPI', 'presetPID'], i;
+  for (i = 0; i < ids.length; i++) $(ids[i]).classList.remove('on');
+  if (name === 'P') $('presetP').classList.add('on');
+  if (name === 'PI') $('presetPI').classList.add('on');
+  if (name === 'PID') $('presetPID').classList.add('on');
+}
+
+/* 프리셋 (12강 §5 값) */
+$('presetP').addEventListener('click', function(){
+  state.Kp = 800; state.Ki = 0; state.Kd = 0;
+  syncSliders(); markPreset('P'); recompute();
+});
+$('presetPI').addEventListener('click', function(){
+  state.Kp = 800; state.Ki = 40; state.Kd = 0;
+  syncSliders(); markPreset('PI'); recompute();
+});
+$('presetPID').addEventListener('click', function(){
+  state.Kp = 1500; state.Ki = 80; state.Kd = 50;
+  syncSliders(); markPreset('PID'); recompute();
+});
+
+$('kpS').addEventListener('input', function(){
+  state.Kp = parseInt(this.value, 10); $('kpV').textContent = state.Kp; markPreset(null); recompute();
+});
+$('kiS').addEventListener('input', function(){
+  state.Ki = parseInt(this.value, 10); $('kiV').textContent = state.Ki; markPreset(null); recompute();
+});
+$('kdS').addEventListener('input', function(){
+  state.Kd = parseInt(this.value, 10); $('kdV').textContent = state.Kd; markPreset(null); recompute();
+});
+$('fmS').addEventListener('input', function(){
+  state.Fmax = parseInt(this.value, 10); $('fmV').textContent = state.Fmax;
+  $('satBtn').classList.toggle('on', state.Fmax === 4000);
+  recompute();
+});
+
+$('startBtn').addEventListener('click', function(){ simulate(); startAnim(); });
+$('pauseBtn').addEventListener('click', function(){ stopAnim(); draw(); updatePanel(); });
+$('resetBtn').addEventListener('click', function(){
+  stopAnim();
+  state.Kp = 800; state.Ki = 0; state.Kd = 0; state.Fmax = 12000;
+  syncSliders(); markPreset('P'); $('satBtn').classList.remove('on'); recompute();
+});
+/* 포화 실험 토글: F_max 4000 N ↔ 12000 N */
+$('satBtn').addEventListener('click', function(){
+  state.Fmax = (state.Fmax === 4000) ? 12000 : 4000;
+  $('fmS').value = state.Fmax; $('fmV').textContent = state.Fmax;
+  this.classList.toggle('on', state.Fmax === 4000);
+  recompute();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+
+markPreset('P');
+recompute();
+})();
+</script>
+</body>
+</html>

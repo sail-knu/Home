@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미분 ↔ s 곱하기 수치 검증 — 9강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 9강 · 인터랙티브 데모</p>
+  <h1>미분 ↔ s 곱하기 — 수치로 검증</h1>
+  <p class="lede"><b>a</b>와 <b>s</b>를 움직이면 정의대로 계산한 수치 적분값과 공식값 <b>sF(s) − f(0)</b>이 나란히 갱신됩니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  f(t) = e<sup>−at</sup>, F(s) = 1/(s+a), f(0) = 1
+  &nbsp;→&nbsp; ∫<sub>0</sub><sup>T</sup> <b>f′(t)</b> e<sup>−st</sup> dt &nbsp;=?=&nbsp; <b>sF(s) − 1</b> = −a/(s+a)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i></i>f(t) = e<sup>−at</sup></span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>f′(t) = −a e<sup>−at</sup></span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>피적분함수 f′(t) e<sup>−st</sup></span>
+        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>적분 음영 (넓이)</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>감쇠율 a <span class="value" id="aV">2.00</span></label>
+        <input type="range" id="aS" min="0.5" max="5" step="0.1" value="2.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>s 값 <span class="value" id="sV">3.0</span></label>
+        <input type="range" id="sS" min="0.5" max="10" step="0.1" value="3.0">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 적분 채우기</button>
+        <button id="stopBtn" class="btn">■ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="initBtn" class="btn">f(0) 빼기: 켬</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">수치 적분 ∫f′e<sup>−st</sup>dt</div><div class="v" id="numV" style="color:var(--c-avg);font-size:14px">—</div></div>
+          <div class="stat"><div class="k" id="formK">공식값 sF(s)−1</div><div class="v" id="formV" style="color:var(--c-true);font-size:14px">—</div></div>
+          <div class="stat"><div class="k">차이 |수치 − 공식|</div><div class="v" id="diffV" style="font-size:14px">—</div></div>
+          <div class="stat"><div class="k">적분 상한 T</div><div class="v" id="tV" style="color:var(--muted)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 파란 곡선 아래 넓이 = 왼쪽 변 (정의대로)<br>
+        • 오른쪽 변 = sF(s) − f(0) = <b>−a/(s+a)</b><br>
+        • a, s를 어떻게 바꿔도 차이 <b>≈ 0</b><br>
+        • [f(0) 빼기: 끔]으로 두면 차이가 <b>1</b>로 벌어짐<br>
+        • s가 작으면 지수 꼬리가 남아 오차 증가
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 9강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 66, r: 28, t: 44, b: 58 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var state = { a: 2.0, s: 3.0, fill: 1, anim: null, noInit: false };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent')
+  };
+}
+
+/* ── 수치·해석 (원본 유지) ── */
+function bigT(){ return 40 / Math.max(state.a, state.s); }
+function f(t){ return Math.exp(-state.a * t); }
+function fp(t){ return -state.a * Math.exp(-state.a * t); }
+function g(t){ return fp(t) * Math.exp(-state.s * t); }
+function formula(){ return -state.a / (state.s + state.a); }
+function noInitVal(){ return state.s / (state.s + state.a); }
+
+var NSTEP = 4000;
+function numeric(frac){
+  var T = bigT(), dt = T / NSTEP;
+  var kMax = Math.max(1, Math.round(NSTEP * frac));
+  var sum = 0, prev = g(0), k, t, cur;
+  for (k = 1; k <= kMax; k++){
+    t = k * dt;
+    cur = g(t);
+    sum += 0.5 * (prev + cur) * dt;
+    prev = cur;
+  }
+  return sum;
+}
+
+function xToPx(t, tHi){ return M.l + (t / tHi) * plotW; }
+function yToPx(y, yLo, yHi){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+function draw(){
+  var C = palette();
+  var T = bigT(), frac = state.fill;
+  var numVal = numeric(frac);
+  var cmpVal = state.noInit ? noInitVal() : formula();
+  var diff = Math.abs(numVal - cmpVal);
+
+  var yLo = Math.min(-state.a * 1.1, -0.3), yHi = 1.15;
+  function clampY(y){ return Math.max(yLo, Math.min(yHi, y)); }
+  var i, t, y, py;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* 격자 */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var span = yHi - yLo;
+  var yStep = span > 6 ? 1 : (span > 3 ? 0.5 : 0.25);
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi + 1e-9; y += yStep){
+    py = yToPx(y, yLo, yHi);
+    ctx.beginPath(); ctx.moveTo(M.l, py); ctx.lineTo(M.l + plotW, py); ctx.stroke();
+  }
+
+  /* 적분 음영 */
+  var tFill = T * frac;
+  var y0 = yToPx(0, yLo, yHi);
+  var SH = 260;
+  ctx.globalAlpha = 0.20; ctx.fillStyle = C.avg;
+  ctx.beginPath();
+  ctx.moveTo(xToPx(0, T), y0);
+  for (i = 0; i <= SH; i++){
+    t = tFill * i / SH;
+    ctx.lineTo(xToPx(t, T), yToPx(clampY(g(t)), yLo, yHi));
+  }
+  ctx.lineTo(xToPx(tFill, T), y0);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  /* 축 */
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH);
+  ctx.stroke();
+  ctx.globalAlpha = 0.7; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(M.l, y0); ctx.lineTo(M.l + plotW, y0); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('진폭', 14, M.t - 16);
+  ctx.textAlign = 'end';
+  ctx.fillText('시간 t →', W - M.r, H - 16);
+  ctx.fillStyle = C.faint;
+  ctx.textAlign = 'end';
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi + 1e-9; y += yStep){
+    ctx.fillText(y.toFixed(span > 3 ? 1 : 2), M.l - 8, yToPx(y, yLo, yHi) + 4);
+  }
+  ctx.textAlign = 'center';
+  for (i = 0; i <= 5; i++){
+    t = T * i / 5;
+    ctx.fillText(t.toFixed(1), xToPx(t, T), M.t + plotH + 18);
+  }
+
+  /* f(t) · f'(t) · 피적분함수 g(t) */
+  function curve(fn, color, lw){
+    var k, tt, qx, qy;
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath();
+    for (k = 0; k <= 400; k++){
+      tt = T * k / 400; qx = xToPx(tt, T); qy = yToPx(clampY(fn(tt)), yLo, yHi);
+      if (k === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
+    }
+    ctx.stroke();
+  }
+  curve(f, C.tru, 2.4); curve(fp, C.alias, 2.4); curve(g, C.avg, 2.8);
+
+  /* 채우기 진행선 */
+  if (frac > 0 && frac < 1){
+    var fpx = xToPx(tFill, T);
+    ctx.globalAlpha = 0.6; ctx.strokeStyle = C.avg; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(fpx, M.t); ctx.lineTo(fpx, M.t + plotH); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+
+  /* 곡선 라벨 */
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillStyle = C.tru;
+  ctx.fillText('f(t) = e^(−at)', xToPx(T * 0.28, T) + 4, yToPx(clampY(f(T * 0.28)), yLo, yHi) - 6);
+  ctx.fillStyle = C.alias;
+  ctx.fillText("f'(t) = −a e^(−at)", M.l + 8, yToPx(clampY(fp(0)), yLo, yHi) + 16);
+  ctx.fillStyle = C.avg;
+  ctx.fillText("f'(t)·e^(−st)", xToPx(T * 0.14, T), yToPx(clampY(g(T * 0.14)), yLo, yHi) - 8);
+
+  /* 수치 갱신 */
+  $('numV').textContent = numVal.toFixed(4);
+  $('formV').textContent = cmpVal.toFixed(4);
+  $('formK').innerHTML = state.noInit ? '공식값 sF(s) (f(0) 생략)' : '공식값 sF(s)−1';
+  var diffEl = $('diffV');
+  diffEl.textContent = diff.toExponential(1);
+  diffEl.style.color = diff < 1e-3 ? 'var(--ok)' : (diff < 1e-2 ? 'var(--warn)' : 'var(--bad)');
+  $('tV').textContent = T.toFixed(2);
+
+  /* 판정 */
+  var vd = $('verdict'), cls, msg;
+  if (frac < 1){
+    cls = 'mid';
+    msg = '적분을 채우는 중입니다 (' + Math.round(frac * 100) + '%). 지금까지 누적값 <b>' + numVal.toFixed(4) + '</b>.';
+  } else if (state.noInit){
+    cls = 'bad';
+    msg = 'f(0) 항을 뺐더니 차이가 <b>' + diff.toFixed(4) + '</b>로 벌어졌습니다. ' +
+      '초기값 항 f(0) = 1이 반드시 필요합니다.';
+  } else if (diff < 1e-3){
+    cls = 'good';
+    msg = '수치 적분 <b>' + numVal.toFixed(4) + '</b> vs 공식값 <b>' + cmpVal.toFixed(4) + '</b>, ' +
+      '차이 ' + diff.toExponential(1) + '. 성질이 수치로 확인됩니다.';
+  } else if (diff < 1e-2){
+    cls = 'mid';
+    msg = '차이 ' + diff.toExponential(1) + ' — T = ' + T.toFixed(2) + '까지 적분했지만 지수 꼬리가 조금 남았습니다. 대체로 일치.';
+  } else {
+    cls = 'bad';
+    msg = '차이 ' + diff.toExponential(1) + '로 큽니다. s를 조금 올려 지수 꼬리를 줄여 보세요.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+function startAnim(){
+  if (state.anim) return;
+  if (state.fill >= 1) state.fill = 0;
+  $('startBtn').classList.add('on');
+  function step(){
+    state.fill = Math.min(1, state.fill + 0.012);
+    draw();
+    if (state.fill < 1){
+      state.anim = requestAnimationFrame(step);
+    } else {
+      state.anim = null;
+      $('startBtn').classList.remove('on');
+    }
+  }
+  state.anim = requestAnimationFrame(step);
+}
+function stopAnim(){
+  if (state.anim){ cancelAnimationFrame(state.anim); state.anim = null; }
+  $('startBtn').classList.remove('on');
+}
+function resetAnim(){ stopAnim(); state.fill = 0; draw(); }
+
+/* ── 컨트롤 ── */
+$('aS').addEventListener('input', function(){
+  state.a = parseFloat(this.value);
+  $('aV').textContent = state.a.toFixed(2);
+  draw();
+});
+$('sS').addEventListener('input', function(){
+  state.s = parseFloat(this.value);
+  $('sV').textContent = state.s.toFixed(1);
+  draw();
+});
+$('startBtn').addEventListener('click', startAnim);
+$('stopBtn').addEventListener('click', stopAnim);
+$('resetBtn').addEventListener('click', resetAnim);
+$('initBtn').addEventListener('click', function(){
+  state.noInit = !state.noInit;
+  this.textContent = state.noInit ? 'f(0) 빼기: 끔' : 'f(0) 빼기: 켬';
+  this.classList.toggle('on', state.noInit);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

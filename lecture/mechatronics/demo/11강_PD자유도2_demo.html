@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차 시스템 + PD — 11강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 11강 · 인터랙티브 데모</p>
+  <h1>2차 시스템 + PD — 자유도 2 설계</h1>
+  <p class="lede"><b>K<sub>p</sub></b>를 움직이면 빠르기 ω<sub>n</sub>′가, <b>K<sub>d</sub></b>를 움직이면 감쇠 ζ′가 바뀝니다. 두 손잡이를 따로 돌려 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  G(s) = <b>ω<sub>n</sub><sup>2</sup></b> / (s<sup>2</sup> + 2ζω<sub>n</sub>s + ω<sub>n</sub><sup>2</sup>),
+  C(s) = <b>K<sub>p</sub> + K<sub>d</sub>s</b>
+  &nbsp;→&nbsp; ω<sub>n</sub>′ = ω<sub>n</sub>√(1+K<sub>p</sub>),
+  ζ′ = (2ζω<sub>n</sub> + K<sub>d</sub>ω<sub>n</sub><sup>2</sup>) / (2ω<sub>n</sub>′)
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">플랜트 ω<sub>n</sub> = 2, ζ = 0.2</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>목표값 r = 1</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>제어 전 플랜트 (C 없음)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>폐루프 PD 응답</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>비례 게인 K<sub>p</sub> · 빠르기 <span class="value" id="kpV">2.00</span></label>
+        <input type="range" id="kpS" min="0" max="10" step="0.1" value="2.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>미분 게인 K<sub>d</sub> · 감쇠 <span class="value" id="kdV">0.50</span></label>
+        <input type="range" id="kdS" min="0" max="5" step="0.05" value="0.5">
+      </div>
+
+      <div class="btn-row">
+        <button id="runBtn" class="btn">▶ 시작</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="fitBtn" class="btn">ζ′ = 0.7 맞추기</button>
+        <button id="openBtn" class="btn on">제어 전 곡선</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">자연진동수 ω<sub>n</sub>′</div><div class="v" id="wnV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ′</div><div class="v" id="zeV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">응답 분류</div><div class="v" id="clsV" style="font-size:13px">—</div></div>
+          <div class="stat"><div class="k">정착시간 t<sub>s</sub> 근사</div><div class="v" id="tsV" style="color:var(--ok)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • K<sub>p</sub>↑ → ω<sub>n</sub>′↑, 대신 오버슈트도 커짐<br>
+        • K<sub>d</sub>↑ → ζ′만 올라감, ω<sub>n</sub>′는 그대로<br>
+        • ζ′ 0.5~0.9 구간이 가장 쓸 만한 응답<br>
+        • ζ′ &gt; 1이면 오버슈트 0, 대신 굼뜸<br>
+        • 정상값이 1보다 낮음 — PD는 오차를 남긴다
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 11강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 60, r: 28, t: 44, b: 52 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* 플랜트 파라미터 (11강: ωn = 2, ζ = 0.2) */
+var WN = 2.0, ZETA = 0.2, R = 1.0;
+var T_END = 12.0, DT = 0.002, NSTEP = Math.round(T_END / DT);
+var state = { Kp: 2.0, Kd: 0.5, showOpen: true };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg')
+  };
+}
+
+/* 특성식: s² + (2ζωn + Kd·ωn²)s + ωn²(1+Kp) */
+function closedParams(Kp, Kd){
+  var wnp = WN * Math.sqrt(1 + Kp);
+  var zep = (2 * ZETA * WN + Kd * WN * WN) / (2 * wnp);
+  return { wnp: wnp, zep: zep };
+}
+
+/* 표준형 2차 ODE 계단 응답 (RK4): y'' + 2·ze·wn·y' + wn²·y = wn²·gain·R */
+function simulate(wn, ze, gain){
+  var y = new Float64Array(NSTEP + 1);
+  var x1 = 0, x2 = 0, i;
+  var w2 = wn * wn, c = 2 * ze * wn, drive = w2 * gain * R;
+  function f1(a, b){ return b; }
+  function f2(a, b){ return drive - w2 * a - c * b; }
+  y[0] = 0;
+  for (i = 0; i < NSTEP; i++){
+    var k1a = f1(x1, x2), k1b = f2(x1, x2);
+    var k2a = f1(x1 + 0.5 * DT * k1a, x2 + 0.5 * DT * k1b);
+    var k2b = f2(x1 + 0.5 * DT * k1a, x2 + 0.5 * DT * k1b);
+    var k3a = f1(x1 + 0.5 * DT * k2a, x2 + 0.5 * DT * k2b);
+    var k3b = f2(x1 + 0.5 * DT * k2a, x2 + 0.5 * DT * k2b);
+    var k4a = f1(x1 + DT * k3a, x2 + DT * k3b);
+    var k4b = f2(x1 + DT * k3a, x2 + DT * k3b);
+    x1 += DT / 6 * (k1a + 2 * k2a + 2 * k3a + k4a);
+    x2 += DT / 6 * (k1b + 2 * k2b + 2 * k3b + k4b);
+    y[i + 1] = x1;
+  }
+  return y;
+}
+
+/* 폐루프 PD: wn=ωn', ze=ζ', gain = Kp/(1+Kp) */
+function closedResponse(Kp, Kd){
+  var p = closedParams(Kp, Kd);
+  var dc = Kp / (1 + Kp);
+  return { y: simulate(p.wnp, p.zep, dc), wnp: p.wnp, zep: p.zep, dc: dc };
+}
+
+var dataClosed = null, dataOpen = null;
+function recompute(){
+  dataClosed = closedResponse(state.Kp, state.Kd);
+  dataOpen = simulate(WN, ZETA, 1.0);   /* 제어 전 플랜트 (목표 R 직접 인가) */
+}
+
+var yLo = -0.15, yHi = 1.75;
+function tToPx(t){ return M.l + t / T_END * plotW; }
+function yToPx(y){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+var anim = { running: false, prog: 0, raf: null };
+
+function draw(){
+  var C = palette(), y, t, i, px, py;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = 0; y <= yHi + 1e-9; y += 0.25){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y)); ctx.lineTo(M.l + plotW, yToPx(y)); ctx.stroke();
+  }
+  for (t = 0; t <= T_END + 1e-9; t += 2){
+    ctx.beginPath(); ctx.moveTo(tToPx(t), M.t); ctx.lineTo(tToPx(t), M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y', 14, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (초) →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = 0; y <= yHi + 1e-9; y += 0.25) ctx.fillText(y.toFixed(2), M.l - 8, yToPx(y) + 4);
+  ctx.textAlign = 'center';
+  for (t = 0; t <= T_END + 1e-9; t += 2) ctx.fillText(t.toFixed(0), tToPx(t), M.t + plotH + 18);
+
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(M.l, yToPx(R)); ctx.lineTo(M.l + plotW, yToPx(R)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('목표값 r = 1', M.l + 8, yToPx(R) - 6);
+
+  var nShow = anim.running ? Math.round(anim.prog * NSTEP) : NSTEP;
+
+  if (state.showOpen){
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    for (i = 0; i <= nShow; i++){
+      px = tToPx(i * DT); py = yToPx(dataOpen[i]);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  for (i = 0; i <= nShow; i++){
+    px = tToPx(i * DT); py = yToPx(dataClosed.y[i]);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  if (anim.running && nShow > 0 && nShow <= NSTEP){
+    px = tToPx(nShow * DT); py = yToPx(dataClosed.y[nShow]);
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+function updateStats(){
+  var wnp = dataClosed.wnp, zep = dataClosed.zep, dc = dataClosed.dc, cls;
+  if (zep < 0.98) cls = '부족감쇠 (진동)';
+  else if (zep <= 1.02) cls = '임계감쇠';
+  else cls = '과감쇠';
+
+  /* 정착시간 근사 (2% 기준): ts ≈ 4/(ζ'·ωn') */
+  var sigma = zep * wnp;
+  var ts = sigma > 1e-6 ? 4 / sigma : Infinity;
+
+  $('wnV').textContent = wnp.toFixed(2);
+  $('zeV').textContent = zep.toFixed(2);
+  $('clsV').textContent = cls;
+  $('tsV').textContent = isFinite(ts) ? ts.toFixed(2) + ' s' : '—';
+
+  var vd = $('verdict'), vcls, msg;
+  if (zep < 0.5){
+    vcls = 'bad';
+    msg = 'ζ′ = ' + zep.toFixed(2) + ' — 감쇠가 부족해 크게 출렁입니다. K<sub>d</sub>를 키우면 ω<sub>n</sub>′ = ' +
+      wnp.toFixed(2) + '는 그대로 두고 진동만 잡힙니다.';
+  } else if (zep <= 0.9){
+    vcls = 'good';
+    msg = 'ω<sub>n</sub>′ = ' + wnp.toFixed(2) + ', ζ′ = ' + zep.toFixed(2) +
+      ' — 빠르면서 오버슈트도 적당한 좋은 응답입니다.';
+  } else if (zep < 1.5){
+    vcls = 'mid';
+    msg = 'ζ′ = ' + zep.toFixed(2) + ' — 오버슈트는 거의 없지만 다소 굼뜹니다. K<sub>p</sub>를 키워 ω<sub>n</sub>′(= ' +
+      wnp.toFixed(2) + ')를 올리세요.';
+  } else {
+    vcls = 'bad';
+    msg = 'ζ′ = ' + zep.toFixed(2) + ' — 과감쇠라 응답이 너무 느립니다 (t<sub>s</sub> ≈ ' +
+      (4 / sigma).toFixed(2) + ' s). K<sub>d</sub>를 줄이거나 K<sub>p</sub>를 키우세요.';
+  }
+  var ess = 1 - dc;
+  if (ess > 0.03) msg += ' 정상값 ' + dc.toFixed(2) + ' — 목표보다 ' + ess.toFixed(2) + ' 부족(PD의 잔류 오차).';
+  vd.className = 'verdict ' + vcls;
+  vd.innerHTML = msg;
+}
+
+function refresh(){ recompute(); draw(); updateStats(); }
+
+function step(){
+  if (!anim.running) return;
+  anim.prog += DT * 8 / T_END;
+  if (anim.prog >= 1){
+    anim.prog = 1; anim.running = false; draw();
+    $('runBtn').textContent = '▶ 시작';
+    $('runBtn').classList.remove('on');
+    return;
+  }
+  draw();
+  anim.raf = requestAnimationFrame(step);
+}
+function startAnim(){
+  if (anim.running) return;
+  anim.running = true; anim.prog = 0;
+  $('runBtn').textContent = '❚❚ 재생중';
+  $('runBtn').classList.add('on');
+  anim.raf = requestAnimationFrame(step);
+}
+function stopAnim(){
+  anim.running = false;
+  if (anim.raf) cancelAnimationFrame(anim.raf);
+  anim.prog = 1;
+  $('runBtn').textContent = '▶ 시작';
+  $('runBtn').classList.remove('on');
+}
+
+$('kpS').addEventListener('input', function(){
+  state.Kp = parseFloat(this.value);
+  $('kpV').textContent = state.Kp.toFixed(2);
+  stopAnim(); refresh();
+});
+$('kdS').addEventListener('input', function(){
+  state.Kd = parseFloat(this.value);
+  $('kdV').textContent = state.Kd.toFixed(2);
+  stopAnim(); refresh();
+});
+$('runBtn').addEventListener('click', function(){
+  if (anim.running){ stopAnim(); draw(); } else { startAnim(); }
+});
+$('resetBtn').addEventListener('click', function(){
+  stopAnim();
+  state.Kp = 2.0; state.Kd = 0.5;
+  $('kpS').value = '2.0'; $('kdS').value = '0.5';
+  $('kpV').textContent = '2.00'; $('kdV').textContent = '0.50';
+  refresh();
+});
+/* ζ' = 0.7이 되도록 Kd만 역산 (ωn'는 건드리지 않는다) */
+$('fitBtn').addEventListener('click', function(){
+  stopAnim();
+  var wnp = WN * Math.sqrt(1 + state.Kp);
+  var kd = (2 * 0.7 * wnp - 2 * ZETA * WN) / (WN * WN);
+  kd = Math.max(0, Math.min(5, Math.round(kd / 0.05) * 0.05));
+  kd = Math.round(kd * 100) / 100;
+  state.Kd = kd;
+  $('kdS').value = String(kd);
+  $('kdV').textContent = kd.toFixed(2);
+  refresh();
+});
+$('openBtn').addEventListener('click', function(){
+  state.showOpen = !state.showOpen;
+  this.classList.toggle('on', state.showOpen);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+refresh();
+})();
+</script>
+</body>
+</html>

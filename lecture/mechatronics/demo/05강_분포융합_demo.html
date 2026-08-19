@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>두 가우시안의 융합 — 5강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강 · 인터랙티브 데모</p>
+  <h1>두 가우시안의 융합 — 예측 × 측정 = 사후</h1>
+  <p class="lede">예측 분포와 측정 분포의 <b>위치</b>와 <b>폭</b>을 움직이면, 두 분포를 곱한 사후 분포가 어디에 얼마나 뾰족하게 서는지 보입니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>K</b> = σ<sub>p</sub><sup>2</sup> / (σ<sub>p</sub><sup>2</sup> + σ<sub>z</sub><sup>2</sup>)
+  &nbsp;·&nbsp; <b>μ<sub>new</sub></b> = μ<sub>p</sub> + K(z − μ<sub>p</sub>)
+  &nbsp;·&nbsp; <b>σ<sub>new</sub><sup>2</sup></b> = (1 − K) σ<sub>p</sub><sup>2</sup>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-alias)"><i></i>예측 N(μ<sub>p</sub>, σ<sub>p</sub><sup>2</sup>)</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>측정 N(z, σ<sub>z</sub><sup>2</sup>)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>사후 N(μ<sub>new</sub>, σ<sub>new</sub><sup>2</sup>)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>예측·측정 평균 세로선</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>예측 평균 μ<sub>p</sub> <span class="value" id="mpV">47.0</span></label>
+        <input type="range" id="mpS" min="40" max="60" step="0.1" value="47">
+      </div>
+
+      <div class="ctl-box">
+        <label>예측 표준편차 σ<sub>p</sub> <span class="value" id="spV">4.0</span></label>
+        <input type="range" id="spS" min="0.5" max="8" step="0.1" value="4">
+      </div>
+
+      <div class="ctl-box">
+        <label>측정값 z <span class="value" id="zV">53.0</span></label>
+        <input type="range" id="zS" min="40" max="60" step="0.1" value="53">
+      </div>
+
+      <div class="ctl-box">
+        <label>측정 표준편차 σ<sub>z</sub> <span class="value" id="szV">2.0</span></label>
+        <input type="range" id="szS" min="0.5" max="8" step="0.1" value="2">
+      </div>
+
+      <div class="btn-row">
+        <button id="pPred" class="btn">예측 신뢰</button>
+        <button id="pEven" class="btn">반반</button>
+        <button id="pMeas" class="btn">측정 신뢰</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">칼만 게인 K</div><div class="v" id="kV" style="color:var(--accent)">—</div></div>
+          <div class="stat"><div class="k">사후 평균 μ<sub>new</sub></div><div class="v" id="muV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">사후 표준편차 σ<sub>new</sub></div><div class="v" id="snV">—</div></div>
+          <div class="stat"><div class="k">min(σ<sub>p</sub>, σ<sub>z</sub>)</div><div class="v" id="minV" style="color:var(--c-meas)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 사후 평균은 늘 μ<sub>p</sub>와 z <b>사이</b><br>
+        • 더 뾰족한 분포 쪽으로 끌린다<br>
+        • σ<sub>new</sub> &lt; min(σ<sub>p</sub>, σ<sub>z</sub>) 항상 성립<br>
+        • σ<sub>z</sub>를 줄이면 K → 1 (측정 신뢰)<br>
+        • σ<sub>p</sub>를 줄이면 K → 0 (예측 유지)
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 5강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 56, r: 28, t: 44, b: 52 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var X_LO = 36, X_HI = 64;
+var state = { mp: 47, sp: 4, z: 53, sz: 2 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), alias: cvar('--c-alias')
+  };
+}
+
+function gauss(x, mu, sig){
+  var d = x - mu;
+  return Math.exp(-d * d / (2 * sig * sig)) / (sig * Math.sqrt(2 * Math.PI));
+}
+function xToPx(x){ return M.l + (x - X_LO) / (X_HI - X_LO) * plotW; }
+function yToPx(y, yMax){ return M.t + plotH - (y / yMax) * plotH; }
+
+function drawCurve(mu, sig, yMax, color, width, fillAlpha){
+  var N = 400, i, x;
+  if (fillAlpha > 0){
+    ctx.beginPath();
+    ctx.moveTo(xToPx(X_LO), yToPx(0, yMax));
+    for (i = 0; i <= N; i++){
+      x = X_LO + (X_HI - X_LO) * i / N;
+      ctx.lineTo(xToPx(x), yToPx(gauss(x, mu, sig), yMax));
+    }
+    ctx.lineTo(xToPx(X_HI), yToPx(0, yMax));
+    ctx.closePath();
+    ctx.globalAlpha = fillAlpha; ctx.fillStyle = color; ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.beginPath();
+  for (i = 0; i <= N; i++){
+    x = X_LO + (X_HI - X_LO) * i / N;
+    var px = xToPx(x), py = yToPx(gauss(x, mu, sig), yMax);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+}
+
+function drawMeanLine(mu, sig, yMax, color, label){
+  var px = xToPx(mu), peakY = yToPx(gauss(mu, mu, sig), yMax);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(px, M.t + plotH); ctx.lineTo(px, peakY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = color; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(label, px, peakY - 6);
+}
+
+function draw(){
+  var C = palette();
+  var mp = state.mp, sp = state.sp, z = state.z, sz = state.sz, x;
+
+  /* 융합 계산 (5강 표기: P⁻ = σ_p², R = σ_z²) */
+  var vp = sp * sp, vz = sz * sz;
+  var K = vp / (vp + vz);
+  var muNew = mp + K * (z - mp);
+  var vNew = (1 - K) * vp;
+  var sNew = Math.sqrt(vNew);
+  var minS = Math.min(sp, sz);
+
+  var peakP = gauss(mp, mp, sp), peakZ = gauss(z, z, sz), peakN = gauss(muNew, muNew, sNew);
+  var yMax = Math.max(peakP, peakZ, peakN) * 1.14;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (x = 36; x <= 64; x += 2){
+    ctx.beginPath(); ctx.moveTo(xToPx(x), M.t); ctx.lineTo(xToPx(x), M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('확률밀도', 12, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('상태값 x →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.textAlign = 'center';
+  for (x = 36; x <= 64; x += 4) ctx.fillText(String(x), xToPx(x), M.t + plotH + 18);
+
+  drawCurve(mp, sp, yMax, C.alias, 2.0, 0.10);
+  drawCurve(z, sz, yMax, C.meas, 2.0, 0.10);
+  drawCurve(muNew, sNew, yMax, C.avg, 3.4, 0.14);
+
+  drawMeanLine(mp, sp, yMax, C.tru, '예측 μ=' + mp.toFixed(1));
+  drawMeanLine(z, sz, yMax, C.tru, '측정 z=' + z.toFixed(1));
+  drawMeanLine(muNew, sNew, yMax, C.avg, '사후 μ=' + muNew.toFixed(2));
+
+  $('kV').textContent = K.toFixed(3);
+  $('muV').textContent = muNew.toFixed(2);
+  var snEl = $('snV');
+  snEl.textContent = sNew.toFixed(3);
+  snEl.style.color = (sNew < minS - 1e-9) ? 'var(--ok)' : 'var(--muted)';
+  $('minV').textContent = minS.toFixed(2);
+
+  var vd = $('verdict'), cls, msg, leanTxt;
+  if (Math.abs(z - mp) < 0.05){
+    leanTxt = '예측과 측정이 거의 같은 자리라 사후도 그 자리에 섭니다';
+  } else if (K > 0.62){
+    leanTxt = '측정이 더 뾰족(σ<sub>z</sub> &lt; σ<sub>p</sub>)해 K=' + K.toFixed(2) +
+      ', 사후 평균이 <b>측정 z=' + z.toFixed(1) + ' 쪽</b>으로 끌립니다';
+  } else if (K < 0.38){
+    leanTxt = '예측이 더 뾰족(σ<sub>p</sub> &lt; σ<sub>z</sub>)해 K=' + K.toFixed(2) +
+      ', 사후 평균이 <b>예측 μ<sub>p</sub>=' + mp.toFixed(1) + ' 쪽</b>에 남습니다';
+  } else {
+    leanTxt = '두 분포의 폭이 비슷(K=' + K.toFixed(2) + ')해 사후 평균이 <b>거의 한가운데</b>에 섭니다';
+  }
+
+  var shrink = (1 - sNew / minS) * 100;
+  if (sNew < minS - 1e-9){
+    cls = 'good';
+    msg = leanTxt + '. 사후 σ<sub>new</sub>=' + sNew.toFixed(2) + '는 더 작은 쪽 ' + minS.toFixed(2) +
+      '보다도 <b>' + shrink.toFixed(0) + '% 작습니다</b>.';
+  } else {
+    cls = 'mid';
+    msg = leanTxt + '. 사후 σ<sub>new</sub>=' + sNew.toFixed(2) + '.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var mpS = $('mpS'), spS = $('spS'), zS = $('zS'), szS = $('szS');
+mpS.addEventListener('input', function(){
+  state.mp = parseFloat(this.value); $('mpV').textContent = state.mp.toFixed(1); draw();
+});
+spS.addEventListener('input', function(){
+  state.sp = parseFloat(this.value); $('spV').textContent = state.sp.toFixed(1); draw();
+});
+zS.addEventListener('input', function(){
+  state.z = parseFloat(this.value); $('zV').textContent = state.z.toFixed(1); draw();
+});
+szS.addEventListener('input', function(){
+  state.sz = parseFloat(this.value); $('szV').textContent = state.sz.toFixed(1); draw();
+});
+
+function applyPreset(sp, sz){
+  state.sp = sp; state.sz = sz;
+  spS.value = sp; szS.value = sz;
+  $('spV').textContent = sp.toFixed(1); $('szV').textContent = sz.toFixed(1);
+  draw();
+}
+$('pPred').addEventListener('click', function(){ applyPreset(1.0, 6.0); });
+$('pEven').addEventListener('click', function(){ applyPreset(3.0, 3.0); });
+$('pMeas').addEventListener('click', function(){ applyPreset(6.0, 1.0); });
+
+$('mpV').textContent = state.mp.toFixed(1);
+$('spV').textContent = state.sp.toFixed(1);
+$('zV').textContent = state.z.toFixed(1);
+$('szV').textContent = state.sz.toFixed(1);
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

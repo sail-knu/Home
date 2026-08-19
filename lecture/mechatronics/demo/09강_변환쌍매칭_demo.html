@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>변환쌍 매칭 연습 — 9강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block;cursor:pointer}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 9강 · 인터랙티브 데모</p>
+  <h1>변환쌍 매칭 연습</h1>
+  <p class="lede">왼쪽 카드를 클릭한 뒤 짝이 되는 오른쪽 카드를 클릭하세요. <b>↔ 방향 바꾸기</b>로 역변환 방향도 연습할 수 있습니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>F(s)</b> = ℒ{f(t)} = ∫<sub>0</sub><sup>∞</sup> f(t) e<sup>−st</sup> dt
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">왼→오른쪽 변환 · 오른→왼쪽 역변환</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--accent)"><i class="o"></i>선택 중인 카드</span>
+        <span class="lg" style="color:var(--ok)"><i></i>맞은 짝 (연결 고정)</span>
+        <span class="lg" style="color:var(--bad)"><i class="d"></i>틀린 짝 (표시 후 해제)</span>
+        <span class="lg" style="color:var(--c-true)"><i></i>f(t) 소형 그래프</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="restart" class="btn">↺ 재시작</button>
+        <button id="shuffle" class="btn">🎲 다시 섞기</button>
+      </div>
+      <div class="btn-row">
+        <button id="revBtn" class="btn">↔ 방향 바꾸기 (f→F)</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">맞춘 짝</div><div class="v" id="matchV" style="color:var(--ok)">0 / 6</div></div>
+          <div class="stat"><div class="k">시도 횟수</div><div class="v" id="tryV">0</div></div>
+          <div class="stat"><div class="k">틀린 횟수</div><div class="v" id="wrongV" style="color:var(--bad)">0</div></div>
+          <div class="stat"><div class="k">정확도</div><div class="v" id="accV" style="color:var(--accent)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 계단 <b>1/s</b> · 지수 <b>1/(s+a)</b> · 임펄스 <b>1</b> 먼저<br>
+        • sin은 분자 <b>ω</b>, cos는 분자 <b>s</b> (분모 동일)<br>
+        • 램프 t = <b>1/s<sup>2</sup></b> — 계단을 한 번 더 ÷s<br>
+        • 소형 그래프 모양으로도 짝을 좁힐 수 있음<br>
+        • [↔]를 눌러 F(s) → f(t) 방향으로도 풀어 보기
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 9강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return { grid:cvar('--border'), axis:cvar('--border2'), faint:cvar('--faint'), muted:cvar('--muted'),
+    surface:cvar('--surface'), surface2:cvar('--surface2'), text:cvar('--text'), tru:cvar('--c-true'),
+    ok:cvar('--ok'), okSoft:cvar('--ok-soft'), bad:cvar('--bad'), badSoft:cvar('--bad-soft'),
+    accent:cvar('--accent'), accSoft:cvar('--accent-soft') };
+}
+
+/* ── 변환쌍 정의 (9강 변환쌍 표, 원본 유지) ── */
+var PAIRS = [
+  { id:'step', ft:'1',       ftSub:'(단위 계단)', fs:'1/s',       plot:'step' },
+  { id:'exp',  ft:'e^(−at)', ftSub:'(지수 감쇠)', fs:'1/(s+a)',   plot:'exp'  },
+  { id:'ramp', ft:'t',       ftSub:'(램프)',      fs:'1/s²',      plot:'ramp' },
+  { id:'sin',  ft:'sin ωt',  ftSub:'(사인)',      fs:'ω/(s²+ω²)', plot:'sin'  },
+  { id:'cos',  ft:'cos ωt',  ftSub:'(코사인)',    fs:'s/(s²+ω²)', plot:'cos'  },
+  { id:'imp',  ft:'δ(t)',    ftSub:'(임펄스)',    fs:'1',         plot:'imp'  }
+];
+var BY = {}, LEFT = [], RIGHT = [], pi;
+for (pi = 0; pi < PAIRS.length; pi++){ BY[PAIRS[pi].id] = PAIRS[pi]; LEFT.push(PAIRS[pi].id); }
+
+function genBase(seed){
+  var t = seed >>> 0;
+  return function(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(seed){
+  var arr, rnd, i, j, tmp, same, k;
+  for (k = 0; k < 8; k++){
+    rnd = genBase(seed + k * 101); arr = LEFT.slice(0);
+    for (i = arr.length - 1; i > 0; i--){ j = Math.floor(rnd() * (i + 1)); tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp; }
+    same = 0;
+    for (i = 0; i < arr.length; i++) if (arr[i] === LEFT[i]) same++;
+    if (same <= 1) return arr;
+  }
+  return arr;
+}
+
+/* ── 레이아웃 좌표 (원본 유지) ── */
+var CARD_W = 300, CARD_H = 62, CGAP = 12, TOP = 46, LEFT_X = 40, RIGHT_X = W - 40 - CARD_W;
+function cardRects(side){
+  var rects = [], i;
+  for (i = 0; i < 6; i++) rects.push({ x: side === 'L' ? LEFT_X : RIGHT_X, y: TOP + i * (CARD_H + CGAP), w: CARD_W, h: CARD_H });
+  return rects;
+}
+var LREC = cardRects('L'), RREC = cardRects('R');
+var state = { selectedL:-1, matched:{}, matchLtoR:{}, tries:0, wrong:0, seed:20260718, rev:false, flash:null };
+
+function reset(newSeed){
+  if (newSeed !== undefined) state.seed = newSeed;
+  RIGHT = shuffled(state.seed);
+  state.selectedL = -1; state.matched = {}; state.matchLtoR = {};
+  state.tries = 0; state.wrong = 0; state.flash = null;
+  updateStats(); draw();
+}
+function countMatched(){ var n = 0, k; for (k in state.matched) if (state.matched[k]) n++; return n; }
+function showsFt(side){ return side === 'L' ? !state.rev : state.rev; }
+function labelOf(id){ return state.rev ? ('F(s) = ' + BY[id].fs) : BY[id].ft; }
+
+/* ── 소형 그래프 (원본 좌표 유지) ── */
+function drawMiniPlot(kind, gx, gy, gw, gh, C){
+  ctx.save();
+  var baseY = gy + gh - 4, zeroX = gx + 4, x1 = gx + gw - 3;
+  var midY = gy + gh / 2, topY = gy + 4, i, t, px, py;
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(zeroX, gy + 2); ctx.lineTo(zeroX, baseY); ctx.lineTo(gx + gw - 2, baseY); ctx.stroke();
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (kind === 'step'){
+    ctx.moveTo(zeroX, baseY); ctx.lineTo(zeroX, topY + 2); ctx.lineTo(x1, topY + 2);
+  } else if (kind === 'exp'){
+    for (i = 0; i <= 40; i++){
+      t = i / 40; px = zeroX + t * (x1 - zeroX);
+      py = (topY + 2) + (baseY - (topY + 2)) * (1 - Math.exp(-3 * t));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+  } else if (kind === 'ramp'){
+    ctx.moveTo(zeroX, baseY); ctx.lineTo(x1, topY + 2);
+  } else if (kind === 'sin' || kind === 'cos'){
+    for (i = 0; i <= 48; i++){
+      t = i / 48; px = zeroX + t * (x1 - zeroX);
+      py = midY - (kind === 'sin' ? Math.sin(t * Math.PI * 2.2) : Math.cos(t * Math.PI * 2.2)) * (gh / 2 - 5);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+  } else {
+    var ax = zeroX + (x1 - zeroX) * 0.28;
+    ctx.moveTo(ax, baseY); ctx.lineTo(ax, topY + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax, topY + 1); ctx.lineTo(ax - 3, topY + 6); ctx.lineTo(ax + 3, topY + 6);
+    ctx.closePath(); ctx.fillStyle = C.tru; ctx.fill(); ctx.restore(); return;
+  }
+  ctx.stroke(); ctx.restore();
+}
+
+function roundRect(x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function drawCard(rec, side, index, C){
+  var id = side === 'L' ? LEFT[index] : RIGHT[index], p = BY[id];
+  var done = state.matched[id], isSel = (side === 'L' && index === state.selectedL);
+  var flashCls = null;
+  if (state.flash){
+    if (side === 'L' && index === state.flash.li) flashCls = state.flash.ok ? 'ok' : 'bad';
+    if (side === 'R' && index === state.flash.ri) flashCls = state.flash.ok ? 'ok' : 'bad';
+  }
+  var bg = C.surface2, border = C.axis, bw = 1.4;
+  if (done){ bg = C.okSoft; border = C.ok; bw = 2; }
+  if (isSel){ bg = C.accSoft; border = C.accent; bw = 2.4; }
+  if (flashCls === 'ok'){ bg = C.okSoft; border = C.ok; bw = 2.8; }
+  if (flashCls === 'bad'){ bg = C.badSoft; border = C.bad; bw = 2.8; }
+
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = bw;
+  roundRect(rec.x, rec.y, rec.w, rec.h, 8); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = done ? C.ok : C.text; ctx.textBaseline = 'middle';
+  if (showsFt(side)){
+    ctx.font = 'bold 20px Consolas, monospace'; ctx.textAlign = 'start';
+    ctx.fillText(p.ft, rec.x + 14, rec.y + 24);
+    ctx.font = '11px sans-serif'; ctx.fillStyle = C.faint;
+    ctx.fillText(p.ftSub, rec.x + 14, rec.y + 46);
+    drawMiniPlot(p.plot, rec.x + rec.w - 108, rec.y + (rec.h - 44) / 2, 96, 44, C);
+  } else {
+    ctx.font = 'bold 22px Consolas, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('F(s) = ' + p.fs, rec.x + rec.w / 2, rec.y + rec.h / 2);
+  }
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'start';
+}
+
+function bezier(ax, ay, bx, by){
+  var midx = (ax + bx) / 2;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.bezierCurveTo(midx, ay, midx, by, bx, by); ctx.stroke();
+}
+
+function drawConnections(C){
+  var li, ri, a, b, ax, ay, bx, by;
+  for (li in state.matchLtoR){
+    ri = state.matchLtoR[li]; a = LREC[li]; b = RREC[ri];
+    ax = a.x + a.w; ay = a.y + a.h / 2; bx = b.x; by = b.y + b.h / 2;
+    ctx.strokeStyle = C.ok; ctx.lineWidth = 2.6; bezier(ax, ay, bx, by);
+    ctx.fillStyle = C.ok;
+    ctx.beginPath(); ctx.arc(ax, ay, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  if (state.flash && !state.flash.ok){
+    a = LREC[state.flash.li]; b = RREC[state.flash.ri];
+    ctx.strokeStyle = C.bad; ctx.lineWidth = 2.6; ctx.setLineDash([7, 5]);
+    bezier(a.x + a.w, a.y + a.h / 2, b.x, b.y + b.h / 2);
+    ctx.setLineDash([]);
+  }
+}
+
+function draw(){
+  var C = palette(), i;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = C.accent; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText(state.rev ? '라플라스 변환  F(s)' : '시간 함수  f(t)', LEFT_X + 4, TOP - 18);
+  ctx.textAlign = 'end';
+  ctx.fillText(state.rev ? '시간 함수  f(t)' : '라플라스 변환  F(s)', RIGHT_X + CARD_W - 4, TOP - 18);
+  ctx.textAlign = 'start';
+  drawConnections(C);
+  for (i = 0; i < 6; i++) drawCard(LREC[i], 'L', i, C);
+  for (i = 0; i < 6; i++) drawCard(RREC[i], 'R', i, C);
+}
+
+function updateStats(){
+  var m = countMatched();
+  var acc = state.tries > 0 ? Math.round((state.tries - state.wrong) / state.tries * 100) : null;
+  $('matchV').textContent = m + ' / 6';
+  $('tryV').textContent = state.tries;
+  $('wrongV').textContent = state.wrong;
+  $('accV').textContent = acc === null ? '—' : acc + ' %';
+
+  var vd = $('verdict');
+  if (m === 6){
+    vd.className = 'verdict good';
+    vd.innerHTML = '<b>6쌍 완성</b> — 시도 ' + state.tries + '회 중 틀림 ' + state.wrong + '회' +
+      (acc === null ? '' : ', 정확도 ' + acc + '%') + '. [↔]로 반대 방향도 풀어 보세요.';
+  } else if (state.selectedL >= 0){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '<b>' + labelOf(LEFT[state.selectedL]) + '</b> 선택됨. 짝이 되는 오른쪽 카드를 클릭하세요. (' + m + ' / 6)';
+  } else {
+    vd.className = 'verdict mid';
+    vd.innerHTML = m === 0 ? '왼쪽 카드를 하나 클릭해 시작하세요.' : (m + ' / 6 완료. 다음 왼쪽 카드를 클릭해 이어서 짝지으세요.');
+  }
+}
+
+function hit(rects, mx, my){
+  var i, r;
+  for (i = 0; i < rects.length; i++){
+    r = rects[i];
+    if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) return i;
+  }
+  return -1;
+}
+
+cv.addEventListener('click', function(e){
+  if (state.flash) return;
+  var rect = cv.getBoundingClientRect();
+  var mx = (e.clientX - rect.left) * (W / rect.width);
+  var my = (e.clientY - rect.top) * (H / rect.height);
+
+  var li = hit(LREC, mx, my);
+  if (li !== -1){
+    if (state.matched[LEFT[li]]) return;
+    state.selectedL = li; updateStats(); draw(); return;
+  }
+
+  var ri = hit(RREC, mx, my);
+  if (ri === -1 || state.selectedL < 0 || state.matched[RIGHT[ri]]) return;
+  state.tries++;
+  if (LEFT[state.selectedL] === RIGHT[ri]){
+    var li2 = state.selectedL;
+    state.flash = { li: li2, ri: ri, ok: true };
+    draw();
+    setTimeout(function(){
+      state.matched[LEFT[li2]] = true; state.matchLtoR[li2] = ri;
+      state.selectedL = -1; state.flash = null;
+      updateStats(); draw();
+    }, 420);
+  } else {
+    state.wrong++;
+    state.flash = { li: state.selectedL, ri: ri, ok: false };
+    draw();
+    setTimeout(function(){
+      state.flash = null; state.selectedL = -1;
+      updateStats(); draw();
+    }, 620);
+  }
+  updateStats();
+});
+
+$('restart').addEventListener('click', function(){ reset(); });
+var shuffleTick = 1;
+$('shuffle').addEventListener('click', function(){ reset(20260718 + shuffleTick * 7919); shuffleTick++; });
+$('revBtn').addEventListener('click', function(){
+  state.rev = !state.rev;
+  this.textContent = state.rev ? '↔ 방향 바꾸기 (F→f)' : '↔ 방향 바꾸기 (f→F)';
+  this.classList.toggle('on', state.rev);
+  reset();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+reset(20260718);
+})();
+</script>
+</body>
+</html>

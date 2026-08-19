@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>최종값 정리와 사용 조건 — 10강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 10강 · 인터랙티브 데모</p>
+  <h1>최종값 정리 — 그리고 사용 조건</h1>
+  <p class="lede"><b>K · τ · U</b>를 움직이면 응답이 FVT 예측선으로 수렴합니다. [사용 조건 위반]을 켜면 극이 우반면으로 옮겨가 예측이 어긋납니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>G(s)</b> = K/(τs+1), 계단 <b>U(s)</b> = U/s
+  &nbsp;→&nbsp; sY(s) = KU/(τs+1)
+  &nbsp;→&nbsp; y(∞) = lim<sub>s→0</sub> sY(s) = <b>KU</b>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">단, sY(s)의 모든 극이 좌반면일 때</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>계단 응답 y(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>FVT 예측선 y(∞) = KU</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>FVT 형식 계산값 −KU</span>
+        <span class="lg" style="color:var(--c-band)"><i class="o"></i>3τ (95%) 표식</span>
+        <span class="lg" style="color:var(--ok)"><i></i>극 좌반면 = 수렴</span>
+        <span class="lg" style="color:var(--bad)"><i></i>극 우반면 = 발산</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>이득 K <span class="value" id="kV">2.0</span></label>
+        <input type="range" id="kS" min="0.5" max="4.0" step="0.1" value="2.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>시정수 τ (s) <span class="value" id="tV">1.0</span></label>
+        <input type="range" id="tS" min="0.3" max="4.0" step="0.1" value="1.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>계단 크기 U <span class="value" id="uV">1.0</span></label>
+        <input type="range" id="uS" min="0.5" max="3.0" step="0.1" value="1.0">
+      </div>
+
+      <div class="btn-row">
+        <button id="violBtn" class="btn">사용 조건 위반: 꺼짐</button>
+        <button id="t3Btn" class="btn">3τ 표시</button>
+      </div>
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="stopBtn" class="btn">■ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">FVT 예측값 KU</div><div class="v" id="fvtV" style="color:var(--c-true)">—</div></div>
+          <div class="stat"><div class="k">응답 끝값 y(t<sub>end</sub>)</div><div class="v" id="endV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">극 s (분모 = 0)</div><div class="v" id="poleV">—</div></div>
+          <div class="stat"><div class="k">일치 여부</div><div class="v" id="matchV">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 극 s = −1/τ 이 좌반면이면 <b>KU</b>로 수렴<br>
+        • [조건 위반] → G = K/(s−1), 극 s = +1로 발산<br>
+        • 이때 공식만 대입하면 <b>−KU</b> (틀린 유한값)<br>
+        • FVT는 <b>모든 극이 좌반면</b>일 때만 유효<br>
+        • [3τ 표시]로 95% 도달 시점 확인
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 10강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 66, r: 28, t: 44, b: 58 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var T_END = 8.0;    /* 표시 구간 (s) */
+var DT = 0.004;     /* RK4 적분 스텝 */
+var SPEED = 40;     /* 프레임당 진행 스텝 수 */
+var state = { K: 2.0, tau: 1.0, U: 1.0, viol: false, show3t: false, t: 0, running: false, raf: 0 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'),
+    ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+/* ODE: 안정  τ y' + y = K U  → y = KU(1−e^{−t/τ}), 극 s = −1/τ
+        위반  G = K/(s−1)     → y' = y + KU, y = KU(e^t−1), 극 s = +1 */
+function deriv(y){
+  if (state.viol) return y + state.K * state.U;
+  return (state.K * state.U - y) / state.tau;
+}
+function rk4(y, dt){
+  var k1 = deriv(y);
+  var k2 = deriv(y + 0.5 * dt * k1);
+  var k3 = deriv(y + 0.5 * dt * k2);
+  var k4 = deriv(y + dt * k3);
+  return y + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+}
+function simulate(tMax){
+  var pts = [{ t: 0, y: 0 }], y = 0, i;
+  var steps = Math.round(tMax / DT);
+  for (i = 1; i <= steps; i++){
+    y = rk4(y, DT);
+    pts.push({ t: i * DT, y: y });
+    if (!isFinite(y) || Math.abs(y) > 1e7) break;
+  }
+  return pts;
+}
+
+function xToPx(t, tHi){ return M.l + t / tHi * plotW; }
+function yToPx(y, yLo, yHi){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+function draw(){
+  var C = palette(), y, t, i;
+  var fvt = state.K * state.U;
+  var formalFVT = -state.K * state.U;
+
+  var tShown = (state.running || state.t > 0) ? Math.min(state.t, T_END) : T_END;
+  var pts = simulate(tShown);
+  var endY = pts.length ? pts[pts.length - 1].y : 0;
+
+  var yLo, yHi;
+  if (state.viol){
+    var peak = Math.min(Math.max(Math.abs(endY), fvt * 2), 6 * fvt + 6);
+    yLo = Math.min(-Math.abs(formalFVT) - 0.5, -0.5);
+    yHi = peak + 0.5;
+  } else {
+    yLo = -0.15 * fvt - 0.3;
+    yHi = fvt * 1.25 + 0.3;
+  }
+  function clampY(v){ return Math.max(yLo, Math.min(yHi, v)); }
+
+  ctx.clearRect(0, 0, W, H);
+
+  var span = yHi - yLo;
+  var yStep = span > 20 ? 4 : (span > 10 ? 2 : (span > 5 ? 1 : (span > 2 ? 0.5 : 0.25)));
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi; y += yStep){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y, yLo, yHi)); ctx.lineTo(M.l + plotW, yToPx(y, yLo, yHi)); ctx.stroke();
+  }
+  for (t = 0; t <= T_END; t += 1){
+    ctx.beginPath(); ctx.moveTo(xToPx(t, T_END), M.t); ctx.lineTo(xToPx(t, T_END), M.t + plotH); ctx.stroke();
+  }
+
+  if (yLo < 0 && yHi > 0){
+    ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(0, yLo, yHi)); ctx.lineTo(M.l + plotW, yToPx(0, yLo, yHi)); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y(t)', 14, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (s) →', W - M.r, H - 16);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi; y += yStep){
+    ctx.fillText(y.toFixed(span > 5 ? 0 : 2), M.l - 8, yToPx(y, yLo, yHi) + 4);
+  }
+  ctx.textAlign = 'center';
+  for (t = 0; t <= T_END; t += 1) ctx.fillText(String(t), xToPx(t, T_END), M.t + plotH + 18);
+
+  /* FVT 형식 계산값 (조건 위반 시) */
+  if (state.viol && formalFVT >= yLo && formalFVT <= yHi){
+    var pg = yToPx(formalFVT, yLo, yHi);
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(M.l, pg); ctx.lineTo(M.l + plotW, pg); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.alias; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('FVT 형식 계산 = −KU = ' + formalFVT.toFixed(2) + ' (틀림)', M.l + 8, pg + 16);
+  }
+
+  /* FVT 예측선 y(∞) = KU */
+  var pf = yToPx(fvt, yLo, yHi);
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(M.l, pf); ctx.lineTo(M.l + plotW, pf); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('y(∞) = KU = ' + fvt.toFixed(2), M.l + 8, pf - 6);
+
+  /* 3τ (95%) 표식 */
+  if (state.show3t && !state.viol && 3 * state.tau <= T_END){
+    var p3 = xToPx(3 * state.tau, T_END), y3 = yToPx(0.95 * fvt, yLo, yHi);
+    ctx.strokeStyle = C.band; ctx.lineWidth = 1.4; ctx.globalAlpha = 0.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(p3, M.t + plotH); ctx.lineTo(p3, y3); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.band;
+    ctx.beginPath(); ctx.arc(p3, y3, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('3τ = ' + (3 * state.tau).toFixed(1) + 's, 95%', p3 + 8, y3 + 16);
+  }
+
+  /* 응답 곡선 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.8; ctx.beginPath();
+  var started = false;
+  for (i = 0; i < pts.length; i++){
+    var px = xToPx(pts[i].t, T_END), py = yToPx(clampY(pts[i].y), yLo, yHi);
+    if (!started){ ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  if (pts.length){
+    var last = pts[pts.length - 1];
+    var mpx = xToPx(last.t, T_END), mpy = yToPx(clampY(last.y), yLo, yHi);
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(mpx, mpy, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = C.avg; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'end';
+    ctx.fillText(Math.abs(last.y) > 1e6 ? 'y → ∞' : 'y = ' + last.y.toFixed(2),
+      Math.min(mpx - 10, M.l + plotW - 4), mpy - 10);
+  }
+
+  ctx.textAlign = 'end'; ctx.font = 'bold 12px monospace';
+  if (state.viol){
+    ctx.fillStyle = C.bad;
+    ctx.fillText('극 s = +1 (우반면 → 발산)', M.l + plotW - 6, M.t + 16);
+  } else {
+    ctx.fillStyle = C.ok;
+    ctx.fillText('극 s = −1/τ = ' + (-1 / state.tau).toFixed(2) + ' (좌반면)', M.l + plotW - 6, M.t + 16);
+  }
+
+  $('fvtV').textContent = fvt.toFixed(2);
+  var endEl = $('endV');
+  endEl.textContent = Math.abs(endY) > 1e6 ? '발산' : endY.toFixed(3);
+  endEl.style.color = state.viol ? 'var(--bad)' : 'var(--c-avg)';
+  var poleEl = $('poleV');
+  poleEl.textContent = state.viol ? '+1.00' : (-1 / state.tau).toFixed(2);
+  poleEl.style.color = state.viol ? 'var(--bad)' : 'var(--ok)';
+
+  var matchEl = $('matchV');
+  var converged = tShown >= T_END * 0.9 || !state.running;
+  if (state.viol){
+    matchEl.textContent = '불일치'; matchEl.style.color = 'var(--bad)';
+  } else if (converged && Math.abs(endY - fvt) < 0.02 * Math.max(1, fvt)){
+    matchEl.textContent = '일치'; matchEl.style.color = 'var(--ok)';
+  } else {
+    matchEl.textContent = '수렴 중'; matchEl.style.color = 'var(--warn)';
+  }
+
+  var vd = $('verdict'), cls, msg;
+  if (state.viol){
+    cls = 'bad';
+    msg = '극이 <b>s = +1 (우반면)</b>이라 y = KU(e<sup>t</sup>−1)로 발산합니다. 그런데 공식만 대입하면 <b>−KU = ' +
+      formalFVT.toFixed(2) + '</b>라는 유한값이 나옵니다 — 화면의 실제 곡선과 전혀 다른 <b>틀린 답</b>입니다.';
+  } else if (converged && Math.abs(endY - fvt) < 0.02 * Math.max(1, fvt)){
+    cls = 'good';
+    msg = '극 s = ' + (-1 / state.tau).toFixed(2) + '이 좌반면이라 조건을 만족합니다. 응답이 예측선 <b>KU = ' +
+      fvt.toFixed(2) + '</b>에 도달했습니다 (끝값 ' + endY.toFixed(3) + ').';
+  } else {
+    cls = 'mid';
+    msg = '극 s = ' + (-1 / state.tau).toFixed(2) + ' (좌반면, 조건 만족). 현재 ' + endY.toFixed(3) +
+      ' → 예측선 <b>KU = ' + fvt.toFixed(2) + '</b>로 수렴 중이며, 3τ = ' + (3 * state.tau).toFixed(1) + ' s면 95%입니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ================= 애니메이션 ================= */
+function tick(){
+  if (!state.running) return;
+  state.t += SPEED * DT;
+  if (state.t >= T_END){ state.t = T_END; state.running = false; }
+  draw();
+  if (state.running) state.raf = requestAnimationFrame(tick);
+}
+function start(){
+  if (state.running) return;
+  if (state.t >= T_END) state.t = 0;
+  state.running = true;
+  state.raf = requestAnimationFrame(tick);
+}
+function stop(){
+  state.running = false;
+  if (state.raf) cancelAnimationFrame(state.raf);
+}
+function reset(){
+  stop(); state.t = 0; draw();
+}
+
+/* ================= 컨트롤 ================= */
+$('kS').addEventListener('input', function(){
+  state.K = parseFloat(this.value); $('kV').textContent = state.K.toFixed(1); draw();
+});
+$('tS').addEventListener('input', function(){
+  state.tau = parseFloat(this.value); $('tV').textContent = state.tau.toFixed(1); draw();
+});
+$('uS').addEventListener('input', function(){
+  state.U = parseFloat(this.value); $('uV').textContent = state.U.toFixed(1); draw();
+});
+$('violBtn').addEventListener('click', function(){
+  state.viol = !state.viol;
+  this.textContent = state.viol ? '사용 조건 위반: 켜짐 G=K/(s−1)' : '사용 조건 위반: 꺼짐';
+  this.classList.toggle('on', state.viol);
+  reset();
+});
+$('t3Btn').addEventListener('click', function(){
+  state.show3t = !state.show3t;
+  this.classList.toggle('on', state.show3t);
+  draw();
+});
+$('startBtn').addEventListener('click', start);
+$('stopBtn').addEventListener('click', stop);
+$('resetBtn').addEventListener('click', reset);
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS + 칼만 — 축을 나눠 1D 두 번 · 13강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 13강 · 인터랙티브 데모</p>
+  <h1>GPS + 칼만 — 축을 나눠 1D 두 번</h1>
+  <p class="lede">등속 직선으로 달리는 차량을 GPS가 5스텝마다 측정합니다. <b>σ<sub>gps</sub></b>와 <b>Q</b>를 움직이고 [시작]을 눌러 회색 점과 파란 궤적을 비교하세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  예측 <b>x̂<sup>−</sup></b> = x̂ + u, P<sup>−</sup> = P + <b>Q</b>
+  &nbsp;→&nbsp; 게인 <b>K</b> = P<sup>−</sup> / (P<sup>−</sup> + <b>R</b>)
+  &nbsp;→&nbsp; 갱신 x̂ = x̂<sup>−</sup> + K(z − x̂<sup>−</sup>), P = (1 − K)P<sup>−</sup>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참 궤적 (등속 직선)</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>GPS 측정점 (5스텝마다)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>칼만 추정 궤적</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>GPS 노이즈 σ<sub>gps</sub> (→ R) <span class="value" id="rV">1.0</span></label>
+        <input type="range" id="rS" min="0.2" max="3.0" step="0.1" value="1.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>모델 잡음 Q <span class="value" id="qV">0.050</span></label>
+        <input type="range" id="qS" min="0.005" max="1.0" step="0.005" value="0.05">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="endBtn" class="btn">⏭ 끝까지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="reroll" class="btn">🎲 다시 생성</button>
+        <button id="rawBtn" class="btn">GPS만 잇기</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">GPS만 RMS</div><div class="v" id="rmsGps" style="color:var(--c-meas)">—</div></div>
+          <div class="stat"><div class="k">칼만 RMS</div><div class="v" id="rmsKf" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">개선율</div><div class="v" id="improve">—</div></div>
+          <div class="stat"><div class="k">게인 K (x축)</div><div class="v" id="gainK">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • <b>R</b> 크면 측정을 덜 믿어 매끄러워짐<br>
+        • <b>Q</b> 크면 측정을 바짝 쫓아감<br>
+        • GPS 점은 흩어져도 추정은 매끄럽게<br>
+        • 개선율이 음수면 <b>Q↓</b> 또는 <b>σ<sub>gps</sub>↑</b><br>
+        • 1D 칼만을 x축·y축에 각각 한 번씩
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 13강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 60, r: 28, t: 40, b: 52 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* ── 참 궤적: 등속 직선 2D ── */
+var dt = 0.05;          /* dt = 0.05초 */
+var NSTEP = 400;        /* 전체 스텝 수 */
+var GPS_EVERY = 5;      /* 5스텝마다 GPS 측정 */
+var VX = 1.6, VY = 1.0; /* 등속 속도 (m/s) */
+var X0 = 2.0, Y0 = 3.0; /* 시작 위치 (m) */
+
+var state = {
+  R_sigma: 1.0, Q: 0.05, base: [],
+  step: 0, running: false, raf: null, raw: false
+};
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent')
+  };
+}
+
+function trueX(k){ return X0 + VX * k * dt; }
+function trueY(k){ return Y0 + VY * k * dt; }
+
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < NSTEP * 2 + 4; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+state.base = genBase(20260718);
+
+function gpsMeas(k){
+  return {
+    x: trueX(k) + state.R_sigma * state.base[2 * k],
+    y: trueY(k) + state.R_sigma * state.base[2 * k + 1]
+  };
+}
+
+/* ── 1D 스칼라 칼만 (축마다 한 개) ── */
+function makeKF(x0, P0){
+  return {
+    x: x0, P: P0,
+    predict: function(u){ this.x = this.x + u; this.P = this.P + state.Q; },
+    update: function(z){
+      var R = state.R_sigma * state.R_sigma;
+      var K = this.P / (this.P + R);
+      this.x = this.x + K * (z - this.x);
+      this.P = (1 - K) * this.P;
+      return K;
+    }
+  };
+}
+
+/* ── 전체 시뮬레이션을 결정적으로 미리 계산 ── */
+function runSim(uptoStep){
+  var kfx = makeKF(trueX(0), 4.0), kfy = makeKF(trueY(0), 4.0);
+  var uX = VX * dt, uY = VY * dt;
+  var est = [], gps = [], lastK = 0;
+  var seGps = 0, seKf = 0, cnt = 0, k;
+
+  for (k = 0; k <= uptoStep; k++){
+    if (k > 0){ kfx.predict(uX); kfy.predict(uY); }
+    if (k % GPS_EVERY === 0){
+      var z = gpsMeas(k);
+      gps.push({ k: k, x: z.x, y: z.y });
+      lastK = kfx.update(z.x);
+      kfy.update(z.y);
+      var tx = trueX(k), ty = trueY(k);
+      seGps += (z.x - tx) * (z.x - tx) + (z.y - ty) * (z.y - ty);
+      seKf += (kfx.x - tx) * (kfx.x - tx) + (kfy.x - ty) * (kfy.x - ty);
+      cnt++;
+    }
+    est.push({ k: k, x: kfx.x, y: kfy.x });
+  }
+  var rmsGps = cnt > 0 ? Math.sqrt(seGps / (cnt * 2)) : 0;
+  var rmsKf = cnt > 0 ? Math.sqrt(seKf / (cnt * 2)) : 0;
+  return { est: est, gps: gps, rmsGps: rmsGps, rmsKf: rmsKf, lastK: lastK, cnt: cnt };
+}
+
+/* ── 좌표 변환 (월드 → 픽셀) ── */
+function worldBounds(){
+  var pad = Math.max(3 * state.R_sigma, 2.0);
+  return {
+    xLo: trueX(0) - pad, xHi: trueX(NSTEP) + pad,
+    yLo: trueY(0) - pad, yHi: trueY(NSTEP) + pad
+  };
+}
+function xToPx(x, b){ return M.l + (x - b.xLo) / (b.xHi - b.xLo) * plotW; }
+function yToPx(y, b){ return M.t + plotH - (y - b.yLo) / (b.yHi - b.yLo) * plotH; }
+
+function draw(){
+  var C = palette();
+  var sim = runSim(state.step);
+  var b = worldBounds();
+  var gxStep = 2, gyStep = 2, gx, gy, i;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (gx = Math.ceil(b.xLo / gxStep) * gxStep; gx <= b.xHi; gx += gxStep){
+    ctx.beginPath(); ctx.moveTo(xToPx(gx, b), M.t); ctx.lineTo(xToPx(gx, b), M.t + plotH); ctx.stroke();
+  }
+  for (gy = Math.ceil(b.yLo / gyStep) * gyStep; gy <= b.yHi; gy += gyStep){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(gy, b)); ctx.lineTo(M.l + plotW, yToPx(gy, b)); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('y [m]', 14, M.t - 14);
+  ctx.textAlign = 'end'; ctx.fillText('x [m] →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.textAlign = 'end';
+  for (gy = Math.ceil(b.yLo / gyStep) * gyStep; gy <= b.yHi; gy += gyStep){
+    ctx.fillText(gy.toFixed(0), M.l - 8, yToPx(gy, b) + 4);
+  }
+  ctx.textAlign = 'center';
+  for (gx = Math.ceil(b.xLo / gxStep) * gxStep; gx <= b.xHi; gx += gxStep){
+    ctx.fillText(gx.toFixed(0), xToPx(gx, b), M.t + plotH + 18);
+  }
+
+  /* 참 궤적 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2.2; ctx.setLineDash([7, 5]);
+  ctx.beginPath();
+  ctx.moveTo(xToPx(trueX(0), b), yToPx(trueY(0), b));
+  ctx.lineTo(xToPx(trueX(NSTEP), b), yToPx(trueY(NSTEP), b));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* GPS 원시 궤적 (토글) */
+  if (state.raw && sim.gps.length > 1){
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 1.4; ctx.globalAlpha = 0.65;
+    ctx.beginPath();
+    for (i = 0; i < sim.gps.length; i++){
+      var gp = sim.gps[i];
+      if (i === 0) ctx.moveTo(xToPx(gp.x, b), yToPx(gp.y, b));
+      else ctx.lineTo(xToPx(gp.x, b), yToPx(gp.y, b));
+    }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+
+  /* GPS 측정점 */
+  ctx.fillStyle = C.meas;
+  for (i = 0; i < sim.gps.length; i++){
+    ctx.beginPath();
+    ctx.arc(xToPx(sim.gps[i].x, b), yToPx(sim.gps[i].y, b), 3.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* 칼만 추정 궤적 */
+  if (sim.est.length > 1){
+    ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    for (i = 0; i < sim.est.length; i++){
+      var e = sim.est[i];
+      if (i === 0) ctx.moveTo(xToPx(e.x, b), yToPx(e.y, b));
+      else ctx.lineTo(xToPx(e.x, b), yToPx(e.y, b));
+    }
+    ctx.stroke();
+  }
+
+  /* 현재 위치 마커 */
+  if (sim.est.length > 0){
+    var le = sim.est[sim.est.length - 1];
+    var px = xToPx(le.x, b), py = yToPx(le.y, b);
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(px, py, 6.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.surface; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(px, py, 6.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = C.tru; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(xToPx(trueX(le.k), b), yToPx(trueY(le.k), b), 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = C.muted; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'end';
+  ctx.fillText('스텝 ' + state.step + ' / ' + NSTEP, M.l + plotW - 4, M.t + 16);
+
+  /* 통계 */
+  $('rmsGps').textContent = sim.cnt > 0 ? sim.rmsGps.toFixed(3) + ' m' : '—';
+  $('rmsKf').textContent = sim.cnt > 0 ? sim.rmsKf.toFixed(3) + ' m' : '—';
+  var impEl = $('improve'), imp = 0;
+  if (sim.rmsGps > 1e-9) imp = (1 - sim.rmsKf / sim.rmsGps) * 100;
+  if (sim.cnt > 0){
+    impEl.textContent = (imp >= 0 ? '+' : '−') + Math.abs(imp).toFixed(1) + '%';
+    impEl.style.color = imp >= 0 ? 'var(--ok)' : 'var(--bad)';
+  } else {
+    impEl.textContent = '—'; impEl.style.color = 'var(--muted)';
+  }
+  $('gainK').textContent = sim.cnt > 0 ? sim.lastK.toFixed(3) : '—';
+
+  updateVerdict(sim, imp);
+}
+
+function updateVerdict(sim, imp){
+  var vd = $('verdict'), cls, msg;
+  var R = state.R_sigma * state.R_sigma;
+
+  if (sim.cnt < 2){
+    cls = 'mid';
+    msg = 'R = σ<sub>gps</sub><sup>2</sup> = ' + R.toFixed(2) + ', Q = ' + state.Q.toFixed(3) +
+      '. [▶ 시작]을 누르면 GPS 측정이 쌓입니다.';
+  } else if (imp >= 40){
+    cls = 'good';
+    msg = '칼만 RMS <b>' + sim.rmsKf.toFixed(3) + ' m</b> — GPS만(' + sim.rmsGps.toFixed(3) +
+      ' m) 대비 <b>' + imp.toFixed(1) + '%</b> 감소. 측정을 덜 믿고 등속 예측으로 평활 중입니다.';
+  } else if (imp >= 10){
+    cls = 'mid';
+    msg = '칼만 ' + sim.rmsKf.toFixed(3) + ' m vs GPS ' + sim.rmsGps.toFixed(3) +
+      ' m (개선 <b>' + imp.toFixed(1) + '%</b>). Q를 줄이거나 σ<sub>gps</sub>를 키우면 더 매끄러워집니다.';
+  } else if (imp >= 0){
+    cls = 'mid';
+    msg = '개선이 <b>' + imp.toFixed(1) + '%</b>로 작습니다. Q가 커서 측정을 거의 그대로 쫓고 있습니다 — Q를 줄여 보세요.';
+  } else {
+    cls = 'bad';
+    msg = '칼만이 GPS보다 나쁩니다(<b>' + imp.toFixed(1) + '%</b>). 노이즈가 그대로 통과하는 설정입니다 — Q↓ 또는 σ<sub>gps</sub>↑.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 루프 ── */
+function tick(){
+  if (!state.running) return;
+  state.step += 2;
+  if (state.step >= NSTEP){
+    state.step = NSTEP; state.running = false;
+    setStartLabel(); draw(); return;
+  }
+  draw();
+  state.raf = requestAnimationFrame(tick);
+}
+
+function setStartLabel(){
+  var btn = $('startBtn');
+  if (state.running){
+    btn.textContent = '❚❚ 정지'; btn.classList.add('on');
+  } else {
+    btn.textContent = (state.step >= NSTEP) ? '▶ 처음부터' : '▶ 시작';
+    btn.classList.remove('on');
+  }
+}
+
+/* ── 컨트롤 ── */
+$('rS').addEventListener('input', function(){
+  state.R_sigma = parseFloat(this.value);
+  $('rV').textContent = state.R_sigma.toFixed(1); draw();
+});
+$('qS').addEventListener('input', function(){
+  state.Q = parseFloat(this.value);
+  $('qV').textContent = state.Q.toFixed(3); draw();
+});
+$('startBtn').addEventListener('click', function(){
+  if (state.running){
+    state.running = false;
+    if (state.raf) cancelAnimationFrame(state.raf);
+  } else {
+    if (state.step >= NSTEP) state.step = 0;
+    state.running = true;
+    state.raf = requestAnimationFrame(tick);
+  }
+  setStartLabel();
+});
+$('endBtn').addEventListener('click', function(){
+  state.running = false;
+  if (state.raf) cancelAnimationFrame(state.raf);
+  state.step = NSTEP;
+  setStartLabel(); draw();
+});
+$('resetBtn').addEventListener('click', function(){
+  state.running = false;
+  if (state.raf) cancelAnimationFrame(state.raf);
+  state.step = 0;
+  setStartLabel(); draw();
+});
+var seedTick = 1;
+$('reroll').addEventListener('click', function(){
+  state.base = genBase(20260718 + seedTick * 7919); seedTick++; draw();
+});
+$('rawBtn').addEventListener('click', function(){
+  state.raw = !state.raw;
+  this.classList.toggle('on', state.raw);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+setStartLabel();
+draw();
+})();
+</script>
+</body>
+</html>

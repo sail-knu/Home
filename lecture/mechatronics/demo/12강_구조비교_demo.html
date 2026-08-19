@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P / PI / PD / PID 구조 비교 — 12강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:62px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+.log{margin-top:14px}
+.log-t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:0 0 7px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:right;color:var(--faint);font-size:11.5px;letter-spacing:.03em}
+th,td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+td.nm{font-weight:800}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 12강 · 인터랙티브 데모</p>
+  <h1>P / PI / PD / PID 구조 비교</h1>
+  <p class="lede">같은 2차 플랜트에 같은 게인 값을 넣고 네 구조의 계단 응답을 겹쳐 봅니다. 슬라이더를 움직이면 아래 표의 e<sub>ss</sub>·%OS·t<sub>s</sub>가 함께 바뀝니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  플랜트 <b>G(s)</b> = &omega;<sub>n</sub><sup>2</sup> / (s<sup>2</sup> + 2&zeta;&omega;<sub>n</sub>s + &omega;<sub>n</sub><sup>2</sup>), &nbsp;&omega;<sub>n</sub> = 2, &zeta; = 0.3
+  &nbsp;·&nbsp; <b>u</b> = K<sub>p</sub>e + K<sub>i</sub>&int;e dt + K<sub>d</sub> de/dt
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>목표 r = 1</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>P</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>PI</span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>PD</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>PID</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>비례 게인 K<sub>p</sub> <span class="value" id="kpV">6.0</span></label>
+        <input type="range" id="kpS" min="1" max="15" step="0.1" value="6">
+      </div>
+
+      <div class="ctl-box">
+        <label>적분 게인 K<sub>i</sub> <span class="value" id="kiV">3.0</span></label>
+        <input type="range" id="kiS" min="0.5" max="8" step="0.1" value="3">
+      </div>
+
+      <div class="ctl-box">
+        <label>미분 게인 K<sub>d</sub> <span class="value" id="kdV">1.5</span></label>
+        <input type="range" id="kdS" min="0.2" max="5" step="0.1" value="1.5">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="pauseBtn" class="btn">❚❚ 정지</button>
+        <button id="resetBtn" class="btn">↻ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="tg0" class="btn on">P</button>
+        <button id="tg1" class="btn on">PI</button>
+        <button id="tg2" class="btn on">PD</button>
+        <button id="tg3" class="btn on">PID</button>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • <b>P</b>: 빠르지만 e<sub>ss</sub>가 남는다<br>
+        • <b>PI</b>: 오차 0, 대신 오버슈트 증가<br>
+        • <b>PD</b>: 진동은 눌러도 오차는 남음<br>
+        • <b>PID</b>: 오차 0 + 진동 억제<br>
+        • 버튼으로 곡선을 껐다 켜며 둘씩 비교
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <p class="log-t">구조별 성능 지표 — 정상상태 오차 / 오버슈트 / 정착시간(±2%)</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>구조</th><th>e<sub>ss</sub></th><th>%OS</th><th>t<sub>s</sub> (s)</th></tr></thead>
+      <tbody id="statsBody">
+        <tr><td class="nm" style="color:var(--c-meas)">P</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="nm" style="color:var(--c-band)">PI</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="nm" style="color:var(--c-alias)">PD</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="nm" style="color:var(--c-avg)">PID</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 12강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function (id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+var M = { l: 60, r: 24, t: 40, b: 52 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* 플랜트 파라미터 (12강 사양) */
+var WN = 2.0, ZETA = 0.3, REF = 1.0, T_END = 12.0, DT = 0.002, STORE = 6;
+
+var STRUCTS = [
+  { key:'P',   ck:'meas',  useI:false, useD:false },
+  { key:'PI',  ck:'band',  useI:true,  useD:false },
+  { key:'PD',  ck:'alias', useI:false, useD:true  },
+  { key:'PID', ck:'avg',   useI:true,  useD:true  }
+];
+
+var state = {
+  Kp: 6.0, Ki: 3.0, Kd: 1.5,
+  curves: [], metrics: [],
+  show: [true, true, true, true],
+  playing: false, progress: 0, raf: null
+};
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+/* ── 폐루프 시뮬레이션 (RK4) ──
+   플랜트: y'' + 2ζωn y' + ωn² y = ωn² u
+   e = r − y, u = Kp e + Ki ∫e dt + Kd de/dt, de/dt = −y'
+   상태 s = [y, v(=y'), I(=∫e dt)] */
+function simulate(useI, useD, Kp, Ki, Kd){
+  var kiEff = useI ? Ki : 0, kdEff = useD ? Kd : 0;
+  function deriv(s){
+    var y = s[0], v = s[1], I = s[2];
+    var e = REF - y, de = -v;
+    var u = Kp * e + kiEff * I + kdEff * de;
+    var acc = WN * WN * (u - y) - 2 * ZETA * WN * v;
+    return [v, acc, e];
+  }
+  function add(a, b, h){ return [a[0] + b[0] * h, a[1] + b[1] * h, a[2] + b[2] * h]; }
+
+  var s = [0, 0, 0], t = [0], y = [0], i;
+  var steps = Math.round(T_END / DT);
+  for (i = 1; i <= steps; i++){
+    var k1 = deriv(s);
+    var k2 = deriv(add(s, k1, DT / 2));
+    var k3 = deriv(add(s, k2, DT / 2));
+    var k4 = deriv(add(s, k3, DT));
+    s = [
+      s[0] + DT / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+      s[1] + DT / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
+      s[2] + DT / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+    ];
+    if (i % STORE === 0){ t.push(i * DT); y.push(s[0]); }
+  }
+  return { t: t, y: y };
+}
+
+function metricsOf(curve){
+  var y = curve.y, t = curve.t, n = y.length, i;
+  var yFinal = y[n - 1];
+  var ess = REF - yFinal;
+  var peak = -Infinity;
+  for (i = 0; i < n; i++) if (y[i] > peak) peak = y[i];
+  var os = 0;
+  if (yFinal > 1e-6 && peak > yFinal) os = (peak - yFinal) / yFinal * 100;
+  var band = Math.max(0.02 * Math.abs(yFinal), 1e-4);
+  var ts = t[n - 1];
+  for (i = n - 1; i >= 0; i--){
+    if (Math.abs(y[i] - yFinal) > band){ ts = t[i]; break; }
+    if (i === 0) ts = 0;
+  }
+  return { ess: ess, os: os, ts: ts, peak: peak };
+}
+
+function rebuild(){
+  state.curves = []; state.metrics = [];
+  var i;
+  for (i = 0; i < STRUCTS.length; i++){
+    var c = simulate(STRUCTS[i].useI, STRUCTS[i].useD, state.Kp, state.Ki, state.Kd);
+    state.curves.push(c);
+    state.metrics.push(metricsOf(c));
+  }
+}
+
+var Y_LO = -0.12, Y_HI = 1.8;
+function computeYRange(){
+  var hi = REF, i, j;
+  for (i = 0; i < state.curves.length; i++){
+    var yy = state.curves[i].y;
+    for (j = 0; j < yy.length; j++) if (yy[j] > hi) hi = yy[j];
+  }
+  Y_HI = Math.max(1.3, hi * 1.08);
+  Y_LO = -0.12;
+}
+function xToPx(tv){ return M.l + tv / T_END * plotW; }
+function yToPx(yv){ return M.t + plotH - (yv - Y_LO) / (Y_HI - Y_LO) * plotH; }
+
+function drawFrame(){
+  var C = palette(), yv, tv, si, i;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = 0.2;
+  for (yv = Math.ceil(Y_LO / yStep) * yStep; yv <= Y_HI; yv += yStep){
+    var pyg = yToPx(yv);
+    ctx.beginPath(); ctx.moveTo(M.l, pyg); ctx.lineTo(M.l + plotW, pyg); ctx.stroke();
+  }
+  for (tv = 0; tv <= T_END + 0.01; tv += 2){
+    var pxg = xToPx(tv);
+    ctx.beginPath(); ctx.moveTo(pxg, M.t); ctx.lineTo(pxg, M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y', 12, M.t - 14);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (s) →', W - M.r, H - 14);
+
+  ctx.fillStyle = C.faint; ctx.textAlign = 'end';
+  for (yv = Math.ceil(Y_LO / yStep) * yStep; yv <= Y_HI; yv += yStep){
+    if (Math.abs(yv) < 1e-9) continue;
+    ctx.fillText(yv.toFixed(1), M.l - 8, yToPx(yv) + 4);
+  }
+  ctx.textAlign = 'center';
+  for (tv = 0; tv <= T_END + 0.01; tv += 2) ctx.fillText(tv.toString(), xToPx(tv), M.t + plotH + 18);
+
+  /* 목표선 r = 1 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var yr = yToPx(REF);
+  ctx.beginPath(); ctx.moveTo(M.l, yr); ctx.lineTo(M.l + plotW, yr); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('목표 r = 1', M.l + 8, yr - 6);
+
+  var total = state.curves.length ? state.curves[0].y.length : 0;
+  var upto = (state.playing || state.progress > 0) ? state.progress : total;
+  var drawN = Math.min(upto, total);
+
+  for (si = 0; si < STRUCTS.length; si++){
+    var c = state.curves[si];
+    if (!c || !state.show[si]) continue;
+    var col = C[STRUCTS[si].ck];
+    ctx.strokeStyle = col;
+    ctx.lineWidth = STRUCTS[si].key === 'PID' ? 2.8 : 2.0;
+    ctx.beginPath();
+    for (i = 0; i < drawN; i++){
+      var px = xToPx(c.t[i]), py = yToPx(c.y[i]);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    if (drawN > 0){
+      var li = drawN - 1;
+      var ex = xToPx(c.t[li]), ey = yToPx(c.y[li]);
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); ctx.fill();
+      if (drawN >= total){
+        ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+        ctx.fillText(STRUCTS[si].key, Math.min(ex + 6, M.l + plotW - 30), ey + 4);
+      }
+    }
+  }
+}
+
+function fmt(v, d){ return v.toFixed(d); }
+
+function updateStats(){
+  var rows = $('statsBody').children, i;
+  for (i = 0; i < STRUCTS.length; i++){
+    var m = state.metrics[i], tds = rows[i].children;
+    tds[1].textContent = fmt(m.ess, 3);
+    tds[2].textContent = m.os.toFixed(1) + '%';
+    tds[3].textContent = m.ts.toFixed(2);
+  }
+
+  var vd = $('verdict'), cls, msg;
+  var mP = state.metrics[0], mPI = state.metrics[1], mPD = state.metrics[2], mPID = state.metrics[3];
+  var essPID = Math.abs(mPID.ess);
+
+  if (essPID < 0.02 && mPID.os < 20){
+    cls = 'good';
+    msg = 'P는 e<sub>ss</sub> = ' + fmt(mP.ess, 3) + '가 남고, <b>PI</b>가 이를 ' + fmt(mPI.ess, 3) +
+      '로 없애는 대신 %OS ' + mPI.os.toFixed(0) + '%로 커집니다. <b>PID</b>는 %OS ' + mPID.os.toFixed(0) +
+      '%, t<sub>s</sub> ' + mPID.ts.toFixed(1) + 's로 둘 다 잡았습니다.';
+  } else if (mPID.os >= 20 || mPI.os >= 40){
+    cls = 'mid';
+    msg = '진동이 큽니다 — PI %OS ' + mPI.os.toFixed(0) + '%, PID %OS ' + mPID.os.toFixed(0) +
+      '%. <b>K<sub>d</sub>를 키우거나</b> K<sub>p</sub>·K<sub>i</sub>를 낮춰 보세요. P의 잔류 오차 ' +
+      fmt(mP.ess, 3) + '는 I가 있는 구조에서만 사라집니다.';
+  } else {
+    cls = 'mid';
+    msg = 'P·PD에 잔류 오차가 남았습니다 (P: ' + fmt(mP.ess, 3) + ', PD: ' + fmt(mPD.ess, 3) +
+      '). I가 들어간 PI·PID만 e<sub>ss</sub> ≈ 0입니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+function tick(){
+  if (!state.playing) return;
+  var total = state.curves.length ? state.curves[0].y.length : 0;
+  state.progress = Math.min(total, state.progress + Math.max(2, Math.round(total / 240)));
+  drawFrame();
+  if (state.progress >= total){
+    state.playing = false;
+    $('startBtn').classList.remove('on');
+    drawFrame();
+    return;
+  }
+  state.raf = requestAnimationFrame(tick);
+}
+
+function fullRecompute(){ rebuild(); computeYRange(); updateStats(); }
+
+function redrawStatic(){
+  fullRecompute();
+  if (!state.playing) state.progress = state.curves[0].y.length;
+  drawFrame();
+}
+
+$('kpS').addEventListener('input', function(){
+  state.Kp = parseFloat(this.value); $('kpV').textContent = state.Kp.toFixed(1); redrawStatic();
+});
+$('kiS').addEventListener('input', function(){
+  state.Ki = parseFloat(this.value); $('kiV').textContent = state.Ki.toFixed(1); redrawStatic();
+});
+$('kdS').addEventListener('input', function(){
+  state.Kd = parseFloat(this.value); $('kdV').textContent = state.Kd.toFixed(1); redrawStatic();
+});
+
+$('startBtn').addEventListener('click', function(){
+  if (state.playing) return;
+  fullRecompute();
+  state.progress = 0;
+  state.playing = true;
+  this.classList.add('on');
+  tick();
+});
+$('pauseBtn').addEventListener('click', function(){
+  state.playing = false;
+  $('startBtn').classList.remove('on');
+  if (state.raf) cancelAnimationFrame(state.raf);
+  drawFrame();
+});
+$('resetBtn').addEventListener('click', function(){
+  state.playing = false;
+  if (state.raf) cancelAnimationFrame(state.raf);
+  $('startBtn').classList.remove('on');
+  fullRecompute();
+  state.progress = state.curves[0].y.length;
+  drawFrame();
+});
+
+function bindToggle(i){
+  var btn = $('tg' + i);
+  btn.addEventListener('click', function(){
+    state.show[i] = !state.show[i];
+    btn.classList.toggle('on', state.show[i]);
+    drawFrame();
+  });
+}
+var ti;
+for (ti = 0; ti < STRUCTS.length; ti++) bindToggle(ti);
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', drawFrame);
+  else if (mq.addListener) mq.addListener(drawFrame);
+}
+if (window.MutationObserver){
+  new MutationObserver(drawFrame).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+
+fullRecompute();
+state.progress = state.curves[0].y.length;
+drawFrame();
+})();
+</script>
+</body>
+</html>

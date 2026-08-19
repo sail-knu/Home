@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>극점 위치와 계단 응답 — 7강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 7강 · 인터랙티브 데모</p>
+  <h1>극점 위치와 계단 응답</h1>
+  <p class="lede"><b>ζ</b>와 <b>ω<sub>n</sub></b>을 움직이면 왼쪽 s평면의 극점이 이동하고, 오른쪽 단위 계단 응답이 곧바로 따라 바뀝니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  s<sup>2</sup> + 2<b>ζ</b>ω<sub>n</sub>s + ω<sub>n</sub><sup>2</sup> = 0
+  &nbsp;→&nbsp; <b>s</b> = −ζω<sub>n</sub> ± jω<sub>d</sub>,&nbsp; ω<sub>d</sub> = ω<sub>n</sub>√(1−ζ<sup>2</sup>)
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">원점거리 = ω<sub>n</sub> · cos θ = ζ</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>극점 × · 계단 응답 x(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>목표값 1 · ω<sub>n</sub> 반원</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>감쇠 포락선 · 각 θ</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>안정 영역 · ±2% 정착 밴드</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>고정한 비교 곡선</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>감쇠비 ζ <span class="value" id="zV">0.60</span></label>
+        <input type="range" id="zS" min="0.05" max="1.5" step="0.01" value="0.60">
+      </div>
+
+      <div class="ctl-box">
+        <label>자연진동수 ω<sub>n</sub> (rad/s) <span class="value" id="wV">5.00</span></label>
+        <input type="range" id="wS" min="0.5" max="8" step="0.1" value="5.0">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn ps" data-z="0.25" data-w="4">ζ=0.25</button>
+        <button class="btn ps" data-z="0.6" data-w="5">ζ=0.6</button>
+        <button class="btn ps" data-z="0.7" data-w="4">ζ=0.7</button>
+        <button class="btn ps" data-z="1" data-w="4">ζ=1</button>
+        <button class="btn ps" data-z="1.25" data-w="4">ζ=1.25</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="playBtn" class="btn">▶ 응답 재생</button>
+        <button id="stopBtn" class="btn">■ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="ghostBtn" class="btn">📌 현재 곡선 고정</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">분류</div><div class="v" id="clsV" style="color:var(--c-avg);font-size:13px">—</div></div>
+          <div class="stat"><div class="k">극점 s</div><div class="v" id="poleV" style="font-size:13px">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v" id="zStat">—</div></div>
+          <div class="stat"><div class="k">자연진동수 ω<sub>n</sub></div><div class="v" id="wStat" style="font-size:13px">—</div></div>
+          <div class="stat"><div class="k">감쇠진동수 ω<sub>d</sub></div><div class="v" id="wdStat" style="font-size:13px">—</div></div>
+          <div class="stat"><div class="k">감쇠율 σ = ζω<sub>n</sub></div><div class="v" id="sigStat" style="font-size:13px">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 극점이 <b>왼쪽</b>일수록 σ = ζω<sub>n</sub>이 커져 빨리 감쇠<br>
+        • 극점이 <b>허축에 가까울수록</b> 오래 진동<br>
+        • 원점까지 거리 = ω<sub>n</sub>, 각의 cos = ζ<br>
+        • ζ ≥ 1이면 <b>실축 위 두 실근</b>, 진동 소멸<br>
+        • [📌]로 곡선을 고정하고 ζ를 바꿔 겹쳐 보기
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 7강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+var GAP = 24, halfW = (W - GAP) / 2;
+var state = { zeta: 0.60, wn: 5.0, ghost: null };
+var anim = { running: false, t: 0, raf: null, tEnd: 0 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return { grid:cvar('--border'), axis:cvar('--border2'), faint:cvar('--faint'), muted:cvar('--muted'),
+    surface:cvar('--surface'), tru:cvar('--c-true'), meas:cvar('--c-meas'), avg:cvar('--c-avg'),
+    band:cvar('--c-band'), alias:cvar('--c-alias'), ok:cvar('--ok'), bad:cvar('--bad'), accent:cvar('--accent') };
+}
+
+/* ── 계단 응답 해석해 (원본 유지) ── */
+function stepResp(z, wn, t){
+  if (Math.abs(z - 1) < 1e-6) return 1 - (1 + wn * t) * Math.exp(-wn * t);
+  if (z < 1){
+    var wd = wn * Math.sqrt(1 - z * z), phi = Math.atan2(Math.sqrt(1 - z * z), z);
+    return 1 - Math.exp(-z * wn * t) / Math.sqrt(1 - z * z) * Math.sin(wd * t + phi);
+  }
+  var r = wn * Math.sqrt(z * z - 1), s1 = -z * wn + r, s2 = -z * wn - r;
+  var A = s2 / (s1 - s2), B = -s1 / (s1 - s2);
+  return 1 + A * Math.exp(s1 * t) + B * Math.exp(s2 * t);
+}
+function envelope(t){
+  var z = state.zeta;
+  return Math.exp(-z * state.wn * t) / Math.sqrt(1 - z * z);
+}
+function timeSpan(){
+  var sig = state.zeta * state.wn, ts = sig > 1e-6 ? 4 / sig : 12;
+  return Math.max(1.5, ts * 1.6);
+}
+function niceStep(x){
+  var p = Math.pow(10, Math.floor(Math.log(x) / Math.LN10)), n = x / p, s;
+  if (n < 1.5) s = 1; else if (n < 3.5) s = 2; else if (n < 7.5) s = 5; else s = 10;
+  return s * p;
+}
+function drawCross(px, py, color){
+  var s = 7; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(px - s, py - s); ctx.lineTo(px + s, py + s);
+  ctx.moveTo(px - s, py + s); ctx.lineTo(px + s, py - s); ctx.stroke();
+}
+
+/* ── 왼쪽: s 평면 (원점 0,0 기준 좌표 유지) ── */
+function drawSPlane(C){
+  var w = halfW, h = H, pad = { l:46, r:20, t:40, b:40 }, cy = h / 2;
+  var innerW = w - pad.l - pad.r, innerH = h - pad.t - pad.b;
+  var reMin = -8.4, reMax = 1.4, imMax = 8.4;
+  var sxAdj = innerW / (reMax - reMin), syAdj = innerH / (2 * imMax);
+  function RX(re){ return pad.l + (re - reMin) * sxAdj; }
+  function IY(im){ return cy - im * syAdj; }
+  var re, im, px, py;
+
+  ctx.fillStyle = C.accent; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('s 평면 (극점 위치)', w / 2, 22);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (re = -8; re <= 1; re++){ px = RX(re); ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, h - pad.b); ctx.stroke(); }
+  for (im = -8; im <= 8; im += 2){ py = IY(im); ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(w - pad.r, py); ctx.stroke(); }
+
+  var zeroPx = RX(0);
+  ctx.globalAlpha = 0.09; ctx.fillStyle = C.ok; ctx.fillRect(pad.l, pad.t, zeroPx - pad.l, innerH); ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(pad.l, cy); ctx.lineTo(w - pad.r, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(zeroPx, pad.t); ctx.lineTo(zeroPx, h - pad.b); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('Re(s) = σ', w - pad.r - 66, cy - 8);
+  ctx.textAlign = 'center'; ctx.fillText('Im(s) = jω', zeroPx + 34, pad.t + 4);
+
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif';
+  for (re = -8; re <= -2; re += 2) ctx.fillText(String(re), RX(re), cy + 16);
+  ctx.textAlign = 'end';
+  for (im = 2; im <= 8; im += 2){
+    ctx.fillText('+' + im + 'j', zeroPx - 6, IY(im) + 4);
+    ctx.fillText('-' + im + 'j', zeroPx - 6, IY(-im) + 4);
+  }
+
+  var z = state.zeta, wn = state.wn;
+  var rxPx = wn * sxAdj, ryPx = wn * syAdj;
+
+  /* ωn 반원 (원점 거리 = ωn) */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 1.8; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.ellipse(zeroPx, cy, rxPx, ryPx, 0, Math.PI * 0.5, Math.PI * 1.5, false); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'end';
+  ctx.fillText('ωn = ' + wn.toFixed(1), RX(-wn) + 40, cy - ryPx - 6);
+
+  if (z < 1){
+    var sig = z * wn, wd = wn * Math.sqrt(1 - z * z);
+    var p1x = RX(-sig), p1y = IY(wd), p2y = IY(-wd);
+    var theta = Math.acos(z), arcR = Math.min(rxPx, ryPx) * 0.42, labA = Math.PI - theta / 2;
+
+    ctx.globalAlpha = 0.55; ctx.strokeStyle = C.alias; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(zeroPx, cy); ctx.lineTo(p1x, p1y); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(zeroPx, cy, arcR, Math.PI, Math.PI - theta, true); ctx.stroke();
+    ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('θ, cosθ=ζ', zeroPx + Math.cos(labA) * (arcR + 6) - 4, cy - Math.sin(labA) * (arcR + 6) - 4);
+
+    ctx.strokeStyle = C.faint; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(p1x, cy); ctx.lineTo(p1x, p1y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.muted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('σ = ' + sig.toFixed(2), p1x, cy + 28);
+
+    drawCross(p1x, p1y, C.avg); drawCross(p1x, p2y, C.avg);
+    ctx.fillStyle = C.avg; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'start';
+    ctx.fillText('−' + sig.toFixed(2) + ' +' + wd.toFixed(2) + 'j', p1x + 10, p1y - 6);
+    ctx.fillText('−' + sig.toFixed(2) + ' −' + wd.toFixed(2) + 'j', p1x + 10, p2y + 16);
+  } else {
+    var r2 = wn * Math.sqrt(z * z - 1), s1 = -z * wn + r2, s2 = -z * wn - r2;
+    var q1x = RX(s1), q2x = RX(s2), sep = Math.abs(s1 - s2) > 1e-4;
+    drawCross(q1x, cy, C.avg); if (sep) drawCross(q2x, cy, C.avg);
+    ctx.fillStyle = C.avg; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(s1.toFixed(2), q1x, cy - 14);
+    if (sep) ctx.fillText(s2.toFixed(2), q2x, cy - 14);
+    else { ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.fillText('중근 (임계감쇠)', q1x, cy + 30); }
+  }
+
+  ctx.fillStyle = C.ok; ctx.font = '11px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('← 안정 (좌반평면)', pad.l + 4, pad.t + 16);
+}
+
+/* ── 오른쪽: 단위 계단 응답 ── */
+function drawResponse(C){
+  var x0 = halfW + GAP, w = halfW, h = H, pad = { l:48, r:22, t:40, b:44 };
+  var innerW = w - pad.l - pad.r, innerH = h - pad.t - pad.b;
+  var Tspan = timeSpan(), z = state.zeta, wn = state.wn;
+  var yMax = 1.15, yMin = 0, os = 0, i, t, y, px, py;
+  if (z < 1){ os = Math.exp(-z * Math.PI / Math.sqrt(1 - z * z)); yMax = Math.max(1.15, 1 + os + 0.12); }
+  function TX(tv){ return x0 + pad.l + (tv / Tspan) * innerW; }
+  function YP(yv){ return pad.t + innerH - (yv - yMin) / (yMax - yMin) * innerH; }
+  function CY(yv){ return Math.max(yMin, Math.min(yMax, yv)); }
+
+  ctx.fillStyle = C.accent; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('단위 계단 응답 x(t)', x0 + w / 2, 22);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = 0.25, tStep = niceStep(Tspan / 6);
+  for (y = 0; y <= yMax + 1e-9; y += yStep){ py = YP(y); ctx.beginPath(); ctx.moveTo(x0 + pad.l, py); ctx.lineTo(x0 + w - pad.r, py); ctx.stroke(); }
+  for (t = 0; t <= Tspan + 1e-9; t += tStep){ px = TX(t); ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, h - pad.b); ctx.stroke(); }
+
+  /* ±2% 정착 밴드 */
+  ctx.globalAlpha = 0.14; ctx.fillStyle = C.band;
+  ctx.fillRect(x0 + pad.l, YP(1.02), innerW, YP(0.98) - YP(1.02));
+  ctx.globalAlpha = 1;
+
+  /* 목표값 1 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x0 + pad.l, YP(1)); ctx.lineTo(x0 + w - pad.r, YP(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('목표값 1', x0 + pad.l + 6, YP(1) - 5);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(x0 + pad.l, pad.t); ctx.lineTo(x0 + pad.l, h - pad.b); ctx.lineTo(x0 + w - pad.r, h - pad.b); ctx.stroke();
+
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'end';
+  for (y = 0; y <= yMax + 1e-9; y += yStep) ctx.fillText(y.toFixed(2), x0 + pad.l - 6, YP(y) + 4);
+  ctx.textAlign = 'center';
+  for (t = 0; t <= Tspan + 1e-9; t += tStep) ctx.fillText(t.toFixed(1), TX(t), h - pad.b + 16);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s) →', x0 + w - pad.r, h - pad.b + 32);
+  ctx.textAlign = 'start'; ctx.fillText('x(t)', x0 + pad.l - 40, pad.t + 4);
+
+  /* 고정한 비교 곡선 */
+  if (state.ghost){
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath();
+    for (i = 0; i <= innerW; i += 2){
+      t = (i / innerW) * Tspan; px = TX(t); py = YP(CY(stepResp(state.ghost.z, state.ghost.wn, t)));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = C.meas; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'end';
+    ctx.fillText('고정: ζ=' + state.ghost.z.toFixed(2) + ', ωn=' + state.ghost.wn.toFixed(1), x0 + w - pad.r - 6, h - pad.b - 8);
+  }
+
+  /* 감쇠 포락선 */
+  if (z < 1){
+    var sgns = [1, -1], si, first;
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+    for (si = 0; si < sgns.length; si++){
+      ctx.beginPath(); first = true;
+      for (i = 0; i <= innerW; i += 2){
+        t = (i / innerW) * Tspan; y = 1 + sgns[si] * envelope(t); px = TX(t); py = YP(CY(y));
+        if (first){ ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  /* 응답 곡선 (재생 중이면 t까지만) */
+  var tDraw = anim.running ? Math.min(anim.t, Tspan) : Tspan;
+  var lastPx = 0, lastPy = 0, f2 = true;
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (i = 0; i <= innerW; i += 1){
+    t = (i / innerW) * Tspan;
+    if (t > tDraw) break;
+    px = TX(t); py = YP(CY(stepResp(z, wn, t)));
+    if (f2){ ctx.moveTo(px, py); f2 = false; } else ctx.lineTo(px, py);
+    lastPx = px; lastPy = py;
+  }
+  ctx.stroke();
+  if (anim.running){
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(lastPx, lastPy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 11px monospace'; ctx.textAlign = 'start';
+    ctx.fillText('t=' + tDraw.toFixed(2) + 's', lastPx + 8, lastPy - 8);
+  }
+
+  /* 피크시간 · 오버슈트 */
+  if (z < 1){
+    var tp = Math.PI / (wn * Math.sqrt(1 - z * z));
+    if (tp <= Tspan){
+      px = TX(tp); py = YP(1 + os);
+      ctx.globalAlpha = 0.55; ctx.strokeStyle = C.bad; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(px, YP(1)); ctx.lineTo(px, py); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.fillStyle = C.bad; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('%OS=' + (os * 100).toFixed(0) + '%', px, py - 8);
+      ctx.fillText('t_p=' + tp.toFixed(2), px, YP(1) + 14);
+    }
+  }
+}
+
+function draw(){
+  var C = palette();
+  ctx.clearRect(0, 0, W, H);
+  drawSPlane(C); drawResponse(C); updateStats();
+}
+
+function updateStats(){
+  var z = state.zeta, wn = state.wn, sig = z * wn, ts = 4 / sig;
+  var cls, poleStr, wdStr, wd = 0, r = 0;
+  if (Math.abs(z - 1) < 1e-6){
+    cls = 'Critical'; poleStr = '−' + wn.toFixed(2) + ' (중근)'; wdStr = '0 (진동 없음)';
+  } else if (z < 1){
+    cls = 'Under-damped'; wd = wn * Math.sqrt(1 - z * z);
+    poleStr = '−' + sig.toFixed(2) + ' ± ' + wd.toFixed(2) + 'j'; wdStr = wd.toFixed(2) + ' rad/s';
+  } else {
+    cls = 'Over-damped'; r = wn * Math.sqrt(z * z - 1);
+    poleStr = '−' + (sig - r).toFixed(2) + ', −' + (sig + r).toFixed(2); wdStr = '0 (실근 2개)';
+  }
+  $('clsV').textContent = cls;
+  $('poleV').textContent = poleStr;
+  $('zStat').textContent = z.toFixed(2);
+  $('wStat').textContent = wn.toFixed(2) + ' rad/s';
+  $('wdStat').textContent = wdStr;
+  $('sigStat').textContent = sig.toFixed(2) + ' /s';
+
+  var vd = $('verdict'), vcls, msg, os, tp;
+  if (z < 1){
+    os = Math.exp(-z * Math.PI / Math.sqrt(1 - z * z)) * 100; tp = Math.PI / wd;
+    if (z < 0.3){
+      vcls = 'bad';
+      msg = '극점이 <b>허축에 바짝</b> 붙었습니다 (ζ = ' + z.toFixed(2) + ', σ = ' + sig.toFixed(2) + '/s). ' +
+        '오버슈트 <b>' + os.toFixed(0) + '%</b>의 진동이 오래 남습니다 (t<sub>p</sub> ' + tp.toFixed(2) +
+        ' s, t<sub>s</sub> ≈ ' + ts.toFixed(2) + ' s).';
+    } else {
+      vcls = 'mid';
+      msg = '<b>Under-damped</b> — 극점 −' + sig.toFixed(2) + ' ± ' + wd.toFixed(2) + 'j. ' +
+        '오버슈트 <b>' + os.toFixed(0) + '%</b>, 피크 ' + tp.toFixed(2) + ' s, 정착 ≈ ' + ts.toFixed(2) + ' s.';
+    }
+  } else if (Math.abs(z - 1) < 1e-6){
+    vcls = 'good';
+    msg = '<b>Critically damped</b> — 실축 위 중근 −' + wn.toFixed(2) +
+      '. 진동 없이 <b>가장 빠르게</b> 목표에 수렴합니다 (t<sub>s</sub> ≈ ' + ts.toFixed(2) + ' s).';
+  } else {
+    vcls = 'mid';
+    msg = '<b>Over-damped</b> — 실근 두 개 (−' + (sig - r).toFixed(2) + ', −' + (sig + r).toFixed(2) +
+      '). 원점에 가까운 느린 극점이 응답을 지배해 진동 없이 <b>굼뜨게</b> 수렴합니다.';
+  }
+  vd.className = 'verdict ' + vcls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+function startAnim(){
+  if (anim.running) return;
+  anim.running = true; anim.t = 0; anim.tEnd = timeSpan();
+  $('playBtn').classList.add('on');
+  var prev = (window.performance && performance.now) ? performance.now() : Date.now();
+  function tick(now){
+    if (!anim.running) return;
+    var dt = Math.min(0.05, (now - prev) / 1000);
+    prev = now; anim.t += dt;
+    if (anim.t >= anim.tEnd){ anim.t = anim.tEnd; draw(); stopAnim(); return; }
+    draw(); anim.raf = requestAnimationFrame(tick);
+  }
+  anim.raf = requestAnimationFrame(tick);
+}
+function stopAnim(){
+  anim.running = false;
+  if (anim.raf) cancelAnimationFrame(anim.raf);
+  $('playBtn').classList.remove('on');
+}
+
+/* ── 컨트롤 ── */
+$('zS').addEventListener('input', function(){
+  state.zeta = parseFloat(this.value); $('zV').textContent = state.zeta.toFixed(2);
+  if (anim.running) stopAnim();
+  draw();
+});
+$('wS').addEventListener('input', function(){
+  state.wn = parseFloat(this.value); $('wV').textContent = state.wn.toFixed(2);
+  if (anim.running) stopAnim();
+  draw();
+});
+var ps = document.querySelectorAll('.ps'), pi;
+for (pi = 0; pi < ps.length; pi++){
+  ps[pi].addEventListener('click', function(){
+    state.zeta = parseFloat(this.getAttribute('data-z'));
+    state.wn = parseFloat(this.getAttribute('data-w'));
+    $('zS').value = state.zeta; $('wS').value = state.wn;
+    $('zV').textContent = state.zeta.toFixed(2); $('wV').textContent = state.wn.toFixed(2);
+    stopAnim(); anim.t = 0; draw();
+  });
+}
+$('playBtn').addEventListener('click', startAnim);
+$('stopBtn').addEventListener('click', stopAnim);
+$('resetBtn').addEventListener('click', function(){ stopAnim(); anim.t = 0; draw(); });
+$('ghostBtn').addEventListener('click', function(){
+  if (state.ghost){ state.ghost = null; this.textContent = '📌 현재 곡선 고정'; this.classList.remove('on'); }
+  else { state.ghost = { z: state.zeta, wn: state.wn }; this.textContent = '✕ 고정 해제'; this.classList.add('on'); }
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

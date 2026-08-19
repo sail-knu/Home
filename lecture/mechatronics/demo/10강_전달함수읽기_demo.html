@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전달함수 읽기 — 10강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+/* ================= 문제 · 입력 ================= */
+.qbox{background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:10px 12px;text-align:center;line-height:1.7}
+.qbox .ask{font-size:11.5px;color:var(--faint);font-weight:700}
+.qbox .gs{font-size:22px;font-weight:800;margin:6px 0;font-variant-numeric:tabular-nums}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px}
+.frac .nu{border-bottom:2px solid currentColor;padding:0 7px 2px}
+.frac .de{padding:2px 7px 0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pair .lab{font-size:12.5px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:4px}
+input[type=text]{width:100%;padding:8px 10px;font-size:16px;font-weight:800;text-align:center;
+  color:var(--text);background:var(--surface);border:1px solid var(--border2);border-radius:9px;
+  font-family:inherit;font-variant-numeric:tabular-nums}
+input[type=text]:focus{outline:none;border-color:var(--accent)}
+.steps{font-size:12.5px;color:var(--muted);line-height:1.85;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.steps b{color:var(--accent)}
+.steps .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 10강 · 인터랙티브 데모</p>
+  <h1>전달함수 읽기 — τ·K / ω<sub>n</sub>·ζ 추출</h1>
+  <p class="lede">뽑힌 전달함수의 분모에서 파라미터를 읽어 입력하세요. 값이 맞으면 그 시스템의 계단 응답과 표식이 캔버스에 나타납니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  1차 <b>G(s)</b> = K/(τs+1) &nbsp;→&nbsp; τ = a/c, K = b/c
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  2차 <b>G(s)</b> = ω<sub>n</sub><sup>2</sup>/(s<sup>2</sup>+2ζω<sub>n</sub>s+ω<sub>n</sub><sup>2</sup>)
+  &nbsp;→&nbsp; ω<sub>n</sub> = √q, ζ = p/(2√q)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>계단 응답 y(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>정상상태 값</span>
+        <span class="lg" style="color:var(--c-band)"><i class="o"></i>1차: 63.2% 지점 (t=τ)</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="o"></i>2차: 피크 t<sub>p</sub> · %OS</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>문제 유형</label>
+        <div class="btn-row">
+          <button id="type1Btn" class="btn on">1차 K/(τs+1)</button>
+          <button id="type2Btn" class="btn">2차 ω<sub>n</sub><sup>2</sup>/(…)</button>
+        </div>
+      </div>
+
+      <div class="ctl-box">
+        <div class="qbox" id="qbox"></div>
+        <div class="btn-row" style="margin-top:9px">
+          <button id="newBtn" class="btn">🎲 새 문제</button>
+          <button id="revealBtn" class="btn">정답 보기</button>
+        </div>
+      </div>
+
+      <div class="ctl-box">
+        <div class="pair">
+          <div>
+            <div class="lab" id="lab1">τ =</div>
+            <input type="text" id="ans1" inputmode="decimal" placeholder="?">
+          </div>
+          <div>
+            <div class="lab" id="lab2">K =</div>
+            <input type="text" id="ans2" inputmode="decimal" placeholder="?">
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:9px">
+          <button id="checkBtn" class="btn">확인</button>
+        </div>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">시도</div><div class="v" id="tryV">0</div></div>
+          <div class="stat"><div class="k">정답</div><div class="v" id="hitV" style="color:var(--ok)">0</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="steps" id="steps" style="display:none"></div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 1차는 분모를 c로 나눠 <b>τs+1</b> 꼴로<br>
+        • 2차는 상수항 q = ω<sub>n</sub><sup>2</sup>, s계수 p = 2ζω<sub>n</sub><br>
+        • 허용 오차는 참값의 <b>1%</b> 이내<br>
+        • 맞히면 계단 응답과 표식이 나타남<br>
+        • ζ에 따라 피크 표식이 생기거나 사라짐
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 10강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 62, r: 28, t: 40, b: 52 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var TOL = 0.01;   /* 허용 오차 1% */
+var state = {
+  type: 1, solved: false,
+  a: 5, b: 2, c: 1,        /* 1차: G = b/(a s + c) → τ = a/c, K = b/c */
+  p: 6, q: 9, b2: 9        /* 2차: G = b2/(s² + p s + q) → ωn = √q, ζ = p/(2√q) */
+};
+var score = { tries: 0, hit: 0 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'),
+    ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+/* ================= 난수 (mulberry32) ================= */
+var rngState = 20261010;
+function seedRand(seed){ rngState = seed >>> 0; }
+function rand(){
+  rngState = (rngState + 0x6D2B79F5) | 0;
+  var r = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
+  r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+  return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+}
+function randInt(lo, hi){ return lo + Math.floor(rand() * (hi - lo + 1)); }
+
+/* ================= 문제 생성 ================= */
+function genProblem(){
+  if (state.type === 1){
+    state.c = randInt(1, 4);
+    state.a = randInt(1, 6) * state.c;   /* τ = a/c 정수 */
+    state.b = randInt(1, 6) * state.c;   /* K = b/c 정수 */
+  } else {
+    /* ωn(정수)과 ζ를 먼저 골라 p = 2ζωn 이 정수가 되는 조합만 채택 */
+    var zetaChoices = [0.5, 0.75, 1.0, 1.25, 1.5];
+    var wn, zeta, pv, tries, pp;
+    for (tries = 0; tries < 40; tries++){
+      wn = randInt(2, 6);
+      zeta = zetaChoices[randInt(0, zetaChoices.length - 1)];
+      pp = 2 * zeta * wn;
+      if (Math.abs(pp - Math.round(pp)) < 1e-9){ pv = Math.round(pp); break; }
+    }
+    if (pv === undefined){ wn = 3; pv = 6; }
+    state.q = wn * wn;     /* 상수항 = ωn² */
+    state.p = pv;          /* s 계수 = 2ζωn */
+    state.b2 = state.q;    /* 분자 = ωn² (정상상태 이득 1) */
+  }
+  state.solved = false;
+  $('ans1').value = ''; $('ans2').value = '';
+  $('steps').style.display = 'none';
+  renderQuestion();
+  setVerdict('mid', state.type === 1
+    ? '분모를 <b>τs+1</b> 꼴로 정규화해 τ와 K를 입력하세요.'
+    : '분모를 <b>s<sup>2</sup>+2ζω<sub>n</sub>s+ω<sub>n</sub><sup>2</sup></b>과 비교해 ω<sub>n</sub>과 ζ를 입력하세요.');
+  draw();
+}
+
+function trueParams(){
+  if (state.type === 1) return { p1: state.a / state.c, p2: state.b / state.c };
+  var wn = Math.sqrt(state.q);
+  return { p1: wn, p2: state.p / (2 * wn) };
+}
+
+function frac(nu, de){ return '<span class="frac"><span class="nu">' + nu + '</span><span class="de">' + de + '</span></span>'; }
+
+function renderQuestion(){
+  $('lab1').innerHTML = nameOf(1) + ' =';
+  $('lab2').innerHTML = nameOf(2) + ' =';
+  if (state.type === 1){
+    $('qbox').innerHTML =
+      '<div class="ask">이 전달함수에서 τ, K 를 읽어라</div>' +
+      '<div class="gs">G(s) = ' + frac(state.b, state.a + 's + ' + state.c) + '</div>' +
+      '<div class="ask">분자 b=' + state.b + ' · 분모 a=' + state.a + ', c=' + state.c + '</div>';
+  } else {
+    $('qbox').innerHTML =
+      '<div class="ask">이 전달함수에서 ω<sub>n</sub>, ζ 를 읽어라</div>' +
+      '<div class="gs">G(s) = ' + frac(state.b2, 's<sup>2</sup> + ' + state.p + 's + ' + state.q) + '</div>' +
+      '<div class="ask">분모 계수 p=' + state.p + ', q=' + state.q + '</div>';
+  }
+}
+
+function nameOf(w){
+  if (state.type === 1) return w === 1 ? 'τ' : 'K';
+  return w === 1 ? 'ω<sub>n</sub>' : 'ζ';
+}
+function hint(){
+  return state.type === 1
+    ? '분모 a·s+c 를 c로 나눠 (a/c)s+1 로 만들면 s의 계수가 τ, 분자 b/c가 K입니다.'
+    : '상수항 q=ω<sub>n</sub><sup>2</sup> 이므로 ω<sub>n</sub>=√q, s의 계수 p=2ζω<sub>n</sub> 이므로 ζ=p/(2√q)입니다.';
+}
+function dampLabel(z){
+  if (z < 1 - 1e-9) return '부족감쇠 (0&lt;ζ&lt;1, 진동 후 수렴)';
+  if (Math.abs(z - 1) <= 1e-9) return '임계감쇠 (ζ=1, 진동 없이 최속 수렴)';
+  return '과감쇠 (ζ&gt;1, 느리게 수렴)';
+}
+function fmt(x){
+  if (Math.abs(x - Math.round(x)) < 1e-9) return Math.round(x).toString();
+  return (Math.round(x * 1000) / 1000).toString();
+}
+function setVerdict(cls, msg){ var vd = $('verdict'); vd.className = 'verdict ' + cls; vd.innerHTML = msg; }
+function updateScore(){ $('tryV').textContent = String(score.tries); $('hitV').textContent = String(score.hit); }
+
+/* ================= 정답 확인 ================= */
+function checkAnswer(){
+  var raw1 = $('ans1').value.replace(/^\s+|\s+$/g, '');
+  var raw2 = $('ans2').value.replace(/^\s+|\s+$/g, '');
+  var v1 = parseFloat(raw1), v2 = parseFloat(raw2);
+  if (raw1 === '' || raw2 === '' || isNaN(v1) || isNaN(v2)){
+    setVerdict('bad', '두 칸에 <b>숫자</b>를 모두 입력하세요. (예: 5, 2)');
+    return;
+  }
+  var t = trueParams();
+  var ok1 = Math.abs(v1 - t.p1) <= Math.abs(t.p1) * TOL + 1e-9;
+  var ok2 = Math.abs(v2 - t.p2) <= Math.abs(t.p2) * TOL + 1e-9;
+  var n1 = nameOf(1), n2 = nameOf(2);
+  score.tries++;
+
+  if (ok1 && ok2){
+    score.hit++; state.solved = true;
+    setVerdict('good', '정답입니다. ' + n1 + ' = <b>' + fmt(t.p1) + '</b>, ' + n2 + ' = <b>' + fmt(t.p2) + '</b>' +
+      (state.type === 2 ? ' → ' + dampLabel(t.p2) : '') + '. 계단 응답이 그려졌습니다.');
+    showSteps(t);
+  } else if (!ok1 && !ok2){
+    state.solved = false;
+    setVerdict('bad', '두 값 모두 다릅니다. 입력 ' + n1 + '=' + fmt(v1) + ', ' + n2 + '=' + fmt(v2) + '. ' + hint());
+  } else {
+    state.solved = false;
+    setVerdict('bad', (ok1 ? n1 : n2) + '는 맞았지만 <b>' + (ok1 ? n2 : n1) + '</b>가 틀렸습니다. 입력 ' +
+      (ok1 ? n2 : n1) + '=' + fmt(ok1 ? v2 : v1) + '. ' + hint());
+  }
+  updateScore();
+  draw();
+}
+
+function reveal(){
+  var t = trueParams();
+  state.solved = true;
+  $('ans1').value = fmt(t.p1); $('ans2').value = fmt(t.p2);
+  setVerdict('mid', '정답은 ' + nameOf(1) + ' = <b>' + fmt(t.p1) + '</b>, ' + nameOf(2) + ' = <b>' + fmt(t.p2) +
+    '</b>입니다' + (state.type === 2 ? ' — ' + dampLabel(t.p2) : '') + '.');
+  showSteps(t);
+  draw();
+}
+
+function showSteps(t){
+  var el = $('steps');
+  if (state.type === 1){
+    var tau = t.p1, K = t.p2;
+    el.innerHTML =
+      '<span class="t">정리</span>' +
+      'G(s) = ' + frac(state.b, state.a + 's + ' + state.c) + ' &nbsp;÷ c=' + state.c + '&nbsp; → ' +
+      frac(fmt(K), fmt(tau) + 's + 1') + '<br>' +
+      '<b>τ = a/c = ' + state.a + '/' + state.c + ' = ' + fmt(tau) + '</b>, ' +
+      '<b>K = b/c = ' + state.b + '/' + state.c + ' = ' + fmt(K) + '</b><br>' +
+      'y(t) = K(1 − e<sup>−t/τ</sup>) · 3τ ≈ ' + fmt(3 * tau) + ' s 에서 95%';
+  } else {
+    var wn = t.p1, zeta = t.p2, poleTxt, wd, r;
+    if (zeta < 1 - 1e-9){
+      wd = wn * Math.sqrt(1 - zeta * zeta);
+      poleTxt = '폴 s = −' + fmt(zeta * wn) + ' ± ' + fmt(wd) + 'j (좌반면 복소켤레)';
+    } else if (Math.abs(zeta - 1) <= 1e-9){
+      poleTxt = '폴 s = −' + fmt(wn) + ' (좌반면 실축 중근)';
+    } else {
+      r = wn * Math.sqrt(zeta * zeta - 1);
+      poleTxt = '폴 s = −' + fmt(zeta * wn - r) + ', −' + fmt(zeta * wn + r) + ' (좌반면 실축 2개)';
+    }
+    el.innerHTML =
+      '<span class="t">정리</span>' +
+      '상수항 q = ω<sub>n</sub><sup>2</sup> = ' + state.q + ' → <b>ω<sub>n</sub> = ' + fmt(wn) + '</b><br>' +
+      's 계수 p = 2ζω<sub>n</sub> = ' + state.p + ' → <b>ζ = ' + state.p + '/' + fmt(2 * wn) + ' = ' + fmt(zeta) + '</b><br>' +
+      dampLabel(zeta) + ' · ' + poleTxt;
+  }
+  el.style.display = 'block';
+}
+
+/* ================= 계단 응답 ================= */
+function responseData(Tmax, dt){
+  var t = trueParams(), ts = [], ys = [], tt;
+  if (state.type === 1){
+    var tau = t.p1, K = t.p2;
+    for (tt = 0; tt <= Tmax + 1e-9; tt += dt){ ts.push(tt); ys.push(K * (1 - Math.exp(-tt / tau))); }
+    return { ts: ts, ys: ys, ss: K };
+  }
+  /* ÿ + p ẏ + q y = b2 (계단 크기 1) — RK4 적분, 정상상태 = b2/q */
+  var pv = state.p, qv = state.q, b2 = state.b2;
+  var y1 = 0, y2 = 0, k1, k2, k3, k4;
+  function f(A, B){ return [B, b2 - pv * B - qv * A]; }
+  for (tt = 0; tt <= Tmax + 1e-9; tt += dt){
+    ts.push(tt); ys.push(y1);
+    k1 = f(y1, y2);
+    k2 = f(y1 + 0.5 * dt * k1[0], y2 + 0.5 * dt * k1[1]);
+    k3 = f(y1 + 0.5 * dt * k2[0], y2 + 0.5 * dt * k2[1]);
+    k4 = f(y1 + dt * k3[0], y2 + dt * k3[1]);
+    y1 += dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+    y2 += dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+  }
+  return { ts: ts, ys: ys, ss: b2 / qv };
+}
+
+function niceStep(range, target){
+  var raw = range / target;
+  var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+  var norm = raw / mag, step;
+  if (norm < 1.5) step = 1; else if (norm < 3) step = 2; else if (norm < 7) step = 5; else step = 10;
+  return step * mag;
+}
+function xToPx(tt, xHi){ return M.l + tt / xHi * plotW; }
+function yToPx(y, yLo, yHi){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+function draw(){
+  var C = palette(), par = trueParams(), i, x, y;
+  ctx.clearRect(0, 0, W, H);
+
+  var Tmax, dt;
+  if (state.type === 1){
+    Tmax = 5 * par.p1; dt = Tmax / 2000;
+  } else {
+    var wn = par.p1, zeta = par.p2;
+    var settle = zeta > 0.05 ? 5 / (zeta * wn) : 12 / wn;
+    Tmax = Math.max(settle, 4); dt = Tmax / 4000;
+  }
+
+  var data = state.solved ? responseData(Tmax, dt) : null;
+  var yLo = 0, yHi;
+  if (state.solved){
+    var maxY = data.ss;
+    for (i = 0; i < data.ys.length; i++) if (data.ys[i] > maxY) maxY = data.ys[i];
+    yHi = maxY * 1.12 + 0.05;
+  } else {
+    yHi = 1.2;
+  }
+
+  var yStep = niceStep(yHi - yLo, 6), xStep = niceStep(Tmax, 8);
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = 0; y <= yHi + 1e-9; y += yStep){ ctx.beginPath(); ctx.moveTo(M.l, yToPx(y, yLo, yHi)); ctx.lineTo(M.l + plotW, yToPx(y, yLo, yHi)); ctx.stroke(); }
+  for (x = 0; x <= Tmax + 1e-9; x += xStep){ ctx.beginPath(); ctx.moveTo(xToPx(x, Tmax), M.t); ctx.lineTo(xToPx(x, Tmax), M.t + plotH); ctx.stroke(); }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y(t)', 14, M.t - 14);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (s) →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = 0; y <= yHi + 1e-9; y += yStep) ctx.fillText(fmt(y), M.l - 8, yToPx(y, yLo, yHi) + 4);
+  ctx.textAlign = 'center';
+  for (x = 0; x <= Tmax + 1e-9; x += xStep) ctx.fillText(fmt(x), xToPx(x, Tmax), M.t + plotH + 18);
+
+  if (!state.solved){
+    ctx.fillStyle = C.faint; ctx.textAlign = 'center';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('값을 맞히면 이 시스템의 계단 응답이 그려집니다.', M.l + plotW / 2, M.t + plotH / 2 - 8);
+    ctx.font = '13px sans-serif';
+    ctx.fillText(state.type === 1 ? '1차: y(t) = K(1 − e^(−t/τ))' : '2차: y″ + 2ζ·ωn·y′ + ωn²·y = ωn² (계단)',
+      M.l + plotW / 2, M.t + plotH / 2 + 16);
+    return;
+  }
+
+  var ssy = yToPx(data.ss, yLo, yHi);
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(M.l, ssy); ctx.lineTo(M.l + plotW, ssy); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('정상상태 = ' + fmt(data.ss), M.l + 8, ssy - 6);
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (i = 0; i < data.ts.length; i++){
+    var px = xToPx(data.ts[i], Tmax), py = yToPx(data.ys[i], yLo, yHi);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  if (state.type === 1){
+    var tau = par.p1, K = par.p2;
+    var mx = xToPx(tau, Tmax), my = yToPx(0.632 * K, yLo, yHi);
+    ctx.strokeStyle = C.band; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(mx, M.t + plotH); ctx.lineTo(mx, my); ctx.lineTo(M.l, my); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.band;
+    ctx.beginPath(); ctx.arc(mx, my, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('t=τ, 63.2%', mx + 8, my + 4);
+  } else if (par.p2 < 1 - 1e-9){
+    var wd = par.p1 * Math.sqrt(1 - par.p2 * par.p2);
+    var tp = Math.PI / wd;
+    var peakY = data.ss, peakIdx = 0;
+    for (i = 0; i < data.ys.length; i++) if (data.ys[i] > peakY){ peakY = data.ys[i]; peakIdx = i; }
+    var qx = xToPx(data.ts[peakIdx], Tmax), qy = yToPx(peakY, yLo, yHi);
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(qx, M.t + plotH); ctx.lineTo(qx, qy); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.alias;
+    ctx.beginPath(); ctx.arc(qx, qy, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('tp=' + fmt(tp) + ', %OS≈' + fmt((peakY / data.ss - 1) * 100), qx, qy - 10);
+  }
+}
+
+/* ================= 컨트롤 ================= */
+var t1 = $('type1Btn'), t2 = $('type2Btn');
+function setType(tp){
+  state.type = tp;
+  t1.classList.toggle('on', tp === 1);
+  t2.classList.toggle('on', tp === 2);
+  genProblem();
+}
+t1.addEventListener('click', function(){ setType(1); });
+t2.addEventListener('click', function(){ setType(2); });
+
+var seedTick = 0;
+$('newBtn').addEventListener('click', function(){
+  seedTick++; seedRand(20261010 + seedTick * 7919); genProblem();
+});
+$('revealBtn').addEventListener('click', reveal);
+$('checkBtn').addEventListener('click', checkAnswer);
+function onEnter(e){ if (e.key === 'Enter') checkAnswer(); }
+$('ans1').addEventListener('keydown', onEnter);
+$('ans2').addEventListener('keydown', onEnter);
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+
+/* 첫 문제는 강의 ✏️① Q1 과 동일한 G(s) = 2/(5s+1) (τ=5, K=2) */
+seedRand(20261010);
+state.type = 1; state.a = 5; state.b = 2; state.c = 1; state.solved = false;
+renderQuestion();
+updateScore();
+setVerdict('mid', '분모를 <b>τs+1</b> 꼴로 정규화해 τ와 K를 입력하세요.');
+draw();
+})();
+</script>
+</body>
+</html>

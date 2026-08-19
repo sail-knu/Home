@@ -1367,6 +1367,11 @@ try{
   setTimeout(function(){ fitView(); }, 120);
 
   requestAnimationFrame(function(t){ last=t; loop(t); });
+  window.refresh_mppi_demo = function () {
+    if (!demoVisible()) return;
+    readTheme();
+    fitView();
+  };
 }catch(err){
   document.body.insertAdjacentHTML('beforeend',
     '<p style="padding:16px">시뮬레이터를 시작할 수 없습니다: '+(err&&err.message?err.message:err)+'</p>');

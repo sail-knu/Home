@@ -982,4 +982,10 @@ if(window.visualViewport) window.visualViewport.addEventListener('resize', onRes
 
 requestAnimationFrame(t=>{ last=t; loop(t); });
 
+window.refresh_path_demo = function () {
+  if (!demoVisible()) return;
+  readTheme();
+  resize();
+};
+
 })();
