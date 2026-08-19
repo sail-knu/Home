@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>칼만 게인 K — 5강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강 · 인터랙티브 데모</p>
+  <h1>칼만 게인 K — 누구를 믿을까</h1>
+  <p class="lede">예측 x̂<sup>−</sup>는 50.0 m 고정입니다. <b>z</b>와 <b>K</b>를 움직이거나(모드 ①), <b>σ<sub>p</sub>·σ<sub>z</sub></b>로 K를 자동 계산해(모드 ②) 추정이 어디에 서는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>x̂</b> = x̂<sup>−</sup> + K(z − x̂<sup>−</sup>) = (1−K) x̂<sup>−</sup> + K z
+  &nbsp;→&nbsp; <b>K</b> = P<sup>−</sup>/(P<sup>−</sup> + R) = σ<sub>p</sub><sup>2</sup>/(σ<sub>p</sub><sup>2</sup> + σ<sub>z</sub><sup>2</sup>)
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-alias)"><i class="o"></i>예측 x̂<sup>−</sup> = 50.0 m (고정)</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정 z</span>
+        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>추정 x̂ = x̂<sup>−</sup> + K(z − x̂<sup>−</sup>)</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="modeK" class="btn on">① K 직접 조절</button>
+        <button id="modeSigma" class="btn">② σ로 자동 계산</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>측정값 z (m) <span class="value" id="zV">54.0</span></label>
+        <input type="range" id="zS" min="40" max="60" step="0.1" value="54">
+      </div>
+
+      <div class="ctl-box" id="kGroup">
+        <label>칼만 게인 K (직접 지정) <span class="value" id="kV">0.50</span></label>
+        <input type="range" id="kS" min="0" max="1" step="0.01" value="0.5">
+      </div>
+
+      <div class="ctl-box" id="spGroup" style="display:none">
+        <label>예측 표준편차 σ<sub>p</sub> <span class="value" id="spV">2.0</span></label>
+        <input type="range" id="spS" min="0.5" max="5" step="0.1" value="2">
+      </div>
+
+      <div class="ctl-box" id="szGroup" style="display:none">
+        <label>측정 표준편차 σ<sub>z</sub> <span class="value" id="szV">2.0</span></label>
+        <input type="range" id="szS" min="0.5" max="5" step="0.1" value="2">
+      </div>
+
+      <div class="btn-row">
+        <button id="k0" class="btn">K = 0</button>
+        <button id="k5" class="btn">K = 0.5</button>
+        <button id="k1" class="btn">K = 1</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">칼만 게인 K</div><div class="v" id="kStat" style="color:var(--accent)">—</div></div>
+          <div class="stat"><div class="k">혁신 z − x̂<sup>−</sup></div><div class="v" id="innovStat" style="color:var(--muted)">—</div></div>
+          <div class="stat"><div class="k">추정 x̂</div><div class="v" id="xhatStat" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">가중 (예측 : 측정)</div><div class="v" id="wStat">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="btn-row">
+        <button id="resetBtn" class="btn">초기화</button>
+      </div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • K는 0~1 신뢰 배분 다이얼<br>
+        • 추정은 늘 예측과 측정 사이<br>
+        • K = 0.75면 혁신의 3/4만 반영<br>
+        • 모드 ②: σ<sub>p</sub> ↑ → K → 1 (측정 신뢰)<br>
+        • 모드 ②: σ<sub>z</sub> ↑ → K → 0 (예측 신뢰)
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 5강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+var PRED = 50.0;                 /* 예측 x̂⁻ (고정) */
+var XLO = 38, XHI = 62;          /* 수직선 표시 범위 (m) */
+var PX0 = 50, PW = W - PX0 - 30;
+var AXIS_Y = 300;                /* 수직선 y */
+var TRACK_Y = 352;               /* K 트랙 y */
+var GX = 140, GW = 620, GY = 428, GH = 26;   /* K 게이지 바 */
+
+var state = { z: 54.0, K: 0.5, sp: 2.0, sz: 2.0, mode: 'K' };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return { grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), surface2: cvar('--surface2'),
+    meas: cvar('--c-meas'), avg: cvar('--c-avg'), alias: cvar('--c-alias') };
+}
+
+function X(v){ return PX0 + (v - XLO) / (XHI - XLO) * PW; }
+function currentK(){
+  if (state.mode === 'K') return state.K;
+  return (state.sp * state.sp) / (state.sp * state.sp + state.sz * state.sz);
+}
+function fmt2(v){ return v.toFixed(2); }
+function sgn2(v){ return (v >= 0 ? '+' : '') + v.toFixed(2); }
+
+/* 가우시안 곡선 (모드 ②에서 불확실성 표시) */
+function gauss(c, s, color){
+  var h = Math.min(175, 160 / s);
+  var lo = Math.max(XLO, c - 3.5 * s), hi = Math.min(XHI, c + 3.5 * s);
+  var pts = [], n = 90, i, x;
+  for (i = 0; i <= n; i++){
+    x = lo + (hi - lo) * i / n; pts.push([X(x), AXIS_Y - h * Math.exp(-(x - c) * (x - c) / (2 * s * s))]);
+  }
+  ctx.beginPath(); ctx.moveTo(pts[0][0], AXIS_Y);
+  for (i = 0; i <= n; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.lineTo(pts[n][0], AXIS_Y); ctx.closePath();
+  ctx.globalAlpha = 0.12; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.beginPath();
+  for (i = 0; i <= n; i++){ if (i === 0) ctx.moveTo(pts[i][0], pts[i][1]); else ctx.lineTo(pts[i][0], pts[i][1]); }
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+  return h;
+}
+
+function draw(){
+  var C = palette(), K = currentK(), z = state.z, v, t;
+  var innov = z - PRED, xhat = PRED + K * innov;
+  var P = state.sp * state.sp, R = state.sz * state.sz;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* 상단 수식 (현재 값 대입) */
+  ctx.font = '14px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = C.muted;
+  ctx.fillText(state.mode === 'sigma'
+    ? 'K = P⁻/(P⁻+R) = ' + fmt2(P) + ' / (' + fmt2(P) + ' + ' + fmt2(R) + ') = ' + K.toFixed(3)
+    : 'K = ' + K.toFixed(2) + '  (모드 ①: 직접 지정)', W / 2, 34);
+  ctx.fillStyle = C.avg; ctx.font = 'bold 15px monospace';
+  ctx.fillText('x̂ = x̂⁻ + K(z − x̂⁻) = 50.0 + ' + K.toFixed(2) + ' × (' + sgn2(innov) + ') = ' + fmt2(xhat) + ' m', W / 2, 60);
+
+  /* 세로 격자 */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (v = 40; v <= 60; v += 2){ ctx.beginPath(); ctx.moveTo(X(v), 100); ctx.lineTo(X(v), AXIS_Y); ctx.stroke(); }
+
+  /* 모드 ②: 예측·측정 분포 곡선 */
+  if (state.mode === 'sigma'){
+    var hp = gauss(PRED, state.sp, C.alias), hz = gauss(z, state.sz, C.meas);
+    ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = C.alias; ctx.fillText('P⁻ = ' + fmt2(P), X(PRED), AXIS_Y - hp - 10);
+    ctx.fillStyle = C.meas;
+    ctx.fillText('R = ' + fmt2(R), X(z), (Math.abs(innov) < 1.5) ? AXIS_Y - hz - 26 : AXIS_Y - hz - 10);
+  }
+
+  /* 수직선 */
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(X(XLO), AXIS_Y); ctx.lineTo(X(XHI), AXIS_Y); ctx.stroke();
+  ctx.font = '12px sans-serif'; ctx.fillStyle = C.faint;
+  for (v = 40; v <= 60; v += 1){
+    var tall = (v % 2 === 0);
+    ctx.beginPath(); ctx.moveTo(X(v), AXIS_Y); ctx.lineTo(X(v), AXIS_Y + (tall ? 7 : 4)); ctx.stroke();
+    if (tall){ ctx.textAlign = 'center'; ctx.fillText(String(v), X(v), AXIS_Y + 20); }
+  }
+  ctx.textAlign = 'end'; ctx.fillText('(m)', W - 8, AXIS_Y + 20);
+
+  /* 예측·측정 점 + 라벨 */
+  var px50 = X(PRED), pxz = X(z);
+  ctx.fillStyle = C.alias; ctx.beginPath(); ctx.arc(px50, AXIS_Y, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.meas; ctx.beginPath(); ctx.arc(pxz, AXIS_Y, 7, 0, Math.PI * 2); ctx.fill();
+
+  ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = C.alias;
+  if (z >= PRED){ ctx.textAlign = 'end'; ctx.fillText('예측 x̂⁻ = 50.0', px50 - 12, 268); }
+  else { ctx.textAlign = 'start'; ctx.fillText('예측 x̂⁻ = 50.0', px50 + 12, 268); }
+  ctx.fillStyle = C.meas;
+  if (z >= PRED){ ctx.textAlign = 'start'; ctx.fillText('측정 z = ' + z.toFixed(1), pxz + 12, 246); }
+  else { ctx.textAlign = 'end'; ctx.fillText('측정 z = ' + z.toFixed(1), pxz - 12, 246); }
+
+  /* 점 → 트랙 점선 */
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(px50, AXIS_Y + 8); ctx.lineTo(px50, TRACK_Y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pxz, AXIS_Y + 8); ctx.lineTo(pxz, TRACK_Y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* 혁신 */
+  if (Math.abs(innov) >= 0.8){
+    ctx.font = '11px monospace'; ctx.fillStyle = C.faint; ctx.textAlign = 'center';
+    ctx.fillText('혁신 z − x̂⁻ = ' + sgn2(innov) + ' m', (px50 + pxz) / 2, 338);
+  }
+
+  /* K 트랙 (예측 → 측정) */
+  var pxE = X(xhat);
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(px50, TRACK_Y); ctx.lineTo(pxz, TRACK_Y); ctx.stroke();
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(px50, TRACK_Y); ctx.lineTo(pxE, TRACK_Y); ctx.stroke();
+  ctx.lineWidth = 2; ctx.strokeStyle = C.alias;
+  ctx.beginPath(); ctx.moveTo(px50, TRACK_Y - 6); ctx.lineTo(px50, TRACK_Y + 6); ctx.stroke();
+  ctx.strokeStyle = C.meas;
+  ctx.beginPath(); ctx.moveTo(pxz, TRACK_Y - 6); ctx.lineTo(pxz, TRACK_Y + 6); ctx.stroke();
+
+  if (Math.abs(innov) >= 0.8){
+    ctx.font = '11px sans-serif'; ctx.fillStyle = C.faint;
+    var dir = (z >= PRED) ? 1 : -1;
+    ctx.textAlign = dir > 0 ? 'end' : 'start';
+    ctx.fillText('K=0', px50 - dir * 10, TRACK_Y + 4);
+    ctx.textAlign = dir > 0 ? 'start' : 'end';
+    ctx.fillText('K=1', pxz + dir * 10, TRACK_Y + 4);
+  }
+
+  ctx.fillStyle = C.avg; ctx.beginPath(); ctx.arc(pxE, TRACK_Y, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = 'bold 13px monospace'; ctx.fillStyle = C.avg; ctx.textAlign = 'center';
+  ctx.fillText('추정 x̂ = ' + fmt2(xhat) + ' m', Math.max(95, Math.min(W - 95, pxE)), 384);
+
+  /* K 게이지 바 */
+  ctx.font = '12px sans-serif'; ctx.fillStyle = C.alias; ctx.textAlign = 'start';
+  ctx.fillText('0 — 측정 무시(예측 신뢰)', GX, GY - 8);
+  ctx.fillStyle = C.meas; ctx.textAlign = 'end';
+  ctx.fillText('1 — 예측 무시(측정 신뢰)', GX + GW, GY - 8);
+  ctx.fillStyle = C.surface2; ctx.fillRect(GX, GY, GW, GH);
+  ctx.fillStyle = C.avg; ctx.fillRect(GX, GY, GW * K, GH);
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.strokeRect(GX, GY, GW, GH);
+  ctx.strokeStyle = C.grid;
+  var ticks = [0.25, 0.5, 0.75];
+  for (t = 0; t < ticks.length; t++){
+    ctx.beginPath(); ctx.moveTo(GX + GW * ticks[t], GY); ctx.lineTo(GX + GW * ticks[t], GY + GH); ctx.stroke();
+  }
+  var hx = GX + GW * K;
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(hx, GY - 4); ctx.lineTo(hx, GY + GH + 4); ctx.stroke();
+  ctx.font = 'bold 13px monospace'; ctx.fillStyle = C.avg; ctx.textAlign = 'center';
+  ctx.fillText('K = ' + K.toFixed(3), Math.max(GX + 45, Math.min(GX + GW - 45, hx)), GY + GH + 22);
+
+  ctx.font = '12px sans-serif'; ctx.fillStyle = C.faint; ctx.textAlign = 'center';
+  ctx.fillText(state.mode === 'sigma' ? '분산이 K를 자동으로 정한다'
+    : '지금은 K를 손으로 정하는 중 — 모드 ②와 비교해 보세요', W / 2, 512);
+
+  $('kStat').textContent = K.toFixed(3); $('innovStat').textContent = sgn2(innov) + ' m';
+  $('xhatStat').textContent = fmt2(xhat) + ' m'; $('wStat').textContent = (1 - K).toFixed(2) + ' : ' + K.toFixed(2);
+
+  var vd = $('verdict'), cls, msg;
+  if (Math.abs(innov) < 0.05){
+    cls = 'mid';
+    msg = '혁신이 0입니다. K가 몇이든 추정은 x̂ = 50.00 m 그대로 — z를 움직여 보세요.';
+  } else if (K <= 0.1){
+    cls = 'bad';
+    msg = 'K = ' + K.toFixed(3) + ' → <b>측정 무시(예측 신뢰)</b>. 혁신 ' + sgn2(innov) + ' m의 ' + Math.round(K * 100) +
+      '%만 반영해 x̂ = ' + fmt2(xhat) + ' m입니다.' +
+      (state.mode === 'sigma' ? ' 측정이 매우 부정확 (R = ' + fmt2(R) + ' ≫ P⁻ = ' + fmt2(P) + ').' : '');
+  } else if (K >= 0.9){
+    cls = 'bad';
+    msg = 'K = ' + K.toFixed(3) + ' → <b>예측 무시(측정 신뢰)</b>. 혁신 ' + sgn2(innov) + ' m의 ' + Math.round(K * 100) +
+      '%를 반영해 x̂ = ' + fmt2(xhat) + ' m — 측정 z = ' + z.toFixed(1) + ' 곁입니다.' +
+      (state.mode === 'sigma' ? ' 예측이 매우 부정확 (P⁻ = ' + fmt2(P) + ' ≫ R = ' + fmt2(R) + ').' : '');
+  } else if (K >= 0.35 && K <= 0.65){
+    cls = 'good';
+    msg = 'K = ' + K.toFixed(3) + ' → <b>가중평균</b>. x̂ = ' + (1 - K).toFixed(2) + '×50.0 + ' + K.toFixed(2) + '×' +
+      z.toFixed(1) + ' = ' + fmt2(xhat) + ' m입니다.' +
+      ((state.mode === 'sigma' && Math.abs(P - R) < 1e-9) ? ' 두 불확실성이 같아(P⁻ = R) 정확히 한가운데입니다.' : '');
+  } else {
+    cls = 'mid';
+    msg = 'K = ' + K.toFixed(3) + ' → <b>가중평균</b>. 혁신의 ' + Math.round(K * 100) + '%만큼 측정 쪽으로 이동해 x̂ = ' +
+      fmt2(xhat) + ' m, 가중은 예측 ' + (1 - K).toFixed(2) + ' : 측정 ' + K.toFixed(2) + '입니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var zS = $('zS'), kS = $('kS'), spS = $('spS'), szS = $('szS');
+zS.addEventListener('input', function(){
+  state.z = parseFloat(this.value); $('zV').textContent = state.z.toFixed(1); draw();
+});
+kS.addEventListener('input', function(){
+  state.K = parseFloat(this.value); $('kV').textContent = state.K.toFixed(2); draw();
+});
+spS.addEventListener('input', function(){
+  state.sp = parseFloat(this.value);
+  $('spV').textContent = state.sp.toFixed(1) + ' (P⁻ ' + (state.sp * state.sp).toFixed(2) + ')'; draw();
+});
+szS.addEventListener('input', function(){
+  state.sz = parseFloat(this.value);
+  $('szV').textContent = state.sz.toFixed(1) + ' (R ' + (state.sz * state.sz).toFixed(2) + ')'; draw();
+});
+
+var modeKBtn = $('modeK'), modeSigmaBtn = $('modeSigma');
+function setMode(m){
+  state.mode = m;
+  var isK = (m === 'K');
+  modeKBtn.classList.toggle('on', isK); modeSigmaBtn.classList.toggle('on', !isK);
+  $('kGroup').style.display = isK ? '' : 'none';
+  $('spGroup').style.display = isK ? 'none' : '';
+  $('szGroup').style.display = isK ? 'none' : '';
+  draw();
+}
+modeKBtn.addEventListener('click', function(){ setMode('K'); });
+modeSigmaBtn.addEventListener('click', function(){ setMode('sigma'); });
+
+function jumpK(v){
+  state.K = v; kS.value = v; $('kV').textContent = v.toFixed(2);
+  if (state.mode !== 'K') setMode('K'); else draw();
+}
+$('k0').addEventListener('click', function(){ jumpK(0); });
+$('k5').addEventListener('click', function(){ jumpK(0.5); });
+$('k1').addEventListener('click', function(){ jumpK(1); });
+
+$('resetBtn').addEventListener('click', function(){
+  state.z = 54.0; state.K = 0.5; state.sp = 2.0; state.sz = 2.0;
+  zS.value = 54; $('zV').textContent = '54.0';
+  kS.value = 0.5; $('kV').textContent = '0.50';
+  spS.value = 2; szS.value = 2;
+  $('spV').textContent = '2.0 (P⁻ 4.00)'; $('szV').textContent = '2.0 (R 4.00)';
+  setMode('K');
+});
+$('spV').textContent = '2.0 (P⁻ 4.00)'; $('szV').textContent = '2.0 (R 4.00)';
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

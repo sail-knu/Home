@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L6-D3 · 전달함수 H(s) — 입력→블록→출력</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 6강</p>
+  <h1>전달함수 H(s) — <span style="color:var(--accent)">입력 → 블록 → 출력</span></h1>
+  <p class="lede">m·c·k를 바꾸면 <b>블록 하나</b>가 바뀌고, ω를 바꾸면 그 블록 위에서 <b>지금 내 위치</b>가 움직입니다.
+    s = jω 를 대입한 |H| 곡선이 1부의 무차원 진폭 곡선과 <b>포개지는지</b> 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--low)"></i>입력 F(t) = F₀ sin ωt</span>
+          <span><i style="background:var(--high)"></i>출력 x(t) = X sin(ωt − θ)</span>
+          <span><i style="background:var(--accent)"></i>|H(jω)| 크기 곡선 (log)</span>
+          <span><i style="background:var(--float)"></i>1부 무차원 진폭 Λ(r)/k (점선)</span>
+          <span><i style="background:var(--ok)"></i>ωₙ = √(k/m) → r = 1</span>
+        </div>
+        <div class="note-box">
+          • 보라 점선(1부 Λ(r)/k)이 청록 |H| 곡선 위에 <b>완전히 포개집니다</b> — s = jω 대입이 곧 1부 곡선입니다.<br>
+          • H(s)는 <b>m, c, k만으로</b> 결정 — ω 슬라이더를 아무리 흔들어도 <b>곡선 자체는 그대로</b>이고 마커만 이동합니다.<br>
+          • r = 1 (초록 점선)에서 분모 실수부 (k−mω²) = 0 → <b>감쇠 cω만</b> 진폭을 막고 θ = 90°.<br>
+          • 출력 파형은 입력보다 <b>θ/ω [s] 늦게</b> 피크에 도달합니다 (−θ는 지연, +θ로 쓰면 틀림).
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="1,2,100,10">연습③ m1·c2·k100, ω=10 (공진)</button>
+            <button class="btn btn-sm" data-p="1,2,100,1">준정적 ω=1 (r=0.1)</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="1,2,100,30">관성지배 ω=30 (r=3)</button>
+            <button class="btn btn-sm" data-p="2,4,200,10">연습① m2·c4·k200 (ζ=0.1)</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="1,0,100,10">c=0 → ζ=0 발산</button>
+            <button class="btn btn-sm" data-p="1,20,100,10">c=20 → ζ=1 임계</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — <b>s = jω 대입 시 |H| 곡선이 1부 진폭 곡선과 겹치는 것</b>을 확인하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">질량 m <span class="big-val" id="mv">1.0</span> kg</p>
+          <input type="range" id="m" min="0.5" max="4" step="0.1" value="1" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">감쇠 c <span class="big-val" id="cval">2.0</span> N·s/m</p>
+          <input type="range" id="c" min="0" max="20" step="0.5" value="2" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">강성 k <span class="big-val" id="kv">100</span> N/m</p>
+          <input type="range" id="k" min="20" max="200" step="5" value="100" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">가진 주파수 ω <span class="big-val" id="wv">10.0</span> rad/s</p>
+          <input type="range" id="w" min="0.5" max="30" step="0.5" value="10" style="width:100%">
+          <p class="mini" style="margin-top:6px" id="wnmini">ωₙ = 10.00 rad/s · 입력 진폭 F₀ = 10 N 고정</p>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">|H(jω)| [m/N]</div><div class="v acc" id="magv">—</div></div>
+          <div class="stat"><div class="k">Λ = k|H| (1부)</div><div class="v acc" id="lamv">—</div></div>
+          <div class="stat"><div class="k">출력 X = F₀|H|</div><div class="v hi" id="xv">—</div></div>
+          <div class="stat"><div class="k">위상 지연 θ</div><div class="v hi" id="thv">—</div></div>
+          <div class="stat"><div class="k">주파수비 r = ω/ωₙ</div><div class="v lo" id="rv">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v lo" id="zev">—</div></div>
+        </div>
+
+        <div class="verdict good" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn btn-acc" id="ovl">Λ(r) 겹쳐보기</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 6강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+var DEF = { m:1, c:2, k:100, w:10 };
+var F0 = 10;                                  /* N */
+var p = { m:1, c:2, k:100, w:10 };
+var phi = 0, running = true, overlay = true;
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT  = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO  = 'Consolas, ui-monospace, monospace';
+
+/* ---- 물리량 (특이점 가드 포함) ---- */
+function compute(){
+  var wn = Math.sqrt(p.k / p.m);
+  var zeta = p.c / (2 * Math.sqrt(p.m * p.k));
+  var r = p.w / Math.max(wn, 1e-9);
+  var re = p.k - p.m * p.w * p.w;              /* 분모 실수부 */
+  var im = p.c * p.w;                          /* 분모 허수부 */
+  var den = Math.sqrt(re * re + im * im);
+  var diverge = den < 1e-5;                    /* 비감쇠 공진 (c=0, ω=ωₙ) */
+  den = Math.max(den, 1e-6);
+  var magH = 1 / den;                          /* |H(jω)| */
+  var theta = Math.atan2(im, re);              /* atan2 → 항상 0~π */
+  if (im === 0 && Math.abs(re) < 1e-9) theta = Math.PI / 2;
+  return { wn:wn, zeta:zeta, r:r, magH:magH, theta:theta,
+           X:F0 * magH, lam:p.k * magH, diverge:diverge };
+}
+function magAt(w){                             /* |H| 곡선용 (클램프) */
+  var re = p.k - p.m * w * w, im = p.c * w;
+  var v = 1 / Math.max(Math.sqrt(re * re + im * im), 1e-6);
+  return Math.min(Math.max(v, 1e-6), 20);
+}
+function lamAt(w, wn, ze){                     /* 1부 무차원 진폭 Λ(r) → /k 로 환산 */
+  var r = w / Math.max(wn, 1e-9);
+  var a = 1 - r * r, b = 2 * ze * r;
+  var v = 1 / (p.k * Math.max(Math.sqrt(a * a + b * b), 1e-9));
+  return Math.min(Math.max(v, 1e-6), 20);
+}
+
+/* ---- 레이아웃 ---- */
+var bandT = 12, bandB = 282;
+var inL = 35, inR = 270, outL = 630, outR = 865, cy = 155, HH = 78;
+var bx1 = 340, bx2 = 565, by1 = 110, by2 = 200;
+var plotL = 70, plotR = 836, plotT = 322, plotB = 490;
+
+var SUP = { '-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹' };
+function sup(n){ return String(n).split('').map(function(ch){ return SUP[ch] || ch; }).join(''); }
+function fmtH(v){ return v >= 0.01 ? v.toFixed(4) : v.toExponential(2); }
+function fmtL(v){ return v >= 0.01 ? v.toFixed(3) : v.toExponential(2); }
+
+function drawWave(x1, x2, cyy, amp, phase0, q, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (var px = x1; px <= x2; px += 2){
+    var y = cyy - amp * Math.sin(phi + phase0 + q * (x2 - px));
+    if (px === x1) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+}
+
+function arrow(x1, x2, y){
+  ctx.strokeStyle = PAL.border2; ctx.fillStyle = PAL.border2; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2 - 8, y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - 9, y - 5); ctx.lineTo(x2 - 9, y + 5); ctx.closePath(); ctx.fill();
+  for (var i = 0; i < 3; i++){                 /* 신호 흐름 점 */
+    var u = ((phi * 0.18 + i / 3) % 1 + 1) % 1;
+    ctx.fillStyle = PAL.accent;
+    ctx.beginPath(); ctx.arc(x1 + u * (x2 - x1 - 10), y, 3, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function roundBox(x, y, w, h, r){
+  if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  var q = compute();
+  var qq = Math.max(0.014, p.w * 0.0035);      /* 화면 파수 [rad/px] */
+  var mag = Math.min(q.lam, 2000);             /* 증폭배율 Xk/F₀ */
+  var s = 26;                                  /* 입력 파형 px 진폭 (F₀=10N 고정 → 상수) */
+  var outPx = Math.min(72, Math.max(s * mag, 1.2));  /* 출력 파형 px 진폭 (정규화·범위 클립) */
+
+  /* ===== 상단: 블록선도 ===== */
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(18, bandT, W - 36, bandB - bandT);
+
+  /* 입력/출력 패널 */
+  [[inL, inR], [outL, outR]].forEach(function(pr){
+    ctx.fillStyle = PAL.surface3;
+    ctx.fillRect(pr[0], cy - HH, pr[1] - pr[0], HH * 2);
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pr[0], cy); ctx.lineTo(pr[1], cy); ctx.stroke(); ctx.setLineDash([]);
+  });
+  drawWave(inL, inR, cy, s, 0, qq, PAL.low);
+  drawWave(outL, outR, cy, outPx, -q.theta, qq, PAL.high);
+
+  ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillStyle = PAL.low;  ctx.fillText('입력 F(t) = F₀ sin ωt', (inL + inR) / 2, 46);
+  ctx.fillStyle = PAL.high; ctx.fillText('출력 x(t) = X sin(ωt − θ)', (outL + outR) / 2, 46);
+  ctx.font = '12px ' + FONT; ctx.fillStyle = PAL.faint;
+  ctx.fillText('(진폭 보기용 정규화)', (outL + outR) / 2, 64);
+
+  ctx.font = '13px ' + MONO; ctx.fillStyle = PAL.muted;
+  ctx.fillText('F₀ = ' + F0 + ' N', (inL + inR) / 2, 256);
+  ctx.fillStyle = q.diverge ? PAL.bad : PAL.text;
+  ctx.fillText(q.diverge ? 'X → ∞ (비감쇠 공진!)' :
+    'X = ' + fmtH(q.X) + ' m · 피크 ' + (q.theta / Math.max(p.w, 1e-9)).toFixed(3) + ' s 늦음',
+    (outL + outR) / 2, 256);
+
+  /* 화살표 */
+  arrow(inR, bx1, cy);
+  arrow(bx2, outL, cy);
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
+  ctx.fillText('F(s)', (inR + bx1) / 2, cy - 16);
+  ctx.font = 'bold 12.5px ' + FONT; ctx.fillStyle = PAL.accent;
+  ctx.fillText('× H(jω)', (bx2 + outL) / 2, cy - 34);
+  ctx.font = '12.5px ' + FONT;
+  ctx.fillText('위상 −θ', (bx2 + outL) / 2, cy - 16);
+
+  /* 블록 H(s) */
+  ctx.fillStyle = PAL['accent-soft']; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2;
+  roundBox(bx1, by1, bx2 - bx1, by2 - by1, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 20px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('H(s) =', 430, 162);
+  ctx.textAlign = 'center'; ctx.font = 'bold 17px ' + FONT;
+  ctx.fillText('1', 492, 142);
+  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(440, 154); ctx.lineTo(546, 154); ctx.stroke();
+  ctx.font = '16px ' + FONT;
+  ctx.fillText('ms² + cs + k', 493, 179);
+
+  ctx.font = '13px ' + MONO; ctx.fillStyle = PAL.muted;
+  ctx.fillText('= 1/(' + p.m.toFixed(1) + 's² + ' + p.c.toFixed(1) + 's + ' + p.k.toFixed(0) + ')', (bx1 + bx2) / 2, 224);
+  ctx.font = '13px ' + FONT; ctx.fillStyle = PAL.accent;
+  ctx.fillText('s = jω 대입 → H(jω) = 1/[(k−mω²) + cωj]', (bx1 + bx2) / 2, 246);
+
+  /* ===== 하단: |H(jω)| 크기 곡선 (log-y) ===== */
+  var wLo = 0.3, wHi = 31, N = 300;
+  var vals = [], lams = [];
+  var lgMin = Infinity, lgMax = -Infinity, i, w;
+  for (i = 0; i <= N; i++){
+    w = wLo + (wHi - wLo) * i / N;
+    var lg = Math.log10(magAt(w));
+    vals.push([w, lg]);
+    lams.push([w, Math.log10(lamAt(w, q.wn, q.zeta))]);
+    if (lg < lgMin) lgMin = lg;
+    if (lg > lgMax) lgMax = lg;
+  }
+  lgMin = Math.floor(lgMin); lgMax = Math.ceil(lgMax);
+  if (lgMax <= lgMin) lgMax = lgMin + 1;
+  var xw  = function(v){ return plotL + (v - wLo) / (wHi - wLo) * (plotR - plotL); };
+  var ylg = function(v){ return plotB - (Math.min(Math.max(v, lgMin), lgMax) - lgMin) / (lgMax - lgMin) * (plotB - plotT); };
+
+  ctx.font = 'bold 16px ' + FONT; ctx.fillStyle = PAL.accent; ctx.textAlign = 'left';
+  ctx.fillText('|H(jω)| [m/N] — 주파수응답 지도 (log 눈금)', plotL, plotT - 10);
+  ctx.font = 'bold 13px ' + FONT; ctx.fillStyle = PAL.float; ctx.textAlign = 'right';
+  ctx.fillText('오른쪽 축 → Λ = k|H| = Xk/F₀ (1부 무차원 진폭)', plotR - 8, plotT + 18);
+
+  /* 데케이드 격자 */
+  ctx.font = '12.5px ' + FONT;
+  for (var d = lgMin; d <= lgMax; d++){
+    var y = ylg(d);
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+    ctx.fillStyle = PAL.muted; ctx.textAlign = 'right';
+    ctx.fillText('10' + sup(d), plotL - 8, y + 4);
+  }
+  /* 오른쪽 축: Λ = k|H| 눈금 */
+  ctx.textAlign = 'left';
+  [0.01, 0.1, 1, 10, 100].forEach(function(L){
+    var lv = Math.log10(L / p.k);
+    if (lv < lgMin || lv > lgMax) return;
+    var y = ylg(lv);
+    ctx.strokeStyle = PAL.float; ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotR, y); ctx.lineTo(plotR + 5, y); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAL.float;
+    ctx.fillText('Λ=' + L, plotR + 9, y + 4);
+  });
+  /* ω 눈금 */
+  for (w = 0; w <= 30; w += 5){
+    if (w < wLo) continue;
+    var x = xw(w);
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 5); ctx.stroke();
+    ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
+    ctx.fillText(String(w), x, plotB + 20);
+  }
+  ctx.font = '13.5px ' + FONT; ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
+  ctx.fillText('ω [rad/s]', (plotL + plotR) / 2, plotB + 38);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+  /* 1/k 점근선 (준정적 한계 = Λ 1) */
+  var yk = ylg(Math.log10(1 / p.k));
+  ctx.strokeStyle = PAL.muted; ctx.globalAlpha = 0.55; ctx.setLineDash([3, 5]); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(plotL, yk); ctx.lineTo(plotR, yk); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.muted; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('|H| = 1/k (준정적) ⇔ Λ = 1', plotL + 8, yk + 17);
+  ctx.textAlign = 'right';
+  ctx.fillText('고주파: |H| → 1/(mω²) (관성 지배)', plotR - 8, plotT + 58);
+
+  /* 1부 무차원 진폭 곡선 Λ(r)/k — 겹쳐보기 */
+  if (overlay){
+    ctx.strokeStyle = PAL.float; ctx.lineWidth = 6; ctx.globalAlpha = 0.9;
+    ctx.setLineDash([9, 7]); ctx.beginPath();
+    lams.forEach(function(pt, j){
+      var X = xw(pt[0]), Y = ylg(pt[1]);
+      if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+    });
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+
+  /* |H| 곡선 */
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  vals.forEach(function(pt, j){
+    var X = xw(pt[0]), Y = ylg(pt[1]);
+    if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  });
+  ctx.stroke();
+
+  /* 현재 ω 마커 위치 (ωₙ 라벨 배치 판단에 먼저 필요) */
+  var xNow = xw(Math.min(Math.max(p.w, wLo), wHi));
+  var yNow = Math.min(Math.max(ylg(Math.log10(magAt(p.w))), plotT + 8), plotB - 3);
+
+  /* ωₙ 표시 */
+  if (q.wn >= wLo && q.wn <= wHi){
+    var xn = xw(q.wn);
+    ctx.strokeStyle = PAL.ok; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(xn, plotT); ctx.lineTo(xn, plotB); ctx.stroke(); ctx.setLineDash([]);
+    /* 마커가 곡선 꼭대기에 붙으면 라벨을 한 줄 아래로 내려 겹침 방지 */
+    ctx.fillStyle = PAL.ok; ctx.font = 'bold 12.5px ' + FONT;
+    var nLbl = 'ωₙ (r=1)', nLW = ctx.measureText(nLbl).width;
+    var nToR = (xn + 11 + nLW) < 560;                  /* 우측 상단 라벨과 충돌 회피 */
+    ctx.textAlign = nToR ? 'left' : 'right';
+    /* 점선·현재 ω 마커와 겹치지 않도록 선 옆으로 밀어 그린다 */
+    ctx.fillText(nLbl, xn + (nToR ? 11 : -11), plotT + 14);
+  }
+  ctx.strokeStyle = PAL.text; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(xNow, plotT); ctx.lineTo(xNow, plotB); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(xNow, yNow, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = PAL['plot-bg']; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(xNow, yNow, 6, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = 'bold 12.5px ' + FONT;
+  var nowTxt = '현재 ω = ' + p.w.toFixed(1);
+  var nowW = ctx.measureText(nowTxt).width;
+  var toRight = xNow <= plotR - 120;
+  var nx = xNow + (toRight ? 10 : -10 - nowW);
+  ctx.fillStyle = PAL['plot-bg'];                /* 곡선 위 겹침 방지용 배경 칩 */
+  ctx.fillRect(nx - 4, plotB - 25, nowW + 8, 18);
+  ctx.fillStyle = PAL.text; ctx.textAlign = 'left';
+  ctx.fillText(nowTxt, nx, plotB - 12);
+
+  /* ===== 수치·판정 ===== */
+  $('magv').textContent = q.diverge ? '→ ∞' : fmtH(q.magH);
+  $('lamv').textContent = q.diverge ? '→ ∞' : fmtL(q.lam);
+  $('xv').textContent   = q.diverge ? '발산' : fmtH(q.X) + ' m';
+  $('thv').textContent  = (q.theta * 180 / Math.PI).toFixed(1) + '°';
+  $('rv').textContent   = q.r.toFixed(2);
+  $('zev').textContent  = q.zeta.toFixed(3);
+  $('wnmini').innerHTML = 'ωₙ = <b>' + q.wn.toFixed(2) + '</b> rad/s · 입력 진폭 F₀ = 10 N 고정';
+
+  var vd = $('verdict');
+  var dr = Math.abs(q.r - 1);
+  if (dr < 0.15){
+    if (q.zeta < 1e-6){
+      vd.className = 'verdict bad';
+      vd.innerHTML = '⚠ 비감쇠 공진 (r≈1, ζ=0) — 분모→0, 출력 <b>발산</b>. 감쇠 c를 올려 보세요';
+    } else {
+      vd.className = 'verdict mid';
+      vd.innerHTML = '△ 공진 영역 (r≈1) — 실수부 (k−mω²)≈0 → <b>감쇠 cω만</b>이 진폭을 막음, θ≈90°';
+    }
+  } else if (dr < 0.4){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ 전이 영역 — ω가 ωₙ에 접근 중, |H|가 <b>피크로 상승</b>하고 위상이 빠르게 변함';
+  } else if (q.r < 1){
+    vd.className = 'verdict good';
+    vd.innerHTML = '○ 준정적 영역 (r≪1) — |H|≈1/k, <b>강성이 지배</b>, 위상≈0° (입·출력 거의 동시)';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '○ 관성 지배 영역 (r≫1) — |H|≈1/(mω²), 출력 미미, 위상→180° (<b>반대 방향</b>)';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('mv').textContent = p.m.toFixed(1);
+  $('cval').textContent = p.c.toFixed(1);
+  $('kv').textContent = p.k.toFixed(0);
+  $('wv').textContent = p.w.toFixed(1);
+  $('m').value = p.m; $('c').value = p.c; $('k').value = p.k; $('w').value = p.w;
+}
+function bind(id, key){
+  $(id).addEventListener('input', function(){
+    p[key] = parseFloat(this.value); syncSpans(); draw();
+  });
+}
+bind('m', 'm'); bind('c', 'c'); bind('k', 'k'); bind('w', 'w');
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var v = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+v[0] - p.m) < 1e-9 && Math.abs(+v[1] - p.c) < 1e-9 &&
+             Math.abs(+v[2] - p.k) < 1e-9 && Math.abs(+v[3] - p.w) < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var v = this.getAttribute('data-p').split(',');
+    p.m = +v[0]; p.c = +v[1]; p.k = +v[2]; p.w = +v[3];
+    syncSpans(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  running = !running;
+  this.textContent = running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', running);
+});
+$('ovl').addEventListener('click', function(){
+  overlay = !overlay;
+  this.classList.toggle('btn-acc', overlay);
+  draw();
+});
+$('reset').addEventListener('click', function(){
+  p = { m:DEF.m, c:DEF.c, k:DEF.k, w:DEF.w }; phi = 0;
+  running = true; overlay = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  $('ovl').classList.add('btn-acc');
+  syncSpans(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (running) phi += 2.2 * dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSpans();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

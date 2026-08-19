@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>샘플링과 에일리어싱 — 2강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:70px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 2강 · 인터랙티브 데모</p>
+  <h1>샘플링과 에일리어싱 — 나이키스트 정리</h1>
+  <p class="lede">5 Hz 사인파를 f<sub>s</sub> = 50 Hz로 샘플링한 상태에서 시작합니다.
+    f<sub>s</sub>를 <b>50 → 12 → 8 → 6</b>으로 낮추며 보라 점선이 언제 회색 원 신호와 갈라지는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  x(t) = sin(2π<b>f</b>t) · 샘플 t<sub>k</sub> = k/<b>f<sub>s</sub></b> ·
+  나이키스트 <b>f<sub>s</sub> ≥ 2f<sub>max</sub></b> ·
+  f<sub>alias</sub> = |f − f<sub>s</sub>·round(f/f<sub>s</sub>)|
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="530"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-meas)"><i></i>연속 원 신호 x(t)</span>
+        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>샘플 점 z<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>샘플로 복원한 겉보기 파형</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>나이키스트 한계 f<sub>s</sub>/2</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>신호 주파수 f (Hz) <span class="value" id="fV">5.0</span></label>
+        <input type="range" id="fS" min="1" max="10" step="0.5" value="5">
+      </div>
+
+      <div class="ctl-box">
+        <label>샘플링 주파수 f<sub>s</sub> (Hz) <span class="value" id="fsV">50.0</span></label>
+        <input type="range" id="fsS" min="2" max="50" step="0.1" value="50">
+      </div>
+
+      <div class="ctl-box">
+        <label>f<sub>s</sub> 프리셋 (f = 5 Hz)</label>
+        <div class="btn-row" style="margin-top:6px">
+          <button id="m50" class="btn">50</button>
+          <button id="m12" class="btn">12</button>
+          <button id="m8" class="btn">8</button>
+          <button id="m6" class="btn">6</button>
+        </div>
+        <div class="btn-row" style="margin-top:7px">
+          <button id="pGood" class="btn">충분 10f</button>
+          <button id="pEdge" class="btn">경계 2f</button>
+          <button id="pBad" class="btn">위반 1.2f</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="hideBtn" class="btn">원 신호 가리기</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">신호 주파수 f</div><div class="v" id="statF" style="color:var(--c-meas)">—</div></div>
+          <div class="stat"><div class="k">샘플링 f<sub>s</sub></div><div class="v" id="statFs" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">나이키스트 한계 f<sub>s</sub>/2</div><div class="v" id="statNyq" style="color:var(--c-true)">—</div></div>
+          <div class="stat"><div class="k">겉보기 f<sub>alias</sub></div><div class="v" id="statAlias">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 한 번 출렁이는 동안 최소 <b>2개의 점</b>은 찍어야 출렁임이 보임 → f<sub>s</sub> ≥ 2f<br>
+        • <b>[원 신호 가리기]</b> — 점만 남기면 가짜 파형이 완벽히 자연스러워 보임<br>
+        • f<sub>s</sub> = f로 맞추면 f<sub>alias</sub> = 0 — 신호가 <b>멈춘 것처럼</b> 보임 (바퀴 착시)<br>
+        • f<sub>s</sub> = 2f는 샘플이 전부 0에 찍힘 → 실무 권장은 <b>2~5배</b><br>
+        • 아래 주파수 축에서 f가 f<sub>s</sub>/2 기준으로 <b>접히는</b> 것을 확인
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 2강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+var T = 2.0;
+var M = { l: 64, r: 28, t: 40 };
+var TW = W - M.l - M.r, TH = 300, YMAX = 1.25;
+var AXIS_Y = 470, STRIP_TOP = 408;
+var state = { f: 5, fs: 50, hide: false };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), bad: cvar('--bad')
+  };
+}
+function tx(t){ return M.l + t / T * TW; }
+function ty(y){ return M.t + TH / 2 - (y / YMAX) * (TH / 2); }
+function aliasSigned(f, fs){ return f - fs * Math.round(f / fs); }
+
+function drawTimePlot(f, fs, r, C){
+  var t, y, i;
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (t = 0; t <= T + 1e-9; t += 0.25){ ctx.beginPath(); ctx.moveTo(tx(t), M.t); ctx.lineTo(tx(t), M.t + TH); ctx.stroke(); }
+  for (y = -1; y <= 1.001; y += 0.5){ ctx.beginPath(); ctx.moveTo(M.l, ty(y)); ctx.lineTo(M.l + TW, ty(y)); ctx.stroke(); }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + TH); ctx.lineTo(M.l + TW, M.t + TH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('x(t)', 16, M.t - 14);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = -1; y <= 1.001; y += 0.5) ctx.fillText(y.toFixed(1), M.l - 9, ty(y) + 4);
+  ctx.textAlign = 'center';
+  for (t = 0; t <= T + 1e-9; t += 0.5) ctx.fillText(t.toFixed(1), tx(t), M.t + TH + 18);
+  ctx.fillStyle = C.muted; ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s) →', M.l + TW, M.t + TH + 34);
+
+  var NPTS = 900;
+  if (!state.hide){
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 3.2; ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    for (i = 0; i <= NPTS; i++){
+      var t1 = i / NPTS * T, y1 = Math.sin(2 * Math.PI * f * t1);
+      if (i === 0) ctx.moveTo(tx(t1), ty(y1)); else ctx.lineTo(tx(t1), ty(y1));
+    }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = C.bad; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'end';
+    ctx.fillText('원 신호 숨김 — 센서가 주는 것은 점뿐입니다', M.l + TW, M.t - 14);
+  }
+
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 2.4; ctx.setLineDash([7, 4]);
+  ctx.beginPath();
+  for (i = 0; i <= NPTS; i++){
+    var t2 = i / NPTS * T, y2 = Math.sin(2 * Math.PI * r * t2);
+    if (i === 0) ctx.moveTo(tx(t2), ty(y2)); else ctx.lineTo(tx(t2), ty(y2));
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  var nSmp = Math.floor(T * fs), k;
+  ctx.strokeStyle = C.avg; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.4;
+  for (k = 0; k <= nSmp; k++){
+    var ts = k / fs, ys = Math.sin(2 * Math.PI * f * ts);
+    ctx.beginPath(); ctx.moveTo(tx(ts), ty(0)); ctx.lineTo(tx(ts), ty(ys)); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = C.avg;
+  var rad = nSmp > 60 ? 2.8 : 3.8;
+  for (k = 0; k <= nSmp; k++){
+    var ts2 = k / fs, ys2 = Math.sin(2 * Math.PI * f * ts2);
+    ctx.beginPath(); ctx.arc(tx(ts2), ty(ys2), rad, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawFreqStrip(f, fs, fAlias, aliased, C){
+  var nyq = fs / 2;
+  var fLim = Math.max(12, nyq + 2, f + 2);
+  function fx(q){ return M.l + q / fLim * TW; }
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('주파수 축 (Hz) — 복원 가능 영역과 나이키스트 한계', M.l, STRIP_TOP - 10);
+
+  ctx.globalAlpha = 0.12; ctx.fillStyle = C.band;
+  ctx.fillRect(fx(0), STRIP_TOP, fx(nyq) - fx(0), AXIS_Y - STRIP_TOP);
+  ctx.globalAlpha = 1;
+  if (fx(nyq) - fx(0) > 150){
+    ctx.fillStyle = C.band; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('복원 가능 (f ≤ fs/2)', (fx(0) + fx(nyq)) / 2, STRIP_TOP + 14);
+  }
+
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(fx(nyq), STRIP_TOP - 4); ctx.lineTo(fx(nyq), AXIS_Y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = fx(nyq) > W - 170 ? 'end' : 'start';
+  ctx.fillText(' fs/2 = ' + nyq.toFixed(1) + ' Hz ', fx(nyq) + (fx(nyq) > W - 170 ? -4 : 4), STRIP_TOP + 30);
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, AXIS_Y); ctx.lineTo(M.l + TW, AXIS_Y); ctx.stroke();
+  var step = fLim <= 15 ? 2 : (fLim <= 30 ? 5 : 10), q;
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  for (q = 0; q <= fLim; q += step){
+    ctx.strokeStyle = C.axis;
+    ctx.beginPath(); ctx.moveTo(fx(q), AXIS_Y); ctx.lineTo(fx(q), AXIS_Y + 4); ctx.stroke();
+    ctx.fillText(String(q), fx(q), AXIS_Y + 16);
+  }
+
+  var xF = fx(f);
+  ctx.fillStyle = C.meas;
+  ctx.beginPath();
+  ctx.moveTo(xF, AXIS_Y - 2); ctx.lineTo(xF - 6, AXIS_Y - 14); ctx.lineTo(xF + 6, AXIS_Y - 14);
+  ctx.closePath(); ctx.fill();
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('f = ' + f.toFixed(1), xF, AXIS_Y - 20);
+
+  if (aliased){
+    var xA = fx(fAlias);
+    ctx.fillStyle = C.alias;
+    ctx.beginPath();
+    ctx.moveTo(xA, AXIS_Y + 2); ctx.lineTo(xA - 6, AXIS_Y + 14); ctx.lineTo(xA + 6, AXIS_Y + 14);
+    ctx.closePath(); ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillText('f_alias = ' + fAlias.toFixed(2), xA, AXIS_Y + 30);
+
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xF, AXIS_Y - 15);
+    ctx.quadraticCurveTo((xF + xA) / 2, STRIP_TOP + 6, xA, AXIS_Y - 4);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = C.alias;
+    ctx.beginPath();
+    ctx.moveTo(xA, AXIS_Y - 2); ctx.lineTo(xA - 4, AXIS_Y - 10); ctx.lineTo(xA + 4, AXIS_Y - 10);
+    ctx.closePath(); ctx.fill();
+    ctx.font = '11px sans-serif';
+    ctx.fillText('접힘 (folding)', (xF + xA) / 2, STRIP_TOP + 18);
+  }
+}
+
+function draw(){
+  var C = palette(), f = state.f, fs = state.fs;
+  var nyq = fs / 2, r = aliasSigned(f, fs), fAlias = Math.abs(r);
+  var aliased = fs < 2 * f - 1e-9;
+
+  ctx.clearRect(0, 0, W, H);
+  drawTimePlot(f, fs, r, C);
+  drawFreqStrip(f, fs, fAlias, aliased, C);
+
+  $('statF').textContent = f.toFixed(1) + ' Hz';
+  $('statFs').textContent = fs.toFixed(1) + ' Hz';
+  $('statNyq').textContent = nyq.toFixed(1) + ' Hz';
+  var aEl = $('statAlias');
+  aEl.textContent = fAlias.toFixed(2) + ' Hz';
+  aEl.style.color = fs > 2 * f + 1e-9 ? 'var(--ok)' : 'var(--bad)';
+
+  var vd = $('verdict'), eps = 1e-9, cls, msg;
+  if (fs > 2 * f + eps){
+    cls = 'good';
+    msg = 'fs = ' + fs.toFixed(1) + ' &gt; 2f = ' + (2 * f).toFixed(1) +
+      ' Hz — 조건 만족. 보라 점선이 회색 원 신호와 일치하며, 샘플만으로 <b>복원 가능</b>합니다. ' +
+      '여유 <b>' + (fs / (2 * f)).toFixed(1) + '배</b> (실무 권장 2~5배).';
+  } else if (Math.abs(fs - 2 * f) <= eps){
+    cls = 'mid';
+    msg = '경계: fs = 2f. 지금 샘플이 모두 사인파의 0점에 찍혀(sin(πk) = 0) <b>진폭·위상을 알 수 없습니다</b>. ' +
+      '2배는 이론적 하한일 뿐입니다.';
+  } else {
+    cls = 'bad';
+    var detail;
+    if (fAlias < 0.005){
+      detail = '겉보기 <b>0 Hz</b> — 샘플이 매번 같은 위상에 찍혀 신호가 <b>멈춘 것처럼</b> 보입니다.';
+    } else {
+      detail = '샘플만 보면 <b>' + fAlias.toFixed(2) + ' Hz</b>인 더 느린 신호처럼 보입니다.' +
+        (r < 0 ? ' 부호도 반전 — 바퀴가 <b>거꾸로 도는</b> 착시와 같은 상황.' : '');
+    }
+    msg = 'fs = ' + fs.toFixed(1) + ' &lt; 2f = ' + (2 * f).toFixed(1) + ' Hz — <b>에일리어싱</b>. ' + detail;
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+function setF(v){ state.f = v; $('fS').value = v; $('fV').textContent = v.toFixed(1); draw(); }
+function setFs(v){
+  v = Math.max(2, Math.min(50, v));
+  state.fs = v; $('fsS').value = v; $('fsV').textContent = v.toFixed(1); draw();
+}
+$('fS').addEventListener('input', function(){ setF(parseFloat(this.value)); });
+$('fsS').addEventListener('input', function(){ setFs(parseFloat(this.value)); });
+$('m50').addEventListener('click', function(){ setF(5); setFs(50); });
+$('m12').addEventListener('click', function(){ setF(5); setFs(12); });
+$('m8').addEventListener('click', function(){ setF(5); setFs(8); });
+$('m6').addEventListener('click', function(){ setF(5); setFs(6); });
+$('pGood').addEventListener('click', function(){ setFs(Math.min(50, state.f * 10)); });
+$('pEdge').addEventListener('click', function(){ setFs(state.f * 2); });
+$('pBad').addEventListener('click', function(){ setFs(Math.round(state.f * 1.2 * 10) / 10); });
+$('hideBtn').addEventListener('click', function(){
+  state.hide = !state.hide;
+  this.textContent = state.hide ? '원 신호 다시 보기' : '원 신호 가리기';
+  this.classList.toggle('on', state.hide);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

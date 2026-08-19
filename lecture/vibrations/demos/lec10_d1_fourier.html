@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L10-D1 · 푸리에 급수 합성기 — 사각파·톱니파</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 10강</p>
+  <h1>푸리에 급수 합성기 <span style="color:var(--high)">— 사각파·톱니파</span></h1>
+  <p class="lede">항 수 <b>N</b>을 늘리며 사인파의 합이 어떻게 목표 파형이 되는지,
+    불연속점의 오버슈트가 왜 사라지지 않는지 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--faint)"></i>목표 파형 F(t)</span>
+          <span><i style="background:var(--accent)"></i>부분합 S(N, t)</span>
+          <span><i style="background:var(--float)"></i>개별 고조파 bₙ sin nt</span>
+          <span><i style="background:var(--low)"></i>1/n 추세선</span>
+          <span><i style="background:var(--high)"></i>오버슈트 피크 (Gibbs)</span>
+        </div>
+        <div class="note-box">
+          • N을 <b>1 → 3 → 5</b>로 올려 보세요 — 3차·5차 항이 붙을 때마다 모서리가 한 단계씩 각져집니다.<br>
+          • 아래 막대: 사각파는 <b>홀수 n만</b>, 톱니파는 <b>모든 n</b>. 두 경우 모두 높이가 <b>1/n</b>로 줄어듭니다.<br>
+          • 불연속점의 <b>오버슈트는 N을 아무리 키워도 ≈9%</b>로 남고 폭만 좁아집니다 (깁스 현상).<br>
+          • <b>고조파 겹쳐보기</b>를 켜면 보라색 사인들이 겹쳐 부분합이 만들어지는 모습이 보입니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="square,1">① 사각파 N=1</button>
+            <button class="btn btn-sm" data-p="square,3">② N=3</button>
+            <button class="btn btn-sm" data-p="square,5">③ N=5</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="square,49">사각파 N=49</button>
+            <button class="btn btn-sm" data-p="sawtooth,8">톱니파 N=8</button>
+            <button class="btn btn-sm" data-p="sawtooth,30">톱니파 N=30</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — ①②③을 차례로 눌러 <b>3·5차 항이 모서리를 만드는 과정</b>을 관찰하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">파형</p>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm btn-acc" id="wsq" style="flex:1">사각파</button>
+            <button class="btn btn-sm" id="wsaw" style="flex:1">톱니파</button>
+          </div>
+          <p class="mini" id="wavedef" style="margin:8px 0 0">T = 2π, ω<sub>T</sub> = 1 rad/s</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">항 개수 N <span class="big-val" id="Nv">8</span></p>
+          <input type="range" id="N" min="1" max="50" step="1" value="8" style="width:100%">
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">기본 진동수 ω<sub>T</sub></div><div class="v acc" id="wt">—</div></div>
+          <div class="stat"><div class="k">평균 a₀/2</div><div class="v lo" id="a0">—</div></div>
+          <div class="stat"><div class="k">최고 고조파</div><div class="v" id="nmax">—</div></div>
+          <div class="stat"><div class="k">0 아닌 항</div><div class="v" id="nnz">—</div></div>
+          <div class="stat"><div class="k">b₁</div><div class="v acc" id="b1">—</div></div>
+          <div class="stat"><div class="k">오버슈트</div><div class="v hi" id="ovs">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" id="playadd">▶ 한 항씩 추가</button>
+            <button class="btn btn-sm" id="harm">고조파 겹쳐보기</button>
+            <button class="btn btn-sm" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 10강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var TWO_PI = Math.PI * 2;
+
+var state = {
+  wave: 'square',   /* 'square' | 'sawtooth' */
+  N: 8,             /* 항 개수 */
+  showHarm: false,  /* 개별 고조파 겹쳐보기 */
+  playing: false,   /* 한 항씩 추가 애니메이션 진행 중 */
+  paused: false,    /* 애니메이션 도중 일시정지 */
+  playN: 1,
+  acc: 0
+};
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 푸리에 계수 ----
+   사각파 : F = +1 on [0,π), −1 on [π,2π) → a₀=0, aₙ=0, bₙ = 4/(nπ) (홀수), 0 (짝수)
+   톱니파 : F = t/(2π) on [0,2π)          → a₀=1 (평균 ½), aₙ=0, bₙ = −1/(πn) (모든 n) */
+function bn(n){
+  if (state.wave === 'square') return (n % 2 === 1) ? 4 / (n * Math.PI) : 0;
+  return -1 / (Math.PI * n);
+}
+function a0half(){ return state.wave === 'square' ? 0 : 0.5; }
+
+function partial(t, N){
+  var s = a0half();
+  for (var n = 1; n <= N; n++){
+    var b = bn(n);
+    if (b !== 0) s += b * Math.sin(n * t);
+  }
+  return s;
+}
+function target(t){
+  var x = t % TWO_PI; if (x < 0) x += TWO_PI;
+  if (state.wave === 'square') return x < Math.PI ? 1 : -1;
+  return x / TWO_PI;
+}
+
+/* ---- 레이아웃 상수 ---- */
+var topL = 62, topR = W - 26, topTop = 48, topBot = 294;      /* 파형 패널 */
+var botL = 62, botR = W - 26, botTop = 360, botBot = 492;     /* 계수 스펙트럼 패널 */
+var tMin = 0, tMax = 2 * TWO_PI;                              /* 2주기 표시 */
+var yMin = -1.45, yMax = 1.45;
+function tx(t){ return topL + (t - tMin) / (tMax - tMin) * (topR - topL); }
+function ty(y){ return topBot - (y - yMin) / (yMax - yMin) * (topBot - topTop); }
+function inPlay(){ return state.playing || state.paused; }
+function currentN(){ return inPlay() ? state.playN : state.N; }
+
+/* ---- 깁스 오버슈트 (부분합에서 수치로 측정) ---- */
+function gibbsInfo(N){
+  var td, jumpTop, jumpMag;
+  if (state.wave === 'square'){ td = Math.PI; jumpTop = 1; jumpMag = 2; }
+  else { td = TWO_PI; jumpTop = 1; jumpMag = 1; }
+  var peak = -Infinity, peakT = td;
+  var win = Math.PI, steps = 600;
+  for (var i = 0; i <= steps; i++){
+    var t = td - win * i / steps;
+    var v = partial(t, N);
+    if (v > peak){ peak = v; peakT = t; }
+  }
+  var over = (peak - jumpTop) / jumpMag;
+  return { td:td, peak:peak, peakT:peakT, jumpTop:jumpTop, over: Math.max(0, over) };
+}
+
+/* ================= 그리기 ================= */
+function drawWavePanel(N){
+  /* 패널 배경 */
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(16, 14, 868, 306);
+
+  /* 제목 */
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  var name = state.wave === 'square' ? '사각파' : '톱니파';
+  ctx.fillText(name + '  F(t) ≈ 부분합 S(N = ' + N + ', t)   ·   가로축 t [rad], 2주기', 24, 36);
+
+  /* 세로 격자 (0, π, 2π, 3π, 4π) */
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  for (var k = 0; k <= 4; k++){
+    var X = tx(k * Math.PI);
+    ctx.beginPath(); ctx.moveTo(X, topTop); ctx.lineTo(X, topBot); ctx.stroke();
+  }
+  /* 가로 기준선 y = ±1 */
+  [1, -1].forEach(function(v){
+    ctx.beginPath(); ctx.moveTo(topL, ty(v)); ctx.lineTo(topR, ty(v)); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  /* 0선 + 틀 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(topL, ty(0)); ctx.lineTo(topR, ty(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(topL, topTop); ctx.lineTo(topL, topBot); ctx.lineTo(topR, topBot); ctx.stroke();
+
+  /* 세로축 눈금값 */
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'right';
+  [[1, '+1'], [0, '0'], [-1, '−1']].forEach(function(p){
+    ctx.fillText(p[1], topL - 8, ty(p[0]) + 4);
+  });
+  /* 가로축 눈금값 */
+  ctx.textAlign = 'center';
+  ['0', 'π', '2π', '3π', '4π'].forEach(function(lb, k){
+    ctx.fillText(lb, tx(k * Math.PI), topBot + 19);
+  });
+
+  var stepsT = 1400, i, t, y, X, Y;
+
+  /* 목표 파형 F(t) — 불연속은 수직선으로 */
+  ctx.strokeStyle = PAL.faint; ctx.lineWidth = 2; ctx.beginPath();
+  var prev = null;
+  for (i = 0; i <= stepsT; i++){
+    t = tMin + (tMax - tMin) * i / stepsT;
+    y = target(t); X = tx(t); Y = ty(y);
+    if (prev === null) ctx.moveTo(X, Y);
+    else if (Math.abs(y - prev) > 0.6){ ctx.lineTo(X, ty(prev)); ctx.lineTo(X, Y); }
+    else ctx.lineTo(X, Y);
+    prev = y;
+  }
+  ctx.stroke();
+
+  /* 개별 고조파 */
+  if (state.showHarm){
+    ctx.globalAlpha = 0.5;
+    if (state.wave === 'sawtooth'){
+      ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.2; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(topL, ty(0.5)); ctx.lineTo(topR, ty(0.5)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    for (var n = 1; n <= N; n++){
+      var b = bn(n);
+      if (b === 0) continue;
+      ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (i = 0; i <= stepsT; i++){
+        t = tMin + (tMax - tMin) * i / stepsT;
+        y = a0half() + b * Math.sin(n * t);
+        X = tx(t); Y = ty(y);
+        if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* 부분합 S(N, t) */
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.beginPath();
+  for (i = 0; i <= stepsT; i++){
+    t = tMin + (tMax - tMin) * i / stepsT;
+    y = partial(t, N); X = tx(t); Y = ty(y);
+    if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  }
+  ctx.stroke();
+
+  /* 오버슈트 피크 표시 */
+  var g = gibbsInfo(N);
+  if (g.over > 0.003){
+    var mx = tx(g.peakT), my = ty(g.peak);
+    ctx.strokeStyle = PAL.high; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx, ty(g.jumpTop)); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.fillStyle = PAL.high;
+    ctx.beginPath(); ctx.arc(mx, my, 5, 0, TWO_PI); ctx.fill();
+    ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText('오버슈트 +' + (g.over * 100).toFixed(1) + '%', Math.min(mx + 10, topR - 150), my - 8);
+  }
+}
+
+/* ---- |bₙ| 막대 스펙트럼 ---- */
+function drawSpectrum(N){
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(16, 328, 868, 208);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('계수 크기 |bₙ|   (색 = 지금 더한 항, 회색 = 아직 안 더한 항)', 24, 350);
+
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(botL, botTop); ctx.lineTo(botL, botBot); ctx.lineTo(botR, botBot); ctx.stroke();
+
+  var total = Math.max(state.N, 1);
+  var bmax = Math.abs(bn(1)) || 1;
+  var plotH = botBot - botTop, plotW = botR - botL;
+  var gap = plotW / (total + 1);
+  var bw = Math.min(16, gap * 0.6);
+  var n, cx, cy;
+
+  /* 1/n 추세선 (포락선 |b₁|/n) — 점이 2개 이상일 때만 */
+  if (total >= 2){
+    ctx.strokeStyle = PAL.low; ctx.lineWidth = 1.8; ctx.setLineDash([5, 4]);
+    ctx.globalAlpha = 0.85; ctx.beginPath();
+    for (n = 1; n <= total; n++){
+      cx = botL + gap * n;
+      cy = botBot - (bmax / n / bmax) * plotH * 0.9;
+      if (n === 1) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = PAL.low; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText('1/n 추세선', botL + gap + 14, botBot - plotH * 0.9 + 2);
+  }
+
+  /* 막대 */
+  for (n = 1; n <= total; n++){
+    var mag = Math.abs(bn(n));
+    cx = botL + gap * n;
+    var h = (mag / bmax) * plotH * 0.9;
+    var active = n <= N;
+    if (mag === 0){
+      ctx.globalAlpha = active ? 0.5 : 0.25;
+      ctx.fillStyle = PAL.faint;
+      ctx.fillRect(cx - bw / 2, botBot - 3, bw, 3);
+      ctx.globalAlpha = 1;
+    } else {
+      if (active){ ctx.fillStyle = PAL.accent; }
+      else { ctx.fillStyle = PAL.faint; ctx.globalAlpha = 0.4; }
+      ctx.fillRect(cx - bw / 2, botBot - h, bw, h);
+      ctx.globalAlpha = 1;
+    }
+    if (total <= 20 || n === 1 || n % 5 === 0){
+      ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
+      ctx.fillText(n, cx, botBot + 16);
+    }
+  }
+  ctx.fillStyle = PAL.muted; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('고조파 차수 n →', botR, botBot + 34);
+}
+
+/* ---- 판독값 ---- */
+function fmtSigned(v, d){ return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d); }
+
+function updateStats(N){
+  var g = gibbsInfo(N);
+  var nnz = state.wave === 'square' ? Math.ceil(N / 2) : N;
+  $('wt').textContent  = '1.0 rad/s';
+  $('a0').textContent  = a0half().toFixed(2);
+  $('nmax').textContent = 'n = ' + N;
+  $('nnz').textContent = nnz + '개';
+  $('b1').textContent  = fmtSigned(bn(1), 3);
+  $('ovs').textContent = '+' + (g.over * 100).toFixed(1) + '%';
+  $('Nv').textContent  = N;
+
+  var wd = $('wavedef');
+  if (state.wave === 'square') wd.innerHTML = 'F(t) = ±1, T = 2π · bₙ = 4/(nπ) — <b>홀수 n만</b>';
+  else wd.innerHTML = 'F(t) = t/2π, T = 2π · a₀/2 = ½, bₙ = −1/(πn) — <b>모든 n</b>';
+
+  var pct = (g.over * 100).toFixed(1);
+  var v = $('verdict');
+  if (N <= 2){
+    v.className = 'verdict mid';
+    v.innerHTML = '△ N = ' + N + ' — 기본파 위주라 <b>아직 사인파</b>. 모서리가 없습니다';
+  } else if (N <= 5){
+    v.className = 'verdict mid';
+    v.innerHTML = '△ N = ' + N + ' — <b>3·5차 항</b>이 붙으며 모서리가 서기 시작 (오버슈트 +' + pct + '%)';
+  } else if (N <= 12){
+    v.className = 'verdict mid';
+    v.innerHTML = '△ N = ' + N + ' — 수렴 진행 중, 오버슈트 <b>+' + pct + '%</b>가 뚜렷';
+  } else {
+    v.className = 'verdict good';
+    v.innerHTML = '✓ N = ' + N + ' — 잘 근사됨. 오버슈트는 <b>+' + pct + '%</b>로 남고 폭만 좁아짐';
+  }
+  markPreset();
+}
+
+/* ---- 메인 프레임 ---- */
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  var N = currentN();
+  drawWavePanel(N);
+  drawSpectrum(N);
+  updateStats(N);
+}
+
+/* ================= 컨트롤 ================= */
+function setWave(w){
+  state.wave = w;
+  $('wsq').classList.toggle('btn-acc', w === 'square');
+  $('wsaw').classList.toggle('btn-acc', w === 'sawtooth');
+}
+$('wsq').addEventListener('click', function(){ setWave('square'); stopPlay(); draw(); });
+$('wsaw').addEventListener('click', function(){ setWave('sawtooth'); stopPlay(); draw(); });
+
+$('N').addEventListener('input', function(){
+  state.N = parseInt(this.value, 10);
+  if (state.paused) stopPlay();                                   /* 멈춘 상태에서 손대면 해제 */
+  else if (state.playing && state.playN > state.N) state.playN = state.N;
+  draw();
+});
+
+$('harm').addEventListener('click', function(){
+  state.showHarm = !state.showHarm;
+  this.textContent = state.showHarm ? '고조파 숨기기' : '고조파 겹쳐보기';
+  this.classList.toggle('btn-acc', state.showHarm);
+  draw();
+});
+
+$('playadd').addEventListener('click', function(){
+  if (state.playing){                 /* 진행 중 → 일시정지 (현재 항 수에서 멈춤) */
+    state.playing = false; state.paused = true;
+    this.textContent = '▶ 이어서'; this.classList.remove('btn-acc');
+    draw();
+    return;
+  }
+  if (!state.paused){ state.playN = 1; state.acc = 0; }   /* 처음부터 / 이어서 */
+  state.playing = true; state.paused = false;
+  this.textContent = '⏸ 일시정지'; this.classList.add('btn-acc');
+  startLoop();
+  draw();
+});
+
+function stopPlay(){
+  state.playing = false; state.paused = false; state.playN = 1; state.acc = 0;
+  $('playadd').textContent = '▶ 한 항씩 추가';
+  $('playadd').classList.remove('btn-acc');
+}
+function endPlay(){                   /* 마지막 항까지 도달 */
+  state.playing = false; state.paused = false; state.acc = 0;
+  state.playN = state.N;
+  $('playadd').textContent = '▶ 한 항씩 추가';
+  $('playadd').classList.remove('btn-acc');
+}
+
+$('reset').addEventListener('click', function(){
+  state.N = 8; state.showHarm = false;
+  $('N').value = 8;
+  setWave('square');
+  $('harm').textContent = '고조파 겹쳐보기'; $('harm').classList.remove('btn-acc');
+  stopPlay();
+  draw();
+});
+
+/* ---- 프리셋 ---- */
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = (p[0] === state.wave) && (+p[1] === state.N) && !inPlay();
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    setWave(p[0]);
+    state.N = parseInt(p[1], 10);
+    $('N').value = state.N;
+    stopPlay();
+    draw();
+  });
+});
+
+/* ---- rAF 루프 (1개, 애니메이션 중에만 돈다) ---- */
+var rafId = 0, last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+  last = now;
+  if (!state.playing){ rafId = 0; return; }
+  state.acc += dt;
+  if (state.acc > 0.28){            /* 약 0.28초마다 한 항씩 */
+    state.acc = 0;
+    state.playN++;
+    if (state.playN >= state.N) endPlay();
+  }
+  draw();
+  if (state.playing) rafId = requestAnimationFrame(loop); else rafId = 0;
+}
+function startLoop(){ if (!rafId){ last = 0; rafId = requestAnimationFrame(loop); } }
+
+setWave('square');
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기계진동학 인터랙티브 데모 — 전체 목록</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+<style>
+/* index 전용 */
+.lec-block{margin:0 0 26px}
+.lec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 12px;
+  padding-bottom:8px;border-bottom:1px solid var(--border)}
+.lec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 11px;border-radius:8px;white-space:nowrap}
+.lec-name{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:900px){.dgrid{grid-template-columns:1fr}}
+a.dcard{display:block;text-decoration:none;color:inherit;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);
+  transition:transform .12s,border-color .12s,background .12s}
+a.dcard:hover{transform:translateY(-2px);border-color:var(--accent);background:var(--accent-soft)}
+.dcard .dn{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.06em;margin-bottom:7px}
+.dcard .dt{font-size:15px;font-weight:700;line-height:1.45}
+.dcard .dgo{margin-top:11px;font-size:12.5px;font-weight:800;color:var(--accent)}
+.exam{background:var(--surface2);border:1px dashed var(--border2);border-radius:12px;
+  padding:12px 18px;color:var(--muted);font-size:14px;font-weight:700;margin:0 0 26px}
+</style>
+
+<header class="hero wrap wide" style="padding-top:32px">
+  <p class="eyebrow">공주대학교 기계공학전공 · 2026-2학기 · 이찬규</p>
+  <h1>기계진동학 인터랙티브 데모</h1>
+  <p class="lede">강의에서 배운 개념을 <b>직접 움직여 보는</b> 시뮬레이터 모음입니다.
+    각 카드를 누르면 새 탭에서 열리고, 개념 설명과 문제 풀이는 강의자료에 있습니다.</p>
+</header>
+
+<main class="wrap wide">
+  <div id="root"></div>
+</main>
+
+<footer>
+  총 <b id="count">0</b>개 · 외부 의존성 없이 브라우저에서 바로 실행됩니다.
+</footer>
+
+<script>
+(function(){
+"use strict";
+var LEC = {
+  1:'강의 소개 · 기계진동학 개요', 2:'자유진동과 조화운동', 3:'점성감쇠와 에너지 방법',
+  4:'강성과 진동응답 설계', 5:'조화가진응답', 6:'복소수응답법과 전달함수법',
+  7:'바닥가진과 회전불균형', 9:'임펄스 응답함수', 10:'임의(주기)입력 응답',
+  11:'라플라스 변환법', 12:'2자유도 시스템', 13:'모드해석', 14:'진동흡진기와 응용'
+};
+/* 현재 강의자료에서 참조하지 않는 데모는 demos/backup/ 으로 옮기고 이 목록에서 뺐다.
+   (backup/lec01_d1_energy.html — 에너지 교환 진동기,
+    backup/lec14_d3_onoff.html  — 흡진기 ON/OFF 비포 애프터) */
+var DEMOS = [
+  {lec:1, file:'lec01/lec01_d1_dof.html',         title:'1자유도 3가지 예제'},
+  {lec:1, file:'lec01/lec01_d2_natfreq.html',     title:'고유진동수 ωₙ 탐험기'},
+  {lec:2, file:'lec02/lec02_d1_initcond.html',    title:'초기조건 → 진폭·위상 (사분면 함정)'},
+  {lec:2, file:'lec02/lec02_d2_phase.html',       title:'변위·속도·가속도 위상관계'},
+  {lec:2, file:'lec02/lec02_d3_rms.html',         title:'평균·평균제곱·RMS'},
+  {lec:3, file:'lec03/lec03_d1_damping.html',     title:'감쇠비 ζ 탐험기: 부족·임계·과도'},
+  {lec:3, file:'lec03/lec03_d2_settling.html',    title:'정착시간 Ts = 4/(ζωₙ)'},
+  {lec:3, file:'lec03/lec03_d3_energy.html',      title:'에너지 방법: Tmax = Umax'},
+  {lec:4, file:'lec04/lec04_d1_stiffness.html',   title:'실제 부품 강성 계산기'},
+  {lec:4, file:'lec04/lec04_d2_springs.html',     title:'직렬 vs 병렬 등가강성'},
+  {lec:4, file:'lec04/lec04_d3_design.html',      title:'설계 미션: 허용 변위 안에 넣기'},
+  {lec:5, file:'lec05/lec05_d1_beat.html',        title:'맥놀이(Beat) 관찰기'},
+  {lec:5, file:'lec05/lec05_d2_resonance.html',   title:'공진 — 발산과 감쇠의 구원'},
+  {lec:5, file:'lec05/lec05_d3_transient.html',   title:'과도응답 vs 정상상태응답'},
+  {lec:6, file:'lec06/lec06_d1_frf.html',         title:'무차원 진폭·위상 FRF 탐험기'},
+  {lec:6, file:'lec06/lec06_d2_phasor.html',      title:'복소평면 페이저 — 회전 벡터로 보는 응답'},
+  {lec:6, file:'lec06/lec06_d3_transfer.html',    title:'전달함수 H(s) — 입력→블록→출력'},
+  {lec:7, file:'lec07/lec07_d1_transmissibility.html', title:'전달률 탐험기 — r=√2의 경계'},
+  {lec:7, file:'lec07/lec07_d2_car.html',         title:'노면 주행 자동차 — 속도와 승차감'},
+  {lec:7, file:'lec07/lec07_d3_unbalance.html',   title:'회전불균형 — 세탁기 탈수의 물리'},
+  {lec:9, file:'lec09_d1_impulse.html',           title:'임펄스 응답함수 h(t)'},
+  {lec:9, file:'lec09_d2_convolution.html',       title:'컨벌루션 적분 — 미소 임펄스의 합'},
+  {lec:9, file:'lec09_d3_step.html',              title:'계단·펄스 응답 — 오버슈트와 정착'},
+  {lec:10,file:'lec10_d1_fourier.html',           title:'푸리에 급수 합성기 — 사각파·톱니파'},
+  {lec:10,file:'lec10_d2_spectrum.html',          title:'파형 ↔ 스펙트럼 대응'},
+  {lec:10,file:'lec10_d3_harmonic.html',          title:'고조파 공진 — 사각파가 시스템을 흔들 때'},
+  {lec:11,file:'lec11_d1_splane.html',            title:'s-평면 극점 ↔ 시간응답'},
+  {lec:11,file:'lec11_d2_responses.html',         title:'변환표 8번 vs 9번 — 임펄스형과 계단형'},
+  {lec:11,file:'lec11_d3_timeshift.html',         title:'시간이동 정리 — t=π에서 오는 임펄스'},
+  {lec:12,file:'lec12_d1_modeshape.html',         title:'모드형상 시뮬레이터 — 동상과 역상'},
+  {lec:12,file:'lec12_d2_eigen.html',             title:'특성방정식 실시간 계산기'},
+  {lec:12,file:'lec12_d3_superposition.html',     title:'모드 중첩 — 초기조건이 정하는 배합비'},
+  {lec:13,file:'lec13_d1_modalcoord.html',        title:'모드좌표 vs 물리좌표 — 얽힘이 풀리는 순간'},
+  {lec:13,file:'lec13_d2_orthogonality.html',     title:'직교성과 정규화 — SᵀMS=I 검증기'},
+  {lec:13,file:'lec13_d3_workflow.html',          title:'모드해석 5단계 워크스루'},
+  {lec:14,file:'lec14_d1_tuning.html',            title:'흡진기 조정하기: X=0 조건'},
+  {lec:14,file:'lec14_d2_safeband.html',          title:'무차원 설계 지도 — 새 공진과 안전대역'}
+];
+var EXAMS = { 8:'중간고사 (1~7강)', 15:'기말고사 (9~14강)' };
+
+var root = document.getElementById('root');
+var byLec = {};
+DEMOS.forEach(function(d){ (byLec[d.lec] = byLec[d.lec] || []).push(d); });
+
+function el(tag, cls, txt){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt != null) e.textContent = txt;
+  return e;
+}
+
+for (var n = 1; n <= 15; n++){
+  if (EXAMS[n]){
+    var ex = el('div', 'exam', n + '주차 — ' + EXAMS[n]);
+    root.appendChild(ex);
+    continue;
+  }
+  if (!byLec[n]) continue;
+  var block = el('div', 'lec-block');
+  var head = el('div', 'lec-head');
+  head.appendChild(el('span', 'lec-num', n + '강'));
+  head.appendChild(el('span', 'lec-name', LEC[n] || ''));
+  block.appendChild(head);
+
+  var grid = el('div', 'dgrid');
+  byLec[n].forEach(function(d, i){
+    var a = document.createElement('a');
+    a.className = 'dcard';
+    a.href = './' + d.file;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.appendChild(el('div', 'dn', '데모 ' + (i + 1)));
+    a.appendChild(el('div', 'dt', d.title));
+    a.appendChild(el('div', 'dgo', '열기 →'));
+    grid.appendChild(a);
+  });
+  block.appendChild(grid);
+  root.appendChild(block);
+}
+document.getElementById('count').textContent = DEMOS.length;
+})();
+</script>
+</body>
+</html>
+

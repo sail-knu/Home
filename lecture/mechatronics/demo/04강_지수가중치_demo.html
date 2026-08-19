@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지수 가중치 (1−α)·α^m — 4강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 4강 · 인터랙티브 데모</p>
+  <h1>지수 가중치 — 과거 측정은 얼마나 반영되나</h1>
+  <p class="lede">막대 하나가 <b>m스텝 전 측정의 가중치</b>입니다. <b>α</b>와 이동평균 창 <b>N</b>을 움직여 두 가중 방식의 모양을 비교하세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  x̄<sub>k</sub> = (1−α)x<sub>k</sub> + α(1−α)x<sub>k−1</sub> + α<sup>2</sup>(1−α)x<sub>k−2</sub> + ⋯
+  &nbsp;→&nbsp; m스텝 전 가중치 <b>(1−α)·α<sup>m</sup></b>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">유효 창 ≈ 1/(1−α)</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>LPF 가중치 (1−α)·α<sup>m</sup></span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>이동평균 균일 가중 1/N</span>
+        <span class="lg" style="color:var(--c-band)"><i class="d"></i>유효 창 ≈ 1/(1−α)</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>과거 가중치 α <span class="value" id="aV">0.80</span></label>
+        <input type="range" id="aS" min="0.50" max="0.98" step="0.01" value="0.80">
+      </div>
+
+      <div class="btn-row">
+        <button id="p07" class="btn">α = 0.7</button>
+        <button id="p08" class="btn">α = 0.8</button>
+        <button id="p09" class="btn">α = 0.9</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>이동평균 창 크기 N <span class="value" id="nV">10</span></label>
+        <input type="range" id="nS" min="2" max="25" step="1" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button id="maBtn" class="btn on">이동평균 비교: 켜짐</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">m = 0 가중치 (1−α)</div><div class="v" id="w0V" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">m ≤ 24 가중치 합</div><div class="v" id="sumV" style="color:var(--ok)">—</div></div>
+          <div class="stat"><div class="k">유효 창 1/(1−α)</div><div class="v" id="effV" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">반감 스텝 ln0.5/lnα</div><div class="v" id="halfV">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • α를 키우면 꼬리가 길어짐 — 오래 기억<br>
+        • 유효 창 ≈ 1/(1−α), α = 0.9면 10<br>
+        • 이동평균은 창 안 1/N, 창 밖 0<br>
+        • LPF는 <b>전체 과거에, 최근일수록 크게</b><br>
+        • 가중치 총합 1 → 출력은 가중평균
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 4강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 66, r: 28, t: 44, b: 58 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var MMAX = 24;   /* 표시할 최대 m (m = 0..24, 막대 25개) */
+var state = { alpha: 0.80, N: 10, showMA: true };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    avg: cvar('--c-avg'), band: cvar('--c-band'), alias: cvar('--c-alias')
+  };
+}
+
+function slotX(m){ return M.l + (m + 0.5) * (plotW / (MMAX + 1)); }
+
+function draw(){
+  var C = palette();
+  var A = state.alpha, N = state.N, showMA = state.showMA, m, y;
+  function wOf(mm){ return (1 - A) * Math.pow(A, mm); }   /* m스텝 전 가중치 */
+  var sum25 = 1 - Math.pow(A, MMAX + 1);                  /* m=0..24 부분합 */
+  var eff = 1 / (1 - A);                                  /* 유효 창 */
+  var halfStep = Math.log(0.5) / Math.log(A);             /* 가중치 반감 스텝 */
+  var sw = plotW / (MMAX + 1);
+  var yMax = Math.max(1 - A, showMA ? 1 / N : 0) * 1.18;
+  function Y(v){ return M.t + plotH - (v / yMax) * plotH; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = yMax > 0.4 ? 0.1 : (yMax > 0.2 ? 0.05 : (yMax > 0.08 ? 0.02 : 0.01));
+  for (y = yStep; y <= yMax; y += yStep){
+    ctx.beginPath(); ctx.moveTo(M.l, Y(y)); ctx.lineTo(M.l + plotW, Y(y)); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('가중치', 14, M.t - 16);
+  ctx.textAlign = 'end';
+  ctx.fillText('m 스텝 전 →   (m = 0이 지금 측정)', W - M.r, H - 16);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = 0; y <= yMax; y += yStep) ctx.fillText(y.toFixed(2), M.l - 8, Y(y) + 4);
+  ctx.textAlign = 'center';
+  for (m = 0; m <= MMAX; m += 2) ctx.fillText(String(m), slotX(m), M.t + plotH + 18);
+
+  /* 이동평균 균일 가중 막대 */
+  if (showMA){
+    ctx.fillStyle = C.alias;
+    var hMA = (1 / N) / yMax * plotH;
+    for (m = 0; m < N && m <= MMAX; m++){
+      ctx.fillRect(slotX(m) + 0.02 * sw, M.t + plotH - hMA, 0.38 * sw, hMA);
+    }
+  }
+
+  /* LPF 지수 가중 막대 */
+  ctx.fillStyle = C.avg;
+  for (m = 0; m <= MMAX; m++){
+    var h = wOf(m) / yMax * plotH, cx = slotX(m);
+    if (showMA) ctx.fillRect(cx - 0.40 * sw, M.t + plotH - h, 0.38 * sw, h);
+    else        ctx.fillRect(cx - 0.30 * sw, M.t + plotH - h, 0.60 * sw, h);
+  }
+
+  /* 처음 5개 가중치 수치 라벨 */
+  ctx.fillStyle = C.avg; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+  for (m = 0; m <= 4; m++){
+    var hL = wOf(m) / yMax * plotH;
+    var hM = (showMA && m < N) ? (1 / N) / yMax * plotH : 0;
+    ctx.fillText(wOf(m).toFixed(3), slotX(m), M.t + plotH - Math.max(hL, hM) - 6);
+  }
+
+  /* 유효 창 표시선 */
+  ctx.strokeStyle = C.band; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var effClamped = Math.min(eff, MMAX + 0.5);
+  var ex = slotX(effClamped);
+  ctx.beginPath(); ctx.moveTo(ex, M.t + 8); ctx.lineTo(ex, M.t + plotH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.band; ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = eff > MMAX * 0.6 ? 'end' : 'start';
+  ctx.fillText('유효 창 ≈ ' + eff.toFixed(1) + (eff > MMAX + 0.5 ? ' (화면 밖)' : ''),
+    ex + (eff > MMAX * 0.6 ? -8 : 8), M.t + 20);
+
+  $('w0V').textContent = (1 - A).toFixed(3);
+  $('sumV').textContent = sum25.toFixed(4);
+  $('effV').textContent = eff.toFixed(1) + ' 스텝';
+  $('halfV').textContent = halfStep.toFixed(1) + ' 스텝';
+
+  var vd = $('verdict'), cls, msg;
+  var aTxt = A.toFixed(2), w0 = (1 - A).toFixed(3);
+  if (A >= 0.97){
+    cls = 'bad';
+    msg = 'α = ' + aTxt + ' — m = 0 가중치가 ' + w0 + '뿐이라 새 측정이 거의 반영되지 않습니다. 표시된 25개 합도 ' +
+      sum25.toFixed(4) + '로 꼬리가 화면 밖까지 이어집니다.';
+  } else if (A > 0.90){
+    cls = 'mid';
+    msg = 'α = ' + aTxt + ' — 반감 ' + halfStep.toFixed(1) + '스텝, 유효 창 ≈ ' + eff.toFixed(1) +
+      '스텝. 감소가 완만해 <b>평활은 강하지만 지연이 커지는</b> 쪽입니다.';
+  } else if (A >= 0.70){
+    cls = 'good';
+    msg = 'α = ' + aTxt + ' — m = 0 가중치 ' + w0 + ', 한 칸 과거로 갈 때마다 ×' + aTxt + ' (약 ' +
+      halfStep.toFixed(1) + '스텝마다 절반). 유효 창 ≈ ' + eff.toFixed(1) + '스텝으로 <b>이동평균 N ≈ ' +
+      Math.round(eff) + '</b> 규모입니다.';
+  } else {
+    cls = 'mid';
+    msg = 'α = ' + aTxt + ' — m = 0 가중치가 ' + w0 + '로 커서 새 측정을 크게 반영합니다. 유효 창 ≈ ' +
+      eff.toFixed(1) + '스텝 — <b>반응은 빠르지만 노이즈가 많이 남는</b> 쪽입니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var aS = $('aS');
+function setAlpha(v){
+  state.alpha = v; aS.value = v; $('aV').textContent = v.toFixed(2); draw();
+}
+aS.addEventListener('input', function(){ setAlpha(parseFloat(this.value)); });
+$('p07').addEventListener('click', function(){ setAlpha(0.70); });
+$('p08').addEventListener('click', function(){ setAlpha(0.80); });
+$('p09').addEventListener('click', function(){ setAlpha(0.90); });
+
+$('nS').addEventListener('input', function(){
+  state.N = parseInt(this.value, 10); $('nV').textContent = state.N; draw();
+});
+$('maBtn').addEventListener('click', function(){
+  state.showMA = !state.showMA;
+  this.textContent = state.showMA ? '이동평균 비교: 켜짐' : '이동평균 비교: 꺼짐';
+  this.classList.toggle('on', state.showMA);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>질량–스프링–댐퍼 시뮬레이터 — 6강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 6강 · 인터랙티브 데모</p>
+  <h1>질량–스프링–댐퍼 시뮬레이터</h1>
+  <p class="lede"><b>m·c·k</b>를 움직이고 [▶ 시작]을 누르면 RK4로 적분한 변위 x(t)가 실시간으로 그려집니다. 자유 진동과 계단 힘을 번갈아 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>m ẍ + c ẋ + k x = F(t)</b>
+  &nbsp;→&nbsp; ω<sub>n</sub> = √(k/m), &nbsp;ζ = c / (2√(mk)), &nbsp;정상상태 x<sub>ss</sub> = F/k
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>변위 x(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>정상상태 x<sub>ss</sub> / 평형 0</span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>스프링 k · 댐퍼 c</span>
+        <span class="lg" style="color:var(--c-meas)"><i></i>외력 F</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="modeFree" class="btn on">자유 진동 x<sub>0</sub>=1</button>
+        <button id="modeStep" class="btn">계단 힘 F=10</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>질량 m (kg) <span class="value" id="mV">1.0</span></label>
+        <input type="range" id="mS" min="0.5" max="5" step="0.1" value="1.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>감쇠 c (N·s/m) <span class="value" id="cVal">4.0</span></label>
+        <input type="range" id="cS" min="0" max="10" step="0.1" value="4.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>강성 k (N/m) <span class="value" id="kVal">25</span></label>
+        <input type="range" id="kS" min="5" max="100" step="1" value="25">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="pUnder" class="btn">부족감쇠</button>
+        <button id="pCrit" class="btn">임계감쇠</button>
+        <button id="pOver" class="btn">과감쇠</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">자연 진동수 ω<sub>n</sub></div><div class="v" id="wnV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v" id="zeV">—</div></div>
+          <div class="stat"><div class="k">분류</div><div class="v" id="clV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">정상상태 x<sub>ss</sub> = F/k</div><div class="v" id="xssV" style="color:var(--c-true)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • c를 키우면 ζ가 커져 진동이 빨리 잦아듦<br>
+        • 0&lt;ζ&lt;1 출렁 · ζ=1 임계 · ζ&gt;1 안 출렁<br>
+        • m·k만 ω<sub>n</sub>(빠르기)을 바꾸고 c는 못 바꿈<br>
+        • 계단 힘에서는 항상 x<sub>ss</sub> = F/k에 정착<br>
+        • 같은 ζ라도 ω<sub>n</sub>이 크면 훨씬 빨리 끝남
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 6강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+var X0 = 1.0;      /* 자유 진동 초기 변위 (m) */
+var F0 = 10.0;     /* 계단 힘 (N) */
+var DT = 0.002;    /* RK4 적분 스텝 (s) */
+var SUBSTEPS = 8;  /* 한 프레임당 적분 횟수 → 약 0.016 s 전진 */
+
+var state = { m:1.0, c:4.0, k:25, mode:'free', t:0, x:X0, v:0, running:false, traj:[] };
+
+/* 오른쪽 그래프 영역 */
+var G = { l:470, r:24, t:40, b:66 };
+var gx0 = G.l, gx1 = W - G.r, gy0 = G.t, gy1 = H - G.b;
+var gW = gx1 - gx0, gH = gy1 - gy0;
+var T_WINDOW = 6.0;
+/* 왼쪽 기구도 영역 */
+var MECH = { l:40, r:440, cy:H / 2 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent'), ink: cvar('--accent-ink')
+  };
+}
+
+/* 물리: 외력 / 가속도 a = (F − c v − k x)/m */
+function force(){ return state.mode === 'step' ? F0 : 0; }
+function accel(x, v){ return (force() - state.c * v - state.k * x) / state.m; }
+
+function rk4(dt){
+  var x = state.x, v = state.v;
+  var k1x = v,                  k1v = accel(x, v);
+  var k2x = v + 0.5 * dt * k1v, k2v = accel(x + 0.5 * dt * k1x, v + 0.5 * dt * k1v);
+  var k3x = v + 0.5 * dt * k2v, k3v = accel(x + 0.5 * dt * k2x, v + 0.5 * dt * k2v);
+  var k4x = v + dt * k3v,       k4v = accel(x + dt * k3x, v + dt * k3v);
+  state.x = x + (dt / 6) * (k1x + 2 * k2x + 2 * k3x + k4x);
+  state.v = v + (dt / 6) * (k1v + 2 * k2v + 2 * k3v + k4v);
+  state.t += dt;
+}
+
+function derived(){
+  var wn = Math.sqrt(state.k / state.m);
+  var ze = state.c / (2 * Math.sqrt(state.m * state.k));
+  var xss = F0 / state.k;
+  var cls;
+  if (ze < 0.999) cls = '부족감쇠';
+  else if (ze <= 1.001) cls = '임계감쇠';
+  else cls = '과감쇠';
+  return { wn:wn, ze:ze, xss:xss, cls:cls };
+}
+
+function reset(){
+  state.t = 0; state.v = 0;
+  state.x = state.mode === 'free' ? X0 : 0;
+  state.traj = [{ t:0, x:state.x }];
+  draw();
+}
+
+function yRange(){
+  var d = derived(), lo, hi, i;
+  if (state.mode === 'free'){ lo = -1.15; hi = 1.15; }
+  else { var top = Math.max(2 * d.xss, 0.3); lo = -0.15 * top; hi = top; }
+  for (i = 0; i < state.traj.length; i++){
+    var px = state.traj[i].x;
+    if (px < lo) lo = px;
+    if (px > hi) hi = px;
+  }
+  var pad = (hi - lo) * 0.06 + 1e-6;
+  return { lo: lo - pad, hi: hi + pad };
+}
+function tx(t, tLo, tHi){ return gx0 + (t - tLo) / (tHi - tLo) * gW; }
+function ty(x, lo, hi){ return gy0 + gH - (x - lo) / (hi - lo) * gH; }
+
+function draw(){
+  var C = palette(), d = derived();
+  ctx.clearRect(0, 0, W, H);
+  drawMech(d, C);
+  drawGraph(d, C);
+  updateStats(d);
+  updateVerdict(d);
+}
+
+/* ── 왼쪽: 벽–스프링–질량–댐퍼 기구도 ── */
+function drawMech(d, C){
+  var cy = MECH.cy, wallX = MECH.l + 8;
+  var eq = state.mode === 'step' ? d.xss : 0;
+  var restCenter = MECH.l + 250, scale = 90;   /* 1 m = 90 px */
+  var cx = restCenter + (state.x - eq) * scale;
+  var minC = wallX + 130, maxC = MECH.r - 60;
+  var cxC = Math.max(minC, Math.min(maxC, cx));
+  var blockW = 66, blockH = 92, blockLeft = cxC - blockW / 2, hx, wy;
+
+  /* 바닥 */
+  var floorY = cy + blockH / 2 + 6;
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(wallX, floorY); ctx.lineTo(MECH.r, floorY); ctx.stroke();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (hx = wallX + 12; hx < MECH.r; hx += 14){
+    ctx.beginPath(); ctx.moveTo(hx, floorY); ctx.lineTo(hx - 10, floorY + 9); ctx.stroke();
+  }
+
+  /* 벽 */
+  ctx.fillStyle = C.axis;
+  ctx.fillRect(wallX - 14, cy - 100, 14, 200);
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+  for (wy = cy - 100; wy < cy + 100; wy += 14){
+    ctx.beginPath(); ctx.moveTo(wallX - 14, wy + 14); ctx.lineTo(wallX, wy); ctx.stroke();
+  }
+
+  var springY = cy - 22, damperY = cy + 24;
+  drawSpring(wallX, springY, blockLeft, 11, C);
+  drawDamper(wallX, damperY, blockLeft, C);
+
+  /* 질량 블록 */
+  ctx.fillStyle = C.accent;
+  roundRect(blockLeft, cy - blockH / 2, blockW, blockH, 8);
+  ctx.fill();
+  ctx.fillStyle = C.ink; ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('m', cxC, cy);
+  ctx.textBaseline = 'alphabetic';
+
+  /* 평형 / 정착점 */
+  var eqPx = restCenter;
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(eqPx, cy - blockH / 2 - 22); ctx.lineTo(eqPx, cy + blockH / 2 + 4); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(state.mode === 'step' ? '정착점' : '평형 0', eqPx, cy - blockH / 2 - 28);
+
+  /* 라벨 */
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('스프링 k', (wallX + blockLeft) / 2, springY - 16);
+  ctx.fillText('댐퍼 c', (wallX + blockLeft) / 2, damperY + 26);
+
+  /* 현재 변위 화살표 */
+  if (Math.abs(cxC - eqPx) > 2){
+    var arrY = cy + blockH / 2 + 26;
+    ctx.strokeStyle = C.avg; ctx.fillStyle = C.avg; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(eqPx, arrY); ctx.lineTo(cxC, arrY); ctx.stroke();
+    var dir = cxC >= eqPx ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(cxC, arrY);
+    ctx.lineTo(cxC - dir * 8, arrY - 4);
+    ctx.lineTo(cxC - dir * 8, arrY + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('x = ' + state.x.toFixed(3) + ' m', (eqPx + cxC) / 2, arrY + 18);
+  }
+
+  /* 외력 화살표 (계단 모드) */
+  if (state.mode === 'step'){
+    var fY = cy, fx0 = blockLeft + blockW, fx1 = fx0 + 42;
+    ctx.strokeStyle = C.meas; ctx.fillStyle = C.meas; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(fx0, fY); ctx.lineTo(fx1, fY); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(fx1 + 8, fY); ctx.lineTo(fx1, fY - 5); ctx.lineTo(fx1, fY + 5);
+    ctx.closePath(); ctx.fill();
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText('F = 10 N', fx1 + 12, fY + 4);
+  }
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText(state.mode === 'step' ? '기구도 · 계단 힘 F = 10 N' : '기구도 · 자유 진동 (초기 변위 1 m)', MECH.l, 24);
+}
+
+function drawSpring(x1, y, x2, coils, C){
+  var lead = 12, zx0 = x1 + lead, zx1 = x2 - lead;
+  var zlen = Math.max(4, zx1 - zx0), amp = 12, seg = coils * 2, i;
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y); ctx.lineTo(zx0, y);
+  for (i = 1; i < seg; i++){
+    var px = zx0 + zlen * (i / seg);
+    ctx.lineTo(px, y + ((i % 2 === 1) ? -amp : amp));
+  }
+  ctx.lineTo(zx1, y); ctx.lineTo(x2, y);
+  ctx.stroke();
+}
+
+function drawDamper(x1, y, x2, C){
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 2.2;
+  var bodyX0 = x1 + (x2 - x1) * 0.30, bodyX1 = x1 + (x2 - x1) * 0.60, h = 13;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(bodyX0, y); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bodyX1, y - h); ctx.lineTo(bodyX0, y - h);
+  ctx.lineTo(bodyX0, y + h); ctx.lineTo(bodyX1, y + h);
+  ctx.stroke();
+  var pistonX = bodyX0 + (bodyX1 - bodyX0) * 0.55;
+  ctx.beginPath(); ctx.moveTo(pistonX, y - h + 2); ctx.lineTo(pistonX, y + h - 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pistonX, y); ctx.lineTo(x2, y); ctx.stroke();
+}
+
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ── 오른쪽: x(t) 궤적 ── */
+function drawGraph(d, C){
+  var tHi = Math.max(T_WINDOW, state.t), tLo = tHi - T_WINDOW;
+  var rng = yRange(), lo = rng.lo, hi = rng.hi, y, tt, i;
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  ctx.strokeRect(gx0, gy0, gW, gH);
+
+  var span = hi - lo, yStep;
+  if (span > 6) yStep = 2; else if (span > 3) yStep = 1; else if (span > 1.3) yStep = 0.5; else yStep = 0.25;
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = Math.ceil(lo / yStep) * yStep; y <= hi; y += yStep){
+    var py = ty(y, lo, hi);
+    ctx.strokeStyle = C.grid;
+    ctx.beginPath(); ctx.moveTo(gx0, py); ctx.lineTo(gx1, py); ctx.stroke();
+    ctx.fillText(y.toFixed(2), gx0 - 6, py + 4);
+  }
+  ctx.textAlign = 'center';
+  for (tt = Math.ceil(tLo); tt <= tHi + 1e-9; tt += 1){
+    var px = tx(tt, tLo, tHi);
+    ctx.strokeStyle = C.grid;
+    ctx.beginPath(); ctx.moveTo(px, gy0); ctx.lineTo(px, gy1); ctx.stroke();
+    ctx.fillText(tt.toFixed(0), px, gy1 + 16);
+  }
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('변위 x [m]', gx0, gy0 - 12);
+  ctx.textAlign = 'end';
+  ctx.fillText('시간 t [s] →', gx1, H - 14);
+
+  /* 기준선: 정상상태(강제) 또는 평형 0(자유) */
+  var base = state.mode === 'step' ? d.xss : 0;
+  if (base >= lo && base <= hi){
+    ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+    var by = ty(base, lo, hi);
+    ctx.beginPath(); ctx.moveTo(gx0, by); ctx.lineTo(gx1, by); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText(state.mode === 'step' ? ('정착값 ' + d.xss.toFixed(3) + ' m') : '평형 0', gx0 + 6, by - 6);
+  }
+
+  /* 궤적 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  var started = false;
+  for (i = 0; i < state.traj.length; i++){
+    var p = state.traj[i];
+    if (p.t < tLo - 0.05) continue;
+    var qx = tx(p.t, tLo, tHi), qy = ty(p.x, lo, hi);
+    if (!started){ ctx.moveTo(qx, qy); started = true; } else ctx.lineTo(qx, qy);
+  }
+  ctx.stroke();
+
+  if (state.traj.length){
+    var lp = state.traj[state.traj.length - 1];
+    var lx = tx(lp.t, tLo, tHi), ly = ty(lp.x, lo, hi);
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(lx, ly, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+function updateStats(d){
+  $('wnV').textContent = d.wn.toFixed(2);
+  var zeEl = $('zeV');
+  zeEl.textContent = d.ze.toFixed(3);
+  zeEl.style.color = d.ze < 0.999 ? 'var(--warn)' : (Math.abs(d.ze - 1) <= 0.001 ? 'var(--ok)' : 'var(--accent)');
+  $('clV').textContent = d.cls;
+  $('xssV').textContent = state.mode === 'step' ? (d.xss.toFixed(3) + ' m') : '— (자유)';
+}
+
+function updateVerdict(d){
+  var vd = $('verdict'), cls, msg;
+  var wnS = d.wn.toFixed(2), zeS = d.ze.toFixed(3);
+  if (d.ze < 0.999){
+    cls = 'mid';
+    msg = 'ζ = ' + zeS + ' &lt; 1 → <b>부족감쇠</b>. ω<sub>n</sub> = ' + wnS + ' rad/s로 진동하면서 서서히 잦아듭니다. '
+      + (state.mode === 'step'
+          ? '출렁임이 가라앉으면 x<sub>ss</sub> = ' + d.xss.toFixed(3) + ' m에 정착합니다.'
+          : '진폭이 매 주기 줄며 평형 0으로 수렴합니다.');
+  } else if (Math.abs(d.ze - 1) <= 0.001){
+    cls = 'good';
+    msg = 'ζ = ' + zeS + ' ≈ 1 → <b>임계감쇠</b>. 출렁임 없이 가장 빠르게 '
+      + (state.mode === 'step' ? 'x<sub>ss</sub> = ' + d.xss.toFixed(3) + ' m에' : '평형 0에') + ' 도달합니다.';
+  } else {
+    cls = 'good';
+    msg = 'ζ = ' + zeS + ' &gt; 1 → <b>과감쇠</b>. 진동 없이 느리게 '
+      + (state.mode === 'step' ? 'x<sub>ss</sub> = ' + d.xss.toFixed(3) + ' m로' : '평형 0으로') + ' 접근합니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+var rafId = null;
+function stepFrame(){
+  if (!state.running) return;
+  var i;
+  for (i = 0; i < SUBSTEPS; i++) rk4(DT);
+  state.traj.push({ t:state.t, x:state.x });
+  var cut = state.t - T_WINDOW - 0.2;
+  while (state.traj.length > 2 && state.traj[1].t < cut) state.traj.shift();
+  draw();
+  rafId = requestAnimationFrame(stepFrame);
+}
+
+var startBtn = $('startBtn');
+function setRunning(run){
+  state.running = run;
+  startBtn.textContent = run ? '⏸ 정지' : '▶ 시작';
+  startBtn.classList.toggle('on', run);
+  if (run){
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(stepFrame);
+  } else if (rafId){
+    cancelAnimationFrame(rafId); rafId = null;
+  }
+}
+startBtn.addEventListener('click', function(){ setRunning(!state.running); });
+$('resetBtn').addEventListener('click', function(){ setRunning(false); reset(); });
+
+/* ── 입력 모드 ── */
+var modeFree = $('modeFree'), modeStep = $('modeStep');
+function setMode(mode){
+  state.mode = mode;
+  modeFree.classList.toggle('on', mode === 'free');
+  modeStep.classList.toggle('on', mode === 'step');
+  setRunning(false);
+  reset();
+}
+modeFree.addEventListener('click', function(){ setMode('free'); });
+modeStep.addEventListener('click', function(){ setMode('step'); });
+
+/* ── 슬라이더 ── */
+var mS = $('mS'), cS = $('cS'), kS = $('kS');
+mS.addEventListener('input', function(){ state.m = parseFloat(this.value); $('mV').textContent = state.m.toFixed(1); draw(); });
+cS.addEventListener('input', function(){ state.c = parseFloat(this.value); $('cVal').textContent = state.c.toFixed(1); draw(); });
+kS.addEventListener('input', function(){ state.k = parseInt(this.value, 10); $('kVal').textContent = state.k; draw(); });
+
+/* ── 감쇠 프리셋 (m, c, k) ── */
+function applyPreset(m, c, k){
+  state.m = m; state.c = c; state.k = k;
+  mS.value = m; cS.value = c; kS.value = k;
+  $('mV').textContent = m.toFixed(1);
+  $('cVal').textContent = c.toFixed(1);
+  $('kVal').textContent = k;
+  reset();
+  setRunning(true);
+}
+$('pUnder').addEventListener('click', function(){ applyPreset(1.0, 2.0, 25); });  /* ζ = 0.2 */
+$('pCrit').addEventListener('click', function(){ applyPreset(1.0, 10.0, 25); });  /* ζ = 1.0 */
+$('pOver').addEventListener('click', function(){ applyPreset(1.0, 9.0, 9); });    /* ζ = 1.5 */
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+reset();
+})();
+</script>
+</body>
+</html>

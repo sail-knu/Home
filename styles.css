@@ -212,12 +212,14 @@ button,
 
 .logo-header {
   line-height: 1;
+  font-size: 1.15rem;
 }
 
 .nav-sail {
   display: block;
-  height: 40px;
+  height: 24px;
   width: auto;
+  object-fit: contain;
 }
 
 .logo-mark {
@@ -242,10 +244,10 @@ button,
 
 .univ-seal {
   display: inline-block;
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
-  vertical-align: -8px;
+  vertical-align: -5px;
   flex: none;
 }
 
@@ -355,8 +357,8 @@ button,
 }
 
 .univ-lockup .univ-seal {
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
 }
 
 .hero h1 {
@@ -1028,14 +1030,18 @@ button,
   align-items: center;
 }
 
-a.member-card,
-a.lecture-card-link {
+a.member-card {
   color: inherit;
 }
 
-a.member-card:hover,
-a.lecture-card-link:hover {
+a.member-card:hover {
   border-color: color-mix(in srgb, var(--primary-color) 40%, var(--surface-border));
+}
+
+.lecture-sim-btn {
+  margin-top: 14px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
 }
 
 .member-photo,
@@ -1156,6 +1162,28 @@ a.lecture-card-link:hover {
   max-width: 640px;
 }
 
+.course-wrap-wide {
+  max-width: 960px;
+}
+
+.sim-lec-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.sim-lec-btn {
+  appearance: none;
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--copy-color);
+  font: 600 0.8rem/1.3 "Outfit", "Apple SD Gothic Neo", sans-serif;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
 .sim-nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1167,7 +1195,12 @@ a.lecture-card-link:hover {
   background: var(--surface);
 }
 
-.sim-nav-btn {
+.sim-nav-dense {
+  margin-top: 10px;
+}
+
+.sim-nav-btn,
+.sim-pick-btn {
   appearance: none;
   border: 1px solid var(--surface-border);
   border-radius: 12px;
@@ -1180,7 +1213,11 @@ a.lecture-card-link:hover {
 }
 
 .sim-nav-btn:hover,
-.sim-nav-btn.active {
+.sim-nav-btn.active,
+.sim-lec-btn:hover,
+.sim-lec-btn.active,
+.sim-pick-btn:hover,
+.sim-pick-btn.active {
   color: var(--on-primary);
   background: var(--primary-color);
   border-color: var(--primary-color);
@@ -1252,10 +1289,10 @@ a.lecture-card-link:hover {
 }
 
 .footer-credit .univ-seal {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   margin: 0 4px 0 2px;
-  vertical-align: -8px;
+  vertical-align: -4px;
 }
 
 .contact-details {
@@ -1355,7 +1392,7 @@ a.lecture-card-link:hover {
   .hero h2 { font-size: 1.05rem; }
   .logo-header { font-size: 1.05rem; }
   .logo-mark { width: 18px; height: 18px; }
-  .nav-sail { height: 32px; }
+  .nav-sail { height: 22px; }
   .section { padding: 72px 0 56px; }
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L12-D2 · 특성방정식 실시간 계산기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    color: #e8eef5; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #ffb86c, #ff6b9d);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:2px 10px; margin-top:4px; }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; }
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06); }
+  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group .value { font-size: 17px; font-weight: 600; color: #ffb86c;
+    font-family: "SF Mono", Consolas, monospace; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #ffb86c; }
+  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #c76b2b, #ffb86c);
+    color: #2a1404; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: transform 0.1s; }
+  button:hover { transform: translateY(-1px); }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
+  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-family: "SF Mono", Consolas, monospace; }
+  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .v { font-size: 15px; font-weight: 600; }
+  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
+    background: rgba(255, 184, 108, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #ffb86c; }
+  .poly { font-family: "SF Mono", Consolas, monospace; font-size: 12.5px; color: #dbe7f5;
+    background: rgba(0,0,0,0.28); padding: 10px; border-radius: 6px; line-height: 1.7;
+    word-break: break-all; }
+  .poly b { color: #ffb86c; }
+  .verdict { font-size: 12.5px; line-height: 1.6; padding: 10px 11px; border-radius: 6px;
+    border-left: 3px solid; }
+  .verdict.good { background: rgba(0,184,148,0.12); border-color: #00b894; color: #b6f0c0; }
+  .verdict.mid  { background: rgba(255,184,108,0.12); border-color: #ffb86c; color: #ffe0b8; }
+  .verdict.bad  { background: rgba(255,107,157,0.12); border-color: #ff6b9d; color: #ffc2d6; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧮 특성방정식 실시간 계산기</h1>
+  <div class="subtitle">det(K − λM) = 0 (λ = ω²) 전개 → 두 고유치 λ₁, λ₂ → 고유진동수 ω₁, ω₂</div>
+  <div style="text-align:center;"><span class="tag">기계진동학 12강</span></div>
+
+  <div class="layout" style="margin-top:16px;">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>특성다항식 p(λ)</div>
+        <div class="legend-item"><span class="dot" style="background:#ffb86c"></span>근 λ₁, λ₂ (x축 교차)</div>
+        <div class="legend-item"><span class="dot" style="background:#b6f0c0"></span>1차 모드 u₁</div>
+        <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>2차 모드 u₂</div>
+      </div>
+    </div>
+    <div class="panel controls">
+      <div class="control-group">
+        <label>질량 m₁ <span class="value" id="m1v">9.0</span> kg</label>
+        <input type="range" id="m1" min="0.5" max="12" step="0.1" value="9">
+      </div>
+      <div class="control-group">
+        <label>질량 m₂ <span class="value" id="m2v">1.0</span> kg</label>
+        <input type="range" id="m2" min="0.5" max="12" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>강성 k₁ (벽 스프링) <span class="value" id="k1v">24</span> N/m</label>
+        <input type="range" id="k1" min="0" max="40" step="1" value="24">
+        <div style="font-size:11px; color:#9bb3cc; margin-top:6px;">0으로 두면 강체모드(λ=0) 등장</div>
+      </div>
+      <div class="control-group">
+        <label>강성 k₂ (연결 스프링) <span class="value" id="k2v">3</span> N/m</label>
+        <input type="range" id="k2" min="0" max="40" step="1" value="3">
+      </div>
+      <div class="control-group">
+        <div class="stats">
+          <div class="stat-item"><div class="k">λ₁ = ω₁²</div><div class="v" id="lam1" style="color:#ffb86c">—</div></div>
+          <div class="stat-item"><div class="k">λ₂ = ω₂²</div><div class="v" id="lam2" style="color:#ffb86c">—</div></div>
+          <div class="stat-item"><div class="k">ω₁</div><div class="v" id="w1" style="color:#b6f0c0">—</div></div>
+          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#ff6b9d">—</div></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>특성다항식 계수</label>
+        <div class="poly" id="polytxt">—</div>
+      </div>
+      <div class="control-group">
+        <div class="verdict mid" id="verdict">—</div>
+      </div>
+      <div class="control-group">
+        <div class="button-row">
+          <button id="preset" class="secondary">↺ 기본값 (m₁=9, m₂=1, k₁=24, k₂=3)</button>
+          <button id="rigid" class="secondary">강체 k₁=0</button>
+        </div>
+        <div class="button-row" style="margin-top:8px;">
+          <button id="play" class="toggle-on">⏸ 진동 정지</button>
+          <button id="reset" class="secondary">↺ 초기화</button>
+        </div>
+      </div>
+      <div class="info">
+        <b>관찰 포인트</b><br>
+        • 곡선이 x축과 만나는 <b>두 점</b>이 λ₁, λ₂ — 자유도 수만큼 근이 생깁니다.<br>
+        • <b>연결 스프링 k₂(연성)</b>가 두 근을 밀어냅니다. <b>k₂→0</b>이면 m₂가 자유가 되어 <b>한 근은 0(강체모드)</b>, 다른 근은 <b>k₁/m₁</b>로 갑니다 (k₂/m₂는 실제 근이 아닌 참조값). k₂를 키울 때 간격 변화는 질량비에 따라 다르니 λ₂−λ₁ 값으로 직접 확인.<br>
+        • 부분계 ωₙ²(파선)은 실제 근과 다릅니다 — 반드시 <b>전체 행렬</b>로 풀어야 함.<br>
+        • <b>k₁=0</b>이면 λ₁=0 강체모드 — 두 질량이 같은 방향(u₁=[1,1])으로 함께 이동.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const EPS = 1e-6;
+
+let state = { m1: 9, m2: 1, k1: 24, k2: 3, t: 0, running: true };
+
+const DEFAULT = { m1: 9, m2: 1, k1: 24, k2: 3 };
+const RIGID   = { m1: 9, m2: 1, k1: 0,  k2: 3 };
+
+// ---- physics: characteristic polynomial in λ = ω² ----
+// M = [[m1,0],[0,m2]],  K = [[k1+k2, -k2],[-k2, k2]]
+// det(K - λM) = m1 m2 λ² - (m1 k2 + m2 k1 + m2 k2) λ + k1 k2 = 0
+function solve(s) {
+  const a = s.m1 * s.m2;                                  // λ² 계수
+  const b = -(s.m1 * s.k2 + s.m2 * s.k1 + s.m2 * s.k2);   // λ¹ 계수
+  const c = s.k1 * s.k2;                                  // λ⁰ 계수
+  // 2차 방정식 aλ² + bλ + c = 0 (a>0 항상, 질량>0)
+  const disc = Math.max(0, b * b - 4 * a * c);            // 물리적으로 항상 ≥0, 가드
+  const sq = Math.sqrt(disc);
+  let lam1 = (-b - sq) / (2 * a);   // 작은 근
+  let lam2 = (-b + sq) / (2 * a);   // 큰 근
+  lam1 = Math.max(0, lam1);         // 음수 근은 0으로 클램프(강체모드 방어)
+  lam2 = Math.max(0, lam2);
+  const w1 = Math.sqrt(lam1), w2 = Math.sqrt(lam2);
+  // 고유벡터: (k1+k2 - λ m1) u1 - k2 u2 = 0  →  u1/u2 = k2 / (k1+k2 - λ m1)
+  function eigvec(lam) {
+    const denom = (s.k1 + s.k2) - lam * s.m1;
+    let r; // u1 / u2
+    if (Math.abs(denom) < EPS) {
+      // 1행이 퇴화 → 2행 사용: -k2 u1 + (k2 - λ m2) u2 = 0 → u1/u2 = (k2 - λ m2)/k2
+      r = (Math.abs(s.k2) < EPS) ? 0 : (s.k2 - lam * s.m2) / s.k2;
+    } else {
+      r = s.k2 / denom;
+    }
+    // [u1, u2] = [r, 1] 정규화 (u2=1 기준). 크기 안전 클램프.
+    let u1 = r, u2 = 1;
+    const n = Math.hypot(u1, u2) || 1;
+    return { u1: u1 / n, u2: u2 / n, ratio: r };
+  }
+  return { a, b, c, lam1, lam2, w1, w2, disc,
+           u1: eigvec(lam1), u2: eigvec(lam2) };
+}
+
+// ---- layout regions ----
+const plotL = 60, plotR = W - 24, plotTop = 24, plotBot = 300;
+const plotW = plotR - plotL, plotH = plotBot - plotTop;
+const modeTop = 340, modeBot = H - 20;
+
+function fmt(x, d) {
+  if (!isFinite(x)) return '—';
+  return x.toFixed(d);
+}
+
+function draw() {
+  const s = state, r = solve(s);
+  ctx.clearRect(0, 0, W, H);
+
+  // ===== TOP: p(λ) curve =====
+  // λ 범위: 두 근을 여유있게 포함
+  const lamMax = Math.max(r.lam2 * 1.6, 4, r.lam2 + 2);
+  const xOfLam = lam => plotL + (lam / lamMax) * plotW;
+  const pOf = lam => r.a * lam * lam + r.b * lam + r.c;
+  // p 값 범위 스캔
+  let pMin = Infinity, pMax = -Infinity;
+  const NS = 240;
+  for (let i = 0; i <= NS; i++) {
+    const lam = (i / NS) * lamMax;
+    const p = pOf(lam);
+    if (p < pMin) pMin = p; if (p > pMax) pMax = p;
+  }
+  if (pMax - pMin < EPS) { pMax = pMin + 1; }
+  const pad = (pMax - pMin) * 0.12;
+  pMin -= pad; pMax += pad;
+  if (pMin > 0) pMin = -pMax * 0.15;   // x축이 보이게 보장
+  const yOfP = p => plotBot - ((p - pMin) / (pMax - pMin)) * plotH;
+
+  // 배경 + 축
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(plotL, plotTop, plotW, plotH);
+  const y0 = yOfP(0);  // p=0 라인 (x축)
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(plotL, y0); ctx.lineTo(plotR, y0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.stroke();
+  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';  ctx.fillText('p(λ)', plotL - 40, plotTop + 12);
+  ctx.textAlign = 'right'; ctx.fillText('λ = ω² →', plotR, plotBot + 15);
+  ctx.textAlign = 'left';  ctx.fillText('p = 0', plotL + 4, y0 - 4);
+
+  // λ 눈금
+  ctx.fillStyle = '#7b8da5'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  const tickN = 6;
+  for (let i = 0; i <= tickN; i++) {
+    const lam = (i / tickN) * lamMax;
+    const X = xOfLam(lam);
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X, plotTop); ctx.lineTo(X, plotBot); ctx.stroke();
+    ctx.fillStyle = '#7b8da5';
+    ctx.fillText(lam.toFixed(1), X, plotBot + 15);
+  }
+
+  // 부분계 ωₙ² 파선 (k1/m1, k2/m2) — "부분계는 실제 근이 아님" 강조
+  const sub = [
+    { v: s.k1 / s.m1, label: 'k₁/m₁' },
+    { v: s.k2 / s.m2, label: 'k₂/m₂ (참조)' }
+  ];
+  ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+  sub.forEach(sv => {
+    if (sv.v <= lamMax + EPS && sv.v >= 0) {
+      const X = xOfLam(sv.v);
+      ctx.strokeStyle = 'rgba(155,179,204,0.55)';
+      ctx.beginPath(); ctx.moveTo(X, plotTop + 4); ctx.lineTo(X, plotBot - 4); ctx.stroke();
+      ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(sv.label, X, plotTop + 14);
+    }
+  });
+  ctx.setLineDash([]);
+
+  // 곡선
+  ctx.strokeStyle = '#6dd5ed'; ctx.lineWidth = 2.5; ctx.beginPath();
+  for (let i = 0; i <= NS; i++) {
+    const lam = (i / NS) * lamMax;
+    const X = xOfLam(lam), Y = yOfP(pOf(lam));
+    i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+  }
+  ctx.stroke();
+
+  // 근 마커
+  [ [r.lam1, 'λ₁'], [r.lam2, 'λ₂'] ].forEach(rt => {
+    const X = xOfLam(rt[0]);
+    ctx.fillStyle = '#ffb86c';
+    ctx.beginPath(); ctx.arc(X, y0, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#2a1404'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#ffb86c'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(rt[1] + ' = ' + rt[0].toFixed(3), X, y0 + 22);
+  });
+
+  // ===== BOTTOM: mode shape arrows =====
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(plotL, modeTop, plotW, modeBot - modeTop);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+  ctx.strokeRect(plotL, modeTop, plotW, modeBot - modeTop);
+  ctx.fillStyle = '#9bb3cc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('고유벡터(모드형상) — 각 질량의 진동 방향·상대 크기', plotL + 8, modeTop + 16);
+
+  // 진동 위상 (running이면 sin으로 흔들림, 정지 시 정적 방향 표시)
+  const phase = s.running ? Math.sin(s.t * 1.8) : 1;
+  const halfW = plotW / 2;
+  const modes = [
+    { vec: r.u1, cx: plotL + halfW * 0.5,       col: '#b6f0c0', name: '1차 모드', w: r.w1, lam: r.lam1 },
+    { vec: r.u2, cx: plotL + halfW + halfW*0.5,  col: '#ff6b9d', name: '2차 모드', w: r.w2, lam: r.lam2 }
+  ];
+  const rowY = [ (modeTop + modeBot)/2 - 22, (modeTop + modeBot)/2 + 40 ];
+  const arrowMax = 62;
+
+  modes.forEach(md => {
+    // 구분선
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.beginPath(); ctx.moveTo(plotL + halfW, modeTop + 4); ctx.lineTo(plotL + halfW, modeBot - 4); ctx.stroke();
+    ctx.fillStyle = md.col; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    const isRigid = md.lam < 1e-4;
+    ctx.fillText(md.name + '  ω=' + fmt(md.w, 3) + (isRigid ? ' (강체 λ=0)' : ''), md.cx, modeTop + 34);
+
+    const comps = [ { u: md.vec.u1, label: 'm₁' }, { u: md.vec.u2, label: 'm₂' } ];
+    comps.forEach((cmp, ri) => {
+      const y = rowY[ri];
+      // 질량 블록
+      const bx = md.cx - 130;
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.fillRect(bx, y - 12, 24, 24);
+      ctx.strokeStyle = md.col; ctx.lineWidth = 1.5; ctx.strokeRect(bx, y - 12, 24, 24);
+      ctx.fillStyle = '#c5d4e6'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(cmp.label, bx + 12, y + 4);
+
+      // 화살표: 성분 크기·부호 × 위상
+      const val = cmp.u * phase;              // -1..1 근처
+      const len = val * arrowMax;
+      const ax0 = md.cx + 12;                  // 화살표 기준 x
+      ctx.strokeStyle = md.col; ctx.fillStyle = md.col; ctx.lineWidth = 3;
+      if (Math.abs(len) > 2) {
+        ctx.beginPath(); ctx.moveTo(ax0, y); ctx.lineTo(ax0 + len, y); ctx.stroke();
+        const sgn = Math.sign(len);
+        ctx.beginPath();
+        ctx.moveTo(ax0 + len, y);
+        ctx.lineTo(ax0 + len - sgn * 10, y - 6);
+        ctx.lineTo(ax0 + len - sgn * 10, y + 6);
+        ctx.closePath(); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(ax0, y, 3, 0, Math.PI*2); ctx.fill();
+      }
+      // 성분 값
+      ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('u=' + cmp.u.toFixed(3), ax0 + arrowMax + 12, y + 3);
+    });
+    // 기준 축
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(md.cx + 12, modeTop + 44); ctx.lineTo(md.cx + 12, modeBot - 8); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ===== readouts =====
+  document.getElementById('lam1').textContent = fmt(r.lam1, 3);
+  document.getElementById('lam2').textContent = fmt(r.lam2, 3);
+  document.getElementById('w1').textContent = fmt(r.w1, 3) + ' rad/s';
+  document.getElementById('w2').textContent = fmt(r.w2, 3) + ' rad/s';
+
+  // 다항식 계수 표시 (전개형)
+  const bAbs = Math.abs(r.b);
+  const bSign = r.b < 0 ? '−' : '+';
+  document.getElementById('polytxt').innerHTML =
+    'det(K − λM) = 0 :<br>' +
+    '<b>' + r.a.toFixed(1) + '</b> λ² ' + bSign + ' <b>' + bAbs.toFixed(1) + '</b> λ + <b>' +
+    r.c.toFixed(1) + '</b> = 0<br>' +
+    '<span style="color:#9bb3cc">a=m₁m₂, b=−(m₁k₂+m₂k₁+m₂k₂), c=k₁k₂</span>';
+
+  // 판정 (verdict)
+  const vd = document.getElementById('verdict');
+  const gap = r.lam2 - r.lam1;
+  if (r.lam1 < 1e-4) {
+    vd.className = 'verdict mid';
+    vd.innerHTML = '↔ <b>강체모드</b>: λ₁=0 → ω₁=0. 벽 스프링 k₁=0이라 전체 병진(복원력 0) 방향이 생김. u₁는 두 질량이 같은 부호로 함께 이동.';
+  } else if (s.k2 < 0.5) {
+    vd.className = 'verdict mid';
+    vd.innerHTML = '↔ <b>연결 거의 없음(k₂→0)</b>: m₂가 자유가 되어 한 근은 <b>0(강체모드)</b>, 다른 근은 k₁/m₁=' + (s.k1/s.m1).toFixed(2) +
+      '로 갑니다 (k₂/m₂=' + (s.k2/s.m2).toFixed(2) + '는 실제 근이 아닌 참조값).';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ <b>연성 진동</b>: 근 간격 λ₂−λ₁=' + gap.toFixed(2) +
+      '. 연성(k₂)이 두 근을 부분계 값 ωₙ²에서 밀어내 실제 근과 <b>일치하지 않게</b> 만듭니다 — 반드시 전체 행렬로 풀어야 함. (k₂를 크게 키우면 간격은 결국 커지지만, 질량비에 따라 작은 k₂ 구간에서는 오히려 줄 수도 있으니 위 값으로 직접 확인).';
+  }
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  if (state.running) state.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- controls ----
+function setUI() {
+  document.getElementById('m1').value = state.m1;
+  document.getElementById('m2').value = state.m2;
+  document.getElementById('k1').value = state.k1;
+  document.getElementById('k2').value = state.k2;
+  document.getElementById('m1v').textContent = state.m1.toFixed(1);
+  document.getElementById('m2v').textContent = state.m2.toFixed(1);
+  document.getElementById('k1v').textContent = state.k1.toFixed(0);
+  document.getElementById('k2v').textContent = state.k2.toFixed(0);
+}
+function bind(id, key, span, d) {
+  document.getElementById(id).addEventListener('input', e => {
+    state[key] = parseFloat(e.target.value);
+    document.getElementById(span).textContent = state[key].toFixed(d);
+  });
+}
+bind('m1', 'm1', 'm1v', 1);
+bind('m2', 'm2', 'm2v', 1);
+bind('k1', 'k1', 'k1v', 0);
+bind('k2', 'k2', 'k2v', 0);
+
+document.getElementById('preset').addEventListener('click', () => { Object.assign(state, DEFAULT); setUI(); });
+document.getElementById('rigid').addEventListener('click', () => { Object.assign(state, RIGID); setUI(); });
+document.getElementById('play').addEventListener('click', e => {
+  state.running = !state.running;
+  e.target.textContent = state.running ? '⏸ 진동 정지' : '▶ 진동 재생';
+  e.target.classList.toggle('toggle-on', state.running);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  Object.assign(state, DEFAULT); state.t = 0; state.running = true; setUI();
+  const pb = document.getElementById('play');
+  pb.textContent = '⏸ 진동 정지';
+  pb.classList.add('toggle-on');
+});
+
+setUI();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

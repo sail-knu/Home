@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L12-D3 · 모드 중첩 — 초기조건이 정하는 배합비</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    color: #e8eef5; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #c792ea, #82e9ff);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:2px 10px; margin-top:4px; }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; }
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06); }
+  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group .value { font-size: 17px; font-weight: 600; color: #c792ea;
+    font-family: "SF Mono", Consolas, monospace; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #c792ea; }
+  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #7b4dc0, #c792ea);
+    color: #1a0733; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: transform 0.1s; }
+  button:hover { transform: translateY(-1px); }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
+  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
+  .preset-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .preset-row button { font-size: 12px; padding: 9px 6px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-family: "SF Mono", Consolas, monospace; }
+  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .v { font-size: 15px; font-weight: 600; }
+  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
+    background: rgba(199, 146, 234, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #c792ea; }
+  .verdict { font-size: 13px; font-weight: 600; text-align: center; padding: 10px;
+    border-radius: 8px; line-height: 1.5; }
+  .verdict.good { background: rgba(0,184,148,0.15); border: 1px solid #00b894; color: #7bffd4; }
+  .verdict.mid  { background: rgba(255,193,7,0.13);  border: 1px solid #ffc107; color: #ffe08a; }
+  .verdict.bad  { background: rgba(255,107,157,0.14); border: 1px solid #ff6b9d; color: #ffb3ce; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+  .line-s { width: 18px; height: 0; border-top: 3px solid; }
+  .line-d { width: 18px; height: 0; border-top: 3px dashed; }
+  .toggle-note { font-size: 11px; color: #9bb3cc; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎚 모드 중첩 — 초기조건이 정하는 배합비</h1>
+  <div class="subtitle">x(t) = A₁sin(ω₁t+φ₁)u₁ + A₂sin(ω₂t+φ₂)u₂ — 초기변위가 두 모드의 배합비를 결정</div>
+  <div style="text-align:center;"><span class="tag">기계진동학 12강</span></div>
+
+  <div class="layout" style="margin-top:16px;">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="line-s" style="border-color:#82e9ff"></span>x₁(t) (실선)</div>
+        <div class="legend-item"><span class="line-d" style="border-color:#ffcf6b"></span>x₂(t) (점선)</div>
+        <div class="legend-item"><span class="dot" style="background:#c792ea"></span>모드1 (ω₁=√2)</div>
+        <div class="legend-item"><span class="dot" style="background:#7bffd4"></span>모드2 (ω₂=2)</div>
+      </div>
+    </div>
+    <div class="panel controls">
+      <div class="control-group">
+        <label>초기변위 x₁(0) <span class="value" id="x10v">1.00</span> mm</label>
+        <input type="range" id="x10" min="-2" max="2" step="0.05" value="1">
+      </div>
+      <div class="control-group">
+        <label>초기변위 x₂(0) <span class="value" id="x20v">0.00</span> mm</label>
+        <input type="range" id="x20" min="-2" max="2" step="0.05" value="0">
+        <div style="font-size:11px; color:#9bb3cc; margin-top:6px;">초기속도는 항상 0 → φ₁=φ₂=π/2 rad (90°)</div>
+      </div>
+      <div class="control-group">
+        <label>프리셋 (초기조건)</label>
+        <div class="preset-row">
+          <button id="pA" class="secondary">IC∝u₁ → 순수 1차</button>
+          <button id="pB" class="secondary">IC∝u₂ → 순수 2차</button>
+          <button id="pC" class="secondary">IC=[1,0] 혼합</button>
+          <button id="pD" class="secondary">↺ 원본 IC=[1,0]</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="stats">
+          <div class="stat-item"><div class="k">A₁ (모드1 진폭)</div><div class="v" id="A1" style="color:#c792ea">—</div></div>
+          <div class="stat-item"><div class="k">A₂ (모드2 진폭)</div><div class="v" id="A2" style="color:#7bffd4">—</div></div>
+          <div class="stat-item"><div class="k">모드1 기여</div><div class="v" id="c1" style="color:#c792ea">—</div></div>
+          <div class="stat-item"><div class="k">모드2 기여</div><div class="v" id="c2" style="color:#7bffd4">—</div></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>모드 배합비</label>
+        <canvas id="bar" width="264" height="46" style="width:100%; height:46px; background:transparent;"></canvas>
+        <div class="verdict" id="verdict">—</div>
+      </div>
+      <div class="control-group">
+        <label>고유벡터 크기</label>
+        <div class="button-row">
+          <button id="scaleBtn" class="secondary">u 크기 ×1 (버튼으로 ×3)</button>
+        </div>
+        <div class="toggle-note" id="scaleNote">
+          u를 3배로 키우면 A는 1/3로 줄어 <b>곱 A·u는 불변</b> → 응답 x(t) 동일.
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="button-row">
+          <button id="play" class="toggle-on">⏸ 일시정지</button>
+          <button id="reset" class="secondary">↺ 초기화</button>
+        </div>
+      </div>
+      <div class="info">
+        <b>관찰 포인트</b><br>
+        • IC를 <b>u₁ 방향</b>으로 주면 모드2가 0 → 순수 1차, 두 질량이 1:3 비율 유지<br>
+        • IC=[1,0]이면 두 모드가 <b>1:1</b>로 섞여 √2·2 두 리듬이 겹침 (정확히 반복 안 됨)<br>
+        • 각 질량의 응답은 <b>두 진동수를 모두</b> 포함 — 순수 사인파가 아님<br>
+        • 고유벡터 크기를 바꿔도 A가 보상 → <b>응답은 동일</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const barCv = document.getElementById('bar'), bctx = barCv.getContext('2d');
+const BW = barCv.width, BH = barCv.height;
+
+// ---- 시스템 상수 ----
+const W1 = Math.sqrt(2);      // ω₁ = √2 rad/s
+const W2 = 2.0;               // ω₂ = 2 rad/s
+// 기본 모드형상 (노트): u1=[1/3,1], u2=[-1/3,1]
+const U1_BASE = [1/3, 1];
+const U2_BASE = [-1/3, 1];
+
+let state = {
+  x10: 1.0, x20: 0.0,   // 초기변위 (mm), 초기속도는 0
+  scale: 1,             // 고유벡터 크기 배율 (1 또는 3)
+  t: 0, running: true
+};
+
+// 현재 배율이 적용된 고유벡터
+function uVecs() {
+  const s = state.scale;
+  return { u1: [U1_BASE[0]*s, U1_BASE[1]*s], u2: [U2_BASE[0]*s, U2_BASE[1]*s] };
+}
+
+// 초기조건 투영: 속도 0이므로 φ1=φ2=π/2 → x(0)=A1 u1 + A2 u2.
+// 모드행렬 U=[u1|u2] 를 역행렬로 풀어 A1,A2 를 정확히 계산.
+function modalAmps() {
+  const { u1, u2 } = uVecs();
+  const det = u1[0]*u2[1] - u2[0]*u1[1];   // det([u1 u2])
+  const dsafe = Math.abs(det) < 1e-9 ? (det < 0 ? -1e-9 : 1e-9) : det; // 특이점 가드
+  const A1 = ( u2[1]*state.x10 - u2[0]*state.x20) / dsafe;
+  const A2 = (-u1[1]*state.x10 + u1[0]*state.x20) / dsafe;
+  return { A1, A2, u1, u2 };
+}
+
+// 시간 t 에서 모드1 기여분, 모드2 기여분, 총합 (φ=π/2 → sin(ωt+π/2)=cos ωt)
+function eval_t(t) {
+  const { A1, A2, u1, u2 } = modalAmps();
+  const g1 = A1 * Math.cos(W1 * t);   // 모드1 시간계수
+  const g2 = A2 * Math.cos(W2 * t);   // 모드2 시간계수
+  return {
+    m1: [g1*u1[0], g1*u1[1]],         // x^(1)(t)
+    m2: [g2*u2[0], g2*u2[1]],         // x^(2)(t)
+    tot:[g1*u1[0]+g2*u2[0], g1*u1[1]+g2*u2[1]]
+  };
+}
+
+// ---- 3단 캔버스 레이아웃 ----
+const padL = 56, padR = 24;
+const rowGap = 14, rowTop = 30;
+const rowH = (H - rowTop - 2*rowGap - 16) / 3;
+const plotW = W - padL - padR;
+const T_WIN = 12;                 // 표시 시간창 (초)
+
+// 세로 스케일: 관측 가능한 최대 진폭 기준으로 자동
+function yScaleFor(maxAmp) {
+  const m = Math.max(maxAmp, 1e-6);
+  return (rowH/2 - 12) / m;
+}
+
+function drawRow(idx, title, tcoefU, color, curT) {
+  // tcoefU: t → {x1, x2} 함수용 데이터는 draw()에서 전달
+  const y0 = rowTop + idx*(rowH + rowGap) + rowH/2;
+  const x0 = padL;
+  // 배경
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(padL-4, y0 - rowH/2, plotW+8, rowH);
+  // 0선
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0+plotW, y0); ctx.stroke();
+  // 현재시각 세로선
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.beginPath(); ctx.moveTo(x0+plotW, y0-rowH/2+4); ctx.lineTo(x0+plotW, y0+rowH/2-4); ctx.stroke();
+  // 제목
+  ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(title, padL, y0 - rowH/2 + 15);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const curT = state.t;
+  const t0 = curT - T_WIN, t1 = curT;
+
+  // 전체 세로 스케일 통일: 현재 IC에서 나올 수 있는 최대 |성분| 추정
+  const { A1, A2, u1, u2 } = modalAmps();
+  const maxTot = Math.abs(A1)*Math.max(Math.abs(u1[0]),Math.abs(u1[1]))
+               + Math.abs(A2)*Math.max(Math.abs(u2[0]),Math.abs(u2[1]));
+  const maxM1 = Math.abs(A1)*Math.max(Math.abs(u1[0]),Math.abs(u1[1]));
+  const maxM2 = Math.abs(A2)*Math.max(Math.abs(u2[0]),Math.abs(u2[1]));
+  const gAmp = Math.max(maxTot, maxM1, maxM2, 1e-6);
+  const sc = yScaleFor(gAmp);
+
+  const rows = [
+    { idx:0, title:'① 모드1 기여분  x⁽¹⁾(t) = A₁cos(ω₁t)·u₁', color:'#c792ea', key:'m1' },
+    { idx:1, title:'② 모드2 기여분  x⁽²⁾(t) = A₂cos(ω₂t)·u₂', color:'#7bffd4', key:'m2' },
+    { idx:2, title:'③ 총합  x(t) = x⁽¹⁾ + x⁽²⁾', color:'#e8eef5', key:'tot' }
+  ];
+
+  const N = 360;
+  rows.forEach(r => {
+    const y0 = rowTop + r.idx*(rowH + rowGap) + rowH/2;
+    drawRow(r.idx, r.title, null, r.color, curT);
+    const tx = t => padL + (t - t0)/T_WIN * plotW;
+    const dra1 = []; const draw2 = [];
+    for (let i=0;i<=N;i++){
+      const tt = t0 + (i/N)*T_WIN;
+      if (tt < 0) continue;
+      const e = eval_t(tt);
+      dra1.push([tx(tt), y0 - e[r.key][0]*sc]);
+      draw2.push([tx(tt), y0 - e[r.key][1]*sc]);
+    }
+    // x1 실선 (파랑)
+    ctx.strokeStyle = '#82e9ff'; ctx.lineWidth = 2; ctx.setLineDash([]);
+    ctx.beginPath(); dra1.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+    // x2 점선 (주황)
+    ctx.strokeStyle = '#ffcf6b'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+    ctx.beginPath(); draw2.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+    ctx.setLineDash([]);
+    // 현재시각 마커 (원)
+    if (curT >= 0) {
+      const e = eval_t(curT);
+      ctx.fillStyle = '#82e9ff';
+      ctx.beginPath(); ctx.arc(padL+plotW, y0 - e[r.key][0]*sc, 3.5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#ffcf6b';
+      ctx.beginPath(); ctx.arc(padL+plotW, y0 - e[r.key][1]*sc, 3.5, 0, 7); ctx.fill();
+    }
+    // 축 라벨
+    ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('mm', padL-8, y0 - rowH/2 + 20);
+    ctx.textAlign = 'center';
+    ctx.fillText('t →', padL+plotW-14, y0 + rowH/2 - 4);
+  });
+
+  drawBars(A1, A2, u1, u2);
+  updateReadouts(A1, A2, u1, u2);
+}
+
+// 모드 배합비: 크기불변량은 |Aᵢ·uᵢ| (uᵢ 방향 성분 norm). u를 스케일하면 A가 보상 → 불변.
+function contribs(A1, A2, u1, u2) {
+  const n1 = Math.hypot(u1[0], u1[1]);
+  const n2 = Math.hypot(u2[0], u2[1]);
+  const c1 = Math.abs(A1) * n1;   // 모드1 물리적 기여 크기 (스케일 불변)
+  const c2 = Math.abs(A2) * n2;
+  const s = c1 + c2;
+  const p1 = s < 1e-9 ? 0 : c1/s;
+  return { c1, c2, p1, p2: 1-p1 };
+}
+
+function drawBars(A1, A2, u1, u2) {
+  bctx.clearRect(0,0,BW,BH);
+  const { p1 } = contribs(A1, A2, u1, u2);
+  const barY = 8, barH = 20, x0 = 4, x1 = BW-4;
+  const total = x1 - x0;
+  const w1 = total * p1;
+  // 모드1
+  bctx.fillStyle = '#c792ea'; bctx.fillRect(x0, barY, w1, barH);
+  // 모드2
+  bctx.fillStyle = '#7bffd4'; bctx.fillRect(x0+w1, barY, total-w1, barH);
+  // 라벨
+  bctx.fillStyle = '#1a0733'; bctx.font = 'bold 11px sans-serif'; bctx.textAlign='left';
+  const pct1 = Math.round(p1*100), pct2 = 100-pct1;
+  if (w1 > 28) bctx.fillText('1차 '+pct1+'%', x0+5, barY+14);
+  bctx.fillStyle = '#053b2c'; bctx.textAlign='right';
+  if (total-w1 > 28) bctx.fillText(pct2+'% 2차', x1-5, barY+14);
+  // 눈금 축
+  bctx.fillStyle = '#9bb3cc'; bctx.font='9px sans-serif'; bctx.textAlign='left';
+  bctx.fillText('모드1', x0, BH-3); bctx.textAlign='right'; bctx.fillText('모드2', x1, BH-3);
+}
+
+function updateReadouts(A1, A2, u1, u2) {
+  const { c1, c2, p1, p2 } = contribs(A1, A2, u1, u2);
+  document.getElementById('A1').textContent = A1.toFixed(3);
+  document.getElementById('A2').textContent = A2.toFixed(3);
+  document.getElementById('c1').textContent = c1.toFixed(3);
+  document.getElementById('c2').textContent = c2.toFixed(3);
+
+  const pct1 = Math.round(p1*100), pct2 = 100-pct1;
+  const v = document.getElementById('verdict');
+  let msg = '모드1 ' + pct1 + '% + 모드2 ' + pct2 + '%';
+  if (pct1 >= 97) { v.className = 'verdict good'; msg = '거의 순수 1차 모드 (' + pct1 + '%) — 두 질량이 1:3 동상'; }
+  else if (pct2 >= 97) { v.className = 'verdict good'; msg = '거의 순수 2차 모드 (' + pct2 + '%) — 두 질량이 반대 위상'; }
+  else if (Math.abs(pct1-50) <= 12) { v.className = 'verdict mid'; msg = '두 모드 혼합: 모드1 ' + pct1 + '% + 모드2 ' + pct2 + '%'; }
+  else { v.className = 'verdict mid'; msg = '한 모드 우세: 모드1 ' + pct1 + '% + 모드2 ' + pct2 + '%'; }
+  v.textContent = msg;
+}
+
+// ---- rAF 루프 (단 1개) ----
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.033, (now - last)/1000); last = now;
+  if (state.running) state.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- 컨트롤 ----
+function syncSliders() {
+  document.getElementById('x10').value = state.x10;
+  document.getElementById('x20').value = state.x20;
+  document.getElementById('x10v').textContent = state.x10.toFixed(2);
+  document.getElementById('x20v').textContent = state.x20.toFixed(2);
+}
+document.getElementById('x10').addEventListener('input', e => {
+  state.x10 = parseFloat(e.target.value);
+  document.getElementById('x10v').textContent = state.x10.toFixed(2);
+});
+document.getElementById('x20').addEventListener('input', e => {
+  state.x20 = parseFloat(e.target.value);
+  document.getElementById('x20v').textContent = state.x20.toFixed(2);
+});
+
+function setIC(a, b) { state.x10 = a; state.x20 = b; state.t = 0; syncSliders(); }
+// IC∝u₁: [1/3,1] 방향 → x1=1/3, x2=1 (스케일해도 순수 1차). 가독성 위해 정규화값 사용.
+document.getElementById('pA').addEventListener('click', ()=> setIC(1/3, 1));
+// IC∝u₂: [-1/3,1] 방향 → 순수 2차
+document.getElementById('pB').addEventListener('click', ()=> setIC(-1/3, 1));
+// IC=[1,0] 혼합
+document.getElementById('pC').addEventListener('click', ()=> setIC(1, 0));
+// 원본: x1(0)=1mm, x2(0)=0
+document.getElementById('pD').addEventListener('click', ()=> setIC(1, 0));
+
+// 토글: u 크기 ×1 ↔ ×3
+document.getElementById('scaleBtn').addEventListener('click', e => {
+  state.scale = (state.scale === 1) ? 3 : 1;
+  e.target.textContent = 'u 크기 ×' + state.scale + (state.scale===1 ? ' (버튼으로 ×3)' : ' (버튼으로 ×1)');
+  e.target.classList.toggle('toggle-on', state.scale !== 1);
+  const note = document.getElementById('scaleNote');
+  if (state.scale === 3) {
+    note.innerHTML = 'u를 ×3 했더니 A는 1/3로 축소 → <b>곱 A·u 불변</b>. 그래프·배합비 모두 그대로.';
+  } else {
+    note.innerHTML = 'u를 3배로 키우면 A는 1/3로 줄어 <b>곱 A·u는 불변</b> → 응답 x(t) 동일.';
+  }
+});
+
+document.getElementById('play').addEventListener('click', e => {
+  state.running = !state.running;
+  e.target.textContent = state.running ? '⏸ 일시정지' : '▶ 재생';
+  e.target.classList.toggle('toggle-on', state.running);
+});
+document.getElementById('reset').addEventListener('click', ()=> {
+  state.x10 = 1.0; state.x20 = 0.0; state.scale = 1; state.t = 0;
+  state.running = true;
+  const pb = document.getElementById('play');
+  pb.textContent = '⏸ 일시정지'; pb.classList.add('toggle-on');
+  const sb = document.getElementById('scaleBtn');
+  sb.textContent = 'u 크기 ×1 (버튼으로 ×3)'; sb.classList.remove('toggle-on');
+  document.getElementById('scaleNote').innerHTML =
+    'u를 3배로 키우면 A는 1/3로 줄어 <b>곱 A·u는 불변</b> → 응답 x(t) 동일.';
+  syncSliders();
+  draw();
+});
+
+syncSliders();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

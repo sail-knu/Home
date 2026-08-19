@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L14-D1 · 흡진기 조정하기: X=0 조건</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: linear-gradient(135deg, #2a1e5f 0%, #150f3d 100%);
+    color: #e8eef5; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #c39bff, #6dd5ed);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #b0a6cc; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#b0a6cc; border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:2px 10px; margin-top:4px; }
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  canvas { background: #0a0e28; border-radius: 10px; width: 100%; height: auto; display: block; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; }
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06); }
+  .control-group label { display: block; font-size: 12px; color: #b0a6cc; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group .value { font-size: 17px; font-weight: 600; color: #c39bff;
+    font-family: "SF Mono", Consolas, monospace; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #c39bff; }
+  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #6a3ca8, #c39bff);
+    color: #180a2a; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: transform 0.1s; }
+  button:hover { transform: translateY(-1px); }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
+  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-family: "SF Mono", Consolas, monospace; }
+  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+  .stat-item .k { color: #b0a6cc; font-size: 11px; }
+  .stat-item .v { font-size: 15px; font-weight: 600; }
+  .info { font-size: 12px; color: #dfd6f0; line-height: 1.65;
+    background: rgba(195, 155, 255, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #c39bff; }
+  .verdict { text-align:center; font-weight:700; font-size:15px; padding:10px; border-radius:8px; margin-top:2px; }
+  .verdict.good { background: rgba(0,184,148,0.18); color:#55efc4; border:1px solid rgba(85,239,196,0.4); }
+  .verdict.mid  { background: rgba(253,203,110,0.15); color:#ffd479; border:1px solid rgba(255,212,121,0.35); }
+  .verdict.bad  { background: rgba(255,107,107,0.15); color:#ff8f8f; border:1px solid rgba(255,143,143,0.35); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎯 흡진기 조정하기: X=0 조건</h1>
+  <div class="subtitle">동조질량 흡진기(TVA) — 주질량의 진폭 X를 0으로 만드는 조정조건 ω = √(kₐ/mₐ)</div>
+  <div style="text-align:center;"><span class="tag">기계진동학 14강</span></div>
+
+  <div class="layout" style="margin-top:16px;">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>주질량(장치) 진폭 X</div>
+        <div class="legend-item"><span class="dot" style="background:#c39bff"></span>흡진기 진폭 Xₐ</div>
+        <div class="legend-item"><span class="dot" style="background:#ffeb3b"></span>현재 가진 진동수 ω</div>
+        <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>조정점 ωₐ=√(kₐ/mₐ)</div>
+      </div>
+    </div>
+    <div class="panel controls">
+      <div id="verdict" class="verdict mid">—</div>
+
+      <div class="control-group">
+        <label>흡진기 강성 kₐ <span class="value" id="kav">20000</span> N/m</label>
+        <input type="range" id="ka" min="4000" max="40000" step="500" value="20000">
+      </div>
+      <div class="control-group">
+        <label>흡진기 질량 mₐ <span class="value" id="mav">2.0</span> kg</label>
+        <input type="range" id="ma" min="0.5" max="6" step="0.1" value="2">
+      </div>
+      <div class="control-group">
+        <label>가진 진동수 ω <span class="value" id="wv">100</span> rad/s</label>
+        <input type="range" id="w" min="40" max="160" step="1" value="100">
+      </div>
+      <div class="control-group">
+        <label>가진력 F₀ <span class="value" id="fv">40</span> N</label>
+        <input type="range" id="f" min="10" max="120" step="2" value="40">
+      </div>
+
+      <div class="control-group">
+        <div class="stats">
+          <div class="stat-item"><div class="k">주질량 진폭 X</div><div class="v" id="X" style="color:#6dd5ed">—</div></div>
+          <div class="stat-item"><div class="k">흡진기 진폭 Xₐ</div><div class="v" id="Xa" style="color:#c39bff">—</div></div>
+          <div class="stat-item"><div class="k">조정점 ωₐ</div><div class="v" id="wa" style="color:#ff6b9d">—</div></div>
+          <div class="stat-item"><div class="k">분모 Δ(ω)</div><div class="v" id="det" style="color:#ffd479">—</div></div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="button-row">
+          <button id="play" class="toggle-on">⏸ 일시정지</button>
+          <button id="reset" class="secondary">↺ 초기화</button>
+        </div>
+        <div style="font-size:11px; color:#b0a6cc; margin-top:8px;">
+          고정: 주질량 m = 10 kg, 지지 강성 k = 1.0×10⁵ N/m (주계 고유진동수 100 rad/s)
+        </div>
+      </div>
+
+      <div class="info">
+        <b>관찰 포인트</b><br>
+        • ωₐ = √(kₐ/mₐ) 를 <b>가진 ω에 맞추면</b> 주질량이 완전히 <b>정지(X=0)</b> — 진동은 흡진기가 모두 떠맡습니다.<br>
+        • 이때 분모 Δ = −kₐ² ≠ 0 → <b>공진 아님</b>. 공진은 "분모=0", 조정은 "분자=0" — 같은 식의 정반대 지점.<br>
+        • 조정 시 흡진기 힘 kₐxₐ = −F₀sin ωt 가 외력을 매 순간 정확히 <b>상쇄</b>합니다(위상 180°).<br>
+        • 흡진기는 에너지를 없애는 게 아니라 <b>대신 떠맡는</b> 장치 — 1자유도가 2자유도가 되며 좌우에 새 공진 2개가 생깁니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// ---- fixed main system ----
+const M = 10;        // 주질량 [kg]
+const K = 1.0e5;     // 지지 강성 [N/m]  -> sqrt(K/M) = 100 rad/s
+
+let state = { ka: 20000, ma: 2, w: 100, F0: 40, t: 0, running: true };
+
+function reset() {
+  state.ka = 20000; state.ma = 2; state.w = 100; state.F0 = 40; state.t = 0;
+  state.running = true;
+  document.getElementById('ka').value = 20000; document.getElementById('kav').textContent = '20000';
+  document.getElementById('ma').value = 2;     document.getElementById('mav').textContent = '2.0';
+  document.getElementById('w').value = 100;    document.getElementById('wv').textContent = '100';
+  document.getElementById('f').value = 40;     document.getElementById('fv').textContent = '40';
+  const playBtn = document.getElementById('play');
+  playBtn.textContent = '⏸ 일시정지';
+  playBtn.classList.add('toggle-on');
+}
+
+// ---- steady-state amplitudes (note formulas) ----
+// Δ(ω) = (k + ka - m ω²)(ka - ma ω²) - ka²
+// X  = (ka - ma ω²) F0 / Δ
+// Xa =  ka F0 / Δ
+function amplitudes(w, ka, ma, F0) {
+  const w2 = w * w;
+  const num = ka - ma * w2;                     // 주질량 분자 계수
+  let det = (K + ka - M * w2) * num - ka * ka;  // 분모 Δ
+  // 특이점 가드: Δ=0(2자유도 공진)에서 X, Xa 발산 방지.
+  // det 스케일이 ~ka²(≈1e8~1e9)이므로 절대치 1e-6이 아니라 상대 하한을 둔다.
+  const floor = 1e-6 * ka * ka;
+  if (Math.abs(det) < floor) det = (det < 0 ? -1 : 1) * floor;
+  const X  = num * F0 / det;
+  const Xa = ka * F0 / det;
+  return { X, Xa, det, num };
+}
+
+// ---- layout regions ----
+const animL = 30, animR = W * 0.42;             // left animation region
+const plotL = W * 0.50, plotR = W - 30;
+const plotTop = 60, plotBot = H - 55;
+const groundY = H - 80;
+
+// visual amplitude scaling: cap physical amplitude in meters -> px
+function ampToPx(a) {
+  const capM = 0.006;                            // 6 mm maps to full swing
+  const px = a / capM * 46;                      // 46 px per cap
+  return Math.max(-70, Math.min(70, px));        // clamp visual travel
+}
+
+function drawSpring(x0, y0, x1, y1, coils, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 2;
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+  const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+  ctx.beginPath(); ctx.moveTo(x0, y0);
+  const n = coils * 2;
+  for (let i = 0; i < n; i++) {
+    const f = (i + 0.5) / n;
+    const off = (i % 2 === 0 ? 8 : -8);
+    ctx.lineTo(x0 + dx * f + nx * off, y0 + dy * f + ny * off);
+  }
+  ctx.lineTo(x1, y1); ctx.stroke();
+}
+
+function arrow(x, y, len, col, label) {
+  if (Math.abs(len) < 4) return;
+  const s = Math.sign(len);
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + len, y); ctx.lineTo(x + len - s * 9, y - 5); ctx.lineTo(x + len - s * 9, y + 5);
+  ctx.closePath(); ctx.fill();
+  if (label) { ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, x + len + s * 12, y - 8); }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  const { X, Xa, det, num } = amplitudes(state.w, state.ka, state.ma, state.F0);
+  const wa = Math.sqrt(state.ka / state.ma);
+  const tuned = Math.abs(state.w - wa) < 0.8;        // 조정조건 근접 판정
+
+  // full-screen highlight on tuning success
+  if (tuned) {
+    ctx.fillStyle = 'rgba(0,184,148,0.10)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(85,239,196,0.7)'; ctx.lineWidth = 3;
+    ctx.strokeRect(3, 3, W - 6, H - 6);
+  }
+
+  const s = Math.sin(state.w * state.t);
+  const xMain = ampToPx(X * s);
+  const xAbs  = ampToPx(Xa * s);                      // 흡진기 절대 변위(px)
+
+  // ===== LEFT: animation =====
+  ctx.textBaseline = 'alphabetic';
+  // ground / wall (fixed base at bottom)
+  ctx.fillStyle = '#4a4066';
+  ctx.fillRect(animL, groundY, animR - animL, 12);
+  ctx.strokeStyle = '#6a5f8c';
+  for (let i = 0; i < 12; i++) { ctx.beginPath();
+    ctx.moveTo(animL + i * 20, groundY + 12); ctx.lineTo(animL + i * 20 + 10, groundY + 22); ctx.stroke(); }
+
+  const midX = (animL + animR) / 2;
+  const mainCX = midX + xMain;                       // 주질량 중심 x
+  const mainCY = groundY - 150;                      // 주질량 중심 y (고정 높이)
+  const mainW = 120, mainHt = 88;
+
+  // support spring (ground -> main mass)
+  drawSpring(midX - 30, groundY, mainCX - 30, mainCY + mainHt / 2, 7, '#8fa0c4');
+  ctx.strokeStyle = '#8fa0c4'; ctx.lineWidth = 2;    // guide rail hint
+  ctx.setLineDash([3,5]); ctx.beginPath();
+  ctx.moveTo(midX, groundY); ctx.lineTo(midX, plotTop + 10); ctx.stroke(); ctx.setLineDash([]);
+
+  // main mass box
+  ctx.fillStyle = tuned ? '#2b6b6b' : '#155066';
+  ctx.strokeStyle = '#6dd5ed'; ctx.lineWidth = 2.5;
+  ctx.fillRect(mainCX - mainW/2, mainCY - mainHt/2, mainW, mainHt);
+  ctx.strokeRect(mainCX - mainW/2, mainCY - mainHt/2, mainW, mainHt);
+  ctx.fillStyle = '#dff3ff'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('주질량 m', mainCX, mainCY - 10);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = '#a8d8ec';
+  ctx.fillText('장치(보호대상)', mainCX, mainCY + 14);
+  ctx.textBaseline = 'alphabetic';
+
+  // absorber attached on the side (right face of main mass)
+  const attachX = mainCX + mainW/2;
+  const attachY = mainCY;
+  const absCX = attachX + 70 + (xAbs - xMain);       // 흡진기 상대변위 반영
+  const absCY = attachY;
+  const absS = 46;
+  // absorber spring (side spring: horizontal)
+  drawSpring(attachX, attachY, absCX - absS/2, absCY, 6, tuned ? '#55efc4' : '#c39bff');
+  ctx.fillStyle = tuned ? '#3a2b6b' : '#3a2b6b';
+  ctx.strokeStyle = '#c39bff'; ctx.lineWidth = 2.5;
+  ctx.fillRect(absCX - absS/2, absCY - absS/2, absS, absS);
+  ctx.strokeRect(absCX - absS/2, absCY - absS/2, absS, absS);
+  ctx.fillStyle = '#efe6ff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('mₐ', absCX, absCY); ctx.textBaseline = 'alphabetic';
+  ctx.font = '11px sans-serif'; ctx.fillStyle = '#c9b8ea'; ctx.textAlign = 'center';
+  ctx.fillText('흡진기', absCX, absCY + absS/2 + 16);
+  ctx.fillText('kₐ', (attachX + absCX - absS/2)/2, attachY - 12);
+
+  // ===== force arrows when tuned: F0 vs absorber spring force =====
+  const forceY = mainCY - mainHt/2 - 30;
+  // external force on main mass F0 sin(wt)
+  const Fpx = Math.max(-55, Math.min(55, state.F0 / 120 * 55)) * s;
+  arrow(mainCX, forceY, Fpx, '#ffeb3b', 'F₀ 외력');
+  // absorber spring force on main mass = ka*(xa - x) = ka*Xrel*sin ; when tuned = -F0 sin
+  const Fabs = state.ka * ((Xa - X) * s);            // N (지시용)
+  const FabsPx = Math.max(-55, Math.min(55, Fabs / 120 * 55));
+  arrow(mainCX, forceY + 26, FabsPx, tuned ? '#55efc4' : '#ff8f8f', '흡진기 힘 kₐ(xₐ−x)');
+  if (tuned) {
+    ctx.fillStyle = '#55efc4'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🎯 두 힘이 정확히 상쇄 → 합력 0', mainCX, forceY - 24);
+  }
+
+  ctx.fillStyle = '#b0a6cc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('바닥에서 본 실제 진동 (X : Xₐ 실제 비율)', midX, plotTop - 4);
+
+  // ===== RIGHT: X vs ω curve =====
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.lineTo(plotR, plotBot); ctx.stroke();
+  ctx.fillStyle = '#b0a6cc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('주질량 진폭 |X|  vs  가진 진동수 ω', (plotL + plotR)/2, plotTop - 8);
+  ctx.textAlign = 'right'; ctx.fillText('|X|', plotL - 6, plotTop + 10);
+  ctx.textAlign = 'center'; ctx.fillText('ω [rad/s]', (plotL + plotR)/2, plotBot + 32);
+
+  const wMin = 40, wMax = 160;
+  const plotW = plotR - plotL, plotH = plotBot - plotTop;
+  const wx = w => plotL + (w - wMin) / (wMax - wMin) * plotW;
+  // reference amplitude scale: static X = F0/K
+  const Xref = state.F0 / K;                          // 정적 처짐 규모
+  const yScaleMax = Xref * 8;                         // clamp curve height
+  const Xy = a => plotBot - Math.min(1, Math.abs(a) / yScaleMax) * plotH * 0.94;
+
+  // x-axis ticks
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.fillStyle = '#8a80a8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  for (let wt = 40; wt <= 160; wt += 20) {
+    const px = wx(wt);
+    ctx.beginPath(); ctx.moveTo(px, plotBot); ctx.lineTo(px, plotBot + 4); ctx.stroke();
+    ctx.fillText(wt, px, plotBot + 16);
+  }
+
+  // curve |X(ω)| with singularity guard at Δ=0
+  ctx.strokeStyle = '#6dd5ed'; ctx.lineWidth = 2.2; ctx.beginPath();
+  let started = false, prevBig = false;
+  for (let px = plotL; px <= plotR; px += 1.5) {
+    const w = wMin + (px - plotL) / plotW * (wMax - wMin);
+    const a = amplitudes(w, state.ka, state.ma, state.F0);
+    const big = Math.abs(a.X) > yScaleMax * 1.02;      // 공진 발산 구간
+    const y = Xy(a.X);
+    if (big) { started = false; prevBig = true; continue; }   // break the line at poles
+    if (!started) { ctx.moveTo(px, y); started = true; }
+    else ctx.lineTo(px, y);
+    prevBig = false;
+  }
+  ctx.stroke();
+
+  // tuning point ωa marker (X -> 0 dip)
+  if (wa >= wMin && wa <= wMax) {
+    const pxA = wx(wa);
+    ctx.strokeStyle = 'rgba(255,107,157,0.8)'; ctx.setLineDash([5,4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pxA, plotTop); ctx.lineTo(pxA, plotBot); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#ff6b9d'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('ωₐ (X=0)', pxA, plotTop + 12);
+    // dip dot
+    ctx.fillStyle = '#ff6b9d'; ctx.beginPath(); ctx.arc(pxA, plotBot - 2, 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  // current ω marker
+  const pxW = wx(state.w);
+  ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 1.8; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(pxW, plotTop); ctx.lineTo(pxW, plotBot); ctx.stroke(); ctx.setLineDash([]);
+  const curY = Xy(X);
+  ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(pxW, curY, 5, 0, Math.PI*2); ctx.fill();
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('현재 ω', pxW, plotTop + 24);
+
+  // ===== readouts =====
+  // 공진(Δ→0) 부근에서는 진폭이 발산 → 비물리적 큰 수 대신 '발산' 표기
+  const fmtAmp = a => {
+    const mm = Math.abs(a) * 1000;
+    return mm > 1e4 ? '≫ (발산)' : mm.toFixed(2) + ' mm';
+  };
+  document.getElementById('X').textContent  = fmtAmp(X);
+  document.getElementById('Xa').textContent = fmtAmp(Xa);
+  document.getElementById('wa').textContent = wa.toFixed(1) + ' rad/s';
+  document.getElementById('det').textContent = det.toExponential(1);
+
+  // verdict
+  const vd = document.getElementById('verdict');
+  if (tuned) {
+    vd.className = 'verdict good';
+    vd.innerHTML = '🎯 조정 성공! 주질량 정지 (X≈0) · 흡진기가 진동을 모두 떠맡음';
+  } else if (Math.abs(X) < yScaleMax) {
+    vd.className = 'verdict mid';
+    vd.innerHTML = 'ω를 ωₐ = ' + wa.toFixed(1) + ' rad/s 에 맞추면 X→0';
+  } else {
+    vd.className = 'verdict bad';
+    vd.innerHTML = '⚠ 새 공진 부근 — 분모 Δ→0, 주질량 진폭 발산';
+  }
+  ctx.textAlign = 'left';
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  if (state.running) state.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- controls ----
+function bind(id, key, span, fmt) {
+  document.getElementById(id).addEventListener('input', e => {
+    state[key] = parseFloat(e.target.value);
+    document.getElementById(span).textContent = fmt(state[key]);
+  });
+}
+bind('ka', 'ka', 'kav', v => v.toFixed(0));
+bind('ma', 'ma', 'mav', v => v.toFixed(1));
+bind('w',  'w',  'wv',  v => v.toFixed(0));
+bind('f',  'F0', 'fv',  v => v.toFixed(0));
+
+document.getElementById('play').addEventListener('click', e => {
+  state.running = !state.running;
+  e.target.textContent = state.running ? '⏸ 일시정지' : '▶ 재생';
+  e.target.classList.toggle('toggle-on', state.running);
+});
+document.getElementById('reset').addEventListener('click', reset);
+
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

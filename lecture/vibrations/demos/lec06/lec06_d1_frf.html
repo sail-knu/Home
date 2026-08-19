@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L6-D1 · 무차원 진폭·위상 FRF 탐험기</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 6강</p>
+  <h1>무차원 진폭·위상 FRF 탐험기</h1>
+  <p class="lede"><b>ζ를 낮추면</b> r=1 근처 피크가 얼마나 높고 좁아지는지,
+    <b>r을 옮기면</b> 위상이 0°→90°→180°로 어떻게 넘어가는지 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>현재 ζ 곡선 (진폭·위상)</span>
+          <span><i style="background:var(--faint)"></i>ζ 가족 곡선 0.1·0.25·0.5·0.707·1</span>
+          <span><i style="background:var(--high)"></i>현재 r 마커</span>
+          <span><i style="background:var(--low)"></i>r<sub>peak</sub> = √(1−2ζ²)</span>
+          <span><i style="background:var(--ok)"></i>준정적 기준 Xk/F₀ = 1</span>
+          <span><i style="background:var(--float)"></i>r=1 → θ=90°</span>
+        </div>
+        <div class="note-box">
+          • r=1에서 위상은 <b>ζ와 무관하게 항상 90°</b> — 감쇠 시스템 <b>공진의 정의</b>입니다.<br>
+          • 피크는 r=1보다 <b>약간 왼쪽</b>(파란 점선 r<sub>peak</sub>), ζ &lt; 0.707 일 때만 존재합니다.<br>
+          • ζ를 낮출수록 피크가 <b>≈1/2ζ</b>로 치솟고 좁아집니다 (ζ=0.0085 → 약 59배).<br>
+          • 공진 근처에서 <b>위상이 급변</b>(0→180°)하는 것이 실무의 공진 탐지 단서입니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="0.1,1">ζ=0.10, r=1</button>
+            <button class="btn btn-sm" data-p="0.05,1">ζ=0.05 (10배)</button>
+            <button class="btn btn-sm" data-p="0.02,1">ζ=0.02 (25배)</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="0.0085,1">ζ=0.0085 (59배)</button>
+            <button class="btn btn-sm" data-p="0.0085,0.947">위 조건 r=0.947 (ω=125)</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="0.707,1">ζ=0.707 피크 소멸 경계</button>
+            <button class="btn btn-sm" data-p="1.5,1">ζ=1.50 과감쇠</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — ζ를 <b>0.10 → 0.05 → 0.02 → 0.0085</b> 로 낮추며
+            r=1 근처 피크가 <b>높고 좁아지는 것</b>을 관찰하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">감쇠비 ζ <span class="big-val" id="zv">0.100</span></p>
+          <input type="range" id="z" min="0.005" max="1.5" step="0.0005" value="0.1" style="width:100%">
+          <p class="mini" style="margin-top:4px">피크 존재 경계 ζ = 1/√2 ≈ 0.707</p>
+          <p class="ctrl-title" style="margin-top:12px">주파수비 r = ω/ωₙ <span class="big-val" id="rv">1.000</span></p>
+          <input type="range" id="r" min="0" max="3" step="0.001" value="1" style="width:100%">
+          <p class="mini" style="margin-top:4px">r = 1 이 공진의 기준점 (위상 90°)</p>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">무차원 진폭 Xk/F₀</div><div class="v acc" id="sMag">—</div></div>
+          <div class="stat"><div class="k">위상 θ</div><div class="v hi" id="sPhase">—</div></div>
+          <div class="stat"><div class="k">피크주파수비 r_peak</div><div class="v lo" id="sRpeak">—</div></div>
+          <div class="stat"><div class="k">피크 배율</div><div class="v" id="sPeakval">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn" id="play">▶ r 스윕 재생</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+          <p class="mini" style="margin-top:8px">▶ 를 누르면 r 마커가 0 ↔ 3 을 자동으로 오갑니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 6강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var EPS = 1e-6;
+
+var st = { zeta: 0.10, r: 1.00, running: false, sweepDir: 1 };
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 물리 계산 (해석해) ---- */
+/* 무차원 진폭 Xk/F0 = 1 / sqrt((1-r^2)^2 + (2 zeta r)^2) */
+function mag(r, z){
+  var a = 1 - r * r;
+  var b = 2 * z * r;
+  var denom = Math.sqrt(a * a + b * b);
+  return 1 / Math.max(denom, EPS);            /* 분모 0 가드 (비감쇠 r=1 발산 방지) */
+}
+/* 위상 θ = atan2(2 zeta r, 1 - r^2) → [0, π]. atan2 로 사분면 자동 처리 */
+function phase(r, z){
+  return Math.atan2(2 * z * r, 1 - r * r);
+}
+/* 피크주파수비 r_peak = sqrt(1 - 2 zeta^2), ζ < 1/√2 일 때만 실수 */
+function rPeak(z){
+  var s = 1 - 2 * z * z;
+  return s > 0 ? Math.sqrt(s) : null;
+}
+/* 피크값 1/(2 zeta sqrt(1 - zeta^2)) */
+function peakValue(z){
+  var rp = rPeak(z);
+  if (rp === null) return mag(0, z);          /* 피크 없으면 최대는 r=0 (=1) */
+  return 1 / (2 * z * Math.sqrt(Math.max(1 - z * z, EPS)));
+}
+
+/* ---- 레이아웃 상수 ---- */
+var plotL = 76, plotR = 874, plotW = plotR - plotL;
+var magTop = 46, magBot = 294;                 /* 상단 진폭 플롯 */
+var phTop = 356, phBot = 498;                  /* 하단 위상 플롯 */
+var R_MAX = 3;
+var MAG_MAX = 6;                               /* 진폭 y축 상한 */
+var family = [0.1, 0.25, 0.5, 0.707, 1.0];
+
+function rx(r){ return plotL + (r / R_MAX) * plotW; }
+function magY(m){ return magBot - (m / MAG_MAX) * (magBot - magTop); }   /* 미클램프 (클립으로 처리) */
+function phY(deg){ return phBot - (deg / 180) * (phBot - phTop); }
+
+function fmtZ(z){ return z < 0.02 ? z.toFixed(4) : z.toFixed(3); }
+function fmtMag(m){ return m >= 1000 ? '≥1000' : m.toFixed(3); }
+function fmtRp(v){ return v > 0.9995 ? v.toFixed(5) : v.toFixed(3); }   /* 1에 붙어도 <1 임을 보이게 */
+
+/* ---- 축·격자 ---- */
+function drawAxes(){
+  /* 플롯 배경 */
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(plotL, magTop, plotW, magBot - magTop);
+  ctx.fillRect(plotL, phTop, plotW, phBot - phTop);
+
+  /* 가로 격자 + y 라벨 (진폭) */
+  ctx.font = '12.5px ' + FONT;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var m = 0; m <= MAG_MAX; m++){
+    var y = magY(m);
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+    ctx.fillStyle = PAL.faint; ctx.fillText(String(m), plotL - 8, y);
+  }
+  /* 준정적 기준선 Xk/F₀ = 1 */
+  ctx.strokeStyle = PAL.ok; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(plotL, magY(1)); ctx.lineTo(plotR, magY(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.ok; ctx.font = 'bold 12.5px ' + FONT;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Xk/F₀ = 1 (준정적)', plotR - 6, magY(1) - 6);
+
+  /* 가로 격자 + y 라벨 (위상) */
+  ctx.font = '12.5px ' + FONT; ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+  [0, 45, 90, 135, 180].forEach(function(d){
+    var y = phY(d);
+    ctx.strokeStyle = (d === 90) ? PAL.float : PAL.grid; ctx.lineWidth = (d === 90) ? 1.4 : 1;
+    if (d === 90) ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAL.faint; ctx.fillText(d + '°', plotL - 8, y);
+  });
+
+  /* 세로 격자 + x 라벨 (두 플롯 공통) */
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '12.5px ' + FONT;
+  for (var r = 0; r <= R_MAX + 1e-9; r += 0.5){
+    var x = rx(r);
+    var atOne = Math.abs(r - 1) < 1e-9;
+    ctx.strokeStyle = atOne ? PAL.border2 : PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, magTop); ctx.lineTo(x, magBot); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, phTop); ctx.lineTo(x, phBot); ctx.stroke();
+    ctx.fillStyle = atOne ? PAL.text : PAL.faint;
+    ctx.font = (atOne ? 'bold ' : '') + '12.5px ' + FONT;
+    ctx.fillText(r.toFixed(1), x, magBot + 6);
+    ctx.fillText(r.toFixed(1), x, phBot + 6);
+  }
+
+  /* 축 테두리 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.strokeRect(plotL, magTop, plotW, magBot - magTop);
+  ctx.strokeRect(plotL, phTop, plotW, phBot - phTop);
+
+  /* 제목 */
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('무차원 진폭  Xk/F₀ = 1 / √((1−r²)² + (2ζr)²)', plotL, magTop - 12);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('가로축 : 주파수비  r = ω/ωₙ  →', plotR, magTop - 12);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('위상 지연  θ [°]', plotL, phTop - 12);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('r < 1 : 따라감   ·   r = 1 : 90°   ·   r > 1 : 반대 방향', plotR, phTop - 12);
+}
+
+/* ---- 곡선 ---- */
+function drawMagCurve(z, color, lw, alpha){
+  ctx.save();
+  ctx.beginPath(); ctx.rect(plotL, magTop, plotW, magBot - magTop); ctx.clip();
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  for (var px = plotL; px <= plotR; px++){
+    var r = ((px - plotL) / plotW) * R_MAX;
+    var y = magY(mag(r, z));
+    if (px === plotL) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function drawPhaseCurve(z, color, lw, alpha){
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  for (var px = plotL; px <= plotR; px++){
+    var r = ((px - plotL) / plotW) * R_MAX;
+    var y = phY(phase(r, z) * 180 / Math.PI);
+    if (px === plotL) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function draw(){
+  var z = st.zeta, r = st.r;
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  /* ζ 가족 곡선 (배경) */
+  family.forEach(function(fz){ if (Math.abs(fz - z) > 1e-3) drawMagCurve(fz, PAL.faint, 1.6, 0.55); });
+  family.forEach(function(fz){ if (Math.abs(fz - z) > 1e-3) drawPhaseCurve(fz, PAL.faint, 1.6, 0.5); });
+
+  /* 현재 ζ 곡선 */
+  drawMagCurve(z, PAL.accent, 3.0, 1);
+  drawPhaseCurve(z, PAL.accent, 2.8, 1);
+
+  /* r_peak 세로선 (ζ < 1/√2 일 때만) */
+  var rp = rPeak(z), pv = peakValue(z);
+  if (rp !== null){
+    var xp = rx(rp);
+    ctx.strokeStyle = PAL.low; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(xp, magTop); ctx.lineTo(xp, magBot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAL.low;
+    if (pv > MAG_MAX){                                  /* 축 상한 밖 — 점 대신 위쪽 화살표 */
+      ctx.beginPath();
+      ctx.moveTo(xp, magTop + 3); ctx.lineTo(xp - 6, magTop + 15); ctx.lineTo(xp + 6, magTop + 15);
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(xp, magY(pv), 4.5, 0, 2 * Math.PI); ctx.fill();
+    }
+    /* 라벨은 불투명 판 위에 — 준정적 기준선·가족 곡선과 겹쳐도 읽히게 */
+    ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    var l1 = 'r_peak = ' + fmtRp(rp);
+    var l2 = '피크 ' + pv.toFixed(2) + '×' + (pv > MAG_MAX ? ' (축 상한 밖)' : '');
+    var lblW = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width);
+    var lblX = Math.min(xp + 8, plotR - lblW - 12);
+    ctx.fillStyle = PAL.surface; ctx.globalAlpha = 0.92;
+    ctx.fillRect(lblX - 5, magBot - 44, lblW + 10, 40); ctx.globalAlpha = 1;
+    ctx.fillStyle = PAL.low;
+    ctx.fillText(l1, lblX, magBot - 26);
+    ctx.fillText(l2, lblX, magBot - 9);
+  }
+
+  /* r=1 → 90° 고정 주석 (하단) */
+  var x1 = rx(1), y90 = phY(90);
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(x1, phTop); ctx.lineTo(x1, phBot); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.float;
+  ctx.beginPath(); ctx.arc(x1, y90, 5, 0, 2 * Math.PI); ctx.fill();
+  ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('r = 1 → θ = 90° (ζ 무관, 공진의 정의)', plotR - 6, y90 - 8);
+
+  /* r 마커 */
+  var mx = rx(r), mVal = mag(r, z), degVal = phase(r, z) * 180 / Math.PI;
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(mx, magTop); ctx.lineTo(mx, magBot); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, phTop); ctx.lineTo(mx, phBot); ctx.stroke();
+  ctx.fillStyle = PAL.high;
+  if (mVal > MAG_MAX){                       /* 축 상한 밖 — 점을 상한에 붙이면 6으로 오독되므로 화살표 */
+    ctx.beginPath();
+    ctx.moveTo(mx, magTop + 3); ctx.lineTo(mx - 7, magTop + 17); ctx.lineTo(mx + 7, magTop + 17);
+    ctx.closePath(); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(mx, magY(mVal), 5.5, 0, 2 * Math.PI); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(mx, phY(degVal), 5.5, 0, 2 * Math.PI); ctx.fill();
+
+  /* 위상 마커 라벨 */
+  ctx.font = 'bold 13px ' + FONT; ctx.textBaseline = 'middle';
+  ctx.textAlign = (mx > plotR - 130) ? 'right' : 'left';
+  var thLabY = Math.min(Math.max(phY(degVal) - 15, phTop + 12), phBot - 12);
+  ctx.fillText('θ = ' + degVal.toFixed(1) + '°',
+    (mx > plotR - 130) ? mx - 16 : mx + 16, thLabY);
+
+  /* 현재값 카드 (진폭 플롯 우상단) */
+  var cw = 214, ch = 104, cxx = plotR - cw - 10, cyy = magTop + 10;
+  ctx.fillStyle = PAL.surface; ctx.globalAlpha = 0.94;
+  ctx.fillRect(cxx, cyy, cw, ch); ctx.globalAlpha = 1;
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.2;
+  ctx.strokeRect(cxx, cyy, cw, ch);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.font = '15px ' + MONO;
+  var ly = cyy + 26;
+  ctx.fillStyle = PAL.text;   ctx.fillText('ζ = ' + fmtZ(z), cxx + 14, ly); ly += 24;
+  ctx.fillStyle = PAL.high;   ctx.fillText('r = ' + r.toFixed(3), cxx + 14, ly); ly += 24;
+  ctx.fillStyle = PAL.accent; ctx.fillText('Xk/F₀ = ' + fmtMag(mVal), cxx + 14, ly); ly += 24;
+  ctx.fillStyle = PAL.accent; ctx.fillText('θ = ' + degVal.toFixed(1) + '°', cxx + 14, ly);
+
+  /* ---- DOM 판독값 ---- */
+  $('sMag').textContent = fmtMag(mVal);
+  $('sPhase').textContent = degVal.toFixed(1) + '°';
+  $('sRpeak').textContent = (rp === null) ? '없음' : fmtRp(rp);
+  $('sPeakval').textContent = (rp === null) ? '—' : (pv >= 1000 ? '≥1000' : pv.toFixed(2) + '×');
+
+  var vd = $('verdict');
+  if (z > 1 / Math.SQRT2 + 1e-9){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ ζ = ' + fmtZ(z) + ' &gt; 0.707 — <b>피크 없음</b>. 최대는 r=0 의 준정적 Xk/F₀ = 1';
+  } else if (Math.abs(z - 1 / Math.SQRT2) <= 0.01){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ 경계 ζ ≈ 0.707 — 피크가 <b>막 사라지는 지점</b> (r_peak → 0)';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ 피크 존재: r_peak = <b>' + fmtRp(rp) + '</b> (&lt; 1) — 최대 배율 <b>' +
+      pv.toFixed(2) + '×</b>, 공진 r=1 보다 약간 왼쪽';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('zv').textContent = fmtZ(st.zeta);
+  $('rv').textContent = st.r.toFixed(3);
+  $('z').value = st.zeta;
+  $('r').value = st.r;
+}
+$('z').addEventListener('input', function(){
+  st.zeta = parseFloat(this.value);
+  $('zv').textContent = fmtZ(st.zeta);
+  draw();
+});
+$('r').addEventListener('input', function(){
+  st.r = parseFloat(this.value);
+  $('rv').textContent = st.r.toFixed(3);
+  draw();
+});
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+p[0] - st.zeta) < 1e-9 && Math.abs(+p[1] - st.r) < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+function stopSweep(){
+  st.running = false;
+  $('play').textContent = '▶ r 스윕 재생';
+  $('play').classList.remove('btn-acc');
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.zeta = +p[0]; st.r = +p[1];
+    stopSweep(); syncSpans(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 스윕 정지' : '▶ r 스윕 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.zeta = 0.10; st.r = 1.00; st.sweepDir = 1;
+  stopSweep(); syncSpans(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running){
+    st.r += st.sweepDir * 0.45 * dt;
+    if (st.r >= R_MAX){ st.r = R_MAX; st.sweepDir = -1; }
+    if (st.r <= 0){ st.r = 0; st.sweepDir = 1; }
+    $('r').value = st.r.toFixed(3);
+    $('rv').textContent = st.r.toFixed(3);
+    draw();                                  /* 스윕 중에만 갱신 (정지 시 CPU 낭비 방지) */
+  }
+  requestAnimationFrame(loop);
+}
+syncSpans();
+draw();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

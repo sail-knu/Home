@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>측정 노이즈와 평균 필터 — 2강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+.log{margin-top:14px}
+.log-t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:0 0 7px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:right;color:var(--faint);font-size:11.5px;letter-spacing:.03em}
+th,td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+th:last-child,td:last-child{text-align:left}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 2강 · 인터랙티브 데모</p>
+  <h1>측정 노이즈와 평균 필터</h1>
+  <p class="lede">참값 14.40 V인 배터리를 N번 측정합니다. <b>N</b>과 <b>σ</b>를 움직이고 <b>편향</b>을 켜 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  측정 <b>z<sub>k</sub></b> = 참값 <b>x</b> + 노이즈 <b>v<sub>k</sub></b>
+  &nbsp;→&nbsp; 평균 <b>x̄<sub>N</sub></b> = (1/N) Σ z<sub>k</sub>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">잔여 노이즈 ≈ σ/√N</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참값 x = 14.40 V</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정값 z<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>누적 평균 x̄<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-band)"><i></i>예상 오차범위 ±σ/√k</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>측정 개수 N <span class="value" id="nV">20</span></label>
+        <input type="range" id="nS" min="1" max="200" step="1" value="20">
+      </div>
+
+      <div class="ctl-box">
+        <label>노이즈 크기 σ (V) <span class="value" id="sV">0.20</span></label>
+        <input type="range" id="sS" min="0.05" max="1" step="0.01" value="0.20">
+      </div>
+
+      <div class="btn-row">
+        <button id="x4" class="btn">N을 4배로</button>
+        <button id="biasBtn" class="btn">편향: 없음</button>
+      </div>
+      <div class="btn-row">
+        <button id="logBtn" class="btn">📌 지금 값 기록</button>
+        <button id="reroll" class="btn">🎲 다시 측정</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">누적 평균 x̄<sub>N</sub></div><div class="v" id="avgV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">참값과의 오차</div><div class="v" id="errV">—</div></div>
+          <div class="stat"><div class="k">측정 1개 흔들림 σ</div><div class="v" id="stdV" style="color:var(--c-meas)">—</div></div>
+          <div class="stat"><div class="k">예상 오차 σ/√N</div><div class="v" id="theoV" style="color:var(--ok)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • N을 키우면 파란 선이 참값으로 수렴 — 잔여 노이즈는 <b>σ/√N</b> 규모<br>
+        • <b>4배</b> 많이 재면 오차는 <b>절반</b>, 100배면 1/10<br>
+        • [편향]을 켜면 N을 아무리 키워도 <b>14.70 V</b>에 수렴 — 평균은 편향을 못 없앤다<br>
+        • N = 3에서 [🎲]를 반복하면 평균이 크게 흔들림
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <p class="log-t">실험 기록장 — N을 바꿔가며 [📌 지금 값 기록]</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>N</th><th>σ</th><th>실제 오차 |x̄−x|</th><th>예상 σ/√N</th><th>편향</th></tr></thead>
+      <tbody id="logBody"><tr><td colspan="5" style="text-align:left;color:var(--faint)">기록 없음</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 2강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 74, r: 30, t: 46, b: 62 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var TRUE_X = 14.40, BIAS = 0.30, MAXN = 200;
+var state = { N: 20, sigma: 0.20, bias: false, base: [] };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), band: cvar('--c-band')
+  };
+}
+
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < MAXN; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+state.base = genBase(20260902);
+function zAt(k){ return TRUE_X + state.sigma * state.base[k] + (state.bias ? BIAS : 0); }
+
+function draw(){
+  var C = palette(), N = state.N, sig = state.sigma, k, y;
+  var z = [], avg = [], sum = 0;
+  for (k = 0; k < N; k++){ var zk = zAt(k); z.push(zk); sum += zk; avg.push(sum / (k + 1)); }
+  var last = avg[N - 1], err = last - TRUE_X, theo = sig / Math.sqrt(N);
+
+  var half = Math.max(3 * sig, 0.5);
+  var yLo = TRUE_X - half - 0.15, yHi = TRUE_X + half + 0.15 + (state.bias ? BIAS : 0);
+  var xLo = 0.5, xHi = N + 0.5;
+  function X(v){ return M.l + (v - xLo) / (xHi - xLo) * plotW; }
+  function Y(v){ return M.t + plotH - (Math.max(yLo, Math.min(yHi, v)) - yLo) / (yHi - yLo) * plotH; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = half > 1.2 ? 0.5 : (half > 0.6 ? 0.25 : 0.1);
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi; y += yStep){
+    ctx.beginPath(); ctx.moveTo(M.l, Y(y)); ctx.lineTo(M.l + plotW, Y(y)); ctx.stroke();
+  }
+
+  /* ±σ/√k 봉투 */
+  var eff = TRUE_X + (state.bias ? BIAS : 0);
+  ctx.globalAlpha = 0.13; ctx.fillStyle = C.band;
+  ctx.beginPath();
+  ctx.moveTo(X(1), Y(eff + sig));
+  for (k = 2; k <= N; k++) ctx.lineTo(X(k), Y(eff + sig / Math.sqrt(k)));
+  for (k = N; k >= 1; k--) ctx.lineTo(X(k), Y(eff - sig / Math.sqrt(k)));
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 0.5; ctx.strokeStyle = C.band; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(X(1), Y(eff + sig));
+  for (k = 2; k <= N; k++) ctx.lineTo(X(k), Y(eff + sig / Math.sqrt(k)));
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('전압 [V]', 16, M.t - 18);
+  ctx.textAlign = 'end'; ctx.fillText('측정 순서 k →', W - M.r, H - 18);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi; y += yStep) ctx.fillText(y.toFixed(2), M.l - 9, Y(y) + 4);
+  ctx.textAlign = 'center';
+  var xStep = Math.max(1, Math.round(N / 10));
+  for (k = 1; k <= N; k += xStep) ctx.fillText(String(k), X(k), M.t + plotH + 20);
+
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(M.l, Y(TRUE_X)); ctx.lineTo(M.l + plotW, Y(TRUE_X)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('참값 x = 14.40 V', M.l + 10, Y(TRUE_X) - 8);
+
+  ctx.fillStyle = C.meas;
+  for (k = 0; k < N; k++){
+    ctx.beginPath(); ctx.arc(X(k + 1), Y(z[k]), N > 80 ? 2.2 : 3.4, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  for (k = 0; k < N; k++){ if (k === 0) ctx.moveTo(X(1), Y(avg[0])); else ctx.lineTo(X(k + 1), Y(avg[k])); }
+  ctx.stroke();
+
+  var mx = X(N), my = Y(last);
+  ctx.fillStyle = C.avg; ctx.beginPath(); ctx.arc(mx, my, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.avg; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'end';
+  ctx.fillText('x̄ = ' + last.toFixed(3) + ' V', Math.min(mx - 12, M.l + plotW - 6), my - 12);
+
+  $('avgV').textContent = last.toFixed(3);
+  var errEl = $('errV');
+  errEl.textContent = (err >= 0 ? '+' : '−') + Math.abs(err).toFixed(3) + ' V';
+  errEl.style.color = Math.abs(err) < 0.05 ? 'var(--ok)' : (Math.abs(err) < 0.15 ? 'var(--warn)' : 'var(--bad)');
+  $('stdV').textContent = sig.toFixed(2) + ' V';
+  $('theoV').textContent = theo.toFixed(3) + ' V';
+
+  var vd = $('verdict'), cls, msg;
+  if (state.bias){
+    cls = 'bad';
+    msg = '노이즈 평균이 <b>+0.30 V</b>로 치우쳐 있습니다. N을 아무리 키워도 평균은 <b>14.70 V</b> 근처로 수렴 — 평균은 <b>편향을 없애지 못합니다</b>.';
+  } else if (N <= 4){
+    cls = 'mid';
+    msg = 'N = ' + N + '개뿐이라 평균이 노이즈에 그대로 휘둘립니다. N을 키워 보세요.';
+  } else if (N >= 40 && Math.abs(err) < theo * 1.2){
+    cls = 'good';
+    msg = 'N = ' + N + ' → 오차 ' + (err >= 0 ? '+' : '−') + Math.abs(err).toFixed(3) +
+      ' V, 예상 범위 σ/√N = ' + theo.toFixed(3) + ' V 안쪽입니다. 초록 깔때기가 <b>1/√N 속도로</b> 좁아집니다.';
+  } else {
+    cls = 'mid';
+    msg = 'N = ' + N + ' → 오차 ' + (err >= 0 ? '+' : '−') + Math.abs(err).toFixed(3) +
+      ' V (예상 ±' + theo.toFixed(3) + ' V). N을 4배로 늘리면 예상 오차는 <b>절반</b>.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+$('nS').addEventListener('input', function(){
+  state.N = parseInt(this.value, 10); $('nV').textContent = state.N; draw();
+});
+$('sS').addEventListener('input', function(){
+  state.sigma = parseFloat(this.value); $('sV').textContent = state.sigma.toFixed(2); draw();
+});
+$('x4').addEventListener('click', function(){
+  state.N = Math.min(MAXN, state.N * 4);
+  $('nS').value = state.N; $('nV').textContent = state.N; draw();
+});
+$('biasBtn').addEventListener('click', function(){
+  state.bias = !state.bias;
+  this.textContent = state.bias ? '편향: +0.30 V' : '편향: 없음';
+  this.classList.toggle('on', state.bias);
+  draw();
+});
+var seedTick = 1;
+$('reroll').addEventListener('click', function(){
+  state.base = genBase(20260902 + seedTick * 7919); seedTick++; draw();
+});
+
+var logRows = [];
+$('logBtn').addEventListener('click', function(){
+  var N = state.N, sig = state.sigma, sum = 0, k;
+  for (k = 0; k < N; k++) sum += zAt(k);
+  logRows.push({ N:N, sig:sig, err:Math.abs(sum / N - TRUE_X), theo:sig / Math.sqrt(N), bias:state.bias });
+  var body = $('logBody');
+  while (body.firstChild) body.removeChild(body.firstChild);
+  logRows.forEach(function(r, i){
+    var tr = document.createElement('tr');
+    if (i === logRows.length - 1) tr.className = 'cur';
+    tr.innerHTML = '<td>' + r.N + '</td><td>' + r.sig.toFixed(2) + '</td><td>' + r.err.toFixed(3) +
+      ' V</td><td>' + r.theo.toFixed(3) + ' V</td><td>' + (r.bias ? '+0.30 V' : '없음') + '</td>';
+    body.appendChild(tr);
+  });
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

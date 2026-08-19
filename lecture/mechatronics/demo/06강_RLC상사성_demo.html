@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLC 상사성 — 6강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.ctl-box .conv{font-size:12px;color:var(--c-alias);font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 6강 · 인터랙티브 데모</p>
+  <h1>RLC 상사성 — 같은 수학 구조</h1>
+  <p class="lede">기계의 <b>m, c, k</b>를 움직이면 전기의 <b>L, R, C</b>가 자동 환산됩니다. 같은 계단 입력에 대한 두 응답이 포개지는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  기계 <b>m&#7821; + c&#7819; + kx = F(t)</b> &nbsp;↔&nbsp; 전기 <b>Lq&#776; + Rq&#775; + (1/C)q = v(t)</b>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">m↔L, c↔R, k↔1/C</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>기계 변위 x(t) — 실선</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>전기 전하 q(t) — 점선</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>정상상태 x<sub>ss</sub> = F<sub>0</sub>/k</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>질량 m (kg) <span class="value" id="mV">1.00</span></label>
+        <input type="range" id="mS" min="0.25" max="4" step="0.05" value="1">
+        <div class="conv">→ 인덕턴스 L = <span id="LV">1.00</span> H</div>
+      </div>
+
+      <div class="ctl-box">
+        <label>감쇠 c (N·s/m) <span class="value" id="cVal">4.00</span></label>
+        <input type="range" id="cS" min="0" max="20" step="0.1" value="4">
+        <div class="conv">→ 저항 R = <span id="RV">4.00</span> Ω</div>
+      </div>
+
+      <div class="ctl-box">
+        <label>강성 k (N/m) <span class="value" id="kV">25.0</span></label>
+        <input type="range" id="kS" min="1" max="100" step="1" value="25">
+        <div class="conv">→ 정전용량 C = 1/k = <span id="capV">0.0400</span> F</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="playBtn" class="btn">&#9654; 재생</button>
+        <button id="resetBtn" class="btn">&#8635; 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="critBtn" class="btn">&zeta; = 1 맞추기</button>
+        <button id="zeroBtn" class="btn">c = 0 (LC)</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">자연진동수 &omega;<sub>n</sub></div><div class="v" id="wnV" style="color:var(--accent)">—</div></div>
+          <div class="stat"><div class="k">감쇠비 &zeta;</div><div class="v" id="zetaV" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">정상상태 x<sub>ss</sub></div><div class="v" id="xssV" style="color:var(--c-true)">—</div></div>
+          <div class="stat"><div class="k">두 곡선 최대차</div><div class="v" id="diffV" style="color:var(--ok)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict good" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • m, c, k를 어떻게 바꿔도 두 곡선이 포개짐<br>
+        • &omega;<sub>n</sub> = √(k/m) = √((1/C)/L) — 같은 식<br>
+        • c(=R)만 키우면 &zeta;만 커지고 x<sub>ss</sub>는 그대로<br>
+        • c = 0이면 LC 회로처럼 진동이 안 잦아듦<br>
+        • 최대차 ≈ 0이 상사성의 수치 증거
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 6강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+var M = { l: 62, r: 28, t: 44, b: 56 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var F0 = 1.0, T_MAX = 6.0, DT = 0.002;
+var STEPS = Math.round(T_MAX / DT);
+var state = { m: 1.0, c: 4.0, k: 25.0, t: 0, playing: false, raf: null };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'),
+    accent: cvar('--accent')
+  };
+}
+
+/* ── RK4로 2차식 적분 ──────────────────────────────
+   기계: m x'' + c x' + k x = F0
+   전기: L q'' + R q' + q/C = v0,  L=m, R=c, 1/C=k → 계수 동일     */
+function simulate(m, c, k){
+  var xArr = new Float64Array(STEPS + 1), qArr = new Float64Array(STEPS + 1);
+  function fMech(x, v){ return [v, (F0 - c * v - k * x) / m]; }
+  var L = m, R = c, invC = k, v0 = F0;
+  function fElec(q, i){ return [i, (v0 - R * i - invC * q) / L]; }
+
+  var x = 0, v = 0, q = 0, i = 0, n;
+  xArr[0] = 0; qArr[0] = 0;
+  for (n = 0; n < STEPS; n++){
+    var a1 = fMech(x, v);
+    var a2 = fMech(x + 0.5 * DT * a1[0], v + 0.5 * DT * a1[1]);
+    var a3 = fMech(x + 0.5 * DT * a2[0], v + 0.5 * DT * a2[1]);
+    var a4 = fMech(x + DT * a3[0], v + DT * a3[1]);
+    x += DT / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]);
+    v += DT / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]);
+    xArr[n + 1] = x;
+    var b1 = fElec(q, i);
+    var b2 = fElec(q + 0.5 * DT * b1[0], i + 0.5 * DT * b1[1]);
+    var b3 = fElec(q + 0.5 * DT * b2[0], i + 0.5 * DT * b2[1]);
+    var b4 = fElec(q + DT * b3[0], i + DT * b3[1]);
+    q += DT / 6 * (b1[0] + 2 * b2[0] + 2 * b3[0] + b4[0]);
+    i += DT / 6 * (b1[1] + 2 * b2[1] + 2 * b3[1] + b4[1]);
+    qArr[n + 1] = q;
+  }
+  return { xArr: xArr, qArr: qArr };
+}
+var sim = simulate(state.m, state.c, state.k);
+
+function niceStep(hi){
+  var raw = hi / 5, p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), n = raw / p, s;
+  if (n < 1.5) s = 1; else if (n < 3.5) s = 2; else if (n < 7.5) s = 5; else s = 10;
+  return s * p;
+}
+function xToPx(t){ return M.l + (t / T_MAX) * plotW; }
+function yToPx(y, yLo, yHi){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+function draw(){
+  var C = palette(), m = state.m, c = state.c, k = state.k, n, t, y;
+  var xss = F0 / k, wn = Math.sqrt(k / m), zeta = c / (2 * Math.sqrt(m * k));
+
+  var peak = 0;
+  for (n = 0; n <= STEPS; n++) if (sim.xArr[n] > peak) peak = sim.xArr[n];
+  var yHi = Math.max(peak * 1.12, xss * 1.25, xss + 0.02), yLo = 0;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* 격자 */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = niceStep(yHi);
+  for (y = 0; y <= yHi + 1e-9; y += yStep){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y, yLo, yHi)); ctx.lineTo(M.l + plotW, yToPx(y, yLo, yHi)); ctx.stroke();
+  }
+  for (t = 0; t <= T_MAX + 1e-9; t += 1){
+    ctx.beginPath(); ctx.moveTo(xToPx(t), M.t); ctx.lineTo(xToPx(t), M.t + plotH); ctx.stroke();
+  }
+
+  /* 축 */
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('응답 x(t) [m] / q(t) [C]', 12, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('시간 t (s) →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = 0; y <= yHi + 1e-9; y += yStep) ctx.fillText(y.toFixed(yStep < 0.1 ? 3 : 2), M.l - 8, yToPx(y, yLo, yHi) + 4);
+  ctx.textAlign = 'center';
+  for (t = 0; t <= T_MAX + 1e-9; t += 1) ctx.fillText(t.toFixed(0), xToPx(t), M.t + plotH + 18);
+
+  /* 정상상태 선 */
+  var yss = yToPx(xss, yLo, yHi);
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(M.l, yss); ctx.lineTo(M.l + plotW, yss); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('x_ss = F0/k = ' + xss.toFixed(3), M.l + 8, yss - 6);
+
+  var nEnd = (state.playing || state.t > 0) ? Math.min(STEPS, Math.round(state.t / DT)) : STEPS;
+
+  /* 기계 곡선 (실선) */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (n = 0; n <= nEnd; n++){
+    var px1 = xToPx(n * DT), py1 = yToPx(sim.xArr[n], yLo, yHi);
+    if (n === 0) ctx.moveTo(px1, py1); else ctx.lineTo(px1, py1);
+  }
+  ctx.stroke();
+
+  /* 전기 곡선 (점선, 위에 겹침) */
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 2; ctx.setLineDash([7, 6]);
+  ctx.beginPath();
+  for (n = 0; n <= nEnd; n++){
+    var px2 = xToPx(n * DT), py2 = yToPx(sim.qArr[n], yLo, yHi);
+    if (n === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  /* 진행 마커 */
+  if (nEnd < STEPS){
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(xToPx(nEnd * DT), yToPx(sim.xArr[nEnd], yLo, yHi), 5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* 두 곡선 최대차 */
+  var maxDiff = 0;
+  for (n = 0; n <= STEPS; n++){
+    var d = Math.abs(sim.xArr[n] - sim.qArr[n]);
+    if (d > maxDiff) maxDiff = d;
+  }
+
+  $('wnV').textContent = wn.toFixed(2);
+  $('zetaV').textContent = zeta.toFixed(3);
+  $('xssV').textContent = xss.toFixed(3) + ' m';
+  $('diffV').textContent = maxDiff.toExponential(1);
+
+  var regime, rcls;
+  if (zeta < 0.001){ regime = '무감쇠 — 진동이 잦아들지 않음 (LC 회로)'; rcls = 'mid'; }
+  else if (zeta < 1){ regime = '부족감쇠 — 오버슈트 후 진동하며 수렴'; rcls = 'good'; }
+  else if (Math.abs(zeta - 1) < 0.02){ regime = '임계감쇠 — 진동 없이 가장 빠르게 수렴'; rcls = 'good'; }
+  else { regime = '과감쇠 — 진동 없이 느리게 수렴'; rcls = 'good'; }
+
+  var vd = $('verdict');
+  vd.className = 'verdict ' + rcls;
+  vd.innerHTML = '기계 x(t)와 전기 q(t)의 최대차 <b>' + maxDiff.toExponential(1) +
+    '</b> — 두 곡선이 포개집니다. &omega;<sub>n</sub> = ' + wn.toFixed(2) +
+    ' rad/s, &zeta; = ' + zeta.toFixed(3) + ' → ' + regime + '.';
+}
+
+function updateConversions(){
+  $('mV').textContent = state.m.toFixed(2);
+  $('cVal').textContent = state.c.toFixed(2);
+  $('kV').textContent = state.k.toFixed(1);
+  $('LV').textContent = state.m.toFixed(2);
+  $('RV').textContent = state.c.toFixed(2);
+  $('capV').textContent = (1 / state.k).toFixed(4);
+}
+function recompute(){
+  sim = simulate(state.m, state.c, state.k);
+  updateConversions();
+  draw();
+}
+
+function setPlayBtn(){
+  var b = $('playBtn');
+  b.innerHTML = state.playing ? '&#10073;&#10073; 정지' : '&#9654; 재생';
+  if (state.playing) b.classList.add('on'); else b.classList.remove('on');
+}
+function tick(){
+  if (!state.playing) return;
+  state.t += DT * 24;
+  if (state.t >= T_MAX){ state.t = T_MAX; state.playing = false; setPlayBtn(); draw(); return; }
+  draw();
+  state.raf = requestAnimationFrame(tick);
+}
+
+$('playBtn').addEventListener('click', function(){
+  if (state.playing){
+    state.playing = false;
+    if (state.raf) cancelAnimationFrame(state.raf);
+  } else {
+    if (state.t >= T_MAX) state.t = 0;
+    state.playing = true;
+    state.raf = requestAnimationFrame(tick);
+  }
+  setPlayBtn();
+});
+$('resetBtn').addEventListener('click', function(){
+  state.playing = false;
+  if (state.raf) cancelAnimationFrame(state.raf);
+  state.t = 0; setPlayBtn(); draw();
+});
+$('mS').addEventListener('input', function(){ state.m = parseFloat(this.value); recompute(); });
+$('cS').addEventListener('input', function(){ state.c = parseFloat(this.value); recompute(); });
+$('kS').addEventListener('input', function(){ state.k = parseFloat(this.value); recompute(); });
+
+function setC(v){
+  var cc = Math.max(0, Math.min(20, Math.round(v * 10) / 10));
+  state.c = cc; $('cS').value = cc; recompute();
+}
+$('critBtn').addEventListener('click', function(){ setC(2 * Math.sqrt(state.m * state.k)); });
+$('zeroBtn').addEventListener('click', function(){ setC(0); });
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+updateConversions();
+draw();
+})();
+</script>
+</body>
+</html>

@@ -14,6 +14,20 @@
     }
   }
   const pageSections = document.querySelectorAll(".page-section");
+  const courseControllers = {};
+  const coursePageKeys = {
+    "#lecture-mechatronics": "mech",
+    "#lecture-vibrations": "vib"
+  };
+
+  function syncCourseDemos(targetId) {
+    Object.entries(coursePageKeys).forEach(([hash, key]) => {
+      const ctl = courseControllers[key];
+      if (!ctl) return;
+      if (targetId === hash) ctl.openFirst();
+      else ctl.unload();
+    });
+  }
 
   window.addEventListener("scroll", () => {
     if (!navbar) return;
@@ -33,7 +47,9 @@
     const navAlias = {
       "#member-im": "#members",
       "#member-yu": "#members",
-      "#lecture-future": "#lecture"
+      "#lecture-future": "#lecture",
+      "#lecture-mechatronics": "#lecture",
+      "#lecture-vibrations": "#lecture"
     };
     navItems.forEach((nav) => {
       const href = nav.getAttribute("href");
@@ -60,6 +76,7 @@
     if (!fromHistory && window.location.hash !== targetId) {
       window.history.pushState(null, "", targetId);
     }
+    syncCourseDemos(targetId);
   }
 
   window.addEventListener("popstate", () => {
@@ -151,10 +168,11 @@
   function showSim(id) {
     const panel = document.getElementById(id);
     if (!panel) return;
-    document.querySelectorAll(".sim-block").forEach((el) => {
+    const scope = panel.closest(".page-section") || document;
+    scope.querySelectorAll(".sim-block").forEach((el) => {
       el.classList.toggle("is-hidden", el.id !== id);
     });
-    document.querySelectorAll(".sim-nav-btn").forEach((btn) => {
+    scope.querySelectorAll(".sim-nav-btn").forEach((btn) => {
       btn.classList.toggle("active", btn.getAttribute("data-sim") === id);
     });
     const frame = panel.querySelector("iframe");
@@ -166,6 +184,177 @@
   document.querySelectorAll(".sim-nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => showSim(btn.getAttribute("data-sim")));
   });
+
+  const COURSE_DEMOS = {
+    mech: {
+      lecNav: "mech-lec-nav",
+      simNav: "mech-sim-nav",
+      title: "mech-title",
+      desc: "mech-desc",
+      frame: "mech-frame",
+      lectures: [
+        { id: "2", name: "2강 · 센서·샘플링" },
+        { id: "3", name: "3강 · 평균" },
+        { id: "4", name: "4강 · 필터" },
+        { id: "5", name: "5강 · 칼만 필터" },
+        { id: "6", name: "6강 · 모델링" },
+        { id: "7", name: "7강 · 1차 시스템" }
+      ],
+      demos: [
+        { lec: "2", title: "샘플링과 에일리어싱", src: "lecture/mechatronics/demo/02강_샘플링에일리어싱_demo.html" },
+        { lec: "2", title: "정확도 vs 정밀도", src: "lecture/mechatronics/demo/02강_정확도정밀도_demo.html" },
+        { lec: "2", title: "측정 노이즈와 평균 필터", src: "lecture/mechatronics/demo/02강_평균필터_demo.html" },
+        { lec: "3", title: "누적 평균 vs 이동평균", src: "lecture/mechatronics/demo/03강_세평균비교_demo.html" },
+        { lec: "3", title: "재귀식 평균 = 배치식 평균", src: "lecture/mechatronics/demo/03강_재귀식평균_demo.html" },
+        { lec: "4", title: "3필터 비교", src: "lecture/mechatronics/demo/04강_3필터비교_demo.html" },
+        { lec: "4", title: "LPF의 α", src: "lecture/mechatronics/demo/04강_LPF알파_demo.html" },
+        { lec: "4", title: "지수 가중치", src: "lecture/mechatronics/demo/04강_지수가중치_demo.html" },
+        { lec: "5", title: "칼만 게인 K", src: "lecture/mechatronics/demo/05강_칼만게인_demo.html" },
+        { lec: "5", title: "Predict–Update", src: "lecture/mechatronics/demo/05강_예측업데이트_demo.html" },
+        { lec: "5", title: "Q와 R 튜닝", src: "lecture/mechatronics/demo/05강_QR튜닝_demo.html" },
+        { lec: "6", title: "RLC 상사성", src: "lecture/mechatronics/demo/06강_RLC상사성_demo.html" },
+        { lec: "6", title: "FBD에서 운동방정식 조립", src: "lecture/mechatronics/demo/06강_FBD조립_demo.html" },
+        { lec: "6", title: "질량–스프링–댐퍼", src: "lecture/mechatronics/demo/06강_MSD시뮬레이터_demo.html" },
+        { lec: "7", title: "1차 시스템 — τ와 63.2%", src: "lecture/mechatronics/demo/07강_1차시스템_demo.html" }
+      ]
+    },
+    vib: {
+      lecNav: "vib-lec-nav",
+      simNav: "vib-sim-nav",
+      title: "vib-title",
+      desc: "vib-desc",
+      frame: "vib-frame",
+      lectures: [
+        { id: "1", name: "1강 · 개요" },
+        { id: "2", name: "2강 · 자유진동" },
+        { id: "3", name: "3강 · 감쇠" },
+        { id: "4", name: "4강 · 강성 설계" },
+        { id: "5", name: "5강 · 조화가진" },
+        { id: "6", name: "6강 · 전달함수" },
+        { id: "7", name: "7강 · 바닥가진" },
+        { id: "9", name: "9강 · 임펄스" },
+        { id: "10", name: "10강 · 주기입력" },
+        { id: "11", name: "11강 · 라플라스" },
+        { id: "12", name: "12강 · 2자유도" },
+        { id: "13", name: "13강 · 모드해석" },
+        { id: "14", name: "14강 · 흡진기" }
+      ],
+      demos: [
+        { lec: "1", title: "1자유도 3가지 예제", src: "lecture/vibrations/demos/lec01/lec01_d1_dof.html" },
+        { lec: "1", title: "고유진동수 ωₙ 탐험기", src: "lecture/vibrations/demos/lec01/lec01_d2_natfreq.html" },
+        { lec: "2", title: "초기조건 → 진폭·위상", src: "lecture/vibrations/demos/lec02/lec02_d1_initcond.html" },
+        { lec: "2", title: "변위·속도·가속도 위상", src: "lecture/vibrations/demos/lec02/lec02_d2_phase.html" },
+        { lec: "2", title: "평균·평균제곱·RMS", src: "lecture/vibrations/demos/lec02/lec02_d3_rms.html" },
+        { lec: "3", title: "감쇠비 ζ 탐험기", src: "lecture/vibrations/demos/lec03/lec03_d1_damping.html" },
+        { lec: "3", title: "정착시간 Ts = 4/(ζωₙ)", src: "lecture/vibrations/demos/lec03/lec03_d2_settling.html" },
+        { lec: "3", title: "에너지 방법 Tmax = Umax", src: "lecture/vibrations/demos/lec03/lec03_d3_energy.html" },
+        { lec: "4", title: "실제 부품 강성 계산기", src: "lecture/vibrations/demos/lec04/lec04_d1_stiffness.html" },
+        { lec: "4", title: "직렬 vs 병렬 등가강성", src: "lecture/vibrations/demos/lec04/lec04_d2_springs.html" },
+        { lec: "4", title: "허용 변위 설계 미션", src: "lecture/vibrations/demos/lec04/lec04_d3_design.html" },
+        { lec: "5", title: "맥놀이(Beat) 관찰기", src: "lecture/vibrations/demos/lec05/lec05_d1_beat.html" },
+        { lec: "5", title: "공진 — 발산과 감쇠", src: "lecture/vibrations/demos/lec05/lec05_d2_resonance.html" },
+        { lec: "5", title: "과도응답 vs 정상상태", src: "lecture/vibrations/demos/lec05/lec05_d3_transient.html" },
+        { lec: "6", title: "무차원 진폭·위상 FRF", src: "lecture/vibrations/demos/lec06/lec06_d1_frf.html" },
+        { lec: "6", title: "복소평면 페이저", src: "lecture/vibrations/demos/lec06/lec06_d2_phasor.html" },
+        { lec: "6", title: "전달함수 H(s)", src: "lecture/vibrations/demos/lec06/lec06_d3_transfer.html" },
+        { lec: "7", title: "전달률 탐험기", src: "lecture/vibrations/demos/lec07/lec07_d1_transmissibility.html" },
+        { lec: "7", title: "노면 주행 자동차", src: "lecture/vibrations/demos/lec07/lec07_d2_car.html" },
+        { lec: "7", title: "회전불균형", src: "lecture/vibrations/demos/lec07/lec07_d3_unbalance.html" },
+        { lec: "9", title: "임펄스 응답함수 h(t)", src: "lecture/vibrations/demos/lec09_d1_impulse.html" },
+        { lec: "9", title: "컨벌루션 적분", src: "lecture/vibrations/demos/lec09_d2_convolution.html" },
+        { lec: "9", title: "계단·펄스 응답", src: "lecture/vibrations/demos/lec09_d3_step.html" },
+        { lec: "10", title: "푸리에 급수 합성기", src: "lecture/vibrations/demos/lec10_d1_fourier.html" },
+        { lec: "10", title: "파형 ↔ 스펙트럼", src: "lecture/vibrations/demos/lec10_d2_spectrum.html" },
+        { lec: "10", title: "고조파 공진", src: "lecture/vibrations/demos/lec10_d3_harmonic.html" },
+        { lec: "11", title: "s-평면 극점 ↔ 시간응답", src: "lecture/vibrations/demos/lec11_d1_splane.html" },
+        { lec: "11", title: "변환표 8번 vs 9번", src: "lecture/vibrations/demos/lec11_d2_responses.html" },
+        { lec: "11", title: "시간이동 정리", src: "lecture/vibrations/demos/lec11_d3_timeshift.html" },
+        { lec: "12", title: "모드형상 — 동상과 역상", src: "lecture/vibrations/demos/lec12_d1_modeshape.html" },
+        { lec: "12", title: "특성방정식 계산기", src: "lecture/vibrations/demos/lec12_d2_eigen.html" },
+        { lec: "12", title: "모드 중첩", src: "lecture/vibrations/demos/lec12_d3_superposition.html" },
+        { lec: "13", title: "모드좌표 vs 물리좌표", src: "lecture/vibrations/demos/lec13_d1_modalcoord.html" },
+        { lec: "13", title: "직교성과 정규화", src: "lecture/vibrations/demos/lec13_d2_orthogonality.html" },
+        { lec: "13", title: "모드해석 5단계", src: "lecture/vibrations/demos/lec13_d3_workflow.html" },
+        { lec: "14", title: "흡진기 조정: X=0", src: "lecture/vibrations/demos/lec14_d1_tuning.html" },
+        { lec: "14", title: "무차원 설계 지도", src: "lecture/vibrations/demos/lec14_d2_safeband.html" }
+      ]
+    }
+  };
+
+  function initCourseDemos(key, data) {
+    const lecNav = document.getElementById(data.lecNav);
+    const simNav = document.getElementById(data.simNav);
+    const titleEl = document.getElementById(data.title);
+    const descEl = document.getElementById(data.desc);
+    const frame = document.getElementById(data.frame);
+    if (!lecNav || !simNav || !titleEl || !descEl || !frame) return;
+
+    const state = { lec: data.lectures[0].id, src: "" };
+
+    function lectureName(id) {
+      return data.lectures.find((lec) => lec.id === id)?.name || id + "강";
+    }
+
+    function demosFor(lec) {
+      return data.demos.filter((demo) => demo.lec === lec);
+    }
+
+    function renderLectures() {
+      lecNav.innerHTML = "";
+      data.lectures.forEach((lec) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
+        btn.textContent = lec.name;
+        btn.addEventListener("click", () => {
+          state.lec = lec.id;
+          renderLectures();
+          renderDemos();
+          showDemo(demosFor(lec.id)[0]);
+        });
+        lecNav.appendChild(btn);
+      });
+    }
+
+    function renderDemos() {
+      simNav.innerHTML = "";
+      demosFor(state.lec).forEach((demo) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-pick-btn" + (demo.src === state.src ? " active" : "");
+        btn.textContent = demo.title;
+        btn.addEventListener("click", () => showDemo(demo));
+        simNav.appendChild(btn);
+      });
+    }
+
+    function showDemo(demo) {
+      if (!demo) return;
+      state.lec = demo.lec;
+      state.src = demo.src;
+      titleEl.textContent = demo.title;
+      descEl.textContent = lectureName(demo.lec);
+      frame.title = demo.title;
+      frame.src = encodeURI(demo.src);
+      renderLectures();
+      renderDemos();
+    }
+
+    function openFirst() {
+      if (!state.src) showDemo(demosFor(state.lec)[0]);
+    }
+
+    function unload() {
+      state.src = "";
+      frame.removeAttribute("src");
+    }
+
+    renderLectures();
+    renderDemos();
+    courseControllers[key] = { openFirst, unload };
+  }
+
+  Object.entries(COURSE_DEMOS).forEach(([key, data]) => initCourseDemos(key, data));
 
   document.addEventListener("DOMContentLoaded", () => {
     if (window.location.hash) navigateToSection(window.location.hash);
@@ -200,7 +389,7 @@
 
     const ring = root.querySelector(".sail-cursor-ring");
     const dot = root.querySelector(".sail-cursor-dot");
-    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
     let rx = x;

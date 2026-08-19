@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FBD에서 운동방정식 조립 — 6강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+/* ================= 힘 항 체크 + 조립식 ================= */
+.terms{display:flex;flex-direction:column;gap:6px;margin-top:7px}
+.term-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;
+  background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:13.5px;user-select:none}
+.term-row:hover{border-color:var(--accent)}
+.term-row input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.term-row .sw{width:13px;height:13px;border-radius:3px;flex-shrink:0}
+.term-row .tl{font-weight:800}
+.term-row .td{color:var(--faint);font-size:11.5px;margin-left:auto}
+.eqbox{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px;
+  margin-top:7px;text-align:center;font-size:16px;font-weight:800;line-height:1.7}
+.eqbox .yes{color:var(--ok)}
+.eqbox .no{color:var(--bad)}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 6강 · 인터랙티브 데모</p>
+  <h1>FBD에서 운동방정식 조립하기</h1>
+  <p class="lede">힘 항을 체크하면 자유 물체도에 화살표가 뜨고 식이 같이 바뀝니다. <b>[확인]</b>으로 조립한 식을 판정하세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  FBD(힘 나열) &nbsp;→&nbsp; 뉴턴 2법칙 <b>m&#7821; = &Sigma;F</b>
+  &nbsp;→&nbsp; 정리 <b>m&#7821; + c&#7819; + kx = F(t)</b>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i></i>외력 +F</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>스프링력 &minus;kx</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>댐퍼력 &minus;c&#7819;</span>
+        <span class="lg" style="color:var(--bad)"><i></i>오답 후보 항</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>FBD 힘 후보 — 체크한 항만 화살표</label>
+        <div class="terms" id="terms">
+          <label class="term-row"><input type="checkbox" data-t="F"><span class="sw" style="background:var(--c-true)"></span><span class="tl">+F</span><span class="td">외력 (입력)</span></label>
+          <label class="term-row"><input type="checkbox" data-t="kx"><span class="sw" style="background:var(--c-avg)"></span><span class="tl">&minus;kx</span><span class="td">스프링 복원력</span></label>
+          <label class="term-row"><input type="checkbox" data-t="cxd"><span class="sw" style="background:var(--c-band)"></span><span class="tl">&minus;c&#7819;</span><span class="td">댐퍼 감쇠력</span></label>
+          <label class="term-row"><input type="checkbox" data-t="pkx"><span class="sw" style="background:var(--bad)"></span><span class="tl">+kx</span><span class="td">오답 후보</span></label>
+          <label class="term-row"><input type="checkbox" data-t="kxd"><span class="sw" style="background:var(--bad)"></span><span class="tl">&minus;k&#7819;</span><span class="td">오답 후보</span></label>
+          <label class="term-row"><input type="checkbox" data-t="cx"><span class="sw" style="background:var(--bad)"></span><span class="tl">&minus;cx</span><span class="td">오답 후보</span></label>
+        </div>
+      </div>
+
+      <div class="ctl-box">
+        <label>조립 중인 식 &nbsp;(m=1, c=4, k=25, F<sub>0</sub>=10)</label>
+        <div class="eqbox" id="eqbox">m&#7821; = 0</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="checkBtn" class="btn">&#10003; 확인</button>
+        <button id="clearBtn" class="btn">선택 해제</button>
+        <button id="ansBtn" class="btn">정답 보기</button>
+      </div>
+
+      <div class="verdict mid" id="verdict">힘 항을 골라 식을 조립한 뒤 [확인]을 누르세요.</div>
+
+      <div class="ctl-box" id="resGroup" style="display:none">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">표준형</div><div class="v" id="stdV" style="font-size:12.5px;color:var(--ok)">—</div></div>
+          <div class="stat"><div class="k">정상상태 x<sub>ss</sub></div><div class="v" id="xssV" style="color:var(--c-true)">—</div></div>
+        </div>
+      </div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 스프링·댐퍼는 <b>항상 운동을 방해</b>(마이너스)<br>
+        • 스프링은 변위 <b>x</b>, 댐퍼는 속도 <b>&#7819;</b>에 비례<br>
+        • 부호가 +로 뒤집히면 발산하는 모델<br>
+        • 체크를 바꾸면 화살표와 식이 같이 변함<br>
+        • FBD만 맞으면 표준형 정리는 자동
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 6강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+
+var M_VAL = 1, C_VAL = 4, K_VAL = 25, F0 = 10;
+var ALL = ['F', 'kx', 'cxd', 'pkx', 'kxd', 'cx'];
+var TERM = {
+  F:   { label: '+F',   key: 'tru',  dir: +1, correct: true },
+  kx:  { label: '−kx',  key: 'avg',  dir: -1, correct: true },
+  cxd: { label: '−cẋ',  key: 'band', dir: -1, correct: true },
+  pkx: { label: '+kx',  key: 'bad',  dir: +1, correct: false },
+  kxd: { label: '−kẋ',  key: 'bad',  dir: -1, correct: false },
+  cx:  { label: '−cx',  key: 'bad',  dir: -1, correct: false }
+};
+var state = { sel: {}, checked: false };
+ALL.forEach(function(t){ state.sel[t] = false; });
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), surface2: cvar('--surface2'), text: cvar('--text'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'),
+    ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+
+function arrowHead(x, y, dir, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - dir * 14, y - 7);
+  ctx.lineTo(x - dir * 14, y + 7);
+  ctx.closePath(); ctx.fill();
+}
+function drawForceArrow(x1, y1, x2, y2, dir, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - dir * 12, y2); ctx.stroke();
+  arrowHead(x2, y2, dir, color);
+}
+function drawSpring(x1, y, x2, color){
+  var coils = 8, dx = (x2 - x1) / (coils + 1), i;
+  ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + dx * 0.6, y);
+  for (i = 0; i < coils; i++){
+    var xa = x1 + dx * (0.6 + i);
+    ctx.lineTo(xa + dx * 0.5, y - 12);
+    ctx.lineTo(xa + dx, y + 12);
+  }
+  ctx.lineTo(x2 - dx * 0.4, y); ctx.lineTo(x2, y); ctx.stroke();
+}
+function drawDamper(x1, y, x2, color){
+  var mid = (x1 + x2) / 2;
+  ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(mid - 4, y); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(mid - 4, y - 16); ctx.lineTo(mid - 16, y - 16);
+  ctx.lineTo(mid - 16, y + 16); ctx.lineTo(mid - 4, y + 16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mid - 10, y - 12); ctx.lineTo(mid - 10, y + 12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mid - 10, y); ctx.lineTo(x2, y); ctx.stroke();
+}
+
+function draw(){
+  var C = palette(), x, y, i;
+  ctx.clearRect(0, 0, W, H);
+
+  /* 바닥 */
+  var groundY = 420;
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(60, groundY); ctx.lineTo(W - 60, groundY); ctx.stroke();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (x = 70; x < W - 60; x += 22){
+    ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 12, groundY + 12); ctx.stroke();
+  }
+
+  /* 벽 */
+  var wallX = 110;
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(wallX, 150); ctx.lineTo(wallX, groundY); ctx.stroke();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = 160; y < groundY; y += 20){
+    ctx.beginPath(); ctx.moveTo(wallX, y); ctx.lineTo(wallX - 14, y + 14); ctx.stroke();
+  }
+
+  /* 질량 블록 */
+  var blockCx = 540, blockCy = 290, bw = 150, bh = 130;
+  var bx = blockCx - bw / 2, by = blockCy - bh / 2;
+  ctx.fillStyle = C.surface2; ctx.strokeStyle = C.axis; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = C.text; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('m', blockCx, blockCy + 10);
+
+  /* 스프링 · 댐퍼 */
+  var springY = by + 32;
+  drawSpring(wallX, springY, bx, C.avg);
+  ctx.fillStyle = C.avg; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('스프링 k', (wallX + bx) / 2, springY - 26);
+
+  var damperY = by + bh - 32;
+  drawDamper(wallX, damperY, bx, C.band);
+  ctx.fillStyle = C.band; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('댐퍼 c', (wallX + bx) / 2, damperY + 40);
+
+  /* +x 기준축 */
+  ctx.strokeStyle = C.faint; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(blockCx, groundY + 26); ctx.lineTo(blockCx + 90, groundY + 26); ctx.stroke();
+  arrowHead(blockCx + 90, groundY + 26, +1, C.faint);
+  ctx.fillStyle = C.faint; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('+x 방향 (변위 · 속도 · 힘 부호 기준)', blockCx - 10, groundY + 48);
+
+  /* 선택된 힘 화살표 */
+  var right = [], left = [];
+  ALL.forEach(function(t){
+    if (!state.sel[t]) return;
+    if (TERM[t].dir > 0) right.push(t); else left.push(t);
+  });
+  var arrowLen = 120;
+  right.forEach(function(t, i){
+    var info = TERM[t], col = C[info.key];
+    var ry = blockCy - (right.length - 1) * 20 / 2 + i * 20;
+    var sx = bx + bw, ex = sx + arrowLen;
+    drawForceArrow(sx, ry, ex, ry, +1, col);
+    ctx.fillStyle = col; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'start';
+    ctx.fillText(info.label, ex + 8, ry + 5);
+  });
+  left.forEach(function(t, i){
+    var info = TERM[t], col = C[info.key];
+    var ly = blockCy - (left.length - 1) * 20 / 2 + i * 20;
+    var sx = bx, ex = sx - arrowLen;
+    drawForceArrow(sx, ly, ex, ly, -1, col);
+    ctx.fillStyle = col; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'end';
+    ctx.fillText(info.label, ex - 8, ly + 5);
+  });
+
+  ctx.fillStyle = C.text; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('자유 물체도 (FBD)', 60, 48);
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif';
+  ctx.fillText('질량 하나를 떼어내 작용하는 힘을 전부 그린다. 오른쪽(+) / 왼쪽(−)이 힘의 부호.', 60, 72);
+
+  if (right.length === 0 && left.length === 0){
+    ctx.fillStyle = C.faint; ctx.font = 'italic 15px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('힘 항을 체크하면 화살표가 나타납니다', blockCx + 60, 130);
+  }
+}
+
+function updateEq(){
+  var parts = [];
+  ALL.forEach(function(t){
+    if (!state.sel[t]) return;
+    var info = TERM[t], cls = info.correct ? 'yes' : 'no';
+    parts.push('<span class="' + cls + '">' + info.label.replace('−', '&minus;') + '</span>');
+  });
+  $('eqbox').innerHTML = 'm&#7821; = ' + (parts.length === 0 ? '0' : parts.join(' '));
+}
+
+function check(){
+  var vd = $('verdict'), res = $('resGroup'), n = 0, i;
+  for (i = 0; i < ALL.length; i++) if (state.sel[ALL[i]]) n++;
+  var ok = state.sel.F && state.sel.kx && state.sel.cxd &&
+           !state.sel.pkx && !state.sel.kxd && !state.sel.cx;
+
+  if (ok){
+    var wn = Math.sqrt(K_VAL / M_VAL), zeta = C_VAL / (2 * Math.sqrt(M_VAL * K_VAL));
+    vd.className = 'verdict good';
+    vd.innerHTML = '정답입니다. <b>m&#7821; = F &minus; c&#7819; &minus; kx</b> → 표준형 <b>m&#7821; + c&#7819; + kx = F(t)</b>. ' +
+      '계단 외력 F<sub>0</sub> = 10 N에서 정상상태는 x<sub>ss</sub> = F<sub>0</sub>/k = <b>0.4 m</b>.';
+    $('stdV').innerHTML = '&#7821; + 4&#7819; + 25x = F<br>&omega;<sub>n</sub> = ' + wn.toFixed(0) + ', &zeta; = ' + zeta.toFixed(1);
+    $('xssV').textContent = (F0 / K_VAL).toFixed(1) + ' m';
+    res.style.display = '';
+    return;
+  }
+
+  vd.className = 'verdict bad';
+  res.style.display = 'none';
+  if (n === 0){
+    vd.innerHTML = '아무 항도 선택하지 않았습니다. <b>+F</b>, <b>&minus;kx</b>, <b>&minus;c&#7819;</b> 세 항을 골라 보세요.';
+    return;
+  }
+  var hints = [];
+  if (state.sel.pkx) hints.push('<b>+kx</b> — 부호 반대. 스프링은 변위 반대로 당깁니다.');
+  if (state.sel.kxd) hints.push('<b>&minus;k&#7819;</b> — 변수 오류. 스프링은 변위 x에 비례.');
+  if (state.sel.cx)  hints.push('<b>&minus;cx</b> — 변수 오류. 댐퍼는 속도 &#7819;에 비례.');
+  if (!state.sel.F) hints.push('외력 <b>+F</b>가 빠졌습니다.');
+  if (!state.sel.kx && !state.sel.pkx) hints.push('스프링 <b>&minus;kx</b>가 빠졌습니다.');
+  if (!state.sel.cxd && !state.sel.kxd) hints.push('댐퍼 <b>&minus;c&#7819;</b>가 빠졌습니다.');
+  vd.innerHTML = '아직 정답 조합(F &minus; kx &minus; c&#7819;)이 아닙니다.<br>' + hints.slice(0, 2).join('<br>');
+}
+
+function boxes(){ return document.querySelectorAll('#terms input[type="checkbox"]'); }
+function setAll(on){
+  var cbs = boxes(), i, t;
+  for (i = 0; i < cbs.length; i++){
+    t = cbs[i].getAttribute('data-t');
+    cbs[i].checked = on[t] === true;
+    state.sel[t] = cbs[i].checked;
+  }
+}
+
+(function bind(){
+  var cbs = boxes(), i;
+  for (i = 0; i < cbs.length; i++){
+    cbs[i].addEventListener('input', function(){
+      state.sel[this.getAttribute('data-t')] = this.checked;
+      updateEq(); draw();
+      if (state.checked){
+        var vd = $('verdict');
+        vd.className = 'verdict mid';
+        vd.innerHTML = '식을 수정했습니다. 다시 [확인]을 누르세요.';
+        $('resGroup').style.display = 'none';
+      }
+    });
+  }
+})();
+
+$('checkBtn').addEventListener('click', function(){ state.checked = true; check(); });
+$('clearBtn').addEventListener('click', function(){
+  setAll({}); state.checked = false;
+  updateEq(); draw();
+  var vd = $('verdict');
+  vd.className = 'verdict mid';
+  vd.innerHTML = '힘 항을 골라 식을 조립한 뒤 [확인]을 누르세요.';
+  $('resGroup').style.display = 'none';
+});
+$('ansBtn').addEventListener('click', function(){
+  setAll({ F:true, kx:true, cxd:true });
+  state.checked = true;
+  updateEq(); draw(); check();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+updateEq();
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L12-D1 · 모드형상 시뮬레이터</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    color: #e8eef5; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #f0a6ca, #b388ff);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:2px 10px; margin-top:4px; }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; }
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06); }
+  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group .value { font-size: 17px; font-weight: 600; color: #f0a6ca;
+    font-family: "SF Mono", Consolas, monospace; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #b388ff; }
+  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #7b52c9, #b388ff);
+    color: #1a0b33; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: transform 0.1s; }
+  button:hover { transform: translateY(-1px); }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
+  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
+  button.mode-active { background: linear-gradient(135deg, #f0a6ca, #b388ff); color:#1a0b33;
+    box-shadow: 0 0 0 2px rgba(240,166,202,.5); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-family: "SF Mono", Consolas, monospace; }
+  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .v { font-size: 15px; font-weight: 600; }
+  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
+    background: rgba(179, 136, 255, 0.09); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #b388ff; }
+  .verdict { font-size: 13px; font-weight: 600; padding: 9px 11px; border-radius: 6px; text-align:center; }
+  .verdict.good { background: rgba(0,184,148,0.16); color:#7effc4; border:1px solid rgba(0,184,148,0.4); }
+  .verdict.mid  { background: rgba(240,166,202,0.14); color:#f7c1dc; border:1px solid rgba(240,166,202,0.4); }
+  .verdict.bad  { background: rgba(255,107,157,0.14); color:#ff9dbf; border:1px solid rgba(255,107,157,0.4); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>💃 모드형상 시뮬레이터 — 동상과 역상</h1>
+  <div class="subtitle">2자유도 자유진동 — 시스템이 허락하는 2가지 "춤 동작"(모드)과 그 합</div>
+  <div style="text-align:center;"><span class="tag">기계진동학 12강</span></div>
+
+  <div class="layout" style="margin-top:16px;">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>m₁ = 9 kg (x₁)</div>
+        <div class="legend-item"><span class="dot" style="background:#f0a6ca"></span>m₂ = 1 kg (x₂)</div>
+        <div class="legend-item"><span class="dot" style="background:#ff6d2c"></span>중간 스프링 k₂ 변형(클수록 주황)</div>
+      </div>
+    </div>
+    <div class="panel controls">
+      <div class="control-group">
+        <label>모드 선택</label>
+        <div class="button-row">
+          <button id="m1btn">1차 모드</button>
+          <button id="m2btn">2차 모드</button>
+          <button id="mixbtn">혼합</button>
+        </div>
+        <div style="font-size:11px; color:#9bb3cc; margin-top:8px;">
+시스템: m₁=9, m₂=1 kg / k₁=24, k₂=3 N/m
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>현재 상태</label>
+        <div id="verdict" class="verdict good">1차 모드 — 동상</div>
+        <div style="font-size:11.5px; color:#cfe0f0; margin-top:8px; line-height:1.6;" id="modedesc">
+          두 질량이 같은 방향, m₂가 3배 크게. 느린 진동수 ω₁으로만 진동.
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="stats">
+          <div class="stat-item"><div class="k">ω₁ (1차)</div><div class="v" id="w1" style="color:#6dd5ed">—</div></div>
+          <div class="stat-item"><div class="k">ω₂ (2차)</div><div class="v" id="w2" style="color:#f0a6ca">—</div></div>
+          <div class="stat-item"><div class="k">고유벡터 u₁</div><div class="v" id="u1" style="color:#6dd5ed">—</div></div>
+          <div class="stat-item"><div class="k">고유벡터 u₂</div><div class="v" id="u2" style="color:#f0a6ca">—</div></div>
+          <div class="stat-item"><div class="k">현재 x₁</div><div class="v" id="cx1" style="color:#6dd5ed">—</div></div>
+          <div class="stat-item"><div class="k">현재 x₂</div><div class="v" id="cx2" style="color:#f0a6ca">—</div></div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>애니메이션 속도 <span class="value" id="spdv">1.0</span>×</label>
+        <input type="range" id="spd" min="0.1" max="3" step="0.1" value="1">
+      </div>
+
+      <div class="control-group">
+        <div class="button-row">
+          <button id="play" class="toggle-on">⏸ 일시정지</button>
+          <button id="reset" class="secondary">↺ 초기화</button>
+        </div>
+      </div>
+
+      <div class="info">
+        <b>관찰 포인트</b><br>
+        • <b>1차 모드</b>: 두 질량이 <b>같은 방향</b>(동상), 중간 스프링 변형이 작음 — 느린 ω₁=√2<br>
+        • <b>2차 모드</b>: 두 질량이 <b>반대 방향</b>(역상), 중간 스프링이 <b>크게</b> 압축·인장 — 빠른 ω₂=2<br>
+        • 순수 모드는 <b>완벽한 사인파</b>(진폭비 = 고유벡터 비율 1:3), 혼합은 두 리듬이 섞여 <b>울렁이는 비주기 곡선</b><br>
+        • 모드 = 시스템이 허락하는 <b>춤 동작 2가지</b>, 모든 자유진동은 이 둘의 합
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// ---- 시스템 파라미터 (고정) ----
+const SYS = {
+  m1: 9, m2: 1, k1: 24, k2: 3,
+  w1: Math.SQRT2,            // ω₁ = √2 ≈ 1.414 rad/s
+  w2: 2,                     // ω₂ = 2 rad/s
+  // 고유벡터: u₁ = [1/3, 1]ᵀ, u₂ = [-1/3, 1]ᵀ
+  u1: [1/3, 1],
+  u2: [-1/3, 1]
+};
+
+// ---- 상태 ----
+// mode: 'm1' | 'm2' | 'mix'
+// 각 모드 성분: x(t) = A1 sin(ω1 t + φ1) u1 + A2 sin(ω2 t + φ2) u2
+let state = {
+  mode: 'm1',
+  A1: 1, A2: 0, phi1: Math.PI/2, phi2: Math.PI/2,
+  t: 0, spd: 1, running: true
+};
+const hist = [];            // {t, x1, x2}
+const HIST_T = 14;          // 화면에 보이는 시간(초)
+
+// 순수 모드 진폭 스케일(보기 좋은 크기). u₂ 성분 x₁는 크기 1/3이라 진폭을 키움.
+function setMode(m) {
+  state.mode = m;
+  state.t = 0; hist.length = 0;
+  if (m === 'm1') {
+    // 1차 모드만: A2 = 0, u₁ 비율대로
+    state.A1 = 1.0; state.A2 = 0;
+    state.phi1 = Math.PI/2; state.phi2 = Math.PI/2;
+  } else if (m === 'm2') {
+    // 2차 모드만: A1 = 0
+    state.A1 = 0; state.A2 = 1.0;
+    state.phi1 = Math.PI/2; state.phi2 = Math.PI/2;
+  } else {
+    // 혼합: 초기조건 x1(0)=1, x2(0)=0, 속도 0
+    //  → A1 = 3/2, A2 = -3/2, φ1 = φ2 = π/2
+    //  x1 = 0.5(cos ω1 t + cos ω2 t), x2 = 1.5(cos ω1 t − cos ω2 t)
+    state.A1 = 1.5; state.A2 = -1.5;
+    state.phi1 = Math.PI/2; state.phi2 = Math.PI/2;
+  }
+  // 첫 프레임에 빈 곡선/점이 나오지 않도록 t=0 표본을 시드
+  const [sx1, sx2] = disp(0);
+  hist.push({ t: 0, x1: sx1, x2: sx2 });
+  updatePanel();
+}
+
+// 해석해로 변위 계산(정확해 — 적분 불필요, NaN/Infinity 원천 차단)
+function disp(t) {
+  const s1 = state.A1 * Math.sin(SYS.w1 * t + state.phi1);
+  const s2 = state.A2 * Math.sin(SYS.w2 * t + state.phi2);
+  const x1 = s1 * SYS.u1[0] + s2 * SYS.u2[0];
+  const x2 = s1 * SYS.u1[1] + s2 * SYS.u2[1];
+  return [x1, x2];
+}
+
+// ---- 레이아웃 영역 ----
+const chainTop = 20, chainBot = 250;
+const chainY = (chainTop + chainBot) / 2;
+const wallX = 60;
+// 두 질량의 평형 위치(px)
+const eq1 = 320, eq2 = 620;
+const massHalf = 34;
+// 하단 시간 그래프(2줄)
+const plotL = 60, plotR = W - 20;
+const plotW = plotR - plotL;
+const p1Top = 300, p1Bot = 400;   // x1(t)
+const p2Top = 430, p2Bot = 530;   // x2(t)
+
+// 변위(m) → px 스케일. 혼합 모드 x₂ 최대 변위 3.0 → 클램프(±140px)로 화면 밖 방지.
+const DISP_SC = 45;
+
+function drawSpring(x1, y, x2, coils, color, thick) {
+  ctx.strokeStyle = color; ctx.lineWidth = thick;
+  ctx.beginPath(); ctx.moveTo(x1, y);
+  const len = x2 - x1;
+  const nseg = coils * 2;
+  const seg = len / nseg;
+  // 스프링 압축/인장 시 진폭을 살짝 조절(길이가 짧으면 코일 진폭 줄임)
+  const amp = Math.max(4, Math.min(13, Math.abs(len) / (coils * 1.4)));
+  for (let i = 0; i < nseg; i++) {
+    const px = x1 + seg * (i + 0.5);
+    ctx.lineTo(px, y + (i % 2 === 0 ? -amp : amp));
+  }
+  ctx.lineTo(x2, y); ctx.stroke();
+}
+
+function drawMass(x, y, label, color, sub) {
+  const s = massHalf;
+  ctx.fillStyle = color; ctx.strokeStyle = '#0a1628'; ctx.lineWidth = 2;
+  ctx.fillRect(x - s, y - s, 2*s, 2*s);
+  ctx.strokeRect(x - s, y - s, 2*s, 2*s);
+  ctx.fillStyle = '#1a0b33'; ctx.font = 'bold 20px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y - 6);
+  ctx.font = '11px sans-serif';
+  ctx.fillText(sub, x, y + 14);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function arrow(x, y, dx, color, lbl) {
+  if (Math.abs(dx) < 5) return;
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx, y); ctx.stroke();
+  const s = Math.sign(dx);
+  ctx.beginPath();
+  ctx.moveTo(x + dx, y); ctx.lineTo(x + dx - s*8, y - 5); ctx.lineTo(x + dx - s*8, y + 5);
+  ctx.closePath(); ctx.fill();
+  if (lbl) { ctx.font = '11px sans-serif'; ctx.textAlign='center'; ctx.fillText(lbl, x + dx + s*10, y - 6); }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const [x1, x2] = disp(state.t);
+  // px 변위 (클램프로 안전)
+  const d1 = Math.max(-140, Math.min(140, x1 * DISP_SC));
+  const d2 = Math.max(-140, Math.min(140, x2 * DISP_SC));
+  const mx1 = eq1 + d1;
+  const mx2 = eq2 + d2;
+
+  // ---- 체인 밴드 배경 ----
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(20, chainTop, W - 40, chainBot - chainTop);
+
+  // 평형 점선
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  [eq1, eq2].forEach(ex => {
+    ctx.beginPath(); ctx.moveTo(ex, chainTop + 8); ctx.lineTo(ex, chainBot - 22); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('m₁ 평형', eq1, chainBot - 6);
+  ctx.fillText('m₂ 평형', eq2, chainBot - 6);
+
+  // 벽
+  ctx.fillStyle = '#5a6b82'; ctx.fillRect(wallX - 14, chainY - 60, 14, 120);
+  for (let i = 0; i < 8; i++) { ctx.strokeStyle = '#3d4a5c'; ctx.beginPath();
+    ctx.moveTo(wallX - 14, chainY - 60 + i*15); ctx.lineTo(wallX, chainY - 72 + i*15); ctx.stroke(); }
+
+  // k₂ 변형량(중간 스프링) — 색 강조(2차 모드에서 크게 변형)
+  const restGap = eq2 - eq1;                 // 자연 간격(px)
+  const curGap = mx2 - mx1;
+  const strain = (curGap - restGap) / restGap; // 상대 변형
+  const strainMag = Math.min(1, Math.abs(strain) * 3.2);
+  // 변형 클수록 노란색이 강해짐
+  const k2col = `rgb(${Math.round(155 + 100*strainMag)}, ${Math.round(179 - 70*strainMag)}, ${Math.round(204 - 160*strainMag)})`;
+
+  // 스프링 k₁ (벽→m₁), k₂ (m₁→m₂)
+  drawSpring(wallX, chainY, mx1 - massHalf, 12, '#9bb3cc', 2);
+  drawSpring(mx1 + massHalf, chainY, mx2 - massHalf, 10, k2col, 2.5 + 1.5*strainMag);
+
+  // 질량
+  drawMass(mx1, chainY, 'm₁', '#6dd5ed', 'x₁');
+  drawMass(mx2, chainY, 'm₂', '#f0a6ca', 'x₂');
+
+  // 변위 화살표(평형 기준)
+  arrow(eq1, chainY - massHalf - 14, d1, '#6dd5ed', null);
+  arrow(eq2, chainY - massHalf - 14, d2, '#f0a6ca', null);
+
+  // k₂ 상태 라벨
+  ctx.fillStyle = k2col; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  let k2txt = '중간 스프링 k₂';
+  if (strain > 0.06) k2txt = '중간 스프링 k₂ — 인장 ↔';
+  else if (strain < -0.06) k2txt = '중간 스프링 k₂ — 압축 →←';
+  ctx.fillText(k2txt, (mx1 + mx2) / 2, chainTop + 24);
+
+  // ---- 시간 궤적 2줄 ----
+  drawPlot(p1Top, p1Bot, 'x₁(t)', '#6dd5ed', p => p.x1);
+  drawPlot(p2Top, p2Bot, 'x₂(t)', '#f0a6ca', p => p.x2);
+
+  // 판넬 라이브 수치
+  document.getElementById('cx1').textContent = x1.toFixed(3);
+  document.getElementById('cx2').textContent = x2.toFixed(3);
+}
+
+function drawPlot(top, bot, label, color, sel) {
+  const mid = (top + bot) / 2;
+  const halfH = (bot - top) / 2 - 6;
+  // 축
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(plotL, mid); ctx.lineTo(plotR, mid); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(plotL, top); ctx.lineTo(plotL, bot); ctx.stroke();
+  ctx.fillStyle = color; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(label, plotL + 6, top + 14);
+  ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('시간 →', plotR - 4, bot - 4);
+
+  // 진폭 정규화(고정 스케일 — 순수/혼합 비교 가능). 혼합 모드 x₂ 최대 |x| = 3.0
+  const YSC = halfH / 3.2;
+  const t1 = state.t, t0 = t1 - HIST_T;
+  const tx = t => plotL + (t - t0) / HIST_T * plotW;
+  const yv = v => mid - Math.max(-halfH, Math.min(halfH, v * YSC));
+
+  if (hist.length > 1) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+    let started = false;
+    for (const p of hist) {
+      if (p.t < t0) continue;
+      const X = tx(p.t), Y = yv(sel(p));
+      if (!started) { ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y);
+    }
+    ctx.stroke();
+    // 현재 점
+    const cur = hist[hist.length - 1];
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(tx(cur.t), yv(sel(cur)), 3.5, 0, 2*Math.PI); ctx.fill();
+  }
+}
+
+function step(dt) {
+  state.t += dt * state.spd;
+  const [x1, x2] = disp(state.t);
+  hist.push({ t: state.t, x1, x2 });
+  while (hist.length && hist[0].t < state.t - HIST_T - 1) hist.shift();
+}
+
+function updatePanel() {
+  document.getElementById('w1').textContent = SYS.w1.toFixed(3) + ' rad/s';
+  document.getElementById('w2').textContent = SYS.w2.toFixed(3) + ' rad/s';
+  document.getElementById('u1').textContent = '[⅓, 1]';
+  document.getElementById('u2').textContent = '[-⅓, 1]';
+
+  const v = document.getElementById('verdict');
+  const d = document.getElementById('modedesc');
+  const btns = { m1: 'm1btn', m2: 'm2btn', mix: 'mixbtn' };
+  Object.values(btns).forEach(id => document.getElementById(id).classList.remove('mode-active'));
+  document.getElementById(btns[state.mode]).classList.add('mode-active');
+
+  if (state.mode === 'm1') {
+    v.className = 'verdict good';
+    v.textContent = '1차 모드 — 동상 (ω₁ = √2 ≈ 1.414 rad/s)';
+    d.innerHTML = '두 질량이 <b>같은 방향</b>, m₂가 3배 크게(비율 ⅓:1). 순수 사인파, 중간 스프링 변형 작음.';
+  } else if (state.mode === 'm2') {
+    v.className = 'verdict mid';
+    v.textContent = '2차 모드 — 역상 (ω₂ = 2 rad/s)';
+    d.innerHTML = '두 질량이 <b>반대 방향</b>(비율 -⅓:1). 중간 스프링 k₂가 <b>크게 압축·인장</b>, 빠른 사인파.';
+  } else {
+    v.className = 'verdict mid';
+    v.textContent = '혼합 — 두 진동수의 합 (비주기)';
+    d.innerHTML = '초기조건 x(0)=[1, 0]: x₁=0.5(cos√2t+cos2t), x₂=1.5(cos√2t−cos2t). 두 리듬이 섞여 <b>정확히 반복 안 됨</b>.';
+  }
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  if (state.running) step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- 컨트롤 ----
+document.getElementById('m1btn').addEventListener('click', () => setMode('m1'));
+document.getElementById('m2btn').addEventListener('click', () => setMode('m2'));
+document.getElementById('mixbtn').addEventListener('click', () => setMode('mix'));
+
+document.getElementById('spd').addEventListener('input', e => {
+  state.spd = parseFloat(e.target.value);
+  document.getElementById('spdv').textContent = state.spd.toFixed(1);
+});
+
+document.getElementById('play').addEventListener('click', e => {
+  state.running = !state.running;
+  e.target.textContent = state.running ? '⏸ 일시정지' : '▶ 재생';
+  e.target.classList.toggle('toggle-on', state.running);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  // 모든 파라미터를 초기 기본값으로 복원
+  state.spd = 1;
+  document.getElementById('spd').value = '1';
+  document.getElementById('spdv').textContent = '1.0';
+  // 재생 상태·버튼 라벨 복원
+  state.running = true;
+  const playBtn = document.getElementById('play');
+  playBtn.textContent = '⏸ 일시정지';
+  playBtn.classList.add('toggle-on');
+  // 모드=1차, t=0, 히스토리 초기화(setMode 내부 처리) 후 즉시 redraw
+  setMode('m1');
+  draw();
+});
+
+setMode('m1');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

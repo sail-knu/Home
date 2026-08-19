@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3필터 비교 — 4강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 4강 · 인터랙티브 데모</p>
+  <h1>3필터 비교 — 누적 평균 · 이동평균 · LPF</h1>
+  <p class="lede">같은 측정 신호에 세 필터를 동시에 겁니다. <b>신호</b>를 정지값/계단으로 바꾸고 <b>N</b>·<b>α</b>·<b>σ</b>를 움직여 RMS 오차를 비교하세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  누적 평균 <b>x̄<sub>k</sub></b> = (1/k) Σ z<sub>i</sub>
+  &nbsp;·&nbsp; 이동평균 <b>x̄<sub>k</sub></b> = (1/N) Σ 최근 N개
+  &nbsp;·&nbsp; LPF <b>x̄<sub>k</sub></b> = α x̄<sub>k−1</sub> + (1−α) z<sub>k</sub>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참값 x</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정값 z<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>누적 평균</span>
+        <span class="lg" style="color:var(--c-band)"><i></i>이동평균 N</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>LPF α</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="sigStep" class="btn">신호: 정지값 14.40 V</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>이동평균 창 N <span class="value" id="nV">15</span></label>
+        <input type="range" id="nS" min="2" max="40" step="1" value="15">
+      </div>
+
+      <div class="ctl-box">
+        <label>LPF α <span class="value" id="aV">0.85</span></label>
+        <input type="range" id="aS" min="0.50" max="0.98" step="0.01" value="0.85">
+      </div>
+
+      <div class="ctl-box">
+        <label>노이즈 크기 σ (V) <span class="value" id="sV">0.30</span></label>
+        <input type="range" id="sS" min="0.05" max="0.80" step="0.01" value="0.30">
+      </div>
+
+      <div class="btn-row">
+        <button id="pFast" class="btn">빠른 응답</button>
+        <button id="pSmooth" class="btn">강한 평활</button>
+      </div>
+      <div class="btn-row">
+        <button id="reroll" class="btn">🎲 다시 생성</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">누적 평균 RMS</div><div class="v" id="rmsAvg" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">이동평균 RMS</div><div class="v" id="rmsMov" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">LPF RMS</div><div class="v" id="rmsLpf" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">측정 원본 RMS</div><div class="v" id="rmsRaw" style="color:var(--c-meas)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 정지값 → <b>누적 평균</b> RMS 최소<br>
+        • 계단 변화 → 누적 평균 RMS 급등<br>
+        • N을 키우면 평활 ↑, 지연 ↑<br>
+        • α를 키우면 평활 ↑, 지연 ↑<br>
+        • 실시간이면 메모리 1개짜리 <b>LPF</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 4강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 66, r: 24, t: 40, b: 54 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var K = 120;            /* 측정 개수 */
+var TRUE_A = 14.40;     /* 정지 참값 / 계단 전 참값 */
+var TRUE_B = 15.60;     /* 계단 후 참값 */
+var STEP_AT = 60;       /* 계단 발생 인덱스 */
+
+var state = { N: 15, alpha: 0.85, sigma: 0.30, step: false, base: [] };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return { grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias') };
+}
+
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < K; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+state.base = genBase(20260718);
+
+function trueAt(k){ return (!state.step || k < STEP_AT) ? TRUE_A : TRUE_B; }
+function zAt(k){ return trueAt(k) + state.sigma * state.base[k]; }
+
+function xToPx(k, xLo, xHi){ return M.l + (k - xLo) / (xHi - xLo) * plotW; }
+function yToPx(y, yLo, yHi){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+
+function compute(){
+  var N = state.N, alpha = state.alpha;
+  var z = [], tru = [], cumAvg = [], movAvg = [], lpf = [];
+  var sum = 0, k, i;
+  for (k = 0; k < K; k++){
+    var zk = zAt(k);
+    z.push(zk);
+    tru.push(trueAt(k));
+
+    sum += zk;
+    cumAvg.push(sum / (k + 1));
+
+    var ms = 0, cnt = 0;
+    for (i = Math.max(0, k - N + 1); i <= k; i++){ ms += z[i]; cnt++; }
+    movAvg.push(ms / cnt);
+
+    if (k === 0) lpf.push(zk);
+    else lpf.push(alpha * lpf[k - 1] + (1 - alpha) * zk);
+  }
+  function rms(arr){
+    var s2 = 0, j;
+    for (j = 0; j < K; j++){ var e = arr[j] - tru[j]; s2 += e * e; }
+    return Math.sqrt(s2 / K);
+  }
+  return {
+    z: z, tru: tru, cumAvg: cumAvg, movAvg: movAvg, lpf: lpf,
+    rmsAvg: rms(cumAvg), rmsMov: rms(movAvg), rmsLpf: rms(lpf), rmsRaw: rms(z)
+  };
+}
+
+function drawSeries(arr, color, lw, xLo, xHi, yLo, yHi, clampY){
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath();
+  for (var k = 0; k < K; k++){
+    var px = xToPx(k, xLo, xHi), py = yToPx(clampY(arr[k]), yLo, yHi);
+    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function draw(){
+  var C = palette(), r = compute(), k, y;
+
+  var lo = TRUE_A, hi = state.step ? TRUE_B : TRUE_A;
+  var half = Math.max(3 * state.sigma, 0.6);
+  var yLo = lo - half - 0.2, yHi = hi + half + 0.2;
+  var xLo = 0, xHi = K - 1;
+  function clampY(v){ return Math.max(yLo, Math.min(yHi, v)); }
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var span = yHi - yLo;
+  var yStep = span > 3 ? 0.5 : (span > 1.5 ? 0.25 : 0.1);
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi + 1e-9; y += yStep){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y, yLo, yHi)); ctx.lineTo(M.l + plotW, yToPx(y, yLo, yHi)); ctx.stroke();
+  }
+
+  if (state.step){
+    var sx = xToPx(STEP_AT, xLo, xHi);
+    ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(sx, M.t); ctx.lineTo(sx, M.t + plotH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('계단 발생', sx, M.t - 6);
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('전압 [V]', 14, M.t - 14);
+  ctx.textAlign = 'end'; ctx.fillText('측정 순서 k →', W - M.r, H - 14);
+  ctx.fillStyle = C.faint;
+  for (y = Math.ceil(yLo / yStep) * yStep; y <= yHi + 1e-9; y += yStep) ctx.fillText(y.toFixed(2), M.l - 8, yToPx(y, yLo, yHi) + 4);
+  ctx.textAlign = 'center';
+  for (k = 0; k <= K - 1; k += 20) ctx.fillText(String(k), xToPx(k, xLo, xHi), M.t + plotH + 18);
+
+  ctx.fillStyle = C.meas;
+  for (k = 0; k < K; k++){
+    ctx.beginPath();
+    ctx.arc(xToPx(k, xLo, xHi), yToPx(clampY(r.z[k]), yLo, yHi), 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  for (k = 0; k < K; k++){
+    var px = xToPx(k, xLo, xHi), py = yToPx(clampY(r.tru[k]), yLo, yHi);
+    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('참값 x', M.l + 8, yToPx(clampY(TRUE_A), yLo, yHi) - 6);
+
+  drawSeries(r.cumAvg, C.alias, 2.4, xLo, xHi, yLo, yHi, clampY);
+  drawSeries(r.movAvg, C.band, 2.4, xLo, xHi, yLo, yHi, clampY);
+  drawSeries(r.lpf, C.avg, 2.6, xLo, xHi, yLo, yHi, clampY);
+
+  $('rmsAvg').textContent = r.rmsAvg.toFixed(3); $('rmsMov').textContent = r.rmsMov.toFixed(3);
+  $('rmsLpf').textContent = r.rmsLpf.toFixed(3); $('rmsRaw').textContent = r.rmsRaw.toFixed(3);
+
+  var vd = $('verdict'), cls, msg, i;
+  var names = ['누적 평균', '이동평균', 'LPF'], vals = [r.rmsAvg, r.rmsMov, r.rmsLpf];
+  var bestName = names[0], bestVal = vals[0];
+  for (i = 1; i < 3; i++){ if (vals[i] < bestVal){ bestVal = vals[i]; bestName = names[i]; } }
+
+  if (!state.step){
+    if (bestName === '누적 평균'){
+      cls = 'good';
+      msg = '<b>정지값</b>: 누적 평균 RMS ' + r.rmsAvg.toFixed(3) + ' V로 최소입니다 (이동평균 ' +
+        r.rmsMov.toFixed(3) + ', LPF ' + r.rmsLpf.toFixed(3) + ' V).';
+    } else {
+      cls = 'mid';
+      msg = '<b>정지값</b>: 지금은 ' + bestName + '(' + bestVal.toFixed(3) + ' V)이 가장 작습니다. 누적 평균 ' +
+        r.rmsAvg.toFixed(3) + ' V는 표본이 쌓일수록 계속 줄어듭니다.';
+    }
+  } else {
+    if (bestName !== '누적 평균'){
+      cls = 'good';
+      msg = '<b>계단 변화</b>: 누적 평균이 RMS ' + r.rmsAvg.toFixed(3) + ' V로 가장 큽니다. 지금 최소는 ' +
+        bestName + ' ' + bestVal.toFixed(3) + ' V입니다.';
+    } else {
+      cls = 'mid';
+      msg = '<b>계단 변화</b>: 지금 설정에선 누적 평균 ' + r.rmsAvg.toFixed(3) +
+        ' V가 최소로 나옵니다. N이나 α를 키우면 순위가 뒤집힙니다.';
+    }
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var nS = $('nS'), aS = $('aS'), sS = $('sS');
+nS.addEventListener('input', function(){
+  state.N = parseInt(this.value, 10); $('nV').textContent = state.N; draw();
+});
+aS.addEventListener('input', function(){
+  state.alpha = parseFloat(this.value); $('aV').textContent = state.alpha.toFixed(2); draw();
+});
+sS.addEventListener('input', function(){
+  state.sigma = parseFloat(this.value); $('sV').textContent = state.sigma.toFixed(2); draw();
+});
+
+function applyPreset(N, alpha){
+  state.N = N; state.alpha = alpha;
+  nS.value = N; aS.value = alpha;
+  $('nV').textContent = N; $('aV').textContent = alpha.toFixed(2);
+  draw();
+}
+$('pFast').addEventListener('click', function(){ applyPreset(4, 0.60); });
+$('pSmooth').addEventListener('click', function(){ applyPreset(30, 0.96); });
+
+var sigBtn = $('sigStep');
+sigBtn.addEventListener('click', function(){
+  state.step = !state.step;
+  this.textContent = state.step ? '신호: 계단 14.40→15.60 V' : '신호: 정지값 14.40 V';
+  this.classList.toggle('on', state.step);
+  draw();
+});
+
+var seedTick = 1;
+$('reroll').addEventListener('click', function(){
+  state.base = genBase(20260718 + seedTick * 7919); seedTick++; draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

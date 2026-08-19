@@ -1,0 +1,711 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1-D1 · 1자유도 3가지 예제</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 1강</p>
+  <h1>1자유도 <span style="color:var(--accent)">3가지 예제</span></h1>
+  <p class="lede">스프링-질량 · 축-원판 · 단진자의 <b>ωₙ을 같게 맞추면</b> 아래 세 곡선이 하나로 겹칩니다 —
+    겉모습만 다른 같은 방정식이라는 증거.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>① 스프링-질량 x(t)</span>
+          <span><i style="background:var(--high)"></i>② 축-원판 θ(t)</span>
+          <span><i style="background:var(--low)"></i>③ 단진자 θ(t)</span>
+          <span>세 곡선은 굵기가 다름 — 겹치면 하나로 포개져 보입니다</span>
+        </div>
+        <div class="note-box">
+          • 셋 다 <b>(관성)×(가속도) + (강성)×(변위) = 0</b> 꼴 — <b>ωₙ만 같으면</b> 세 곡선이 완전히 겹칩니다.<br>
+          • 겹쳤는지는 <b>선 굵기</b>로 보세요: 굵은 ① 안에 ②③이 포개져 있으면 일치입니다.<br>
+          • m·J를 키우면 느려지고 k·kₜ를 키우면 빨라집니다. 진자는 <b>l이 길수록 느려집니다</b>.<br>
+          • <b>🎯 동기화</b>는 ②③의 값을 ①의 ωₙ에 맞춰 다시 계산합니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="20,1,20,1,0.49">기준 ωₙ=4.47</button>
+            <button class="btn btn-sm" data-p="20,4,20,4,1.96">무겁게 m,J=4 → 2.24</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="49,0.5,49,0.5,0.1">가볍고 단단 → 9.90</button>
+            <button class="btn btn-sm" data-p="45,1,20,1,0.49">①만 k=45 → 어긋남</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 8px">
+            <button class="btn btn-sm" data-p="5,4,60,0.5,0.49">셋 다 따로 1.1/11.0/4.5</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" id="sync" style="width:100%">🎯 ②③을 ①의 ωₙ에 동기화</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — <b>동기화</b>로 세 곡선을 겹친 뒤, ①의 <b>k만</b> 움직여 어긋나는 순간을 확인하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="panel-label" style="color:var(--accent);margin-bottom:8px">① 스프링-질량 · m x″ + k x = 0</p>
+          <p class="ctrl-title">강성 k <span class="big-val" id="kv">20</span> N/m</p>
+          <input type="range" id="k" min="5" max="60" step="1" value="20" style="width:100%">
+          <p class="ctrl-title" style="margin-top:10px">질량 m <span class="big-val" id="mv">1.0</span> kg</p>
+          <input type="range" id="m" min="0.5" max="4" step="0.1" value="1" style="width:100%">
+
+          <p class="panel-label" style="color:var(--high);margin:16px 0 8px">② 축-원판 · J θ″ + kₜ θ = 0</p>
+          <p class="ctrl-title">비틀림강성 kₜ <span class="big-val" id="ktv">20.0</span> N·m/rad</p>
+          <input type="range" id="kt" min="5" max="60" step="0.1" value="20" style="width:100%">
+          <p class="ctrl-title" style="margin-top:10px">관성모멘트 J <span class="big-val" id="Jv">1.00</span> kg·m²</p>
+          <input type="range" id="J" min="0.5" max="4" step="0.01" value="1" style="width:100%">
+
+          <p class="panel-label" style="color:var(--low);margin:16px 0 8px">③ 단진자 · θ″ + (g/l) θ = 0</p>
+          <p class="ctrl-title">길이 l <span class="big-val" id="lv">0.49</span> m <span class="mini">(g = 9.81 m/s²)</span></p>
+          <input type="range" id="l" min="0.1" max="2" step="0.01" value="0.49" style="width:100%">
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">① ωₙ [rad/s]</div><div class="v acc" id="sA">—</div></div>
+          <div class="stat"><div class="k">② ωₙ [rad/s]</div><div class="v hi" id="sB">—</div></div>
+          <div class="stat"><div class="k">③ ωₙ [rad/s]</div><div class="v lo" id="sC">—</div></div>
+          <div class="stat"><div class="k">최대 편차</div><div class="v" id="sD">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 1강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var G = 9.81;
+var st = { k:20, m:1, kt:20, J:1, l:0.49, t:0, running:true, warn:'', warnUntil:0 };
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid','mass','mass-ink','spring','wall'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 물리 (원본 유지) ---- */
+function wnA(){ return Math.sqrt(st.k / st.m); }
+function wnB(){ return Math.sqrt(st.kt / st.J); }
+function wnC(){ return Math.sqrt(G / st.l); }
+
+/* ---- 레이아웃 상수 ---- */
+var colX = [166, 450, 734];   /* 패널 24~876 을 308·592 로 3등분한 각 칸의 중심 */
+var PT = 24, PB = 376;
+var SY0 = 400, SY1 = 528;
+var SX0 = 44, SX1 = 856, SMID = 458, SHALF = 46, TSPAN = 4;
+
+/* ---- 그리기 도우미 ---- */
+function ceiling(cx, w, y){
+  ctx.fillStyle = PAL.wall; ctx.fillRect(cx - w/2, y, w, 10);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1;
+  for (var i = 0; i < Math.floor(w/12); i++){
+    ctx.beginPath();
+    ctx.moveTo(cx - w/2 + i*12, y); ctx.lineTo(cx - w/2 + i*12 - 8, y - 8); ctx.stroke();
+  }
+}
+function drawSpringV(cx, y0, y1){
+  ctx.strokeStyle = PAL.spring; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(cx, y0);
+  var coils = 7, seg = (y1 - y0) / (coils*2);
+  for (var i = 0; i < coils*2; i++) ctx.lineTo(cx + (i%2 === 0 ? -14 : 14), y0 + seg*(i + 0.5));
+  ctx.lineTo(cx, y1); ctx.stroke();
+}
+/* 선 위에 얹히는 라벨용 — 배경색으로 외곽선을 먼저 그려 글자를 띄운다 */
+function haloText(txt, x, y){
+  ctx.save();
+  ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  ctx.lineWidth = 4; ctx.strokeStyle = PAL.surface2;
+  ctx.strokeText(txt, x, y);
+  ctx.restore();
+  ctx.fillText(txt, x, y);
+}
+function arrow(x1, y1, x2, y2, color, lw){
+  var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  if (L < 5) return;
+  var ux = dx/L, uy = dy/L, hs = Math.min(9, L*0.5);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hs*ux - hs*0.5*uy, y2 - hs*uy + hs*0.5*ux);
+  ctx.lineTo(x2 - hs*ux + hs*0.5*uy, y2 - hs*uy - hs*0.5*ux);
+  ctx.closePath(); ctx.fill();
+}
+
+/* ---- 메인 그리기 ---- */
+var NAMES = ['① 스프링-질량', '② 축-원판 (비틀림)', '③ 단진자'];
+var EQS   = ['m x″ + k x = 0', 'J θ″ + kₜ θ = 0', 'θ″ + (g/l) θ = 0'];
+var FORMS = ['ωₙ = √(k/m)', 'ωₙ = √(kₜ/J)', 'ωₙ = √(g/l)'];
+
+function draw(){
+  var wA = wnA(), wB = wnB(), wC = wnC(), t = st.t;
+  var ws = [wA, wB, wC];
+  var C = [PAL.accent, PAL.high, PAL.low];
+  var dA = Math.cos(wA*t), dB = Math.cos(wB*t), dC = Math.cos(wC*t);
+  var wmax = Math.max(wA, wB, wC), wmin = Math.min(wA, wB, wC);
+  var spread = (wmax - wmin) / wmax * 100;
+  var i;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+  /* ===== 상단 패널 ===== */
+  ctx.fillStyle = PAL.surface2; ctx.fillRect(24, PT, W - 48, PB - PT);
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+  ctx.strokeRect(24.5, PT + 0.5, W - 49, PB - PT - 1);
+  ctx.beginPath(); ctx.moveTo(308, PT + 10); ctx.lineTo(308, PB - 10);
+  ctx.moveTo(592, PT + 10); ctx.lineTo(592, PB - 10); ctx.stroke();
+
+  ctx.textAlign = 'center';
+  for (i = 0; i < 3; i++){
+    ctx.fillStyle = C[i]; ctx.font = 'bold 16px ' + FONT;
+    ctx.fillText(NAMES[i], colX[i], PT + 26);
+    ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT;
+    ctx.fillText(EQS[i], colX[i], PT + 47);
+  }
+
+  /* ----- ① 스프링-질량 ----- */
+  var cx = colX[0], ceilY = 88, eqY = 214, amp = 44, side = 52;
+  ceiling(cx, 96, ceilY);
+  var my = eqY + dA*amp;
+  drawSpringV(cx, ceilY + 10, my - side/2);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(cx - 74, eqY); ctx.lineTo(cx + 74, eqY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x = 0', cx + 78, eqY + 4);
+  if (Math.abs(my - eqY) > 6) arrow(cx - side/2 - 20, eqY, cx - side/2 - 20, my, C[0], 2.2);
+  ctx.fillStyle = PAL.mass; ctx.strokeStyle = C[0]; ctx.lineWidth = 2.4;
+  ctx.fillRect(cx - side/2, my - side/2, side, side);
+  ctx.strokeRect(cx - side/2, my - side/2, side, side);
+  ctx.fillStyle = PAL['mass-ink']; ctx.font = 'bold 19px ' + FONT;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('m', cx, my); ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = C[0]; ctx.font = 'bold 13.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('x', cx - side/2 - 26, (eqY + my)/2 + 5);
+
+  /* ----- ② 축-원판 ----- */
+  cx = colX[1];
+  var diskY = 214, R = 56;
+  ceiling(cx, 80, 88);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(cx, 98); ctx.lineTo(cx, diskY); ctx.stroke();
+  ctx.globalAlpha = 0.16; ctx.fillStyle = C[1];
+  ctx.beginPath(); ctx.arc(cx, diskY, R, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = C[1]; ctx.lineWidth = 2.6;
+  ctx.beginPath(); ctx.arc(cx, diskY, R, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(cx, diskY); ctx.lineTo(cx, diskY - R - 4); ctx.stroke();
+  ctx.setLineDash([]);
+  var ang = dB*0.7;
+  ctx.strokeStyle = C[1]; ctx.lineWidth = 4.5;
+  ctx.beginPath(); ctx.moveTo(cx, diskY);
+  ctx.lineTo(cx + R*Math.sin(ang), diskY - R*Math.cos(ang)); ctx.stroke();
+  ctx.globalAlpha = 0.4; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(cx, diskY);
+  ctx.lineTo(cx - R*Math.sin(ang)*0.6, diskY + R*Math.cos(ang)*0.6); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = C[1]; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.arc(cx, diskY, 30, -Math.PI/2, -Math.PI/2 + ang, ang < 0); ctx.stroke();
+  /* 각이 0에 가까우면 라벨이 기준선·마커와 겹쳐 뭉개지므로 부드럽게 사라지게 한다 */
+  ctx.globalAlpha = Math.min(1, Math.abs(ang)/0.16);
+  ctx.fillStyle = C[1]; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'center';
+  haloText('θ', cx + 46*Math.sin(ang/2), diskY - 46*Math.cos(ang/2) + 5);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.mass;
+  ctx.beginPath(); ctx.arc(cx, diskY, 7, 0, Math.PI*2); ctx.fill();
+
+  /* ----- ③ 단진자 ----- */
+  cx = colX[2];
+  var pivY = 98, L = 140;
+  ceiling(cx, 72, 88);
+  var pang = dC*0.5;
+  var bx = cx + L*Math.sin(pang), by = pivY + L*Math.cos(pang);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(cx, pivY); ctx.lineTo(cx, pivY + L + 6); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = C[2]; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.arc(cx, pivY, 44, Math.PI/2, Math.PI/2 - pang, pang > 0); ctx.stroke();
+  ctx.globalAlpha = Math.min(1, Math.abs(pang)/0.12);
+  ctx.fillStyle = C[2]; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'center';
+  haloText('θ', cx + 60*Math.sin(pang/2), pivY + 60*Math.cos(pang/2) + 5);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = C[2]; ctx.lineWidth = 2.8;
+  ctx.beginPath(); ctx.moveTo(cx, pivY); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.fillStyle = PAL.mass;
+  ctx.beginPath(); ctx.arc(bx, by, 21, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = C[2]; ctx.lineWidth = 2.4; ctx.stroke();
+  ctx.fillStyle = PAL['mass-ink']; ctx.font = 'bold 16px ' + FONT;
+  ctx.textBaseline = 'middle'; ctx.fillText('m', bx, by); ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = PAL.border2;
+  ctx.beginPath(); ctx.arc(cx, pivY, 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C[2]; ctx.font = 'bold 13.5px ' + FONT; ctx.textAlign = 'left';
+  haloText('l', (cx + bx)/2 + 14, (pivY + by)/2 + 4);
+
+  /* ----- 각 열 ωₙ 판독 ----- */
+  ctx.textAlign = 'center';
+  for (i = 0; i < 3; i++){
+    ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT;
+    ctx.fillText(FORMS[i], colX[i], 322);
+    ctx.fillStyle = C[i]; ctx.font = 'bold 17px ' + MONO;
+    ctx.fillText(ws[i].toFixed(2) + ' rad/s', colX[i], 348);
+    ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
+    ctx.fillText('T = ' + (2*Math.PI/ws[i]).toFixed(2) + ' s', colX[i], 368);
+  }
+
+  /* ===== 하단 스트립: 정규화 변위 3개 ===== */
+  ctx.textAlign = 'left'; ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT;
+  ctx.fillText('정규화 변위 — 최근 4초 (오른쪽 끝이 현재)', 28, SY0 - 9);
+  ctx.textAlign = 'right'; ctx.font = 'bold 13.5px ' + FONT;
+  if (spread < 1.5){ ctx.fillStyle = PAL.ok; ctx.fillText('✓ 세 곡선 완전히 겹침', 872, SY0 - 9); }
+  else if (spread < 10){ ctx.fillStyle = PAL.float; ctx.fillText('△ 편차 ' + spread.toFixed(1) + '% — 서서히 어긋남', 872, SY0 - 9); }
+  else { ctx.fillStyle = PAL.bad; ctx.fillText('✗ 편차 ' + spread.toFixed(1) + '% — 제각각', 872, SY0 - 9); }
+
+  ctx.fillStyle = PAL.surface2; ctx.fillRect(24, SY0, W - 48, SY1 - SY0);
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+  ctx.strokeRect(24.5, SY0 + 0.5, W - 49, SY1 - SY0 - 1);
+
+  var pw = SX1 - SX0, n;
+  ctx.textAlign = 'center'; ctx.font = '12.5px ' + FONT;
+  for (n = 0; n <= TSPAN; n++){
+    var gx = SX0 + (n/TSPAN)*pw;
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(gx, SY0 + 6); ctx.lineTo(gx, SY1 - 24); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAL.faint;
+    ctx.fillText(n === TSPAN ? '지금' : ('−' + (TSPAN - n) + ' s'), gx, SY1 - 8);
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(SX0, SMID); ctx.lineTo(SX1, SMID); ctx.stroke();
+
+  var lws = [3.6, 2.6, 1.6];
+  for (i = 0; i < 3; i++){
+    ctx.strokeStyle = C[i]; ctx.lineWidth = lws[i]; ctx.beginPath();
+    for (var px = 0; px <= pw; px++){
+      var tt = t - TSPAN + (px/pw)*TSPAN;
+      var y = SMID - Math.cos(ws[i]*tt)*SHALF;
+      if (px === 0) ctx.moveTo(SX0 + px, y); else ctx.lineTo(SX0 + px, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = C[i];
+    ctx.beginPath(); ctx.arc(SX1, SMID - Math.cos(ws[i]*t)*SHALF, 4.5 - i*0.7, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* ---- DOM 판독값 ---- */
+  $('sA').textContent = wA.toFixed(2);
+  $('sB').textContent = wB.toFixed(2);
+  $('sC').textContent = wC.toFixed(2);
+  $('sD').textContent = spread.toFixed(1) + ' %';
+
+  var vd = $('verdict');
+  if (st.warn && performance.now() < st.warnUntil){
+    vd.className = 'verdict bad';
+    vd.innerHTML = st.warn;
+  } else if (spread < 1.5){
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ ωₙ 일치 (' + wA.toFixed(2) + ' rad/s) — <b>세 곡선이 하나로 겹칩니다</b>. 기호만 다른 같은 방정식.';
+  } else if (spread < 10){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ 편차 <b>' + spread.toFixed(1) + '%</b> — 처음엔 붙어 있다가 시간이 갈수록 벌어집니다.';
+  } else {
+    vd.className = 'verdict bad';
+    vd.innerHTML = '✗ ωₙ 제각각 (편차 <b>' + spread.toFixed(1) + '%</b>) — ' +
+      wA.toFixed(2) + ' / ' + wB.toFixed(2) + ' / ' + wC.toFixed(2) + ' rad/s';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('kv').textContent  = st.k.toFixed(0);
+  $('mv').textContent  = st.m.toFixed(1);
+  $('ktv').textContent = st.kt.toFixed(1);
+  $('Jv').textContent  = st.J.toFixed(2);
+  $('lv').textContent  = st.l.toFixed(2);
+  $('k').value = st.k; $('m').value = st.m;
+  $('kt').value = st.kt; $('J').value = st.J; $('l').value = st.l;
+}
+function bind(id, key){
+  $(id).addEventListener('input', function(){
+    st[key] = parseFloat(this.value); st.t = 0; st.warn = '';
+    syncSpans(); draw();
+  });
+}
+bind('k', 'k'); bind('m', 'm'); bind('kt', 'kt'); bind('J', 'J'); bind('l', 'l');
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+p[0] - st.k)  < 1e-9 && Math.abs(+p[1] - st.m) < 1e-9 &&
+             Math.abs(+p[2] - st.kt) < 1e-9 && Math.abs(+p[3] - st.J) < 1e-9 &&
+             Math.abs(+p[4] - st.l)  < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.k = +p[0]; st.m = +p[1]; st.kt = +p[2]; st.J = +p[3]; st.l = +p[4];
+    st.t = 0; st.warn = '';
+    syncSpans(); draw();
+  });
+});
+
+/* ---- ②③ 을 ①의 ωₙ 에 동기화 (원본 알고리즘 유지) ---- */
+$('sync').addEventListener('click', function(){
+  var w = wnA(), w2 = w*w, mismatch = false;
+
+  /* ② 축-원판: kₜ, J 두 자유변수로 wnB = √(kₜ/J) = w 를 정확히 맞춘다.
+        kₜ 를 먼저 정한 뒤 J = kₜ/w² 로 재정합. J 가 범위를 벗어나면 J 를 클램프하고 kₜ 를 다시 푼다. */
+  st.kt = Math.min(60, Math.max(5, w2 * 1));
+  st.J  = st.kt / w2;
+  if (st.J < 0.5 || st.J > 4){
+    st.J  = Math.min(4, Math.max(0.5, st.J));
+    st.kt = w2 * st.J;
+  }
+  if (st.kt < 5 || st.kt > 60){
+    st.kt = Math.min(60, Math.max(5, st.kt));
+    mismatch = true;
+  }
+
+  /* ③ 단진자: l 이 유일한 자유변수 → l = g/w². 범위 밖이면 정확 동기화 불가. */
+  st.l = G / w2;
+  if (st.l < 0.1 || st.l > 2){
+    st.l = Math.min(2, Math.max(0.1, st.l));
+    mismatch = true;
+  }
+
+  /* 슬라이더 step 에 맞춰 스냅된 실제 값을 상태로 되읽어 슬라이더-상태 불일치를 막는다 */
+  $('kt').value = st.kt; st.kt = parseFloat($('kt').value);
+  $('J').value  = st.J;  st.J  = parseFloat($('J').value);
+  $('l').value  = st.l;  st.l  = parseFloat($('l').value);
+  st.t = 0;
+
+  if (mismatch){
+    st.warn = '⚠️ <b>범위 초과 — 완전 동기화 불가.</b> ①의 ωₙ(' + w.toFixed(2) +
+              ' rad/s)은 ②③ 슬라이더 범위로 만들 수 없습니다. k·m 을 조정해 다시 시도하세요.';
+    st.warnUntil = performance.now() + 4000;
+  } else {
+    st.warn = '';
+  }
+  syncSpans(); draw();
+});
+
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.k = 20; st.m = 1; st.kt = 20; st.J = 1; st.l = 0.49;
+  st.t = 0; st.running = true; st.warn = '';
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  syncSpans(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last)/1000) : 0;
+  last = now;
+  if (st.running) st.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSpans();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+

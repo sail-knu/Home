@@ -1,0 +1,671 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L2-D3 · 평균·평균제곱·RMS</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 2강</p>
+  <h1>평균 · 평균제곱 · <span style="color:var(--high)">RMS</span></h1>
+  <p class="lede">평균은 상쇄로 <b>0</b>이 되지만, 제곱해서 시간평균한 뒤 루트를 씌우면
+    <b>RMS = 0.707A</b> 가 남습니다. 진행 적분이 어떻게 A²/2 로 수렴하는지 보세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="560"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>x(t) = A sin ωₙt</span>
+          <span><i style="background:var(--high)"></i>RMS 레벨 ±0.707A</span>
+          <span><i style="background:var(--low)"></i>x²(t) 곡선과 면적</span>
+          <span><i style="background:var(--ok)"></i>평균제곱 A²/2 (수렴 목표)</span>
+          <span><i style="background:var(--float)"></i>진행 평균 x̄₀ᵗ · 진행 ⟨x²⟩₀ᵗ</span>
+          <span><i style="background:var(--faint)"></i>기준 진폭 A₀ (dB 비교)</span>
+        </div>
+        <div class="note-box">
+          • 위 그래프의 <b>진행 평균(보라 점선)</b>은 0으로 내려앉지만 <b>RMS 레벨(빨강)</b>은 남습니다.<br>
+          • 아래 그래프에서 제곱하면 음수가 접혀 올라와 면적이 계속 쌓입니다.<br>
+          • 진행 ⟨x²⟩₀ᵗ 는 <b>T/2 와 T 눈금을 지날 때마다 정확히 A²/2</b> 를 찍습니다.<br>
+          • A를 2배로 키우면 RMS도 2배, dB 판독은 <b>+6 dB</b> 만 올라갑니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="5,20,1">a) A=5, ω=20</button>
+            <button class="btn btn-sm" data-p="2,20,1">2배 A=2 → +6 dB</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="10,20,1">10배 A=10 → +20 dB</button>
+            <button class="btn btn-sm" data-p="1,20,10">1/10 A₀=10 → −20 dB</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="10,6,1">느린 ω=6 (T=1.05 s)</button>
+            <button class="btn btn-sm" data-p="5,60,1">빠른 ω=60 (T=0.10 s)</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 : 프리셋 <b>a)</b> A=5, ω=20 에서 <b>RMS ≈ 3.54 mm</b> 확인.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">진폭 A <span class="big-val" id="av">5.0</span> mm</p>
+          <input type="range" id="a" min="1" max="10" step="0.5" value="5" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">고유진동수 ωₙ <span class="big-val" id="wv">20</span> rad/s</p>
+          <input type="range" id="w" min="6" max="60" step="1" value="20" style="width:100%">
+          <p class="mini" style="margin-top:4px">주기 T = 2π/ωₙ = <b id="tv">0.314</b> s</p>
+          <p class="ctrl-title" style="margin-top:12px">기준 진폭 A₀ <span class="big-val" id="a0v">1.0</span> mm</p>
+          <input type="range" id="a0" min="0.5" max="10" step="0.5" value="1" style="width:100%">
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">평균 x̄</div><div class="v" id="meanV">—</div></div>
+          <div class="stat"><div class="k">평균제곱 A²/2</div><div class="v" id="msV" style="color:var(--ok)">—</div></div>
+          <div class="stat"><div class="k">RMS = A/√2</div><div class="v hi" id="rmsV">—</div></div>
+          <div class="stat"><div class="k">20log₁₀(A/A₀)</div><div class="v acc" id="dbV">—</div></div>
+          <div class="stat"><div class="k">진행 ⟨x²⟩₀ᵗ</div><div class="v" id="runMsV" style="color:var(--float)">—</div></div>
+          <div class="stat"><div class="k">진행 RMS</div><div class="v" id="runRmsV" style="color:var(--float)">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="vd">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 2강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ---- 상태 ---- */
+var st = { A: 5, w: 20, A0: 1, t: 0, running: true };
+var TW = 1.2;                       /* 화면에 보이는 시간 창 [s] */
+var RATE = 0.12;                    /* 실시간 1초당 신호 0.12 s 진행 */
+var AMAX = 10;                      /* 고정 진폭 스케일 [mm] */
+var MSMAX = AMAX * AMAX * 1.05;     /* 고정 평균제곱 스케일 [mm²] */
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, monospace';
+
+/* ---- 플롯 영역 ---- */
+var L = 86, R = W - 26;
+var T1 = 48, B1 = 258;              /* 위: x(t) */
+var T2 = 344, B2 = 534;             /* 아래: x²(t) */
+var midY = (T1 + B1) / 2;
+function xPix(t){ return L + t / TW * (R - L); }
+function yTop(x){ return midY - x / (AMAX * 1.08) * (B1 - T1) / 2; }
+function yBot(v){ return B2 - Math.min(v, MSMAX) / MSMAX * (B2 - T2); }
+
+/* ---- 해석해 (특이점 보호) ---- */
+function runMean(t){                /* (1/t)∫₀ᵗ A sin ωτ dτ = A(1−cos ωt)/(ωt) → 0 */
+  var u = st.w * t;
+  if (u < 1e-6) return 0;
+  return st.A * (1 - Math.cos(u)) / u;
+}
+function runMS(t){                  /* (1/t)∫₀ᵗ A²sin²ωτ dτ = (A²/2)[1 − sin2ωt/(2ωt)] → A²/2 */
+  var u = 2 * st.w * t;
+  if (u < 1e-6) return 0;
+  return st.A * st.A / 2 * (1 - Math.sin(u) / u);
+}
+
+/* ---- 그리기 도우미 ---- */
+function frame(x0, y0, x1, y1){
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.lineTo(x1, y1); ctx.stroke();
+}
+function dashV(x, y0, y1, color, alpha){
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.globalAlpha = alpha;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+}
+/* 곡선 위에 얹히는 라벨 — 플롯 배경색 판을 깔아 항상 읽히게 한다 */
+function tagText(x, y, txt, color, font, align){
+  ctx.font = font;
+  var w = ctx.measureText(txt).width, pad = 4;
+  var x0 = (align === 'right') ? x - w : (align === 'center') ? x - w / 2 : x;
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(x0 - pad, y - 13, w + pad * 2, 18);
+  /* 얇은 테두리 — 곡선 위에 얹힌 것이 '칩'으로 읽히게 (구멍처럼 보이지 않게) */
+  ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+  ctx.strokeRect(x0 - pad + 0.5, y - 12.5, w + pad * 2 - 1, 17);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = color; ctx.textAlign = 'left';
+  ctx.fillText(txt, x0, y);
+}
+function ticks(yBase){
+  ctx.textAlign = 'center'; ctx.font = '12.5px ' + FONT;
+  for (var tt = 0; tt <= TW + 1e-9; tt += 0.2){
+    var px = xPix(tt);
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, yBase); ctx.lineTo(px, yBase - 6); ctx.stroke();
+    if (tt > 0.01 && px < R - 46){
+      ctx.fillStyle = PAL.faint; ctx.fillText(tt.toFixed(1), px, yBase + 18);
+    }
+  }
+  ctx.textAlign = 'left';
+}
+
+function draw(){
+  var A = st.A, w = st.w, A0 = Math.max(st.A0, 1e-6);
+  var T = 2 * Math.PI / w;
+  var rms = A / Math.SQRT2, ms = A * A / 2;
+  var rMS = runMS(st.t), rRMS = Math.sqrt(Math.max(rMS, 0));
+  var N = 700, i, t, s, px, py;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* ================= 위: x(t) ================= */
+  frame(L, T1, R, B1);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x(t) = A sin ωₙt   [mm]', L, T1 - 12);
+  ctx.fillStyle = PAL.muted; ctx.font = '14px ' + MONO; ctx.textAlign = 'right';
+  ctx.fillText('A = ' + A.toFixed(1) + ' mm,  T = ' + T.toFixed(3) + ' s,  x̄₀ᵗ = ' +
+               runMean(st.t).toFixed(2) + ' mm', R, T1 - 12);
+
+  ticks(B1);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('t [s] →', R, B1 + 18);
+
+  /* 평균 = 0 기준선 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(L, midY); ctx.lineTo(R, midY); ctx.stroke();
+
+  /* 기준 진폭 A₀ (dB 비교) */
+  ctx.strokeStyle = PAL.faint; ctx.lineWidth = 1.4; ctx.setLineDash([7, 5]);
+  ctx.beginPath(); ctx.moveTo(L, yTop(st.A0)); ctx.lineTo(R, yTop(st.A0)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* RMS 레벨 ±0.707A */
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 3;
+  [rms, -rms].forEach(function(v){
+    ctx.beginPath(); ctx.moveTo(L, yTop(v)); ctx.lineTo(R, yTop(v)); ctx.stroke();
+  });
+
+  /* 파형 x(t) */
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (i = 0; i <= N; i++){
+    t = TW * i / N; py = yTop(A * Math.sin(w * t));
+    if (i) ctx.lineTo(xPix(t), py); else ctx.moveTo(xPix(t), py);
+  }
+  ctx.stroke();
+
+  /* 진행 평균 (0으로 수렴) */
+  if (st.t > 0.005){
+    ctx.strokeStyle = PAL.float; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    var M = Math.max(2, Math.floor(N * st.t / TW));
+    for (i = 0; i <= M; i++){
+      t = st.t * i / M; py = yTop(runMean(t));
+      if (i) ctx.lineTo(xPix(t), py); else ctx.moveTo(xPix(t), py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = PAL.float;
+    ctx.beginPath(); ctx.arc(xPix(st.t), yTop(runMean(st.t)), 4.5, 0, 2 * Math.PI); ctx.fill();
+  }
+
+  /* 이동점 */
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(xPix(st.t), yTop(A * Math.sin(w * st.t)), 5.5, 0, 2 * Math.PI); ctx.fill();
+
+  /* 좌측 여백 라벨 — 플롯 밖이라 곡선을 절대 가리지 않는다 */
+  ctx.textAlign = 'right';
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT;
+  ctx.fillText('x̄ = 0', L - 8, midY + 5);
+  var yA0 = yTop(st.A0) + 5;
+  if (yA0 > midY - 12) yA0 = midY - 14;          /* 평균 라벨과 겹치면 위로 밀어냄 */
+  if (yA0 < T1 + 12) yA0 = T1 + 12;
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
+  ctx.fillText('A₀ = ' + st.A0.toFixed(1), L - 8, yA0);
+  ctx.textAlign = 'left';
+
+  /* 라벨 (곡선 위에 얹음) */
+  tagText(R - 8, yTop(rms) - 8, 'RMS = 0.707A = ' + rms.toFixed(2) + ' mm',
+          PAL.high, 'bold 13px ' + FONT, 'right');
+  tagText(R - 8, yTop(-rms) + 18, '−RMS', PAL.high, 'bold 13px ' + FONT, 'right');
+
+  /* ================= 아래: x²(t) ================= */
+  frame(L, T2, R, B2);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x²(t)   [mm²] — 음수가 접혀 올라와 전부 양수', L, T2 - 12);
+  ctx.fillStyle = PAL.float; ctx.font = '14px ' + MONO; ctx.textAlign = 'right';
+  ctx.fillText('⟨x²⟩₀ᵗ = ' + rMS.toFixed(2) + '  →  A²/2 = ' + ms.toFixed(2), R, T2 - 12);
+
+  ticks(B2);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('t [s] →', R, B2 + 18);
+
+  /* 한 주기 적분 구간 [0, T] 밴드 + T/2, T 눈금 */
+  var pxT = xPix(Math.min(T, TW)), pxT2 = xPix(Math.min(T / 2, TW));
+  ctx.fillStyle = PAL.accent; ctx.globalAlpha = 0.08;
+  ctx.fillRect(L, T2, pxT - L, B2 - T2);
+  ctx.globalAlpha = 1;
+  dashV(pxT2, T2, B2, PAL.accent, 0.55);
+  dashV(pxT, T2, B2, PAL.accent, 0.9);
+
+  /* x² 아래 면적 (전체 창: 옅게 / 커서까지: 진하게) */
+  function fillArea(tEnd, alpha){
+    ctx.fillStyle = PAL.low; ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.moveTo(L, B2);
+    var M2 = 700, j;
+    for (j = 0; j <= M2; j++){
+      var tj = tEnd * j / M2, sj = A * Math.sin(w * tj);
+      ctx.lineTo(xPix(tj), yBot(sj * sj));
+    }
+    ctx.lineTo(xPix(tEnd), B2); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  fillArea(TW, 0.12);
+  if (st.t > 0.002) fillArea(st.t, 0.34);
+
+  /* 평균제곱 A²/2 (수렴 목표선) */
+  ctx.strokeStyle = PAL.ok; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(L, yBot(ms)); ctx.lineTo(R, yBot(ms)); ctx.stroke();
+
+  /* x² 곡선 */
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (i = 0; i <= N; i++){
+    t = TW * i / N; s = A * Math.sin(w * t);
+    if (i) ctx.lineTo(xPix(t), yBot(s * s)); else ctx.moveTo(xPix(t), yBot(s * s));
+  }
+  ctx.stroke();
+
+  /* 진행 평균제곱 ⟨x²⟩₀ᵗ (A²/2 로 수렴) */
+  if (st.t > 0.002){
+    ctx.strokeStyle = PAL.float; ctx.lineWidth = 2.8; ctx.beginPath();
+    var M3 = Math.max(2, Math.floor(700 * st.t / TW));
+    for (i = 0; i <= M3; i++){
+      t = st.t * i / M3; py = yBot(runMS(t));
+      if (i) ctx.lineTo(xPix(t), py); else ctx.moveTo(xPix(t), py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = PAL.float;
+    ctx.beginPath(); ctx.arc(xPix(st.t), yBot(rMS), 5.5, 0, 2 * Math.PI); ctx.fill();
+  }
+
+  /* x² 위의 이동점 */
+  var sNow = A * Math.sin(w * st.t);
+  ctx.fillStyle = PAL.low;
+  ctx.beginPath(); ctx.arc(xPix(st.t), yBot(sNow * sNow), 4.5, 0, 2 * Math.PI); ctx.fill();
+
+  /* 라벨 (곡선 위에 얹음) */
+  tagText(Math.min(Math.max(pxT2, L + 48), R - 48), T2 + 19, 'T/2 (반주기)',
+          PAL.accent, 'bold 12.5px ' + FONT, 'center');
+  tagText(Math.min(Math.max(pxT, L + 80), R - 80), T2 + 39, 'T = ' + T.toFixed(3) + ' s (한 주기)',
+          PAL.accent, 'bold 12.5px ' + FONT, 'center');
+  tagText(R - 8, yBot(ms) - 12, '평균제곱 = A²/2 = ' + ms.toFixed(1) + ' mm²',
+          PAL.ok, 'bold 13px ' + FONT, 'right');
+
+  /* ================= 판독값 ================= */
+  var db = 20 * Math.log10(Math.max(A, 1e-6) / A0);
+  $('meanV').textContent = '0 (상쇄)';
+  $('msV').textContent = ms.toFixed(1) + ' mm²';
+  $('rmsV').textContent = rms.toFixed(2) + ' mm';
+  $('dbV').textContent = (db >= 0 ? '+' : '−') + Math.abs(db).toFixed(1) + ' dB';
+  $('runMsV').textContent = rMS.toFixed(1) + ' mm²';
+  $('runRmsV').textContent = rRMS.toFixed(2) + ' mm';
+
+  var vd = $('vd');
+  var err = Math.abs(rMS - ms) / Math.max(ms, 1e-9);
+  if (st.t < 0.01){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ 적분 시작 전 — <b>▶ 재생</b>으로 시간평균을 진행';
+  } else if (err < 0.02){
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ 수렴 완료 — ⟨x²⟩ ≈ A²/2 = <b>' + ms.toFixed(1) + ' mm²</b>, RMS ≈ <b>' + rms.toFixed(2) + ' mm</b>';
+  } else if (err < 0.10){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ 수렴 중 — 오차 <b>' + (err * 100).toFixed(1) + '%</b>, 주기 눈금을 지날 때마다 정확히 A²/2';
+  } else {
+    vd.className = 'verdict bad';
+    vd.innerHTML = '⚠️ 초기 구간 — 평균이 아직 출렁임 (오차 <b>' + (err * 100).toFixed(0) + '%</b>)';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('av').textContent = st.A.toFixed(1);
+  $('wv').textContent = st.w.toFixed(0);
+  $('a0v').textContent = st.A0.toFixed(1);
+  $('tv').textContent = (2 * Math.PI / st.w).toFixed(3);
+  $('a').value = st.A; $('w').value = st.w; $('a0').value = st.A0;
+}
+function bind(id, key){
+  $(id).addEventListener('input', function(){
+    st[key] = parseFloat(this.value); st.t = 0; syncSpans(); draw();
+  });
+}
+bind('a', 'A'); bind('w', 'w'); bind('a0', 'A0');
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+p[0] - st.A) < 1e-9 && Math.abs(+p[1] - st.w) < 1e-9 && Math.abs(+p[2] - st.A0) < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.A = +p[0]; st.w = +p[1]; st.A0 = +p[2]; st.t = 0;
+    syncSpans(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.A = 5; st.w = 20; st.A0 = 1; st.t = 0; st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  syncSpans(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) st.t = Math.min(TW, st.t + dt * RATE);
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSpans();
+draw();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+

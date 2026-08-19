@@ -1,0 +1,883 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L4-D1 · 실제 부품 강성 계산기</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 4강</p>
+  <h1>실제 부품 강성 계산기</h1>
+  <p class="lede">막대·비틀림 축·외팔보·코일의 <b>치수와 재료를 바꾸며</b> k와 ωₙ이 어떻게 움직이는지,
+    특히 <b>길이를 2배</b>로 했을 때 부품마다 얼마나 다르게 떨어지는지 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="640"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--high)"></i>하중 F · 토크 T</span>
+          <span><i style="background:var(--float)"></i>변형 x · δ · θ</span>
+          <span><i style="background:var(--accent)"></i>선택된 부품</span>
+          <span><i style="background:var(--low)"></i>다른 부품 (비교용)</span>
+        </div>
+        <div class="note-box">
+          • 길이 슬라이더를 2배로 밀어 보세요 — <b>막대·축은 k가 1/2</b>, <b>외팔보는 1/8</b>로 갈립니다.<br>
+          • 지름 d는 비틀림·코일에서 <b>4제곱</b> — d 2배면 kₜ는 16배, 가장 강력한 설계 손잡이입니다.<br>
+          • 아래 막대그래프는 log 스케일 — 한 칸이 <b>10배</b>입니다.<br>
+          • 비틀림 축만 단위가 <b>N·m/rad</b>이고 짝이 되는 관성도 m이 아니라 J [kg·m²]입니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="rod|steel|l=1|d=10|m=100">막대 l=1 m</button>
+            <button class="btn btn-sm" data-p="rod|steel|l=2|d=10|m=100">막대 l=2 m → 1/2</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="beam|steel|l=0.5|b=12|h=10|m=3">외팔보 l=0.5 m</button>
+            <button class="btn btn-sm" data-p="beam|steel|l=1|b=12|h=10|m=3">외팔보 l=1 m → 1/8</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="shaft|steel|l=1|d=50|m=0.5">축 d=5 cm</button>
+            <button class="btn btn-sm" data-p="coil|steel|d=10|R=100|n=12.5|m=10">코일 k=1000</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 : <b>막대 l=1↔2 m</b>, <b>외팔보 l=0.5↔1 m</b> 을 번갈아 눌러
+            강성이 <b>1/2 · 1/8</b>로 갈리는 것을 확인하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">부품</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" id="b_rod">① 축방향 막대</button>
+            <button class="btn btn-sm" id="b_shaft">② 비틀림 축</button>
+            <button class="btn btn-sm" id="b_beam">③ 외팔보</button>
+            <button class="btn btn-sm" id="b_coil">④ 코일 스프링</button>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">재료</p>
+          <select id="mat" style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px">
+            <option value="steel" selected>강철 (E=2.0×10¹¹, G=8.0×10¹⁰)</option>
+            <option value="al">알루미늄 (E=7.1×10¹⁰, G=2.67×10¹⁰)</option>
+            <option value="brass">황동 (E=10.0×10¹⁰, G=3.68×10¹⁰)</option>
+            <option value="copper">구리 (E=6.0×10¹⁰, G=2.22×10¹⁰)</option>
+            <option value="rubber">고무 (E=2.3×10⁹, G=8.21×10⁸)</option>
+          </select>
+          <div id="g1" style="margin-top:12px">
+            <p class="ctrl-title"><span id="n1">길이 l</span> <span class="big-val" id="v1">1.00</span> <span id="u1">m</span></p>
+            <input type="range" id="s1" style="width:100%">
+          </div>
+          <div id="g2" style="margin-top:12px">
+            <p class="ctrl-title"><span id="n2">지름 d</span> <span class="big-val" id="v2">10</span> <span id="u2">mm</span></p>
+            <input type="range" id="s2" style="width:100%">
+          </div>
+          <div id="g3" style="margin-top:12px">
+            <p class="ctrl-title"><span id="n3">—</span> <span class="big-val" id="v3">—</span> <span id="u3"></span></p>
+            <input type="range" id="s3" style="width:100%">
+          </div>
+          <div id="gm" style="margin-top:12px">
+            <p class="ctrl-title"><span id="nm">부착 질량 m</span> <span class="big-val" id="vm">100</span> <span id="um">kg</span></p>
+            <input type="range" id="sm" style="width:100%">
+          </div>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k" id="st_k_lab">강성 k</div><div class="v acc" id="st_k">—</div></div>
+          <div class="stat"><div class="k" id="st_sec_lab">단면 성질</div><div class="v" id="st_sec">—</div></div>
+          <div class="stat"><div class="k">고유진동수 ωₙ</div><div class="v acc" id="st_wn">—</div></div>
+          <div class="stat"><div class="k">fₙ = ωₙ/2π</div><div class="v hi" id="st_fn">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 4강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, "SF Mono", monospace';
+
+/* ---- 재료 상수 ---- */
+var MATS = {
+  steel:  { name: '강철',     E: 2.0e11,  G: 8.0e10 },
+  al:     { name: '알루미늄', E: 7.1e10,  G: 2.67e10 },
+  brass:  { name: '황동',     E: 10.0e10, G: 3.68e10 },
+  copper: { name: '구리',     E: 6.0e10,  G: 2.22e10 },
+  rubber: { name: '고무',     E: 2.3e9,   G: 8.21e8 }
+};
+
+/* ---- 부품 정의 (기본값) ----
+   rod   : d=1cm, l=1m, 강철, m=100kg → k=1.57×10⁷ N/m, fₙ≈63.1 Hz
+   shaft : d=5cm, l=1m, 강철, J=0.5   → kₜ=4.91×10⁴, ωₙ=313.3 rad/s
+   beam  : I=1.0×10⁻⁹ m⁴ = 12mm×10mm, l=0.5m, 강철, m=3kg → k=4800, ωₙ=40
+   coil  : d=1cm, R=10cm, n=12.5, 강철, m=10kg → k=1000 N/m, ωₙ=10 */
+function defaults(){
+  return {
+    rod: {
+      name: '① 축방향 막대', formula: 'k = EA/l', matKey: 'E', unitK: 'N/m',
+      secLab: '단면적 A [m²]', lenKey: 'l', lenUnit: 'm', lenExp: 1,
+      sliders: [
+        { key: 'l', label: '길이 l', unit: 'm',  min: 0.2, max: 3.0, step: 0.05, dec: 2 },
+        { key: 'd', label: '지름 d', unit: 'mm', min: 5,   max: 50,  step: 1,    dec: 0 }
+      ],
+      mass: { label: '부착 질량 m', unit: 'kg', min: 1, max: 1000, step: 1, dec: 0 },
+      vals: { l: 1.0, d: 10, m: 100 }
+    },
+    shaft: {
+      name: '② 비틀림 축', formula: 'kₜ = GJₚ/l,  Jₚ = πd⁴/32', matKey: 'G', unitK: 'N·m/rad',
+      secLab: '극관성 Jₚ [m⁴]', lenKey: 'l', lenUnit: 'm', lenExp: 1,
+      sliders: [
+        { key: 'l', label: '길이 l', unit: 'm',  min: 0.2, max: 3.0, step: 0.05, dec: 2 },
+        { key: 'd', label: '지름 d', unit: 'mm', min: 10,  max: 100, step: 1,    dec: 0 }
+      ],
+      mass: { label: '원판 관성모멘트 J', unit: 'kg·m²', min: 0.05, max: 2.0, step: 0.05, dec: 2 },
+      vals: { l: 1.0, d: 50, m: 0.5 }
+    },
+    beam: {
+      name: '③ 외팔보', formula: 'k = 3EI/l³,  I = bh³/12', matKey: 'E', unitK: 'N/m',
+      secLab: '단면 2차 모멘트 I [m⁴]', lenKey: 'l', lenUnit: 'm', lenExp: 3,
+      sliders: [
+        { key: 'l', label: '길이 l',    unit: 'm',  min: 0.2, max: 2.0, step: 0.05, dec: 2 },
+        { key: 'b', label: '단면 폭 b',   unit: 'mm', min: 5,   max: 50,  step: 1,    dec: 0 },
+        { key: 'h', label: '단면 높이 h', unit: 'mm', min: 5,   max: 50,  step: 1,    dec: 0 }
+      ],
+      mass: { label: '끝단 질량 m', unit: 'kg', min: 0.5, max: 50, step: 0.5, dec: 1 },
+      vals: { l: 0.5, b: 12, h: 10, m: 3 }
+    },
+    coil: {
+      name: '④ 코일 스프링', formula: 'k = Gd⁴/(64nR³)', matKey: 'G', unitK: 'N/m',
+      secLab: '와이어 d⁴ [m⁴]', lenKey: 'R', lenUnit: 'mm', lenExp: 3,
+      sliders: [
+        { key: 'd', label: '와이어 지름 d', unit: 'mm', min: 2,  max: 20,  step: 0.5, dec: 1 },
+        { key: 'R', label: '코일 반지름 R', unit: 'mm', min: 10, max: 150, step: 5,   dec: 0 },
+        { key: 'n', label: '감김 수 n',     unit: '회', min: 2,  max: 20,  step: 0.5, dec: 1 }
+      ],
+      mass: { label: '부착 질량 m', unit: 'kg', min: 1, max: 100, step: 1, dec: 0 },
+      vals: { d: 10, R: 100, n: 12.5, m: 10 }
+    }
+  };
+}
+
+var COMPS = defaults();
+var ORDER = ['rod', 'shaft', 'beam', 'coil'];
+var cur = 'rod';
+var matId = 'steel';
+var running = true, ph = 0;
+
+/* ---- 강성 계산 (해석해, 특이점 가드: 분모 클램프) ---- */
+function SAFE(v){ return Math.max(v, 1e-9); }
+function calcK(id, mat){
+  var v = COMPS[id].vals;
+  if (id === 'rod'){
+    var A = Math.PI * Math.pow(v.d / 1000, 2) / 4;
+    return { k: mat.E * A / SAFE(v.l), sec: A };
+  }
+  if (id === 'shaft'){
+    var Jp = Math.PI * Math.pow(v.d / 1000, 4) / 32;
+    return { k: mat.G * Jp / SAFE(v.l), sec: Jp };
+  }
+  if (id === 'beam'){
+    var I = (v.b / 1000) * Math.pow(v.h / 1000, 3) / 12;
+    return { k: 3 * mat.E * I / SAFE(Math.pow(v.l, 3)), sec: I };
+  }
+  var d4 = Math.pow(v.d / 1000, 4);
+  return { k: mat.G * d4 / SAFE(64 * v.n * Math.pow(v.R / 1000, 3)), sec: d4 };
+}
+
+/* ---- 수치 표기 (유니코드 지수) ---- */
+var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+            '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+function sup(e){ return String(e).split('').map(function(c){ return SUP[c] || ''; }).join(''); }
+function fmtSci(v){
+  if (!isFinite(v)) return '—';
+  if (v === 0) return '0';
+  var e = Math.floor(Math.log10(Math.abs(v)));
+  if (e >= -2 && e <= 3) return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+  return (v / Math.pow(10, e)).toFixed(2) + '×10' + sup(e);
+}
+
+/* ---- 컨트롤 재구성 ---- */
+function rebuildUI(){
+  var c = COMPS[cur];
+  for (var i = 0; i < 3; i++){
+    var g = $('g' + (i + 1)), s = $('s' + (i + 1)), def = c.sliders[i];
+    if (!def){ g.style.display = 'none'; continue; }
+    g.style.display = 'block';
+    $('n' + (i + 1)).textContent = def.label;
+    $('u' + (i + 1)).textContent = def.unit;
+    s.min = def.min; s.max = def.max; s.step = def.step;
+    s.value = c.vals[def.key];
+    $('v' + (i + 1)).textContent = c.vals[def.key].toFixed(def.dec);
+  }
+  var md = c.mass, sm = $('sm');
+  $('nm').textContent = md.label; $('um').textContent = md.unit;
+  sm.min = md.min; sm.max = md.max; sm.step = md.step;
+  sm.value = c.vals.m;
+  $('vm').textContent = c.vals.m.toFixed(md.dec);
+  $('st_k_lab').textContent = (cur === 'shaft') ? '비틀림 강성 kₜ' : '강성 k';
+  $('st_sec_lab').textContent = c.secLab;
+  $('mat').value = matId;
+  ORDER.forEach(function(id){ $('b_' + id).classList.toggle('btn-acc', id === cur); });
+}
+
+/* ---- 그리기 공통 도우미 ---- */
+function arrow(x1, y1, x2, y2, color, lw){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw || 2.5;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  var a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 10 * Math.cos(a - 0.42), y2 - 10 * Math.sin(a - 0.42));
+  ctx.lineTo(x2 - 10 * Math.cos(a + 0.42), y2 - 10 * Math.sin(a + 0.42));
+  ctx.closePath(); ctx.fill();
+}
+function wallV(x, y1, y2){
+  ctx.fillStyle = PAL.border2; ctx.fillRect(x - 12, y1, 12, y2 - y1);
+  ctx.strokeStyle = PAL.faint; ctx.lineWidth = 1.5;
+  for (var y = y1; y < y2; y += 14){
+    ctx.beginPath(); ctx.moveTo(x - 12, y + 14); ctx.lineTo(x, y); ctx.stroke();
+  }
+}
+function wallH(x1, x2, y){
+  ctx.fillStyle = PAL.border2; ctx.fillRect(x1, y - 12, x2 - x1, 12);
+  ctx.strokeStyle = PAL.faint; ctx.lineWidth = 1.5;
+  for (var x = x1; x < x2; x += 14){
+    ctx.beginPath(); ctx.moveTo(x, y - 12); ctx.lineTo(x + 14, y); ctx.stroke();
+  }
+}
+function member(x, y, w, h){
+  ctx.fillStyle = PAL.muted; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1.4; ctx.strokeRect(x, y, w, h);
+}
+function massBox(x, y, s, label){
+  ctx.fillStyle = PAL.accent; ctx.strokeStyle = PAL['accent-line']; ctx.lineWidth = 2;
+  ctx.fillRect(x - s / 2, y - s / 2, s, s);
+  ctx.strokeRect(x - s / 2, y - s / 2, s, s);
+  ctx.fillStyle = PAL.surface; ctx.font = 'bold 17px ' + FONT;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y); ctx.textBaseline = 'alphabetic';
+}
+function dashLine(x1, y1, x2, y2){
+  ctx.strokeStyle = PAL.border2; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+}
+function lenPx(l, lmax){ return 150 + (l - 0.2) / (lmax - 0.2) * 330; }
+
+/* ---- 부품별 개략도 ---- */
+function drawRod(){
+  var v = COMPS.rod.vals, y0 = 212, wx = 95;
+  var L = lenPx(v.l, 3.0), th = 8 + v.d * 0.35;
+  var dx = 24 * Math.sin(ph);
+  wallV(wx, y0 - 92, y0 + 92);
+  member(wx, y0 - th / 2, L + dx, th);
+  var mx = wx + L + dx + 26;
+  massBox(mx, y0, 52, 'm');
+  /* 하중 화살표 F */
+  arrow(mx + 40, y0, mx + 94, y0, PAL.high, 2.8);
+  ctx.fillStyle = PAL.high; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('F', mx + 100, y0 + 5);
+  /* 변형 x (평형선 대비) */
+  var eqx = wx + L + 26;
+  dashLine(eqx, y0 - 78, eqx, y0 + 78);
+  arrow(eqx, y0 - 62, eqx + (Math.abs(dx) < 0.5 ? 0.5 : dx), y0 - 62, PAL.float, 2.2);
+  ctx.fillStyle = PAL.float; ctx.font = '13px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('x(t)', eqx + dx / 2, y0 - 71);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('길이 l = ' + v.l.toFixed(2) + ' m,  지름 d = ' + v.d.toFixed(0) + ' mm',
+               wx + L / 2, y0 + 118);
+}
+function drawShaft(){
+  var v = COMPS.shaft.vals, y0 = 212, wx = 95;
+  var L = lenPx(v.l, 3.0), th = 6 + v.d * 0.3;
+  var th0 = 0.9 * Math.sin(ph);          /* 표시용 비틀림 각 */
+  wallV(wx, y0 - 92, y0 + 92);
+  member(wx, y0 - th / 2, L, th);
+  /* 축 표면의 비틀림 표시선 (뿌리 0 → 끝 θ) */
+  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.55;
+  for (var i = 1; i <= 4; i++){
+    var xx = wx + L * i / 5, tw = th0 * i / 5;
+    ctx.beginPath(); ctx.moveTo(xx, y0 - th / 2); ctx.lineTo(xx + tw * 6, y0 + th / 2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  /* 원판 (타원) + 회전 마커 */
+  var dcx = wx + L + 14, ry = 78, rx = 16;
+  ctx.fillStyle = PAL.surface3; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.ellipse(dcx, y0, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  var mkx = dcx + rx * 0.9 * Math.sin(th0), mky = y0 - ry * 0.9 * Math.cos(th0);
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(dcx, y0); ctx.lineTo(mkx, mky); ctx.stroke();
+  ctx.fillStyle = PAL.float; ctx.beginPath(); ctx.arc(mkx, mky, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('θ(t)', dcx + 24, y0 - ry - 8);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('원판 J', dcx, y0 + ry + 20);
+  /* 토크 화살표 (곡선) */
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 2.8;
+  ctx.beginPath(); ctx.arc(dcx + 44, y0, 30, -1.2, 1.2); ctx.stroke();
+  var ax = dcx + 44 + 30 * Math.cos(1.2), ay = y0 + 30 * Math.sin(1.2);
+  arrow(ax + 3, ay - 3, ax - 4, ay + 4, PAL.high, 2.8);
+  ctx.fillStyle = PAL.high; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('T', dcx + 84, y0 + 5);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('길이 l = ' + v.l.toFixed(2) + ' m,  지름 d = ' + v.d.toFixed(0) + ' mm',
+               wx + L / 2, y0 + 118);
+}
+function drawBeam(){
+  var v = COMPS.beam.vals, y0 = 168, wx = 95;
+  var L = lenPx(v.l, 2.0), th = Math.max(4, v.h * 0.4);
+  var del = 40 * Math.sin(ph);
+  wallV(wx, y0 - 84, y0 + 128);
+  /* 미변형 기준선 */
+  dashLine(wx, y0, wx + L, y0);
+  /* 처짐 곡선 y(s) = δ(3s²-s³)/2 (끝단 하중 외팔보 해석해 형상) */
+  ctx.strokeStyle = PAL.muted; ctx.lineWidth = th; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (var i = 0; i <= 40; i++){
+    var s = i / 40, xx = wx + L * s, yy = y0 + del * (3 * s * s - s * s * s) / 2;
+    if (i) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy);
+  }
+  ctx.stroke(); ctx.lineCap = 'butt';
+  var tipY = y0 + del;
+  massBox(wx + L + 8, tipY, 46, 'm');
+  /* 하중 화살표 */
+  arrow(wx + L + 8, tipY + 38, wx + L + 8, tipY + 86, PAL.high, 2.8);
+  ctx.fillStyle = PAL.high; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('F', wx + L + 20, tipY + 76);
+  /* 변형 δ */
+  var dxm = wx + L - 62;
+  arrow(dxm, y0, dxm, Math.abs(del) < 0.5 ? y0 + 0.5 : tipY, PAL.float, 2.2);
+  ctx.fillStyle = PAL.float; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('δ(t)', dxm - 7, Math.abs(del) < 26 ? y0 - 12 : (y0 + tipY) / 2 + 5);
+  /* 단면 미니 표시 */
+  var sbx = wx + 34, sby = 362;
+  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1.5;
+  ctx.strokeRect(sbx, sby - v.h * 0.9, v.b * 0.9, v.h * 0.9);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('단면 b×h = ' + v.b.toFixed(0) + '×' + v.h.toFixed(0) + ' mm (세울수록 I↑)',
+               sbx + v.b * 0.9 + 10, sby - v.h * 0.45 + 4);
+  ctx.textAlign = 'center';
+  ctx.fillText('길이 l = ' + v.l.toFixed(2) + ' m', wx + L / 2, y0 - 66);
+}
+function drawCoil(){
+  var v = COMPS.coil.vals, x0 = 320, yTop = 88, yBase = 282;
+  var halfW = Math.min(110, 14 + v.R * 0.6);
+  var yMass = yBase + 22 * Math.sin(ph);
+  wallH(x0 - halfW - 30, x0 + halfW + 30, yTop);
+  /* 코일 (감김 수 n 반영) */
+  var n2 = Math.max(2, Math.round(v.n)), yBot = yMass - 26;
+  var segs = n2 * 2, dy = (yBot - yTop - 24) / segs;
+  /* 감김이 많고 와이어가 굵으면 선끼리 붙어 덩어리가 된다 → 피치에 맞춰 선 굵기 제한 */
+  ctx.strokeStyle = PAL.muted;
+  ctx.lineWidth = Math.max(2, Math.min(1.5 + v.d * 0.28, Math.abs(dy) * 0.85));
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, yTop);
+  ctx.lineTo(x0, yTop + 12);
+  for (var i = 0; i < segs; i++){
+    ctx.lineTo(x0 + (i % 2 === 0 ? -halfW : halfW), yTop + 12 + dy * (i + 0.5));
+  }
+  ctx.lineTo(x0, yBot); ctx.stroke();
+  ctx.lineJoin = 'miter'; ctx.lineCap = 'butt';
+  massBox(x0, yMass, 52, 'm');
+  /* 하중 화살표 */
+  arrow(x0, yMass + 32, x0, yMass + 62, PAL.high, 2.8);
+  ctx.fillStyle = PAL.high; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('F = mg', x0 + 12, yMass + 58);
+  /* 변형 x */
+  dashLine(x0 + halfW + 24, yBase, x0 + halfW + 96, yBase);
+  arrow(x0 + halfW + 58, yBase, x0 + halfW + 58, Math.abs(yMass - yBase) < 0.5 ? yBase + 0.5 : yMass,
+        PAL.float, 2.2);
+  ctx.fillStyle = PAL.float; ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x(t)', x0 + halfW + 66,
+               Math.abs(yMass - yBase) < 18 ? yBase - 10 : (yBase + yMass) / 2 + 5);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT;
+  ctx.fillText('와이어 d = ' + v.d.toFixed(1) + ' mm', x0 + halfW + 24, 138);
+  ctx.fillText('코일 반지름 R = ' + v.R.toFixed(0) + ' mm', x0 + halfW + 24, 160);
+  ctx.fillText('감김 수 n = ' + v.n.toFixed(1) + ' 회', x0 + halfW + 24, 182);
+}
+
+/* ---- 막대그래프 (log 스케일 k 비교) ---- */
+function drawChart(mat){
+  var top = 414, bot = 624, left = 190, right = 862;
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(16, top - 24, W - 32, bot - top + 36);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('부품 간 강성 비교 — 재료 ' + mat.name + ' · 각 부품의 현재 치수 · log 스케일(한 칸 = 10배)', 26, top - 6);
+
+  var ks = ORDER.map(function(id){ return Math.max(1e-12, calcK(id, mat).k); });
+  /* 최소값 막대도 폭이 보이도록 왼쪽에 1데케이드 여유 (표시용 스케일만 조정) */
+  var lo = Math.floor(Math.log10(Math.min.apply(null, ks))) - 1;
+  var hi = Math.ceil(Math.log10(Math.max.apply(null, ks)));
+  if (hi <= lo) hi = lo + 1;
+  var X = function(k){ return left + (Math.log10(k) - lo) / (hi - lo) * (right - left); };
+
+  /* 데케이드 격자 */
+  ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (var e = lo; e <= hi; e++){
+    var x = X(Math.pow(10, e));
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, top + 10); ctx.lineTo(x, bot - 16); ctx.stroke();
+    ctx.fillStyle = PAL.faint;
+    ctx.fillText('10' + sup(e), x, bot);
+  }
+  var names = ['① 막대  EA/l', '② 축  GJₚ/l', '③ 외팔보  3EI/l³', '④ 코일  Gd⁴/64nR³'];
+  ORDER.forEach(function(id, i){
+    var y = top + 22 + i * 44, bh = 26;
+    var xw = Math.max(2, X(ks[i]) - left);
+    ctx.fillStyle = (id === cur) ? PAL.accent : PAL.low;
+    ctx.fillRect(left, y, xw, bh);
+    if (id === 'shaft'){                       /* 단위가 다른 비틀림 강성 표시 */
+      ctx.strokeStyle = PAL.text; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+      ctx.strokeRect(left, y, xw, bh); ctx.setLineDash([]);
+    }
+    ctx.fillStyle = (id === cur) ? PAL.accent : PAL.muted;
+    ctx.font = ((id === cur) ? 'bold ' : '') + '13px ' + FONT; ctx.textAlign = 'right';
+    ctx.fillText(names[i], left - 10, y + bh / 2 + 5);
+    ctx.font = '14px ' + MONO;
+    var unit = (id === 'shaft') ? ' N·m/rad ⚠ 단위 다름' : ' N/m';
+    var txt = fmtSci(ks[i]) + unit, tw = ctx.measureText(txt).width, barEnd = left + xw;
+    /* 글자가 막대 경계를 걸치면 반쪽이 안 읽힌다 → 전부 바깥 또는 전부 안쪽(반전색)에 그린다 */
+    if (barEnd + 10 + tw <= W - 26){
+      ctx.textAlign = 'left'; ctx.fillStyle = PAL.text;
+      ctx.fillText(txt, barEnd + 10, y + bh / 2 + 5);
+    } else {
+      ctx.textAlign = 'right'; ctx.fillStyle = PAL.surface;
+      ctx.fillText(txt, barEnd - 10, y + bh / 2 + 5);
+      ctx.textAlign = 'left';
+    }
+  });
+}
+
+/* ---- 길이 민감도 (복습 미션) ---- */
+function lenSensitivity(mat){
+  var c = COMPS[cur], v = c.vals, key = c.lenKey;
+  var k1 = calcK(cur, mat).k, L0 = v[key];
+  v[key] = L0 * 2;
+  var k2 = calcK(cur, mat).k;
+  v[key] = L0;
+  return { key: key, unit: c.lenUnit, exp: c.lenExp, L0: L0, k1: k1, k2: k2 };
+}
+
+/* ---- 메인 그리기 ---- */
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  var mat = MATS[matId];
+  var c = COMPS[cur];
+  var r = calcK(cur, mat), k = r.k, sec = r.sec;
+  var m = SAFE(c.vals.m);
+  var wn = Math.sqrt(Math.max(k, 0) / m);
+  var fn = wn / (2 * Math.PI);
+
+  /* 개략도 배경 */
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(16, 14, W - 32, 372);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText(c.name + ' — ' + c.formula, 26, 38);
+  ctx.fillStyle = PAL.accent; ctx.font = '14px ' + MONO;
+  ctx.fillText((cur === 'shaft' ? 'kₜ = ' : 'k = ') + fmtSci(k) + ' ' + c.unitK
+    + '   →   ωₙ = √(' + (cur === 'shaft' ? 'kₜ/J' : 'k/m') + ') = ' + fmtSci(wn) + ' rad/s', 26, 60);
+
+  if (cur === 'rod') drawRod();
+  else if (cur === 'shaft') drawShaft();
+  else if (cur === 'beam') drawBeam();
+  else drawCoil();
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('재료 ' + mat.name + ' : ' + c.matKey + ' = ' + fmtSci(mat[c.matKey]) + ' N/m²' +
+               '  ·  T = ' + (wn > 1e-9 ? fmtSci(2 * Math.PI / wn) + ' s' : '—') +
+               '  ·  애니메이션은 보기 쉽게 감속 재생', W - 26, 376);
+
+  drawChart(mat);
+
+  /* ---- DOM 판독값 ---- */
+  $('st_k').textContent = fmtSci(k) + ' ' + c.unitK;
+  $('st_sec').textContent = fmtSci(sec);
+  $('st_wn').textContent = fmtSci(wn) + ' rad/s';
+  $('st_fn').textContent = fmtSci(fn) + ' Hz';
+
+  var s = lenSensitivity(mat), vd = $('verdict');
+  var head = s.key + ' = ' + fmtSci(s.L0) + ' → ' + fmtSci(s.L0 * 2) + ' ' + s.unit +
+             ' 이면 k : ' + fmtSci(s.k1) + ' → ' + fmtSci(s.k2);
+  if (s.exp === 1){
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ ' + c.name + ' — k ∝ 1/' + s.key + ' : ' + head + ' <b>(1/2)</b>';
+  } else {
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ ' + c.name + ' — k ∝ 1/' + s.key + '³ : ' + head + ' <b>(1/8, 가장 민감)</b>';
+  }
+  markPreset();
+}
+
+/* ---- 프리셋 ---- */
+function parseP(str){
+  var a = str.split('|'), o = { comp: a[0], mat: a[1], vals: {} };
+  for (var i = 2; i < a.length; i++){
+    var kv = a[i].split('=');
+    o.vals[kv[0]] = parseFloat(kv[1]);
+  }
+  return o;
+}
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = parseP(b.getAttribute('data-p'));
+    var on = (p.comp === cur) && (p.mat === matId);
+    if (on){
+      for (var key in p.vals){
+        if (Math.abs(COMPS[cur].vals[key] - p.vals[key]) > 1e-9){ on = false; break; }
+      }
+    }
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = parseP(this.getAttribute('data-p'));
+    cur = p.comp; matId = p.mat; ph = 0;
+    for (var key in p.vals) COMPS[cur].vals[key] = p.vals[key];
+    rebuildUI(); draw();
+  });
+});
+
+/* ---- 이벤트 ---- */
+ORDER.forEach(function(id){
+  $('b_' + id).addEventListener('click', function(){ cur = id; rebuildUI(); draw(); });
+});
+$('mat').addEventListener('change', function(){ matId = this.value; draw(); });
+for (var i = 1; i <= 3; i++){
+  (function(i){
+    $('s' + i).addEventListener('input', function(){
+      var def = COMPS[cur].sliders[i - 1];
+      if (!def) return;
+      COMPS[cur].vals[def.key] = parseFloat(this.value);
+      $('v' + i).textContent = COMPS[cur].vals[def.key].toFixed(def.dec);
+      draw();
+    });
+  })(i);
+}
+$('sm').addEventListener('input', function(){
+  COMPS[cur].vals.m = parseFloat(this.value);
+  $('vm').textContent = COMPS[cur].vals.m.toFixed(COMPS[cur].mass.dec);
+  draw();
+});
+$('play').addEventListener('click', function(){
+  running = !running;
+  this.textContent = running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', running);
+});
+$('reset').addEventListener('click', function(){
+  COMPS = defaults(); cur = 'rod'; matId = 'steel'; ph = 0; running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  rebuildUI(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  var k = calcK(cur, MATS[matId]).k;
+  var fn = Math.sqrt(Math.max(k, 0) / SAFE(COMPS[cur].vals.m)) / (2 * Math.PI);
+  /* 표시용 감속 진동수: fₙ에 단조 증가, 0.3~2.5 Hz 클램프 (NaN 가드 포함) */
+  var fDisp = Math.min(2.5, Math.max(0.3, 0.35 * Math.sqrt(isFinite(fn) ? fn : 0)));
+  if (running) ph += 2 * Math.PI * fDisp * dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+rebuildUI();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+

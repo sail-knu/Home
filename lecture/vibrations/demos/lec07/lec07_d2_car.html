@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L7-D2 · 노면 주행 자동차 — 속도와 승차감</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 7강</p>
+  <h1>노면 주행 자동차 — <span style="color:var(--high)">속도와 승차감</span></h1>
+  <p class="lede">노면 파장은 6 m로 고정 — <b>주행 속도가 곧 가진진동수</b>입니다.
+    속도를 올리며 공진 봉우리를 지나 절연 영역으로 넘어가는 순간을 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--low)"></i>노면 y(t) — 파장 6 m, Y = 1 cm</span>
+          <span><i style="background:var(--accent)"></i>차체 진폭 X = (X/Y)·Y</span>
+          <span><i style="background:var(--faint)"></i>반대 적재 상태 (비교)</span>
+          <span><i style="background:var(--float)"></i>현재 속도 마커</span>
+          <span><i style="background:var(--high)"></i>공진 속도 v*</span>
+          <span><i style="background:var(--ok)"></i>r = √2 절연 시작</span>
+        </div>
+        <div class="note-box">
+          • 파장이 고정이므로 <b>속도가 가진진동수</b>를 정합니다: ω_b = 0.2909·v (v는 km/h).<br>
+          • 20 km/h 부근이 r ≈ 1 — 1 cm 요철에 차체가 <b>3 cm 넘게</b> 출렁입니다.<br>
+          • 80 km/h 이상은 r ≫ √2 <b>절연 영역</b> — 진폭이 mm 급으로 떨어집니다.<br>
+          • 승객이 타면 ωₙ이 낮아져 같은 속도에서 r이 커지고, 진폭은 더 작아집니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="5,0">5 km/h</button>
+            <button class="btn btn-sm" data-p="20,0">20 km/h 공진</button>
+            <button class="btn btn-sm" data-p="20,1">20 km/h 탑승</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="80,0">80 km/h</button>
+            <button class="btn btn-sm" data-p="100,0">100 km/h</button>
+            <button class="btn btn-sm" data-p="150,0">150 km/h</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — 속도를 올리며 <b>공진 봉우리(≈20 km/h)</b>를 지나
+            절연 영역에서 진폭이 작아지는 것을 관찰하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">주행 속도 v <span class="big-val" id="vv">20</span> km/h</p>
+          <input type="range" id="v" min="2" max="160" step="1" value="20" style="width:100%">
+          <p class="mini" style="margin:6px 0 0">가진진동수 ω_b = 2πv/(3.6λ) = <b id="wbv">5.82</b> rad/s</p>
+          <p class="ctrl-title" style="margin-top:12px">적재 상태</p>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm btn-acc" id="loadEmpty">빈 차 m₁ = 1007 kg</button>
+            <button class="btn btn-sm" id="loadFull">탑승 m₂ = 1585 kg</button>
+          </div>
+          <p class="mini" style="margin:6px 0 0">k = 4×10⁴ N/m, c = 2000 N·s/m, λ = 6 m, Y = 1 cm</p>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">고유진동수 ωₙ</div><div class="v" id="sWn">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v" id="sZeta">—</div></div>
+          <div class="stat"><div class="k">진동수비 r</div><div class="v lo" id="sR">—</div></div>
+          <div class="stat"><div class="k">전달률 X/Y</div><div class="v acc" id="sT">—</div></div>
+          <div class="stat"><div class="k">차체 진폭 X</div><div class="v acc" id="sX">—</div></div>
+          <div class="stat"><div class="k">공진 속도 v*</div><div class="v hi" id="sVres">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 7강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ---- 기본 수치 ---- */
+var LAMBDA  = 6;        /* 노면 파장 [m] */
+var Y0      = 0.01;     /* 노면 진폭 [m] = 1 cm */
+var K       = 4e4;      /* 현가 강성 [N/m] */
+var C       = 2000;     /* 감쇠 [N·s/m] */
+var M_EMPTY = 1007;     /* 빈 차 [kg] */
+var M_FULL  = 1585;     /* 탑승 [kg] */
+var EPS     = 1e-6;
+var V_MAX_PLOT = 160;
+var ROOT2 = Math.SQRT2;
+
+var st = { v: 20, loaded: false, t: 0, running: true };
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid','mass','mass-ink','spring'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 물리 계산 (원본 그대로) ---- */
+function sysVals(loaded){
+  var m = loaded ? M_FULL : M_EMPTY;
+  return { m:m, wn: Math.sqrt(K / m), zeta: C / (2 * Math.sqrt(K * m)) };
+}
+/* 속도(km/h) → 가진진동수 ω_b [rad/s] */
+function omegaB(v){ return 2 * Math.PI * (v / 3.6) / LAMBDA; }
+/* 진동수비 r 이 되는 속도 [km/h] */
+function speedFor(r, wn){ return r * wn * 3.6 * LAMBDA / (2 * Math.PI); }
+/* 변위전달률 X/Y (분모 클램프로 특이점 가드) */
+function transmissibility(r, zeta){
+  var num = 1 + (2 * zeta * r) * (2 * zeta * r);
+  var den = (1 - r * r) * (1 - r * r) + (2 * zeta * r) * (2 * zeta * r);
+  if (den < EPS) den = EPS;
+  return Math.sqrt(num / den);
+}
+/* 정상상태 위상 φ = −θ₁ + θ₂ */
+function phase(r, zeta){
+  var th1 = Math.atan2(2 * zeta * r, 1 - r * r);
+  var th2 = Math.atan(2 * zeta * r);
+  return -th1 + th2;
+}
+/* 전달률 봉우리(공진 속도) — 수치 탐색. 적재상태별 상수라 1회만 계산 */
+function peak(loaded){
+  var s = sysVals(loaded), bestV = 0, bestT = -1;
+  for (var v = 1; v <= 200; v += 0.25){
+    var T = transmissibility(omegaB(v) / s.wn, s.zeta);
+    if (T > bestT){ bestT = T; bestV = v; }
+  }
+  return { v: bestV, T: bestT };
+}
+var PEAK_E = peak(false), PEAK_F = peak(true);
+var XMAX = Math.max(PEAK_E.T, PEAK_F.T) * Y0 * 1.1;   /* 세로축 상한 [m] — 적재 상태와 무관하게 고정 */
+
+/* ---- 그리기 도우미 ---- */
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function headV(x, y, dir, color){
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x - 4.5, y - dir * 8); ctx.lineTo(x + 4.5, y - dir * 8);
+  ctx.closePath(); ctx.fill();
+}
+function vArrow(x, y1, y2, color, lw){
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
+  if (Math.abs(y2 - y1) > 10){ headV(x, y1, -1, color); headV(x, y2, 1, color); }
+}
+function niceStep(x){
+  var e = Math.pow(10, Math.floor(Math.log(x) / Math.LN10)), f = x / e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e;
+}
+
+/* ---- 레이아웃 ---- */
+var BAND_T = 14, BAND_B = 306;
+/* PX_PER_CM: 노면 Y(1cm)와 차체 X 를 같은 축척으로 그린다. 최대 진폭(XMAX)이
+   밴드 안에 들어가도록 정한 값 — 노면·차체 진폭 비율은 화면에서 그대로 읽힌다. */
+var PX_PER_CM = 11;
+var roadY = 262, wheelR = 18, roadWaveAmp = PX_PER_CM, roadPxPerM = 70;
+var roadWlPx = LAMBDA * roadPxPerM;
+var restY = 144;
+var carX = W * 0.5;
+var plotL = 64, plotR = W - 26, plotTop = 350, plotBot = H - 38;
+var plotW = plotR - plotL, plotH = plotBot - plotTop;
+
+function vx(v){ return plotL + (v / V_MAX_PLOT) * plotW; }
+function xy(X){ return plotBot - Math.min(1, X / (XMAX || EPS)) * plotH; }
+
+function roadYat(px){
+  var distM = (st.v / 3.6) * st.t;
+  var roadPhase = 2 * Math.PI * distM / LAMBDA;
+  return roadY - roadWaveAmp * Math.sin(2 * Math.PI * (px - 20) / roadWlPx + roadPhase);
+}
+
+function draw(){
+  var sv = sysVals(st.loaded), wn = sv.wn, zeta = sv.zeta;
+  var wb = omegaB(st.v);
+  var r  = wb / wn;
+  var T  = transmissibility(r, zeta);
+  var phi = phase(r, zeta);
+  var Xamp = T * Y0;                              /* 차체 진폭 [m] */
+  var pk = st.loaded ? PEAK_F : PEAK_E;
+  var vres = pk.v;
+  var vIso = speedFor(ROOT2, wn);                 /* r = √2 가 되는 속도 */
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* ================= 상단: 주행 애니메이션 밴드 ================= */
+  ctx.fillStyle = PAL.surface;
+  ctx.fillRect(18, BAND_T, W - 36, BAND_B - BAND_T);
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+  ctx.strokeRect(18.5, BAND_T + 0.5, W - 37, BAND_B - BAND_T - 1);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('노면 요철 = 바닥가진 y(t)  →  차체 진폭 X = (X/Y)·Y', 32, 34);
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('상하 진폭만 확대 (1 cm → ' + PX_PER_CM + ' px, 노면·차체 동일 축척)', W - 32, 34);
+  ctx.textAlign = 'left';
+
+  /* 노면 곡선 + 지면 채움 */
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (var px = 20; px <= W - 20; px++){
+    var yy = roadYat(px);
+    if (px === 20) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+  }
+  ctx.stroke();
+  ctx.lineTo(W - 20, BAND_B - 4); ctx.lineTo(20, BAND_B - 4); ctx.closePath();
+  ctx.globalAlpha = 0.13; ctx.fillStyle = PAL.low; ctx.fill(); ctx.globalAlpha = 1;
+
+  /* 노면 진폭 Y 표시 (X 화살표와 같은 px 스케일) */
+  vArrow(118, roadY - roadWaveAmp, roadY + roadWaveAmp, PAL.low, 2);
+  ctx.fillStyle = PAL.low; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('Y = 1 cm', 118, roadY - roadWaveAmp - 11);
+
+  /* 정지 높이 기준선 */
+  ctx.strokeStyle = PAL.border2; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(carX - 96, restY); ctx.lineTo(carX + 150, restY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* 서스펜션 + 차체 + 바퀴 */
+  var bodyDispPx = PX_PER_CM * Xamp * 100 * Math.sin(wb * st.t + phi);
+  var bodyY = restY - bodyDispPx;
+  var bodyBot = bodyY + 20;
+  ctx.strokeStyle = PAL.spring; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+  [carX - 44, carX + 44].forEach(function(wx){
+    var wy = roadYat(wx) - wheelR;
+    var n = 12, dy = (bodyBot - wy) / n;
+    ctx.beginPath(); ctx.moveTo(wx, wy);
+    for (var i = 0; i < n; i++) ctx.lineTo(wx + (i % 2 === 0 ? -9 : 9), wy + dy * (i + 0.5));
+    ctx.lineTo(wx, bodyBot); ctx.stroke();
+  });
+  [carX - 44, carX + 44].forEach(function(wx){
+    var wy = roadYat(wx) - wheelR;
+    ctx.fillStyle = PAL.mass; ctx.beginPath(); ctx.arc(wx, wy, wheelR, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = PAL.surface2; ctx.beginPath(); ctx.arc(wx, wy, 5, 0, 2 * Math.PI); ctx.fill();
+  });
+  ctx.fillStyle = PAL['accent-soft']; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.5;
+  roundRect(carX - 70, bodyY - 20, 140, 40, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.surface; ctx.lineWidth = 2;
+  roundRect(carX - 40, bodyY - 42, 80, 26, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 15px ' + FONT;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(st.loaded ? 'm₂ = 1585 kg' : 'm₁ = 1007 kg', carX, bodyY);
+  ctx.textBaseline = 'alphabetic';
+
+  /* 차체 진폭 X 화살표 */
+  var arrX = carX + 130, ampPx = PX_PER_CM * Xamp * 100;
+  vArrow(arrX, restY - ampPx, restY + ampPx, PAL.accent, 2.4);
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 13.5px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('X = ' + (Xamp * 100).toFixed(2) + ' cm', arrX, restY - ampPx - 11);
+
+  /* 주행 상태 판독 */
+  ctx.textAlign = 'left'; ctx.font = 'bold 15px ' + MONO; ctx.fillStyle = PAL.text;
+  ctx.fillText('v = ' + st.v.toFixed(0) + ' km/h', 32, BAND_B - 16);
+  ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
+  ctx.fillText('ω_b = ' + wb.toFixed(2) + ' rad/s   ·   r = ' + r.toFixed(3) +
+               '   ·   X/Y = ' + T.toFixed(3), 172, BAND_B - 16);
+
+  /* ================= 하단: 진폭 X vs 속도 v ================= */
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('차체 진폭 X [cm]   ·   가로축 = 주행 속도 v [km/h]', plotL - 2, plotTop - 14);
+
+  /* 절연 영역 음영 */
+  if (vIso < V_MAX_PLOT){
+    ctx.globalAlpha = 0.10; ctx.fillStyle = PAL.ok;
+    ctx.fillRect(vx(vIso), plotTop, plotR - vx(vIso), plotH); ctx.globalAlpha = 1;
+  }
+
+  /* 가로 격자 + 세로축 눈금 */
+  var maxCm = XMAX * 100, step = niceStep(maxCm / 4);
+  ctx.font = '12.5px ' + FONT;
+  for (var g = 0; g <= maxCm + 1e-9; g += step){
+    var gy = xy(g / 100);
+    if (g > 0){
+      ctx.strokeStyle = PAL.grid; ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(plotL, gy); ctx.lineTo(plotR, gy); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.fillStyle = PAL.faint; ctx.textAlign = 'right';
+    ctx.fillText(g.toFixed(step < 1 ? 1 : 0), plotL - 8, gy + 4);
+  }
+
+  /* 축 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.lineTo(plotR, plotBot); ctx.stroke();
+
+  /* 속도 눈금 */
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  [20, 40, 60, 80, 100, 120, 140, 160].forEach(function(v){
+    ctx.fillText(v, vx(v), plotBot + 19);
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(vx(v), plotBot); ctx.lineTo(vx(v), plotBot - 5); ctx.stroke();
+  });
+
+  /* 노면 진폭 Y = 1 cm 기준선 */
+  var y1 = xy(0.01);
+  ctx.strokeStyle = PAL.low; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(plotL, y1); ctx.lineTo(plotR, y1); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = PAL.low; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('Y = 1 cm (노면)', plotR - 8, y1 - 7);
+
+  /* 공진 속도 v* / r=√2 안내선 */
+  ctx.strokeStyle = PAL.high; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(vx(vres), plotTop); ctx.lineTo(vx(vres), plotBot); ctx.stroke();
+  ctx.strokeStyle = PAL.ok;
+  ctx.beginPath(); ctx.moveTo(vx(vIso), plotTop); ctx.lineTo(vx(vIso), plotBot); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = 'bold 12.5px ' + FONT;
+  ctx.textAlign = 'right';
+  /* 라벨을 세로축(눈금 0) 위로 넘기지 않도록 왼쪽 한계를 둔다 */
+  ctx.fillStyle = PAL.high;
+  ctx.fillText('v* = ' + vres.toFixed(0) + ' km/h', Math.max(vx(vres) - 7, plotL + 90), plotBot - 10);
+  ctx.fillStyle = PAL.ok;   ctx.fillText('절연 영역 (r > √2)', plotR - 8, plotTop + 18);
+  ctx.textAlign = 'left';
+  ctx.fillText('r = √2 → ' + vIso.toFixed(0) + ' km/h', vx(vIso) + 6, plotTop + 36);
+
+  /* 두 적재 상태 곡선 */
+  function curve(loaded, color, lw, dash){
+    var s2 = sysVals(loaded);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    for (var v = 0; v <= V_MAX_PLOT; v += 1){
+      var X = transmissibility(omegaB(v) / s2.wn, s2.zeta) * Y0;
+      if (v === 0) ctx.moveTo(vx(v), xy(X)); else ctx.lineTo(vx(v), xy(X));
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.globalAlpha = 0.7;  curve(!st.loaded, PAL.faint, 1.8, [6, 5]);  ctx.globalAlpha = 1;
+  curve(st.loaded, PAL.accent, 2.8);
+
+  /* 현재 속도 마커 */
+  var mx = vx(st.v), my = xy(Xamp);
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.4; ctx.globalAlpha = 0.6;
+  ctx.beginPath(); ctx.moveTo(mx, plotBot); ctx.lineTo(mx, my); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.float; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 2 * Math.PI); ctx.fill();
+  ctx.font = 'bold 13.5px ' + FONT; ctx.textAlign = 'center';
+  var ly = (my - 14 < plotTop + 14) ? my + 22 : my - 14;
+  var mLbl = (Xamp * 100).toFixed(2) + ' cm';
+  var mLx  = Math.min(Math.max(mx, plotL + 34), plotR - 34);
+  var mLw  = ctx.measureText(mLbl).width;
+  /* 곡선이 라벨을 관통하지 않도록 배경 칩을 깐다 */
+  ctx.globalAlpha = 0.88; ctx.fillStyle = PAL['plot-bg'];
+  roundRect(mLx - mLw / 2 - 5, ly - 12, mLw + 10, 17, 5); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.float; ctx.fillText(mLbl, mLx, ly);
+  ctx.textAlign = 'left';
+
+  /* ---- DOM 판독값 ---- */
+  $('sWn').textContent   = wn.toFixed(3) + ' rad/s';
+  $('sZeta').textContent = zeta.toFixed(3);
+  $('sR').textContent    = r.toFixed(3);
+  $('sT').textContent    = T.toFixed(3);
+  $('sX').textContent    = (Xamp * 100).toFixed(2) + ' cm';
+  $('sVres').textContent = vres.toFixed(0) + ' km/h';
+  $('wbv').textContent   = wb.toFixed(2);
+
+  var vd = $('verdict');
+  if (Math.abs(r - 1) < 0.20 || (r < ROOT2 && T > 1.6)){
+    vd.className = 'verdict bad';
+    vd.innerHTML = '❗ 최악의 승차감 — r ≈ 1 공진 근처. 1 cm 요철에 <b>X = ' +
+      (Xamp * 100).toFixed(2) + ' cm</b> 로 증폭';
+  } else if (r < ROOT2){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '⚠ 증폭 영역 (r &lt; √2) — 차체가 노면보다 크게 흔들림 (X/Y = <b>' + T.toFixed(2) + '</b>)';
+  } else if (r < 2.6){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '↗ 절연 진입 (r &gt; √2) — 전달률이 1 아래로, 진폭 감소 중 (X/Y = <b>' + T.toFixed(2) + '</b>)';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ 절연 영역 — 고속에서 r ≫ √2, <b>X = ' + (Xamp * 100).toFixed(2) + ' cm</b> 로 mm 급';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncUI(){
+  $('vv').textContent = st.v.toFixed(0);
+  $('v').value = st.v;
+  $('loadEmpty').classList.toggle('btn-acc', !st.loaded);
+  $('loadFull').classList.toggle('btn-acc', st.loaded);
+}
+$('v').addEventListener('input', function(){
+  st.v = parseFloat(this.value); syncUI(); draw();
+});
+function setLoad(loaded){ st.loaded = loaded; syncUI(); draw(); }
+$('loadEmpty').addEventListener('click', function(){ setLoad(false); });
+$('loadFull').addEventListener('click', function(){ setLoad(true); });
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+p[0] - st.v) < 1e-9 && ((p[1] === '1') === st.loaded);
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.v = +p[0]; st.loaded = (p[1] === '1'); st.t = 0;
+    syncUI(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.v = 20; st.loaded = false; st.t = 0; st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  syncUI(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) st.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+syncUI();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

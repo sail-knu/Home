@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L11-D1 · s-평면 극점 ↔ 시간응답</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 11강</p>
+  <h1>s-평면 극점 ↔ 시간응답</h1>
+  <p class="lede">켤레 극점 <span class="mth">s = −ζω<sub>n</sub> ± jω<sub>d</sub></span> 를 <b>드래그</b>하면
+    오른쪽 임펄스 응답이 바로 바뀝니다 — <b>실수부는 감쇠, 허수부는 진동수</b>.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540" style="touch-action:none"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>극점 s = −ζωₙ ± jωd</span>
+          <span><i style="background:var(--low)"></i>임펄스 응답 h(t) = (1/ωd)e<sup>σt</sup>sin ωd t</span>
+          <span><i style="background:var(--float)"></i>포락선 ±(1/ωd)e<sup>σt</sup></span>
+          <span><i style="background:var(--bad)"></i>발산 (우반면 σ&gt;0)</span>
+          <span><i style="background:var(--accent);opacity:.35"></i>iso-ωₙ 원 (|s| = ωₙ)</span>
+          <span><i style="background:var(--low);opacity:.4"></i>iso-ζ 방사선 (cos θ = ζ)</span>
+        </div>
+        <div class="note-box">
+          • 극점을 <b>허수축에 붙이면(ζ=0)</b> 포락선이 사라지고 <b>등진폭 순수 진동</b>이 됩니다 — 복습 미션.<br>
+          • 극점의 <b>실수부 σ = −ζωₙ</b> 가 감쇠 속도, <b>허수부 ωd</b> 가 출렁이는 속도입니다.<br>
+          • 원점에서 극점까지의 거리가 <b>ωₙ</b>, 음의 실수축과 이루는 각은 <b>cos θ = ζ</b>.<br>
+          • 허수축을 넘어 <b>우반면(σ&gt;0)</b>으로 가면 포락선이 커지는 <b>발산</b>입니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="0,6">ζ=0 허수축 (순수 진동)</button>
+            <button class="btn btn-sm" data-p="0.1,6">ζ=0.1</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="0.5,6">ζ=0.5</button>
+            <button class="btn btn-sm" data-p="1,6">ζ=1.0 임계</button>
+            <button class="btn btn-sm" data-p="1.25,6">ζ=1.25 과도</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="0.832,3.61">s²+6s+13 → −3±j2</button>
+            <button class="btn btn-sm" data-p="-0.15,6">ζ=−0.15 발산</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — 첫 버튼으로 극점을 <b>허수축</b>에 붙이고, 포락선이 사라지는지 확인하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">감쇠비 ζ <span class="big-val" id="zv">0.20</span></p>
+          <input type="range" id="z" min="-0.30" max="1.30" step="0.001" value="0.20" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">고유진동수 ωₙ <span class="big-val" id="wnv">6.00</span> rad/s</p>
+          <input type="range" id="wn" min="1" max="12" step="0.01" value="6" style="width:100%">
+          <p class="mini" style="margin-top:6px">왼쪽 s-평면에서 <b>위쪽 극점을 드래그</b>해도 됩니다 (켤레는 자동 미러).</p>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v acc" id="szeta">—</div></div>
+          <div class="stat"><div class="k">ωₙ = |s|</div><div class="v" id="swn">—</div></div>
+          <div class="stat"><div class="k">ωd = ωₙ√(1−ζ²)</div><div class="v lo" id="swd">—</div></div>
+          <div class="stat"><div class="k">σ = −ζωₙ</div><div class="v hi" id="ssig">—</div></div>
+        </div>
+
+        <div class="verdict good" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 11강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var EPS = 1e-6;
+var st = { zeta: 0.20, wn: 6.0, t: 0, running: true };
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 레이아웃 : 좌 s-평면 / 우 임펄스 응답 ---- */
+var planeL = 46, planeR = 432, planeT = 46, planeB = 502;
+var SCALE  = 19;                              /* px / (rad/s) — 실수축·허수축 동일 배율 */
+var ox = planeR - 4 * SCALE, oy = (planeT + planeB) / 2;
+function reToX(re){ return ox + re * SCALE; }
+function imToY(im){ return oy - im * SCALE; }
+function xToRe(x){ return (x - ox) / SCALE; }
+function yToIm(y){ return (oy - y) / SCALE; }
+
+var respL = 470, respR = 884, respT = 46, respB = 396;
+var cxA = respL + 34, midY = (respT + respB) / 2;
+var plotW = respR - cxA - 10, plotH = (respB - respT) / 2 - 26;
+
+/* ---- 물리 계산 (원본 유지) ---- */
+function derived(){
+  var wn = st.wn, zeta = st.zeta;
+  var disc = 1 - zeta * zeta;
+  var wd = wn * Math.sqrt(Math.max(0, disc));   /* 감쇠 고유진동수 (|ζ|≥1 이면 0) */
+  var sigma = -zeta * wn;                        /* 극점 실수부 */
+  return { wn:wn, zeta:zeta, wd:wd, sigma:sigma, disc:disc };
+}
+/* 1/(s² + 2ζωₙs + ωₙ²) 의 역변환 */
+function impulse(t){
+  var d = derived(), az = Math.abs(d.zeta);
+  if (az < 1 - EPS){
+    var wdd = Math.max(d.wd, EPS);
+    return Math.exp(d.sigma * t) * Math.sin(wdd * t) / wdd;
+  } else if (az <= 1 + EPS){
+    return t * Math.exp(d.sigma * t);            /* 임계감쇠 극한 t·e^{σt} */
+  }
+  var beta = Math.max(d.wn * Math.sqrt(d.zeta * d.zeta - 1), EPS);
+  return Math.exp(d.sigma * t) * Math.sinh(beta * t) / beta;
+}
+
+/* ---- 그리기 도우미 ---- */
+function fx(v, n){ var s = v.toFixed(n); return s.charAt(0) === '-' ? '−' + s.slice(1) : s; }
+function panelFrame(l, t, r, b){
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+  ctx.strokeRect(l + 0.5, t + 0.5, r - l - 1, b - t - 1);
+}
+/* 격자·눈금·곡선 위에 얹히는 주석 — 배경 칩으로 가독성 확보 */
+function labelChip(txt, x, y, align, col, font){
+  ctx.font = font || ('bold 12.5px ' + FONT);
+  var w = ctx.measureText(txt).width;
+  var lx = (align === 'right') ? x - w : (align === 'center') ? x - w / 2 : x;
+  ctx.fillStyle = PAL['plot-bg'];
+  ctx.fillRect(lx - 4, y - 13, w + 8, 18);
+  ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(txt, lx, y);
+}
+/* (x,y) 가 극점 마커에 가려지는가 */
+function hidden(x, y, poles, rx, ry){
+  for (var i = 0; i < poles.length; i++){
+    if (Math.abs(poles[i][0] - x) < rx && Math.abs(poles[i][1] - y) < ry) return true;
+  }
+  return false;
+}
+function xMark(px, py, col, ring){
+  ctx.save();                                   /* 패널 밖(제목 영역)으로 새지 않도록 */
+  ctx.beginPath(); ctx.rect(planeL + 1, planeT + 1, planeR - planeL - 2, planeB - planeT - 2); ctx.clip();
+  ctx.strokeStyle = col; ctx.lineWidth = 3.2;
+  var s = 9;
+  ctx.beginPath();
+  ctx.moveTo(px - s, py - s); ctx.lineTo(px + s, py + s);
+  ctx.moveTo(px + s, py - s); ctx.lineTo(px - s, py + s);
+  ctx.stroke();
+  if (ring){
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(px, py, 15, 0, 2 * Math.PI); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+/* ============ 좌: s-평면 ============ */
+function drawPlane(){
+  var d = derived(), az = Math.abs(d.zeta);
+
+  /* 극점 화면 좌표 — 눈금 라벨이 마커에 가리지 않도록 먼저 계산 */
+  var rootP = Math.sqrt(Math.max(0, d.zeta * d.zeta - 1));
+  var poles = (az < 1 - EPS)
+    ? [[reToX(d.sigma), imToY(d.wd)], [reToX(d.sigma), imToY(-d.wd)]]
+    : [[reToX(d.wn * (-d.zeta + rootP)), oy], [reToX(d.wn * (-d.zeta - rootP)), oy]];
+
+  /* 우반면(불안정) 음영 */
+  ctx.globalAlpha = 0.12; ctx.fillStyle = PAL.bad;
+  ctx.fillRect(ox, planeT, planeR - ox, planeB - planeT);
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(planeL, planeT, planeR - planeL, planeB - planeT); ctx.clip();
+
+  /* iso-ωₙ 원 (|s| = ωₙ) */
+  ctx.strokeStyle = PAL.accent; ctx.globalAlpha = 0.28; ctx.lineWidth = 1;
+  for (var r = 2; r <= 14; r += 2){
+    ctx.beginPath(); ctx.arc(ox, oy, r * SCALE, 0, 2 * Math.PI); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  /* iso-ζ 방사선 (cos θ = ζ) */
+  ctx.lineWidth = 1; ctx.font = '12px ' + FONT;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var imLab = (oy - (planeT + 22)) / SCALE;        /* 라벨은 상단 한 줄에 모아 배치 */
+  for (var zt = 0.2; zt <= 0.8001; zt += 0.2){
+    var th = Math.acos(zt), R = 17;
+    var re = -R * zt, im = R * Math.sin(th);
+    ctx.strokeStyle = PAL.low; ctx.globalAlpha = 0.32;
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(reToX(re), imToY(im)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(reToX(re), imToY(-im)); ctx.stroke();
+    ctx.globalAlpha = 0.9; ctx.fillStyle = PAL.low;
+    ctx.fillText('ζ=' + zt.toFixed(1), reToX(-imLab * zt / Math.sin(th)), planeT + 22);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  /* 축 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(planeL, oy); ctx.lineTo(planeR, oy); ctx.stroke();
+  /* 허수축 = 안정 경계 */
+  ctx.strokeStyle = PAL.bad; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(ox, planeT + 2); ctx.lineTo(ox, planeB - 2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* 축 라벨 */
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Re(s) = σ →', planeR - 8, oy - 14);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('Im(s) = jω', ox + 9, planeT + 7);
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = 'bold 12.5px ' + FONT;
+  ctx.fillStyle = PAL.ok;  ctx.textAlign = 'right'; ctx.fillText('안정 σ<0', ox - 8, planeB - 12);
+  ctx.fillStyle = PAL.bad; ctx.textAlign = 'left';  ctx.fillText('불안정', ox + 8, planeB - 12);
+
+  /* 눈금 */
+  ctx.font = '12px ' + FONT; ctx.fillStyle = PAL.faint;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  [-15, -12, -9, -6, -3, 3].forEach(function(re){          /* 극점 마커에 가리는 눈금은 생략 */
+    if (hidden(reToX(re), oy + 13, poles, 26, 24)) return;
+    ctx.fillText(fx(re, 0), reToX(re), oy + 6);
+  });
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';   /* 우반면 쪽에 배치 — ωd 라벨과 겹침 방지 */
+  [-8, -4, 4, 8].forEach(function(im){
+    if (hidden(ox + 18, imToY(im), poles, 30, 15)) return;
+    ctx.fillText((im > 0 ? '+' : '−') + Math.abs(im) + 'j', ox + 7, imToY(im));
+  });
+  ctx.textBaseline = 'alphabetic';
+
+  if (az < 1 - EPS){
+    /* ---- 켤레 복소 극점 ---- */
+    var px = reToX(d.sigma), py = imToY(d.wd), pyc = imToY(-d.wd);
+    var rhp = d.sigma > EPS, col = rhp ? PAL.bad : PAL.accent;
+
+    /* ωₙ 반지름 + θ 각 */
+    ctx.strokeStyle = PAL.accent; ctx.globalAlpha = 0.75; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(px, py); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    /* σ · ωd 보조선 */
+    ctx.strokeStyle = PAL.muted; ctx.globalAlpha = 0.7;
+    ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(px, oy); ctx.lineTo(px, py); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, py); ctx.lineTo(px, py); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    if (Math.abs(d.sigma) > 0.25){
+      labelChip('σ = ' + fx(d.sigma, 2), px - 8, (oy + py) / 2 + 4, 'right', PAL.high);
+    }
+    ctx.font = 'bold 12.5px ' + FONT;
+    var lab = 'ωd = ' + d.wd.toFixed(2);
+    /* 극점이 위쪽 끝에 붙어도 iso-ζ 라벨 줄(planeT+22)을 침범하지 않게 */
+    labelChip(lab, Math.min(px + 4, ox - 10 - ctx.measureText(lab).width),
+              Math.max(py - 20, planeT + 46), 'left', PAL.low);
+    labelChip('ωₙ = ' + d.wn.toFixed(2),
+              ox + 0.52 * (px - ox) + 9, oy + 0.52 * (py - oy) + 18, 'left', PAL.accent);
+
+    if (d.wn > 0.5 && az > 0.02 && az < 0.98){
+      var thv = Math.acos(Math.max(-1, Math.min(1, d.zeta)));
+      ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(ox, oy, 36, thv - Math.PI, Math.PI, true); ctx.stroke();
+      ctx.fillStyle = PAL.float; ctx.textAlign = 'center'; ctx.font = 'bold 12.5px ' + FONT;
+      ctx.fillText('θ', ox - 50 * Math.cos(thv / 2), oy - 50 * Math.sin(thv / 2) + 5);
+    }
+
+    xMark(px, py, col, true);
+    xMark(px, pyc, col, false);
+  } else {
+    /* ---- 실수 극점 2개 ---- */
+    var root = Math.sqrt(Math.max(0, d.zeta * d.zeta - 1));
+    var s1 = d.wn * (-d.zeta + root), s2 = d.wn * (-d.zeta - root);
+    var c1 = s1 > EPS ? PAL.bad : PAL.accent;
+    var x1 = reToX(s1);
+    xMark(x1, oy, c1, true);
+    labelChip('s₁ = ' + fx(s1, 2), x1, oy - 22, 'center', c1);
+
+    if (root > 1e-4){
+      var x2 = reToX(s2);
+      if (x2 >= planeL + 12){
+        xMark(x2, oy, PAL.accent, false);
+        labelChip('s₂ = ' + fx(s2, 2), x2, oy + 36, 'center', PAL.accent);
+      } else {
+        /* 화면 밖 극점 — 왼쪽 가장자리에 표시 */
+        ctx.fillStyle = PAL.accent;
+        ctx.beginPath();
+        ctx.moveTo(planeL + 4, oy); ctx.lineTo(planeL + 18, oy - 8); ctx.lineTo(planeL + 18, oy + 8);
+        ctx.closePath(); ctx.fill();
+        labelChip('s₂ = ' + fx(s2, 2) + ' (화면 밖)', planeL + 22, oy + 26, 'left', PAL.accent);
+      }
+    } else {
+      labelChip('중근 (ζ=1)', x1, oy + 36, 'center', PAL.float);
+    }
+  }
+  panelFrame(planeL, planeT, planeR, planeB);
+}
+
+/* ============ 우: 임펄스 응답 ============ */
+function drawResponse(){
+  var d = derived(), az = Math.abs(d.zeta);
+  var rhp = d.sigma > EPS;
+
+  if (rhp){
+    ctx.globalAlpha = 0.10; ctx.fillStyle = PAL.bad;
+    ctx.fillRect(respL, respT, respR - respL, respB - respT);
+    ctx.globalAlpha = 1;
+  }
+
+  var Tmax = Math.max(6, 24 / Math.max(d.wn, 0.5));
+  var NS = 400, vals = new Float64Array(NS + 1), peak = 1e-9, i, t, v;
+  for (i = 0; i <= NS; i++){
+    t = Tmax * i / NS; v = impulse(t); vals[i] = v;
+    if (isFinite(v)) peak = Math.max(peak, Math.abs(v));
+  }
+  var yscale = plotH * 0.92 / peak;
+  var tToX = function(tt){ return cxA + tt / Tmax * plotW; };
+  var vToY = function(vv){ return midY - vv * yscale; };
+
+  /* 시간 격자 */
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  ctx.font = '12px ' + FONT; ctx.fillStyle = PAL.faint; ctx.textAlign = 'center';
+  [0.5, 1].forEach(function(f){
+    var gx = tToX(Tmax * f);
+    ctx.beginPath(); ctx.moveTo(gx, respT + 8); ctx.lineTo(gx, respB - 24); ctx.stroke();
+    ctx.fillText((Tmax * f).toFixed(1) + ' s', gx, respB - 8);
+  });
+  ctx.setLineDash([]);
+
+  /* 축 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(cxA, respT + 8); ctx.lineTo(cxA, respB - 22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cxA, midY); ctx.lineTo(respR - 8, midY); ctx.stroke();
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('시간 t [s] →', cxA + 6, respB - 8);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = PAL.faint; ctx.fillText('0', cxA - 6, midY);
+  ctx.textBaseline = 'alphabetic';
+
+  /* ---- 포락선 · 응답곡선 · 마커 : 패널 밖으로 새지 않도록 클리핑 ---- */
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(respL + 1, respT + 1, respR - respL - 2, respB - respT - 2);
+  ctx.clip();
+
+  /* 포락선 ±(1/ωd)e^{σt} */
+  if (az < 1 - EPS){
+    var envAmp = 1 / Math.max(d.wd, EPS);
+    ctx.strokeStyle = PAL.float; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+    [1, -1].forEach(function(sg){
+      ctx.beginPath();
+      for (var k = 0; k <= NS; k++){
+        var tt = Tmax * k / NS, e = sg * envAmp * Math.exp(d.sigma * tt);
+        var X = tToX(tt), Y = vToY(e);
+        if (k) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+      }
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+  }
+
+  /* 응답 곡선 */
+  ctx.strokeStyle = rhp ? PAL.bad : PAL.low; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (i = 0; i <= NS; i++){
+    var X = tToX(Tmax * i / NS), Y = vToY(vals[i]);
+    if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  }
+  ctx.stroke();
+
+  /* 이동 마커 */
+  var tm = st.t % Tmax, Xm = tToX(tm), Ym = vToY(impulse(tm));
+  ctx.strokeStyle = PAL.text; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(Xm, midY); ctx.lineTo(Xm, Ym); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.text;
+  ctx.beginPath(); ctx.arc(Xm, Ym, 5, 0, 2 * Math.PI); ctx.fill();
+  ctx.restore();
+
+  /* 식 — 곡선·포락선 위에 배경칩으로 (곡선이 글자를 가로지르지 않게) */
+  var f = (az < 1 - EPS) ? 'h(t) = (1/ωd)·e^(σt)·sin(ωd t)'
+        : (az <= 1 + EPS) ? 'h(t) = t·e^(σt)   (임계 극한)'
+        : 'h(t) = (1/β)·e^(σt)·sinh(βt),  β = ωₙ√(ζ²−1)';
+  labelChip(f, cxA + 6, respT + 22, 'left', PAL.muted, '12.5px ' + FONT);
+
+  if (rhp){
+    labelChip('발산 — 포락선이 커진다', respR - 10, respT + 24, 'right', PAL.bad, 'bold 14px ' + FONT);
+  }
+  panelFrame(respL, respT, respR, respB);
+}
+
+/* ============ 우하: 완전제곱꼴 판독 ============ */
+function drawReadout(){
+  var d = derived(), az = Math.abs(d.zeta), y = respB + 32;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  if (az < 1 - EPS){
+    ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
+    ctx.fillText('완전제곱꼴  (s + ζωₙ)² + ωd²  =', respL, y); y += 26;
+    ctx.font = 'bold 15px ' + MONO; ctx.fillStyle = PAL.accent;
+    ctx.fillText('  (s ' + (d.sigma <= 0 ? '+ ' : '− ') + Math.abs(d.sigma).toFixed(2) + ')² + '
+                 + d.wd.toFixed(2) + '²', respL, y); y += 28;
+    ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
+    ctx.fillText('극점 s = ' + fx(d.sigma, 2) + ' ± j' + d.wd.toFixed(2), respL, y); y += 24;
+    ctx.fillText('ωₙ = ' + d.wn.toFixed(2) + ' ,  ζ = cos θ = ' + d.zeta.toFixed(3), respL, y);
+  } else {
+    var root = Math.sqrt(Math.max(0, d.zeta * d.zeta - 1));
+    ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
+    ctx.fillText('ζ ≥ 1 → 완전제곱꼴 대신 실근 인수분해', respL, y); y += 26;
+    ctx.font = 'bold 15px ' + MONO; ctx.fillStyle = PAL.accent;
+    ctx.fillText('  s = ' + fx(d.wn * (-d.zeta + root), 2) + ' , ' +
+                 fx(d.wn * (-d.zeta - root), 2), respL, y); y += 28;
+    ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
+    ctx.fillText('ωd = 0 → 진동 성분 없음', respL, y); y += 24;
+    ctx.fillText('ωₙ = ' + d.wn.toFixed(2) + ' ,  ζ = ' + d.zeta.toFixed(3), respL, y);
+  }
+}
+
+/* ============ DOM 판독값 ============ */
+function updateReadouts(){
+  var d = derived(), az = Math.abs(d.zeta);
+  $('szeta').textContent = fx(d.zeta, 3);
+  $('swn').textContent   = d.wn.toFixed(2);
+  $('ssig').textContent  = fx(d.sigma, 2);
+  $('swd').textContent   = (az < 1 - EPS) ? d.wd.toFixed(2)
+                         : (az <= 1 + EPS) ? '0 (임계)' : '없음 (과도)';
+
+  var vd = $('verdict');
+  if (d.sigma > EPS){
+    vd.className = 'verdict bad';
+    vd.innerHTML = '⚠️ <b>발산 (불안정)</b> — 우반면 극점 σ = ' + fx(d.sigma, 2) + ' &gt; 0';
+  } else if (az > 1 + EPS){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ <b>과도감쇠 (ζ&gt;1)</b> — 실수축 위 두 극점, 진동 소멸';
+  } else if (az >= 1 - EPS){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ <b>임계감쇠 (ζ=1)</b> — 중근 s = ' + fx(d.sigma, 2) + ', 진동 없이 최속 복귀';
+  } else if (az < EPS){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '◎ <b>무감쇠 (ζ=0)</b> — 극점이 <b>허수축 ±j' + d.wd.toFixed(2) +
+                   '</b> 위, 포락선 없는 등진폭 진동';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ <b>부족감쇠</b> ζ = ' + d.zeta.toFixed(3) + ' — 극점 ' + fx(d.sigma, 2) +
+                   ' ± j' + d.wd.toFixed(2) + ', 출렁이며 잦아듦';
+  }
+}
+
+/* ============ 전체 그리기 ============ */
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillStyle = PAL.text;
+  ctx.fillText('s-평면 — 극점 s = −ζωₙ ± jωd', planeL, 34);
+  ctx.fillText('임펄스 응답 h(t)', respL, 34);
+  drawPlane();
+  drawResponse();
+  drawReadout();
+  updateReadouts();
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSliders(){
+  $('z').value = st.zeta;   $('wn').value = st.wn;
+  $('zv').textContent = st.zeta.toFixed(2);
+  $('wnv').textContent = st.wn.toFixed(2);
+}
+$('z').addEventListener('input', function(){
+  st.zeta = parseFloat(this.value); st.t = 0;
+  $('zv').textContent = st.zeta.toFixed(2); draw();
+});
+$('wn').addEventListener('input', function(){
+  st.wn = parseFloat(this.value); st.t = 0;
+  $('wnv').textContent = st.wn.toFixed(2); draw();
+});
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+p[0] - st.zeta) < 1e-9 && Math.abs(+p[1] - st.wn) < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.zeta = +p[0]; st.wn = +p[1]; st.t = 0;
+    syncSliders(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.zeta = 0.20; st.wn = 6.0; st.t = 0; st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  syncSliders(); draw();
+});
+
+/* ---- 극점 드래그 ---- */
+var dragging = false;
+function canvasPos(e){
+  var rect = cv.getBoundingClientRect();
+  return { x: (e.clientX - rect.left) * cv.width / rect.width,
+           y: (e.clientY - rect.top) * cv.height / rect.height };
+}
+function poleScreen(){
+  var d = derived();
+  return { x: reToX(d.sigma), y: imToY(d.wd) };
+}
+function setFromDrag(x, y){
+  x = Math.max(planeL, Math.min(planeR, x));
+  y = Math.max(planeT, Math.min(planeB, y));
+  var re = xToRe(x), im = Math.max(0, yToIm(y));   /* 위쪽 극점만 — 켤레는 자동 미러 */
+  var wn = Math.min(12, Math.max(1, Math.sqrt(re * re + im * im)));
+  var zeta = Math.max(-0.30, Math.min(1.30, -re / Math.max(wn, 1e-6)));
+  st.zeta = zeta; st.wn = wn; st.t = 0;
+  syncSliders(); draw();
+}
+cv.addEventListener('pointerdown', function(e){
+  var p = canvasPos(e);
+  if (p.x < planeL || p.x > planeR || p.y < planeT || p.y > planeB) return;
+  var pole = poleScreen();
+  if (Math.hypot(p.x - pole.x, p.y - pole.y) < 40 || p.y < oy){
+    dragging = true;
+    if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+    setFromDrag(p.x, p.y);
+  }
+});
+cv.addEventListener('pointermove', function(e){ if (dragging){ var p = canvasPos(e); setFromDrag(p.x, p.y); } });
+cv.addEventListener('pointerup', function(){ dragging = false; });
+cv.addEventListener('pointercancel', function(){ dragging = false; });
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) st.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSliders();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

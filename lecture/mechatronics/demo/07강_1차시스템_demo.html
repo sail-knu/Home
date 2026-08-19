@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차 시스템 — τ와 63.2% 규칙 · 7강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+.log{margin-top:14px}
+.log-t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:0 0 7px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:right;color:var(--faint);font-size:11.5px;letter-spacing:.03em}
+th,td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left;color:var(--faint);font-size:11.5px;font-weight:700}
+td.hit{background:var(--accent-soft);font-weight:800;color:var(--accent)}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 7강 · 인터랙티브 데모</p>
+  <h1>1차 시스템 — τ와 63.2% 규칙</h1>
+  <p class="lede">계단 입력 U = 1을 넣고 <b>τ</b>와 <b>K</b>를 움직여 보세요. 곡선이 얼마나 느린지와 어디로 수렴하는지가 따로 움직입니다.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>τ</b>&#7823; + y = <b>K</b>·u(t), u = U = 1
+  &nbsp;→&nbsp; y(t) = KU(1 − e<sup>−t/τ</sup>)
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">y(τ) = 0.632·KU · t<sub>s</sub> ≈ 4τ</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-avg)"><i></i>응답 y(t)</span>
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>점근선 KU</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="o"></i>t = τ → 63.2%</span>
+        <span class="lg" style="color:var(--c-band)"><i class="o"></i>t = 4τ → ±2% 정착</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>시정수 τ (s) <span class="value" id="tauV">1.00</span></label>
+        <input type="range" id="tauS" min="0.1" max="5" step="0.1" value="1.0">
+      </div>
+
+      <div class="ctl-box">
+        <label>이득 K <span class="value" id="kV">2.0</span></label>
+        <input type="range" id="kS" min="0.5" max="5" step="0.1" value="2.0">
+      </div>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn">▶ 시작</button>
+        <button id="stopBtn" class="btn">⏸ 정지</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="x2" class="btn">τ 2배</button>
+        <button id="jumpBtn" class="btn">t = τ 로 이동</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">정상상태값 KU</div><div class="v" id="kuV" style="color:var(--c-true)">—</div></div>
+          <div class="stat"><div class="k">y(τ) = 0.632·KU</div><div class="v" id="ytauV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">정착시간 t<sub>s</sub> = 4τ</div><div class="v" id="tsV" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">현재 y(t) / t</div><div class="v" id="curV" style="color:var(--c-avg)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • t = τ 에서 항상 <b>63.2%</b> 도달<br>
+        • τ를 키워도 아래 도달률은 그대로<br>
+        • K는 <b>수렴 높이 KU</b>만 바꾼다<br>
+        • t = 4τ 에서 <b>±2% 안</b>(98.2%)<br>
+        • [τ 2배]는 시간축만 늘린다
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <p class="log-t">τ 배수별 도달률 (KU 대비)</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>시점</th><th>τ</th><th>2τ</th><th>3τ</th><th>4τ</th><th>5τ</th></tr></thead>
+      <tbody>
+        <tr><td>시각 (s)</td><td id="s1">—</td><td id="s2">—</td><td id="s3">—</td><td id="s4">—</td><td id="s5">—</td></tr>
+        <tr><td>도달률</td><td id="r1">—</td><td id="r2">—</td><td id="r3">—</td><td class="hit" id="r4">—</td><td id="r5">—</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 7강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 64, r: 28, t: 40, b: 54 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var U = 1;               /* 계단 입력 크기 */
+var T_SPAN_TAU = 6;      /* 가로축을 6τ 까지 */
+var state = { tau: 1.0, K: 2.0, t: 0, playing: false, animId: null };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad')
+  };
+}
+
+function y(t){ return state.K * U * (1 - Math.exp(-t / state.tau)); }
+function xToPx(t, tHi){ return M.l + (t / tHi) * plotW; }
+function yToPx(val, yHi){ return M.t + plotH - (val / yHi) * plotH; }
+
+function draw(){
+  var C = palette();
+  var tau = state.tau, K = state.K, KU = K * U;
+  var tHi = T_SPAN_TAU * tau;
+  var yHi = KU * 1.15 + 1e-6;
+  var i, n, yy, xx, t, px, py;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* 격자 */
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  var yStep = KU / 5;
+  for (i = 0; i <= 5; i++){ yy = yToPx(i * yStep, yHi); ctx.beginPath(); ctx.moveTo(M.l, yy); ctx.lineTo(M.l + plotW, yy); ctx.stroke(); }
+  for (n = 0; n <= T_SPAN_TAU; n++){ xx = xToPx(n * tau, tHi); ctx.beginPath(); ctx.moveTo(xx, M.t); ctx.lineTo(xx, M.t + plotH); ctx.stroke(); }
+
+  /* ±2% 정착 밴드 */
+  var yLoBand = yToPx(0.98 * KU, yHi);
+  var yHiBand = yToPx(Math.min(1.02 * KU, yHi), yHi);
+  ctx.globalAlpha = 0.12; ctx.fillStyle = C.band;
+  ctx.fillRect(M.l, yHiBand, plotW, yLoBand - yHiBand);
+  ctx.globalAlpha = 1;
+
+  /* 점근선 KU */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+  var yKU = yToPx(KU, yHi);
+  ctx.beginPath(); ctx.moveTo(M.l, yKU); ctx.lineTo(M.l + plotW, yKU); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('점근선 KU = ' + KU.toFixed(2), M.l + 10, yKU - 7);
+
+  /* 축 */
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('출력 y(t)', 12, M.t - 14);
+  ctx.textAlign = 'end';
+  ctx.fillText('시간 t (s) →', W - M.r, H - 14);
+
+  ctx.fillStyle = C.faint; ctx.textAlign = 'end';
+  for (i = 0; i <= 5; i++) ctx.fillText((i * yStep).toFixed(2), M.l - 8, yToPx(i * yStep, yHi) + 4);
+  ctx.textAlign = 'center';
+  for (n = 0; n <= T_SPAN_TAU; n++){
+    xx = xToPx(n * tau, tHi);
+    ctx.font = '12px sans-serif'; ctx.fillText(n === 0 ? '0' : (n + 'τ'), xx, M.t + plotH + 16);
+    ctx.font = '10px sans-serif'; ctx.fillText((n * tau).toFixed(1) + 's', xx, M.t + plotH + 30);
+  }
+
+  /* 전 구간 응답을 얇게 → 재생된 부분을 굵게 */
+  var NPTS = 600, tNow = Math.min(state.t, tHi);
+  ctx.globalAlpha = 0.3; ctx.strokeStyle = C.avg; ctx.lineWidth = 1.4; ctx.beginPath();
+  for (i = 0; i <= NPTS; i++){
+    t = (i / NPTS) * tHi; px = xToPx(t, tHi); py = yToPx(y(t), yHi);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.8; ctx.beginPath();
+  for (i = 0; i <= NPTS; i++){
+    t = (i / NPTS) * tNow; px = xToPx(t, tHi); py = yToPx(y(t), yHi);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  /* t = τ, 63.2% 마커 */
+  var pxTau = xToPx(tau, tHi), pyTau = yToPx(y(tau), yHi);
+  ctx.globalAlpha = 0.5; ctx.strokeStyle = C.alias; ctx.lineWidth = 1.2; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(pxTau, M.t + plotH); ctx.lineTo(pxTau, pyTau); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.l, pyTau); ctx.lineTo(pxTau, pyTau); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.fillStyle = C.alias;
+  ctx.beginPath(); ctx.arc(pxTau, pyTau, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start'; ctx.fillText('t=τ → 63.2%', pxTau + 9, pyTau + 4);
+
+  /* t = 4τ, ±2% 정착 마커 */
+  var t4 = 4 * tau;
+  var px4 = xToPx(t4, tHi), py4 = yToPx(y(t4), yHi);
+  ctx.globalAlpha = 0.5; ctx.strokeStyle = C.band; ctx.lineWidth = 1.2; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(px4, M.t + plotH); ctx.lineTo(px4, py4); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.fillStyle = C.band;
+  ctx.beginPath(); ctx.arc(px4, py4, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('t=4τ → 98.2%', px4, py4 - 12);
+
+  /* 재생 헤드 */
+  if (tNow > 0){
+    var pxh = xToPx(tNow, tHi), pyh = yToPx(y(tNow), yHi);
+    ctx.fillStyle = C.avg;
+    ctx.beginPath(); ctx.arc(pxh, pyh, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = C.avg; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pxh, M.t + plotH); ctx.lineTo(pxh, pyh); ctx.stroke();
+  }
+
+  updateStats(tNow);
+}
+
+function updateStats(tNow){
+  var tau = state.tau, K = state.K, KU = K * U, n;
+  $('kuV').textContent = KU.toFixed(2);
+  $('ytauV').textContent = (0.632 * KU).toFixed(2);
+  $('tsV').textContent = (4 * tau).toFixed(1) + ' s';
+  $('curV').textContent = y(tNow).toFixed(2) + ' / ' + tNow.toFixed(1) + 's';
+
+  for (n = 1; n <= 5; n++){
+    $('s' + n).textContent = (n * tau).toFixed(1); $('r' + n).textContent = ((1 - Math.exp(-n)) * 100).toFixed(1) + '%';
+  }
+
+  var vd = $('verdict'), ts = 4 * tau, cls, msg;
+  var reached = KU > 0 ? (y(tNow) / KU) * 100 : 0;
+  if (!state.playing && tNow < 1e-6){
+    cls = 'mid';
+    msg = 'τ = ' + tau.toFixed(1) + ' s, K = ' + K.toFixed(1) + ' → KU = <b>' + KU.toFixed(2) +
+      '</b>, t<sub>s</sub> = 4τ = <b>' + ts.toFixed(1) + ' s</b>. [▶ 시작]을 누르세요.';
+  } else if (tNow >= ts - 1e-6){
+    cls = 'good';
+    msg = 't = ' + tNow.toFixed(1) + ' s 에서 KU의 <b>' + reached.toFixed(1) +
+      '%</b> — 이미 ±2% 정착 범위 안입니다 (t<sub>s</sub> = ' + ts.toFixed(1) + ' s).';
+  } else {
+    cls = 'mid';
+    msg = 't = ' + tNow.toFixed(1) + ' s, KU의 <b>' + reached.toFixed(1) +
+      '%</b> 도달. 정착까지 t<sub>s</sub> = 4τ = <b>' + ts.toFixed(1) + ' s</b> 필요합니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+/* ── 애니메이션 ── */
+var lastTs = null;
+function frame(ts){
+  if (!state.playing) return;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+  state.t += dt * state.tau;
+  var tHi = T_SPAN_TAU * state.tau;
+  if (state.t >= tHi){ state.t = tHi; state.playing = false; }
+  draw();
+  if (state.playing) state.animId = requestAnimationFrame(frame);
+}
+function startAnim(){
+  if (state.playing) return;
+  if (state.t >= T_SPAN_TAU * state.tau) state.t = 0;
+  state.playing = true; lastTs = null;
+  state.animId = requestAnimationFrame(frame);
+}
+function halt(){
+  state.playing = false;
+  if (state.animId) cancelAnimationFrame(state.animId);
+}
+
+/* ── 컨트롤 ── */
+$('tauS').addEventListener('input', function(){
+  state.tau = parseFloat(this.value);
+  $('tauV').textContent = state.tau.toFixed(2);
+  var tHi = T_SPAN_TAU * state.tau;
+  if (state.t > tHi) state.t = tHi;
+  draw();
+});
+$('kS').addEventListener('input', function(){
+  state.K = parseFloat(this.value);
+  $('kV').textContent = state.K.toFixed(1);
+  draw();
+});
+$('startBtn').addEventListener('click', startAnim);
+$('stopBtn').addEventListener('click', function(){ halt(); draw(); });
+$('resetBtn').addEventListener('click', function(){ halt(); state.t = 0; draw(); });
+$('x2').addEventListener('click', function(){
+  state.tau = Math.min(5, Math.round(state.tau * 20) / 10);
+  $('tauS').value = state.tau; $('tauV').textContent = state.tau.toFixed(2);
+  var tHi = T_SPAN_TAU * state.tau;
+  if (state.t > tHi) state.t = tHi;
+  draw();
+});
+$('jumpBtn').addEventListener('click', function(){ halt(); state.t = state.tau; draw(); });
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

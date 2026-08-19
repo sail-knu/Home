@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L14-D2 · 무차원 설계 지도 — 새 공진과 안전대역</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: linear-gradient(135deg, #2a1e5f 0%, #140f3d 100%);
+    color: #e8eef5; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #b39dff, #7ee8c8);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #b3a9cc; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#b3a9cc; border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:2px 10px; margin-top:4px; }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  canvas { background: #0a0f28; border-radius: 10px; width: 100%; height: auto; display: block; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; }
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06); }
+  .control-group label { display: block; font-size: 12px; color: #b3a9cc; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group .value { font-size: 17px; font-weight: 600; color: #b39dff;
+    font-family: "SF Mono", Consolas, monospace; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #b39dff; }
+  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #6a4ca8, #b39dff);
+    color: #1a0a3a; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: transform 0.1s; }
+  button:hover { transform: translateY(-1px); }
+  button.secondary { background: rgba(255,255,255,0.08); color: #d4c5e6; }
+  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-family: "SF Mono", Consolas, monospace; }
+  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+  .stat-item .k { color: #b3a9cc; font-size: 11px; }
+  .stat-item .v { font-size: 15px; font-weight: 600; }
+  .info { font-size: 12px; color: #e0d8f0; line-height: 1.65;
+    background: rgba(179, 157, 255, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #b39dff; }
+  .verdict { font-size: 14px; font-weight: 700; text-align: center; padding: 11px; border-radius: 8px;
+    line-height: 1.5; }
+  .verdict.good { background: rgba(0,184,148,0.18); color: #7ee8c8; border: 1px solid rgba(0,184,148,0.45); }
+  .verdict.mid  { background: rgba(255,196,0,0.16);  color: #ffd45e; border: 1px solid rgba(255,196,0,0.45); }
+  .verdict.bad  { background: rgba(255,71,87,0.16);   color: #ff8b96; border: 1px solid rgba(255,71,87,0.45); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #d4c5e6; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎯 무차원 설계 지도 — 새 공진과 안전대역</h1>
+  <div class="subtitle">|Xk/F₀| vs r = ω/ωₐ — 흡진기는 공진 1개를 없애고 2개를 만든다</div>
+  <div style="text-align:center;"><span class="tag">기계진동학 14강</span></div>
+
+  <div class="layout" style="margin-top:16px;">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#b39dff"></span>흡진기 부착 후 |Xk/F₀|</div>
+        <div class="legend-item"><span class="dot" style="background:rgba(255,255,255,0.32)"></span>흡진기 없는 원래 1자유도</div>
+        <div class="legend-item"><span class="dot" style="background:rgba(0,184,148,0.14)"></span>안전 영역 |Xk/F₀| ≤ 1</div>
+        <div class="legend-item"><span class="dot" style="background:#ff8b96"></span>새 공진 2개</div>
+      </div>
+    </div>
+    <div class="panel controls">
+      <div class="control-group">
+        <label>질량비 μ = mₐ/m <span class="value" id="muv">0.250</span></label>
+        <input type="range" id="mu" min="0.02" max="0.6" step="0.005" value="0.25">
+        <div style="font-size:11px; color:#b3a9cc; margin-top:6px;">μ↑ → 두 공진이 멀어져 안전대역↑ (대신 무거워짐)</div>
+      </div>
+      <div class="control-group">
+        <label>진동수비 β = ωₐ/ωₚ <span class="value" id="bev">1.000</span></label>
+        <input type="range" id="be" min="0.6" max="1.4" step="0.005" value="1">
+        <div style="font-size:11px; color:#b3a9cc; margin-top:6px;">β=1이면 ωₐ=ωₚ (표준 설계조건) · 조정조건은 ω=ωₐ 즉 r=1</div>
+      </div>
+      <div class="control-group">
+        <label>구동 주파수 마커 r = ω/ωₐ <span class="value" id="rv">1.000</span></label>
+        <input type="range" id="r" min="0.05" max="2.2" step="0.005" value="1">
+      </div>
+      <div class="control-group">
+        <div class="stats">
+          <div class="stat-item"><div class="k">새 공진 r₁</div><div class="v" id="p1" style="color:#ff8b96">—</div></div>
+          <div class="stat-item"><div class="k">새 공진 r₂</div><div class="v" id="p2" style="color:#ff8b96">—</div></div>
+          <div class="stat-item"><div class="k">안전대역 하한</div><div class="v" id="lo" style="color:#7ee8c8">—</div></div>
+          <div class="stat-item"><div class="k">안전대역 상한</div><div class="v" id="hi" style="color:#7ee8c8">—</div></div>
+          <div class="stat-item"><div class="k">현재 |Xk/F₀|</div><div class="v" id="amp" style="color:#b39dff">—</div></div>
+          <div class="stat-item"><div class="k">고주파 안전 r ≥</div><div class="v" id="hf" style="color:#7ee8c8">—</div></div>
+        </div>
+      </div>
+      <div class="verdict mid" id="verdict">—</div>
+      <div class="control-group">
+        <div class="button-row">
+          <button id="play" class="toggle-on">⏸ 스윕정지</button>
+          <button id="reset" class="secondary">↺ 초기화</button>
+        </div>
+        <div style="font-size:11px; color:#b3a9cc; margin-top:8px;">스윕: 마커 r이 자동으로 좌우를 오갑니다</div>
+      </div>
+      <div class="info">
+        <b>관찰 포인트</b><br>
+        • r = 1(조정점)에서 진폭 <b>정확히 0</b> — 흡진기가 그 공진을 없앰<br>
+        • 대신 좌우 <b>r = 0.781 / 1.281</b>에 새 공진 2개가 솟음(μ=0.25,β=1)<br>
+        • μ를 키우면 두 봉우리가 멀어져 <b>안전대역이 넓어짐</b> = 질량비의 대가는 무거워짐<br>
+        • 흡진기는 공진 1개를 없애는 대신 2개를 만든다 → 운전 주파수가 <b>골(r=1)에 머물게</b> 설계
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const EPS = 1e-6;
+
+let state = { mu: 0.25, be: 1.0, r: 1.0, running: true, dir: 1 };
+
+// ---- 무차원 진폭 --------------------------------------------------
+// Xk/F0 = (1 - r²) / [ (1 + μβ² - β²r²)(1 - r²) - μβ² ]
+// (ω/ωa = r, ω/ωp = βr 대입)
+function ampWith(r, mu, be) {
+  const b2 = be * be, r2 = r * r;
+  let den = (1 + mu * b2 - b2 * r2) * (1 - r2) - mu * b2;
+  if (Math.abs(den) < EPS) den = (den < 0 ? -1 : 1) * EPS; // 공진 특이점 가드
+  return (1 - r2) / den;
+}
+// 흡진기 없는 원래 1자유도: Xk/F0 = 1/(1 - ω²/ωp²) = 1/(1 - β²r²)
+function ampOrig(r, be) {
+  let den = 1 - be * be * r * r;
+  if (Math.abs(den) < EPS) den = (den < 0 ? -1 : 1) * EPS;
+  return 1 / den;
+}
+
+// ---- 분모의 근 = 새 공진점 (r>0) ---------------------------------
+// 분모 D(r²) = β²·s² - (1 + μβ² + β²)·s + 1,  s = r²  (전개)
+function resonances(mu, be) {
+  const b2 = be * be;
+  const A = b2, B = -(1 + mu * b2 + b2), C = 1;
+  const disc = B * B - 4 * A * C;
+  if (disc <= 0 || A < EPS) return [NaN, NaN];
+  const sd = Math.sqrt(disc);
+  const s1 = (-B - sd) / (2 * A), s2 = (-B + sd) / (2 * A);
+  const r1 = s1 > 0 ? Math.sqrt(s1) : NaN;
+  const r2 = s2 > 0 ? Math.sqrt(s2) : NaN;
+  return [Math.min(r1, r2), Math.max(r1, r2)];
+}
+
+// ---- |Xk/F0| = 1 교점(경계) — 수치 근 탐색 -----------------------
+function safeCrossings(mu, be) {
+  const res = resonances(mu, be);
+  const g = r => Math.abs(ampWith(r, mu, be)) - 1;
+  const roots = [];
+  let pr = 0.01, pv = g(pr);
+  for (let r = 0.02; r <= 2.6; r += 0.002) {
+    const v = g(r);
+    if (isFinite(pv) && isFinite(v) && pv * v < 0) {
+      // 공진 근처(부호가 발산으로 뒤집힘)는 실제 교점이 아니므로 걸러냄
+      const nearRes = res.some(rr => isFinite(rr) && Math.abs(r - rr) < 0.02);
+      if (!nearRes) {
+        let a = pr, b = r; // 이분법
+        for (let k = 0; k < 40; k++) {
+          const m = 0.5 * (a + b), gm = g(m);
+          if (!isFinite(gm)) break;
+          if (g(a) * gm <= 0) b = m; else a = m;
+        }
+        roots.push(0.5 * (a + b));
+      }
+    }
+    pr = r; pv = v;
+  }
+  return roots;
+}
+
+// ---- 캔버스 좌표 ----
+const plotL = 62, plotR = W - 22, plotTop = 42, plotBot = H - 46;
+const plotW = plotR - plotL, plotH = plotBot - plotTop;
+const R_MAX = 2.2, Y_MAX = 6;         // 세로축 상한(진폭 clamp)
+const rx = r => plotL + (r / R_MAX) * plotW;
+const ry = y => plotBot - Math.min(y, Y_MAX) / Y_MAX * plotH;
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const { mu, be, r } = state;
+  const res = safeBand();               // {res, lo, hi, hf}
+  const p = res;
+
+  // 배경
+  ctx.fillStyle = 'rgba(255,255,255,0.02)';
+  ctx.fillRect(plotL, plotTop, plotW, plotH);
+
+  // ---- 안전 영역 음영: |Xk/F0| ≤ 1 인 r 구간을 세로 띠로 --------
+  ctx.fillStyle = 'rgba(0,184,148,0.14)';
+  let bandOn = false, bandStart = 0;
+  for (let r0 = 0.03; r0 <= R_MAX + 0.001; r0 += 0.004) {
+    const safe = Math.abs(ampWith(r0, mu, be)) <= 1;
+    if (safe && !bandOn) { bandOn = true; bandStart = r0; }
+    if ((!safe || r0 >= R_MAX) && bandOn) {
+      ctx.fillRect(rx(bandStart), plotTop, rx(r0) - rx(bandStart), plotH);
+      bandOn = false;
+    }
+  }
+  // 기준선 |Xk/F0| = 1
+  ctx.strokeStyle = 'rgba(0,184,148,0.7)'; ctx.lineWidth = 1.2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(plotL, ry(1)); ctx.lineTo(plotR, ry(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#7ee8c8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('|Xk/F₀| = 1 (안전 기준선)', plotL + 6, ry(1) - 5);
+
+  // ---- 축 ----
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.lineTo(plotR, plotBot); ctx.stroke();
+  ctx.fillStyle = '#b3a9cc'; ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  for (let t = 0; t <= R_MAX + 0.001; t += 0.25) {
+    const X = rx(t);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.beginPath();
+    ctx.moveTo(X, plotTop); ctx.lineTo(X, plotBot); ctx.stroke();
+    ctx.fillText(t.toFixed(2), X, plotBot + 15);
+  }
+  ctx.textAlign = 'right';
+  for (let y = 0; y <= Y_MAX; y += 1) {
+    const Y = ry(y);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath();
+    ctx.moveTo(plotL, Y); ctx.lineTo(plotR, Y); ctx.stroke();
+    ctx.fillStyle = '#b3a9cc'; ctx.fillText(String(y), plotL - 8, Y + 4);
+  }
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#d4c5e6'; ctx.font = '12px sans-serif';
+  ctx.fillText('r = ω / ωₐ  (구동 주파수비)', (plotL + plotR) / 2, H - 8);
+  ctx.save(); ctx.translate(16, (plotTop + plotBot) / 2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('|Xk/F₀| (무차원 진폭)', 0, 0); ctx.restore();
+
+  // ---- 곡선 그리기(공진에서 세로 발산은 clamp로 끊음) ----------
+  function curve(fn, style, lw) {
+    ctx.strokeStyle = style; ctx.lineWidth = lw;
+    ctx.beginPath();
+    let pen = false;
+    for (let r0 = 0.02; r0 <= R_MAX + 0.001; r0 += 0.003) {
+      const y = Math.abs(fn(r0));
+      const X = rx(r0), Y = ry(y);
+      if (y > Y_MAX) { pen = false; continue; }  // 화면 밖(공진 근처)은 선 끊기
+      if (!pen) { ctx.moveTo(X, Y); pen = true; } else ctx.lineTo(X, Y);
+    }
+    ctx.stroke();
+  }
+  // 원래 1자유도(옅게)
+  curve(r0 => ampOrig(r0, be), 'rgba(255,255,255,0.32)', 1.6);
+  // 흡진기 부착 후(굵게)
+  curve(r0 => ampWith(r0, mu, be), '#b39dff', 2.8);
+
+  // ---- 새 공진 세로선 + 라벨 ----
+  p.res.forEach((rr, i) => {
+    if (!isFinite(rr) || rr > R_MAX) return;
+    const X = rx(rr);
+    ctx.strokeStyle = 'rgba(255,139,150,0.7)'; ctx.lineWidth = 1.4; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(X, plotTop); ctx.lineTo(X, plotBot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ff8b96'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('새 공진', X, plotTop + 12);
+    ctx.fillText('r=' + rr.toFixed(3), X, plotTop + 26);
+  });
+
+  // ---- 조정점(골) r=1 표시 ----
+  const Xg = rx(1);
+  ctx.fillStyle = '#7ee8c8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.beginPath(); ctx.arc(Xg, ry(Math.abs(ampWith(1, mu, be))), 4, 0, 7); ctx.fill();
+  ctx.fillText('골 r=1 (진폭 0)', Xg, plotBot - 6);
+
+  // ---- 현재 r 마커 ----
+  const yc = Math.abs(ampWith(r, mu, be));
+  const Xm = rx(r), Ym = ry(yc);
+  ctx.strokeStyle = '#ffd45e'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(Xm, plotTop); ctx.lineTo(Xm, plotBot); ctx.stroke();
+  ctx.fillStyle = '#ffd45e';
+  ctx.beginPath(); ctx.arc(Xm, Math.max(Ym, plotTop + 3), 5, 0, 7); ctx.fill();
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = Xm > W - 90 ? 'right' : 'left';
+  ctx.fillText('r=' + r.toFixed(3), Xm + (Xm > W - 90 ? -8 : 8), plotTop + 40);
+
+  // ---- readouts / verdict ----
+  updatePanel(p, yc);
+}
+
+// 안전대역 요약: res 2개 + 조정점 주변 하한/상한 + 고주파 안전 시작
+function safeBand() {
+  const { mu, be } = state;
+  const res = resonances(mu, be);
+  const cr = safeCrossings(mu, be).sort((a,b) => a - b);
+  // 조정점 r=1을 감싸는 하한/상한: 1보다 작은 최대 교점, 1보다 큰 최소 교점
+  let lo = NaN, hi = NaN, hf = NaN;
+  const below = cr.filter(c => c < 1);
+  const above = cr.filter(c => c > 1);
+  if (below.length) lo = below[below.length - 1];
+  if (above.length) { hi = above[0]; hf = above[above.length - 1]; }
+  // 고주파 안전 시작점(가장 큰 교점)이 상한과 같으면 별도 고주파대역 없음
+  if (above.length <= 1) hf = NaN;
+  return { res, lo, hi, hf, cr };
+}
+
+function updatePanel(p, yc) {
+  const set = (id, t) => document.getElementById(id).textContent = t;
+  set('p1', isFinite(p.res[0]) ? p.res[0].toFixed(3) : '—');
+  set('p2', isFinite(p.res[1]) ? p.res[1].toFixed(3) : '—');
+  set('lo', isFinite(p.lo) ? p.lo.toFixed(3) + ' ωₐ' : '—');
+  set('hi', isFinite(p.hi) ? p.hi.toFixed(3) + ' ωₐ' : '—');
+  set('hf', isFinite(p.hf) ? p.hf.toFixed(3) + ' ωₐ' : '없음');
+  set('amp', (yc > 90 ? '≫1' : yc.toFixed(2)));
+
+  // 판정: 현재 r
+  const r = state.r;
+  const v = document.getElementById('verdict');
+  const nearRes = p.res.some(rr => isFinite(rr) && Math.abs(r - rr) < 0.03);
+  if (nearRes) {
+    v.className = 'verdict bad';
+    v.textContent = '⚠ 위험 — 새 공진 바로 위! (r≈' +
+      p.res.reduce((a,b)=>Math.abs(b-r)<Math.abs(a-r)?b:a).toFixed(3) + ') 진폭 폭발';
+  } else if (yc <= 1) {
+    const inBand = (isFinite(p.lo) && isFinite(p.hi) && r >= p.lo && r <= p.hi);
+    const inHF = (isFinite(p.hf) && r >= p.hf);
+    v.className = 'verdict good';
+    v.textContent = '✔ 안전 — |Xk/F₀|=' + yc.toFixed(2) + ' ≤ 1' +
+      (inBand ? ' · 조정점 대역 안' : inHF ? ' · 고주파 대역 안' : '');
+  } else {
+    v.className = 'verdict mid';
+    v.textContent = '△ 주의 — |Xk/F₀|=' + (yc>90?'≫1':yc.toFixed(2)) + ' > 1 (정적변형 초과)';
+  }
+}
+
+// ---- 애니메이션(마커 스윕) : rAF 1개 ----
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state.running) {
+    state.r += state.dir * 0.28 * dt;
+    if (state.r >= 2.15) { state.r = 2.15; state.dir = -1; }
+    if (state.r <= 0.08) { state.r = 0.08; state.dir = 1; }
+    document.getElementById('r').value = state.r.toFixed(3);
+    document.getElementById('rv').textContent = state.r.toFixed(3);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- 컨트롤 ----
+document.getElementById('mu').addEventListener('input', e => {
+  state.mu = parseFloat(e.target.value);
+  document.getElementById('muv').textContent = state.mu.toFixed(3);
+});
+document.getElementById('be').addEventListener('input', e => {
+  state.be = parseFloat(e.target.value);
+  document.getElementById('bev').textContent = state.be.toFixed(3);
+});
+document.getElementById('r').addEventListener('input', e => {
+  state.r = parseFloat(e.target.value);
+  document.getElementById('rv').textContent = state.r.toFixed(3);
+});
+document.getElementById('play').addEventListener('click', e => {
+  state.running = !state.running;
+  e.target.textContent = state.running ? '⏸ 스윕정지' : '▶ 스윕';
+  e.target.classList.toggle('toggle-on', state.running);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state.mu = 0.25; state.be = 1.0; state.r = 1.0; state.dir = 1; state.running = true;
+  document.getElementById('mu').value = 0.25;  document.getElementById('muv').textContent = '0.250';
+  document.getElementById('be').value = 1.0;   document.getElementById('bev').textContent = '1.000';
+  document.getElementById('r').value = 1.0;    document.getElementById('rv').textContent = '1.000';
+  const pb = document.getElementById('play');
+  pb.textContent = '⏸ 스윕정지'; pb.classList.add('toggle-on');
+  draw();
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

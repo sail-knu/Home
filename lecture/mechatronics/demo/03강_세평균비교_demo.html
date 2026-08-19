@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>누적 평균 vs 이동평균 — 3강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 3강 · 인터랙티브 데모</p>
+  <h1>누적 평균 vs 이동평균 — 변하는 신호에서</h1>
+  <p class="lede">0 → 50 km/h로 뛰는 속도를 두 필터가 동시에 따라갑니다. <b>N</b>·<b>σ</b>·<b>변화 시점</b>을 움직이며 보라 곡선과 파란 곡선의 끝값을 비교하세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  누적 <b>x̄<sub>k</sub></b> = x̄<sub>k−1</sub> + (1/k)(x<sub>k</sub> − x̄<sub>k−1</sub>)
+  &nbsp;·&nbsp; 이동 <b>x̄<sub>k</sub></b> = x̄<sub>k−1</sub> + (x<sub>k</sub> − x<sub>k−N</sub>)/N
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">가중치 1/k ↓ vs 1/N 고정</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참값 0 → 50 km/h</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정값 x<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-alias)"><i></i>누적 평균 (전체)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>이동평균 (최근 N개)</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>윈도우 크기 N <span class="value" id="nV">10</span></label>
+        <input type="range" id="nS" min="2" max="50" step="1" value="10">
+      </div>
+      <div class="btn-row">
+        <button id="p5" class="btn">N=5</button>
+        <button id="p20" class="btn">N=20</button>
+        <button id="p50" class="btn">N=50</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>노이즈 크기 σ (km/h) <span class="value" id="sV">3.0</span></label>
+        <input type="range" id="sS" min="0.5" max="10" step="0.5" value="3">
+      </div>
+
+      <div class="ctl-box">
+        <label>변화 시점 t<sub>c</sub> (샘플) <span class="value" id="tV">60</span></label>
+        <input type="range" id="tS" min="20" max="150" step="5" value="60">
+      </div>
+
+      <div class="btn-row">
+        <button id="reroll" class="btn">🎲 다시 생성</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">누적 RMS (변화 후)</div><div class="v" id="rmsCumV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">이동 RMS (변화 후)</div><div class="v" id="rmsMovV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">이동평균 지연 (N−1)/2</div><div class="v" id="lagV">—</div></div>
+          <div class="stat"><div class="k">마지막 누적 평균값</div><div class="v" id="finalCumV">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 누적(보라)은 출발 전 0에 발목 잡혀 50에 못 감<br>
+        • 이동(파랑)은 N샘플 뒤 창이 새 값으로 교체<br>
+        • N을 키우면 매끈하지만 <b>(N−1)/2</b> 만큼 지연<br>
+        • 변화 시점을 뒤로 밀수록 누적은 더 못 따라감<br>
+        • 정지값 → 누적, 변하는 값 → 이동
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 3강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 66, r: 30, t: 46, b: 62 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var V_LOW = 0;        /* 출발 전 참값 (km/h) */
+var V_HIGH = 50;      /* 가속 후 참값 (km/h) */
+var K_TOTAL = 200;    /* 전체 측정 개수 */
+
+var state = { N: 10, sigma: 3.0, tc: 60, base: [] };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), alias: cvar('--c-alias')
+  };
+}
+
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < K_TOTAL; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+state.base = genBase(20260318);
+
+function trueAt(k){ return k >= state.tc ? V_HIGH : V_LOW; }
+function zAt(k){ return trueAt(k) + state.sigma * state.base[k - 1]; }
+
+function draw(){
+  var C = palette(), N = state.N, sig = state.sigma, tc = state.tc, k, y;
+
+  /* 데이터 + 두 필터 */
+  var z = [], cum = [], mov = [], cumPrev = 0, winSum = 0;
+  for (k = 1; k <= K_TOTAL; k++){
+    var zk = zAt(k);
+    z.push(zk);
+    cumPrev = (k === 1) ? zk : cumPrev + (zk - cumPrev) / k;
+    cum.push(cumPrev);
+    winSum += zk;
+    if (k > N) winSum -= z[k - N - 1];
+    mov.push(winSum / Math.min(k, N));
+  }
+
+  /* 변화 후 구간 RMS 오차 */
+  var seCum = 0, seMov = 0, cnt = 0;
+  for (k = tc; k <= K_TOTAL; k++){
+    var tv = trueAt(k);
+    seCum += (cum[k - 1] - tv) * (cum[k - 1] - tv);
+    seMov += (mov[k - 1] - tv) * (mov[k - 1] - tv);
+    cnt++;
+  }
+  var rmsCum = Math.sqrt(seCum / cnt), rmsMov = Math.sqrt(seMov / cnt);
+  var lag = (N - 1) / 2, finalCum = cum[K_TOTAL - 1];
+
+  var pad = Math.max(8, 2.2 * sig);
+  var yLo = V_LOW - pad, yHi = V_HIGH + pad;
+  var xLo = 0, xHi = K_TOTAL + 2;
+  function X(v){ return M.l + (v - xLo) / (xHi - xLo) * plotW; }
+  function Y(v){ return M.t + plotH - (Math.max(yLo, Math.min(yHi, v)) - yLo) / (yHi - yLo) * plotH; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = Math.ceil(yLo / 10) * 10; y <= yHi; y += 10){
+    ctx.beginPath(); ctx.moveTo(M.l, Y(y)); ctx.lineTo(M.l + plotW, Y(y)); ctx.stroke();
+  }
+  for (k = 0; k <= K_TOTAL; k += 20){
+    ctx.beginPath(); ctx.moveTo(X(k), M.t); ctx.lineTo(X(k), M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('속도 [km/h]', 16, M.t - 18);
+  ctx.textAlign = 'end'; ctx.fillText('측정 순서 k →', W - M.r, H - 18);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = Math.ceil(yLo / 10) * 10; y <= yHi; y += 10) ctx.fillText(y.toFixed(0), M.l - 9, Y(y) + 4);
+  ctx.textAlign = 'center';
+  for (k = 0; k <= K_TOTAL; k += 20) ctx.fillText(String(k), X(k), M.t + plotH + 20);
+
+  /* 변화 시점 */
+  var tcx = X(tc);
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(tcx, M.t); ctx.lineTo(tcx, M.t + plotH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('변화 시점 k = ' + tc, tcx, M.t - 8);
+
+  /* 참값 계단 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.moveTo(X(1), Y(V_LOW));
+  ctx.lineTo(tcx, Y(V_LOW));
+  ctx.lineTo(tcx, Y(V_HIGH));
+  ctx.lineTo(X(K_TOTAL), Y(V_HIGH));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('참값 50 km/h', tcx + 8, Y(V_HIGH) - 10);
+
+  /* 측정값 점 */
+  ctx.fillStyle = C.meas; ctx.globalAlpha = 0.75;
+  for (k = 1; k <= K_TOTAL; k++){
+    ctx.beginPath(); ctx.arc(X(k), Y(z[k - 1]), 1.8, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  /* 누적 평균 곡선 */
+  ctx.strokeStyle = C.alias; ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for (k = 1; k <= K_TOTAL; k++){ if (k === 1) ctx.moveTo(X(1), Y(cum[0])); else ctx.lineTo(X(k), Y(cum[k - 1])); }
+  ctx.stroke();
+
+  /* 이동평균 곡선 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (k = 1; k <= K_TOTAL; k++){ if (k === 1) ctx.moveTo(X(1), Y(mov[0])); else ctx.lineTo(X(k), Y(mov[k - 1])); }
+  ctx.stroke();
+
+  /* 끝점 라벨 */
+  ctx.font = 'bold 13px monospace'; ctx.textAlign = 'end';
+  ctx.fillStyle = C.alias;
+  ctx.fillText('누적 ' + finalCum.toFixed(1), M.l + plotW - 6, Y(finalCum) + 18);
+  ctx.fillStyle = C.avg;
+  ctx.fillText('이동 ' + mov[K_TOTAL - 1].toFixed(1), M.l + plotW - 6, Y(mov[K_TOTAL - 1]) - 10);
+
+  $('rmsCumV').textContent = rmsCum.toFixed(2) + ' km/h';
+  $('rmsMovV').textContent = rmsMov.toFixed(2) + ' km/h';
+  $('lagV').textContent = lag.toFixed(1) + ' 샘플';
+  var fEl = $('finalCumV');
+  fEl.textContent = finalCum.toFixed(1) + ' km/h';
+  fEl.style.color = Math.abs(finalCum - V_HIGH) > 5 ? 'var(--bad)' : 'var(--ok)';
+
+  var vd = $('verdict'), cls, msg;
+  var ratio = rmsMov > 1e-9 ? rmsCum / rmsMov : Infinity;
+  var head = '변화 후 RMS 오차: 누적 <b>' + rmsCum.toFixed(2) + '</b> vs 이동 <b>' + rmsMov.toFixed(2) + '</b> km/h. ';
+  if (ratio >= 3){
+    cls = 'good';
+    msg = head + '이동평균이 약 <b>' + ratio.toFixed(1) + '배</b> 정확합니다. 누적 평균은 마지막에도 ' + finalCum.toFixed(1) + ' km/h에 머뭅니다.';
+  } else if (ratio >= 1.3){
+    cls = 'mid';
+    if (N >= 30){
+      msg = head + '이동평균이 ' + ratio.toFixed(1) + '배 낫지만 N = ' + N + '의 지연 ' + lag.toFixed(1) + '샘플만큼 계단을 늦게 따라갑니다.';
+    } else if (sig >= 6){
+      msg = head + '이동평균이 ' + ratio.toFixed(1) + '배 낫지만 σ = ' + sig.toFixed(1) + ' km/h가 커서 잔여 노이즈가 남아 있습니다.';
+    } else {
+      msg = head + '이동평균이 ' + ratio.toFixed(1) + '배 낫습니다. 변화 시점이나 N을 바꿔 차이를 키워 보세요.';
+    }
+  } else {
+    cls = 'bad';
+    msg = head + '차이가 ' + ratio.toFixed(1) + '배뿐입니다. N = ' + N + '의 지연(' + lag.toFixed(1) +
+      '샘플)이 변화 후 구간(' + cnt + '샘플)에 비해 큽니다. N을 줄이거나 변화 시점을 앞으로 옮겨 보세요.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var nS = $('nS');
+nS.addEventListener('input', function(){
+  state.N = parseInt(this.value, 10); $('nV').textContent = state.N; draw();
+});
+function setN(n){ state.N = n; nS.value = n; $('nV').textContent = n; draw(); }
+$('p5').addEventListener('click', function(){ setN(5); });
+$('p20').addEventListener('click', function(){ setN(20); });
+$('p50').addEventListener('click', function(){ setN(50); });
+$('sS').addEventListener('input', function(){
+  state.sigma = parseFloat(this.value); $('sV').textContent = state.sigma.toFixed(1); draw();
+});
+$('tS').addEventListener('input', function(){
+  state.tc = parseInt(this.value, 10); $('tV').textContent = state.tc; draw();
+});
+var seedTick = 1;
+$('reroll').addEventListener('click', function(){
+  state.base = genBase(20260318 + seedTick * 7919); seedTick++; draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

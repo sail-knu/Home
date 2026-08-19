@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predict–Update 스텝 실행 — 5강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:default}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+.step{margin-top:12px;font-variant-numeric:tabular-nums}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강 · 인터랙티브 데모</p>
+  <h1>Predict–Update 한 스텝씩 실행</h1>
+  <p class="lede">[▶ 다음]을 누를 때마다 예측 → 업데이트가 한 번 실행됩니다. <b>Q</b>를 올려 게인 <b>K</b>가 어디서 멈추는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  예측 <b>x̂<sub>k</sub><sup>−</sup></b> = x̂<sub>k−1</sub>, <b>P<sub>k</sub><sup>−</sup></b> = P<sub>k−1</sub> + Q
+  &nbsp;→&nbsp; <b>K<sub>k</sub></b> = P<sub>k</sub><sup>−</sup> / (P<sub>k</sub><sup>−</sup> + R)
+  &nbsp;→&nbsp; <b>x̂<sub>k</sub></b> = x̂<sub>k</sub><sup>−</sup> + K<sub>k</sub>(z<sub>k</sub> − x̂<sub>k</sub><sup>−</sup>),
+  <b>P<sub>k</sub></b> = (1 − K<sub>k</sub>)P<sub>k</sub><sup>−</sup>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="560"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참값 50 m</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정값 z<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>칼만 추정 x̂<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-band)"><i></i>±√P 구간</span>
+      </div>
+      <div class="tips step"><span class="t">이번 스텝 계산</span><span id="stepDetail">—</span></div>
+    </div>
+
+    <div class="ctl">
+      <div class="btn-row">
+        <button id="prevBtn" class="btn">◀ 이전</button>
+        <button id="nextBtn" class="btn">▶ 다음 측정</button>
+      </div>
+      <div class="btn-row">
+        <button id="autoBtn" class="btn">자동 실행</button>
+        <button id="resetBtn" class="btn">↺ 초기화</button>
+      </div>
+      <div class="btn-row">
+        <button id="rerollBtn" class="btn">🎲 측정 다시</button>
+        <button id="noteBtn" class="btn">노트값 복원</button>
+      </div>
+
+      <div class="ctl-box">
+        <label>과정 잡음 Q (강의 예제 = 0) <span class="value" id="qV">0.0</span></label>
+        <input type="range" id="qS" min="0" max="10" step="0.5" value="0">
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">스텝 k</div><div class="v" id="stepV">0 / 10</div></div>
+          <div class="stat"><div class="k">게인 K<sub>k</sub></div><div class="v" id="KV" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">추정 x̂<sub>k</sub> (m)</div><div class="v" id="xV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">분산 P<sub>k</sub></div><div class="v" id="PV" style="color:var(--c-band)">—</div></div>
+          <div class="stat"><div class="k">참값과 차이</div><div class="v" id="errV">—</div></div>
+          <div class="stat"><div class="k">√P<sub>k</sub> (m)</div><div class="v" id="sPV" style="color:var(--c-meas)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • 게인 K는 0.900 → 0.099로 <b>단조 감소</b><br>
+        • 분산 P는 225 → 2.47, 밴드가 계속 좁아짐<br>
+        • k = 10의 튄 측정 55.84에도 추정은 거의 안 흔들림<br>
+        • Q를 올리면 K가 <b>0까지 내려가지 않음</b><br>
+        • [🎲]로 측정을 바꿔도 K 감소 양상은 동일
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 5강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 58, r: 26, t: 42, b: 56 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+/* ── 강의 노트 예제 ① 수치 (그대로) ── */
+var TRUE_H = 50, R = 25, SENSOR_SIGMA = 5, X0 = 60, P0 = 225, KMAX = 10;
+var Z_NOTE = [49.03, 48.44, 55.21, 49.98, 50.60, 52.61, 45.87, 42.64, 48.26, 55.84];
+var Z = Z_NOTE.slice();
+var state = { k: 0, Q: 0, seedTick: 0 };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < KMAX; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+
+/* k = 0..kMax 이력 계산 */
+function computeHistory(kMax, Q){
+  var hist = [{ x:X0, P:P0, K:NaN, z:NaN, xm:X0, Pm:P0, innov:NaN }];
+  var x = X0, P = P0, i;
+  for (i = 0; i < kMax; i++){
+    var xm = x;              /* 예측 평균 (정적: 그대로) */
+    var Pm = P + Q;          /* 예측 분산 */
+    var K = Pm / (Pm + R);   /* 칼만 게인 */
+    var z = Z[i];
+    var innov = z - xm;      /* 혁신 */
+    x = xm + K * innov;
+    P = (1 - K) * Pm;
+    hist.push({ x:x, P:P, K:K, z:z, xm:xm, Pm:Pm, innov:innov });
+  }
+  return hist;
+}
+
+var xLo = -0.5, xHi = KMAX + 0.5, yLo = 35, yHi = 78;
+function xToPx(k){ return M.l + (k - xLo) / (xHi - xLo) * plotW; }
+function yToPx(y){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+function clampY(y){ return Math.max(yLo, Math.min(yHi, y)); }
+function fmt(v, d){ return (v < 0 ? '−' : '') + Math.abs(v).toFixed(d); }
+
+function draw(){
+  var C = palette();
+  var hist = computeHistory(state.k, state.Q);
+  var cur = hist[state.k];
+  var k, y;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = yLo; y <= yHi; y += 5){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y)); ctx.lineTo(M.l + plotW, yToPx(y)); ctx.stroke();
+  }
+  for (k = 0; k <= KMAX; k++){
+    ctx.beginPath(); ctx.moveTo(xToPx(k), M.t); ctx.lineTo(xToPx(k), M.t + plotH); ctx.stroke();
+  }
+
+  /* ±√P 밴드 */
+  ctx.beginPath();
+  ctx.moveTo(xToPx(0), yToPx(clampY(hist[0].x + Math.sqrt(hist[0].P))));
+  for (k = 1; k <= state.k; k++) ctx.lineTo(xToPx(k), yToPx(clampY(hist[k].x + Math.sqrt(hist[k].P))));
+  for (k = state.k; k >= 0; k--) ctx.lineTo(xToPx(k), yToPx(clampY(hist[k].x - Math.sqrt(hist[k].P))));
+  ctx.closePath();
+  ctx.fillStyle = C.band; ctx.globalAlpha = 0.13; ctx.fill();
+  ctx.strokeStyle = C.band; ctx.lineWidth = 1; ctx.globalAlpha = 0.5; ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('높이 [m]', 14, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('스텝 k →', W - M.r, H - 16);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = yLo; y <= yHi; y += 5) ctx.fillText(y.toFixed(0), M.l - 8, yToPx(y) + 4);
+  ctx.textAlign = 'center';
+  for (k = 0; k <= KMAX; k++) ctx.fillText(String(k), xToPx(k), M.t + plotH + 18);
+
+  /* 참값 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var yt = yToPx(TRUE_H);
+  ctx.beginPath(); ctx.moveTo(M.l, yt); ctx.lineTo(M.l + plotW, yt); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('참값 50 m', M.l + 8, yt - 6);
+
+  /* 측정값 */
+  for (k = 1; k <= state.k; k++){
+    var px = xToPx(k), py = yToPx(clampY(hist[k].z));
+    ctx.fillStyle = C.meas;
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+    if (k === state.k){
+      ctx.strokeStyle = C.meas; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px, py, 7.5, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  /* 추정 곡선 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (k = 0; k <= state.k; k++){
+    if (k === 0) ctx.moveTo(xToPx(0), yToPx(clampY(hist[0].x)));
+    else ctx.lineTo(xToPx(k), yToPx(clampY(hist[k].x)));
+  }
+  ctx.stroke();
+  ctx.fillStyle = C.avg;
+  for (k = 0; k < state.k; k++){
+    ctx.beginPath(); ctx.arc(xToPx(k), yToPx(clampY(hist[k].x)), 4, 0, Math.PI * 2); ctx.fill();
+  }
+  var mpx = xToPx(state.k), mpy = yToPx(clampY(cur.x));
+  ctx.beginPath(); ctx.arc(mpx, mpy, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = state.k >= 8 ? 'end' : 'start';
+  var lx = state.k >= 8 ? mpx - 12 : mpx + 12;
+  ctx.fillStyle = C.avg;
+  ctx.fillText('x̂ = ' + cur.x.toFixed(2) + ' m', lx, mpy - 12);
+  ctx.font = '12px monospace'; ctx.fillStyle = C.band;
+  ctx.fillText('±√P = ±' + Math.sqrt(cur.P).toFixed(2) + ' m', lx, mpy + 22);
+
+  /* 통계 */
+  $('stepV').textContent = state.k + ' / ' + KMAX;
+  $('KV').textContent = state.k === 0 ? '—' : cur.K.toFixed(3);
+  $('xV').textContent = cur.x.toFixed(2);
+  $('PV').textContent = cur.P.toFixed(2);
+  var err = cur.x - TRUE_H;
+  var errEl = $('errV');
+  errEl.textContent = (err >= 0 ? '+' : '−') + Math.abs(err).toFixed(2) + ' m';
+  errEl.style.color = Math.abs(err) < 1 ? 'var(--ok)' : (Math.abs(err) < 3 ? 'var(--warn)' : 'var(--bad)');
+  $('sPV').textContent = Math.sqrt(cur.P).toFixed(2);
+
+  /* 스텝 상세 */
+  var sd = $('stepDetail');
+  if (state.k === 0){
+    sd.innerHTML = 'x̂<sub>0</sub> = 60.00 m, P<sub>0</sub> = 225.00 (√P<sub>0</sub> = 15.00 m) — [▶ 다음 측정]으로 스텝을 실행하세요.';
+  } else {
+    sd.innerHTML = '<b>k = ' + state.k + '</b> (z<sub>' + state.k + '</sub> = ' + cur.z.toFixed(2) + ')<br>'
+      + '예측 &nbsp;x̂<sup>−</sup> = ' + cur.xm.toFixed(2) + ', &nbsp;P<sup>−</sup> = ' + (cur.Pm - state.Q).toFixed(2)
+      + ' + ' + state.Q.toFixed(1) + ' = ' + cur.Pm.toFixed(2) + '<br>'
+      + '게인 &nbsp;K = ' + cur.Pm.toFixed(2) + ' / (' + cur.Pm.toFixed(2) + ' + ' + R + ') = <b>' + cur.K.toFixed(3) + '</b><br>'
+      + '혁신 &nbsp;z − x̂<sup>−</sup> = ' + cur.z.toFixed(2) + ' − ' + cur.xm.toFixed(2) + ' = ' + fmt(cur.innov, 2) + '<br>'
+      + '갱신 &nbsp;x̂ = ' + cur.xm.toFixed(2) + ' + ' + cur.K.toFixed(3) + ' × (' + fmt(cur.innov, 2) + ') = <b>' + cur.x.toFixed(2) + '</b>, '
+      + '&nbsp;P = (1 − ' + cur.K.toFixed(3) + ') × ' + cur.Pm.toFixed(2) + ' = <b>' + cur.P.toFixed(2) + '</b>';
+  }
+
+  /* 판정 */
+  var vd = $('verdict'), cls, msg, PmSS, KSS;
+  if (state.k === 0){
+    cls = 'mid';
+    msg = '측정 전. 초기 추정 60 m는 참값보다 10 m 높고 √P = 15 m로 매우 불확실합니다.';
+  } else if (state.Q >= 5 && state.k >= 5){
+    PmSS = (state.Q + Math.sqrt(state.Q * state.Q + 4 * state.Q * R)) / 2;
+    KSS = PmSS / (PmSS + R);
+    cls = 'bad';
+    msg = 'Q = ' + state.Q.toFixed(1) + '이 과도합니다. 게인이 K ≈ <b>' + KSS.toFixed(3) + '</b> 아래로 내려가지 못해 추정이 측정을 따라 계속 출렁입니다.';
+  } else if (state.Q > 0 && state.k >= 3){
+    PmSS = (state.Q + Math.sqrt(state.Q * state.Q + 4 * state.Q * R)) / 2;
+    KSS = PmSS / (PmSS + R);
+    cls = 'mid';
+    msg = 'Q = ' + state.Q.toFixed(1) + ' &gt; 0이라 게인이 0까지 내려가지 않고 K ≈ <b>' + KSS.toFixed(3) + '</b> 부근에 멈춥니다 (현재 K = ' + cur.K.toFixed(3) + ').';
+  } else if (state.k >= 5){
+    cls = 'good';
+    msg = 'K<sub>1</sub> = 0.900 → K = <b>' + cur.K.toFixed(3) + '</b>, P = 225 → ' + cur.P.toFixed(2)
+      + '. 추정 ' + cur.x.toFixed(2) + ' m, 참값과 차이 ' + fmt(cur.x - TRUE_H, 2) + ' m'
+      + (state.k === KMAX ? ' — 마지막 측정 ' + cur.z.toFixed(2) + '이 튀었어도 추정은 거의 안 움직였습니다.' : '.');
+  } else if (state.k === 1){
+    cls = 'mid';
+    msg = 'K<sub>1</sub> = 0.900 — P<sub>0</sub>가 R의 9배라 측정을 크게 믿었습니다. 추정이 60 → ' + cur.x.toFixed(2) + ' m로 이동.';
+  } else {
+    cls = 'mid';
+    msg = '게인 0.900 → <b>' + cur.K.toFixed(3) + '</b>. P = ' + cur.P.toFixed(2) + '로 작아진 만큼 새 측정은 K 비율만 반영됩니다.';
+  }
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+
+  $('nextBtn').disabled = (state.k >= KMAX);
+  $('prevBtn').disabled = (state.k <= 0);
+}
+
+function stepOnce(){ if (state.k < KMAX){ state.k++; draw(); } }
+
+/* 자동 실행 */
+var autoBtn = $('autoBtn');
+var anim = { on:false, last:0, acc:0 };
+function loop(ts){
+  if (!anim.on) return;
+  if (anim.last === 0) anim.last = ts;
+  anim.acc += ts - anim.last;
+  anim.last = ts;
+  if (anim.acc >= 650){
+    anim.acc = 0;
+    stepOnce();
+    if (state.k >= KMAX){ stopAuto(); return; }
+  }
+  requestAnimationFrame(loop);
+}
+function startAuto(){
+  if (state.k >= KMAX) return;
+  anim.on = true; anim.last = 0; anim.acc = 0;
+  autoBtn.textContent = '⏸ 정지'; autoBtn.classList.add('on');
+  requestAnimationFrame(loop);
+}
+function stopAuto(){
+  anim.on = false;
+  autoBtn.textContent = '자동 실행'; autoBtn.classList.remove('on');
+}
+
+$('nextBtn').addEventListener('click', function(){ stopAuto(); stepOnce(); });
+$('prevBtn').addEventListener('click', function(){ stopAuto(); if (state.k > 0){ state.k--; draw(); } });
+autoBtn.addEventListener('click', function(){ if (anim.on) stopAuto(); else startAuto(); });
+$('resetBtn').addEventListener('click', function(){ stopAuto(); state.k = 0; draw(); });
+$('rerollBtn').addEventListener('click', function(){
+  stopAuto();
+  state.seedTick++;
+  var base = genBase(20260718 + state.seedTick * 7919), i;
+  Z = [];
+  for (i = 0; i < KMAX; i++) Z.push(+(TRUE_H + SENSOR_SIGMA * base[i]).toFixed(2));
+  state.k = 0; draw();
+});
+$('noteBtn').addEventListener('click', function(){
+  stopAuto(); Z = Z_NOTE.slice(); state.k = 0; draw();
+});
+$('qS').addEventListener('input', function(){
+  state.Q = parseFloat(this.value);
+  $('qV').textContent = state.Q.toFixed(1);
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+draw();
+})();
+</script>
+</body>
+</html>

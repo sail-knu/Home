@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L9-D2 · 컨벌루션 적분 — 미소 임펄스의 합</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31; --surface3:#1e373d;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0; --surface3:#dde8e8;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 9강</p>
+  <h1>컨벌루션 적분 — <span style="color:var(--float)">미소 임펄스의 합</span></h1>
+  <p class="lede">힘 <b>F(τ)</b>를 임펄스 조각으로 쪼개고, 뒤집힌 <b>h(t−τ)</b>를 미끄러뜨리며 곱한 <b>면적</b>이
+    바로 응답 x(t)입니다. 막대 개수 N을 키워 <b>합 → 적분</b>이 되는 순간을 확인하세요.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="540"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--low)"></i>입력 F(τ)</span>
+          <span><i style="background:var(--high)"></i>뒤집힌 h(t−τ)</span>
+          <span><i style="background:var(--float)"></i>곱 F(τ)·h(t−τ)</span>
+          <span><i style="background:var(--accent)"></i>응답 x(t) = 곱의 면적</span>
+          <span><i style="background:var(--ok)"></i>막대합 근사 (N개 임펄스)</span>
+        </div>
+        <div class="note-box">
+          • h(t−τ)를 τ축에서 <b>뒤집어 t만큼 미끄러뜨리며</b> F와 곱하고, <b>그 면적</b>이 현재의 x(t)입니다.<br>
+          • 적분 변수는 τ, <b>t는 상수</b> — 과거(τ=0)부터 현재(τ=t)까지의 기여만 쌓입니다.<br>
+          • 막대 근사에서 <b>N을 키우면</b> 초록 합이 참 적분 곡선 x(t) 위로 겹쳐집니다 — Δτ→0이 곧 「합→적분」.<br>
+          • 이 중첩 합산은 <b>선형시스템</b>에서만, 그리고 <b>초기조건이 0</b>일 때만 성립합니다.
+        </div>
+        <p class="mini" style="margin:0">
+          <span class="formula-chip">h(t) = (1/mω<sub>d</sub>)·e<sup>−ζω<sub>n</sub>t</sup>·sin(ω<sub>d</sub>t)</span>
+          <span class="formula-chip">x(t) = ∫₀ᵗ F(τ)·h(t−τ) dτ</span>
+          <span style="margin-left:6px">m = 1 kg, F 진폭 1 N 기준</span>
+        </p>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="rect,0.1,6,1.6,0,16">사각펄스 ωₙ=6, ζ=0.1</button>
+            <button class="btn btn-sm" data-p="rect,0.2,10,2.4,0,16">사각펄스 ωₙ=10, ζ=0.2</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="rect,0.1,6,3,1,4">막대 N=4 (거친 합)</button>
+            <button class="btn btn-sm" data-p="rect,0.1,6,3,1,64">N=64 (적분 수렴)</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="hsin,0.02,6,3.2,0,16">반사인 ζ=0.02</button>
+            <button class="btn btn-sm" data-p="tri,0.7,6,3.2,0,16">삼각 ζ=0.70</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 : <b>사각펄스 ωₙ=6, ζ=0.1</b> 을 누르고 힘 조각을 밀며
+            h(t−τ)가 <b>겹쳐 쌓이는 과정</b>을 관찰하세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">입력 힘 F(τ) 모양</p>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-f="rect">사각펄스</button>
+            <button class="btn btn-sm" data-f="tri">삼각</button>
+            <button class="btn btn-sm" data-f="trap">사다리꼴</button>
+            <button class="btn btn-sm" data-f="hsin">반사인</button>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">현재 시각 t <span class="big-val" id="tv">1.60</span> s</p>
+          <input type="range" id="t" min="0" max="10" step="0.02" value="1.6" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">감쇠비 ζ <span class="big-val" id="zv">0.10</span></p>
+          <input type="range" id="z" min="0" max="0.98" step="0.01" value="0.1" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">고유진동수 ωₙ <span class="big-val" id="wv">6.0</span> rad/s</p>
+          <input type="range" id="w" min="2" max="12" step="0.1" value="6" style="width:100%">
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">막대 근사 — 임펄스 개수 N <span class="big-val" id="nv">16</span></p>
+          <input type="range" id="n" min="4" max="64" step="1" value="16" style="width:100%">
+          <div class="btn-row" style="margin:8px 0 0">
+            <button class="btn btn-sm" id="bars">막대 근사 켜기</button>
+          </div>
+        </div>
+
+        <div class="stats" style="margin:0 0 10px">
+          <div class="stat"><div class="k">현재 x(t)</div><div class="v acc" id="xt">—</div></div>
+          <div class="stat"><div class="k">감쇠진동수 ωd</div><div class="v lo" id="wd">—</div></div>
+          <div class="stat"><div class="k">막대합 근사</div><div class="v" id="xb" style="color:var(--ok)">—</div></div>
+          <div class="stat"><div class="k">오차 (최대|x| 대비)</div><div class="v hi" id="err">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 9강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
+   'ok','bad','plot-bg','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 물리 파라미터 (m = 1 kg) ---- */
+var M = 1.0;
+var st = { wn:6.0, zeta:0.10, t:1.6, fType:'rect', running:true, barsOn:false, N:16 };
+var TMAX = 10;          /* τ축 표시 구간 [s] */
+var GRID = 900;         /* 참 적분용 τ 분할 수 */
+
+function omegaD(){
+  var z = Math.min(st.zeta, 1 - 1e-6);
+  return st.wn * Math.sqrt(Math.max(1e-9, 1 - z * z));
+}
+/* ---- 임펄스 응답 h(s), s = t − τ (s<0 이면 0) ---- */
+function hFun(s){
+  if (s < 0) return 0;
+  var z = Math.min(st.zeta, 1 - 1e-6);
+  var wd = omegaD();
+  return (1 / (M * wd)) * Math.exp(-z * st.wn * s) * Math.sin(wd * s);
+}
+/* ---- 입력 힘 F(τ) ---- */
+function fFun(tau){
+  var t = tau;
+  switch (st.fType){
+    case 'rect':   return (t >= 0.5 && t <= 3.0) ? 1.0 : 0.0;                 /* 사각펄스 */
+    case 'tri':                                                               /* 삼각 (0.5~3.5) */
+      if (t < 0.5 || t > 3.5) return 0;
+      return t <= 2.0 ? (t - 0.5) / 1.5 : (3.5 - t) / 1.5;
+    case 'trap':                                                              /* 사다리꼴 (0.5~4.0) */
+      if (t < 0.5 || t > 4.0) return 0;
+      if (t < 1.3) return (t - 0.5) / 0.8;
+      if (t <= 3.2) return 1.0;
+      return (4.0 - t) / 0.8;
+    case 'hsin':                                                              /* 반사인 (0.5~3.5) */
+      if (t < 0.5 || t > 3.5) return 0;
+      return Math.sin(Math.PI * (t - 0.5) / 3.0);
+  }
+  return 0;
+}
+var FEND = { rect:3.0, tri:3.5, trap:4.0, hsin:3.5 };
+var FNAME = { rect:'사각펄스', tri:'삼각', trap:'사다리꼴', hsin:'반사인' };
+
+/* ---- 참 컨벌루션 x(t) : τ∈[0,t] 미세격자 사다리꼴 ---- */
+function convTrue(t){
+  if (t <= 0) return 0;
+  var n = GRID, dtau = t / n, sum = 0;
+  for (var i = 0; i <= n; i++){
+    var tau = i * dtau;
+    var val = fFun(tau) * hFun(t - tau);
+    sum += (i === 0 || i === n) ? 0.5 * val : val;
+  }
+  return sum * dtau;
+}
+/* ---- 막대(임펄스) 근사 : [0,TMAX] 를 N개로 쪼갬 ---- */
+var barCache = { N:-1, list:[] };
+function barCenters(){
+  if (barCache.N !== st.N){
+    var d = TMAX / st.N, cs = [];
+    for (var j = 0; j < st.N; j++) cs.push({ tau:(j + 0.5) * d, d:d });
+    barCache = { N:st.N, list:cs };
+  }
+  return barCache.list;
+}
+function convBars(t){
+  var sum = 0, cs = barCenters();
+  for (var j = 0; j < cs.length; j++){
+    var fhat = fFun(cs[j].tau) * cs[j].d;     /* 조각의 충격량 */
+    sum += fhat * hFun(t - cs[j].tau);
+  }
+  return sum;
+}
+/* ---- x(t) 전구간 궤적 캐시 (t 와 무관 → 파라미터 바뀔 때만 재계산) ---- */
+var NX = 260;
+var traj = { key:'', xs:[], xmax:1e-6 };
+function trajectory(){
+  var key = st.fType + '|' + st.zeta + '|' + st.wn;
+  if (traj.key !== key){
+    var xs = [], xmax = 1e-6;
+    for (var i = 0; i <= NX; i++){
+      var tt = i / NX * TMAX, xv = convTrue(tt);
+      xs.push({ tt:tt, xv:xv });
+      if (Math.abs(xv) > xmax) xmax = Math.abs(xv);
+    }
+    traj = { key:key, xs:xs, xmax:xmax };
+  }
+  return traj;
+}
+
+/* ---- 레이아웃 ---- */
+var PL = 68, PR = W - 20;
+var p1 = { top:34,  bot:172 };   /* ① 겹침 */
+var p2 = { top:212, bot:350 };   /* ② 곱 + 면적 */
+var p3 = { top:388, bot:506 };   /* ③ x(t) 궤적 */
+function tauX(tau){ return PL + (tau / TMAX) * (PR - PL); }
+
+function drawAxis(p, ylabel){
+  var yc = (p.top + p.bot) / 2;
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(10, p.top - 25, (PR + 10) - 10, (p.bot - p.top) + 33);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(PL, p.top); ctx.lineTo(PL, p.bot); ctx.stroke();
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PL, yc); ctx.lineTo(PR, yc); ctx.stroke();
+  ctx.fillStyle = PAL.muted; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText(ylabel, 14, yc + 4);
+  return yc;
+}
+
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  var t = st.t, tX = tauX(t);
+  var tj = trajectory();
+
+  var hMax = 1 / (M * omegaD());          /* h 의 대략적 최대값 */
+  var fScale = 46;                        /* F 1단위당 px */
+  var hScale = 40 / Math.max(hMax, 1e-6); /* h 1단위당 px */
+
+  /* ============ ① F(τ) 와 뒤집혀 미끄러지는 h(t−τ) ============ */
+  var yc1 = drawAxis(p1, 'F, h');
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('① F(τ) 와 뒤집혀 미끄러지는 h(t−τ)', PL + 2, p1.top - 8);
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('세로축은 F·h 각각 보기용 정규화', PR, p1.top - 8);
+  ctx.textAlign = 'left';
+
+  /* F(τ) */
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (var px = PL; px <= PR; px++){
+    var tau = (px - PL) / (PR - PL) * TMAX;
+    var y = yc1 - fFun(tau) * fScale;
+    if (px === PL) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+
+  /* h(t−τ) : τ ≤ t 구간, τ = t 기준 좌우 반전 */
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 2.2; ctx.beginPath();
+  var started = false;
+  for (var px2 = PL; px2 <= tX; px2++){
+    var tau2 = (px2 - PL) / (PR - PL) * TMAX;
+    var y2 = yc1 - hFun(t - tau2) * hScale;
+    if (!started){ ctx.moveTo(px2, y2); started = true; } else ctx.lineTo(px2, y2);
+  }
+  ctx.stroke();
+
+  /* 막대 근사 : ① 위의 임펄스 조각 */
+  if (st.barsOn){
+    barCenters().forEach(function(b){
+      var bx = tauX(b.tau), fv = fFun(b.tau);
+      if (fv > 1e-4){
+        ctx.globalAlpha = 0.75;
+        ctx.strokeStyle = PAL.ok; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(bx, yc1); ctx.lineTo(bx, yc1 - fv * fScale); ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = PAL.ok;
+        ctx.beginPath(); ctx.arc(bx, yc1 - fv * fScale, 2.6, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+  }
+
+  /* ============ ② 곱 F(τ)h(t−τ) 와 음영 면적 ============ */
+  var yc2 = drawAxis(p2, 'F·h');
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('② 곱 F(τ)·h(t−τ) — 음영 면적이 곧 지금의 x(t)', PL + 2, p2.top - 8);
+
+  var prodScale = 46 / Math.max(1e-6, hMax);
+  var pts = [];
+  for (var px3 = PL; px3 <= tX; px3 += 1){
+    var tau3 = (px3 - PL) / (PR - PL) * TMAX;
+    pts.push({ px:px3, val:fFun(tau3) * hFun(t - tau3) });
+  }
+  if (pts.length > 1){
+    ctx.beginPath();
+    ctx.moveTo(pts[0].px, yc2);
+    pts.forEach(function(p){ ctx.lineTo(p.px, yc2 - p.val * prodScale); });
+    ctx.lineTo(pts[pts.length - 1].px, yc2);
+    ctx.closePath();
+    ctx.globalAlpha = 0.26; ctx.fillStyle = PAL.accent; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = PAL.float; ctx.lineWidth = 2.2; ctx.beginPath();
+    pts.forEach(function(p, i){
+      var y = yc2 - p.val * prodScale;
+      if (i) ctx.lineTo(p.px, y); else ctx.moveTo(p.px, y);
+    });
+    ctx.stroke();
+  }
+
+  /* ============ ③ 응답 x(t) 궤적 ============ */
+  var yc3 = drawAxis(p3, 'x(t)');
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('③ 응답 x(t) = ∫₀ᵗ F(τ)·h(t−τ) dτ', PL + 2, p3.top - 8);
+
+  var xs = tj.xs, xScale = 58 / tj.xmax;
+
+  /* 패널 ③ 밖으로 삐져나가는 곡선(거친 막대합)을 잘라낸다 */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(PL - 2, p3.top, (PR - PL) + 6, p3.bot - p3.top); ctx.clip();
+
+  /* 전체 궤적 (앞으로 그려질 부분: 흐리게) */
+  ctx.globalAlpha = 0.32;
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 1.6; ctx.beginPath();
+  xs.forEach(function(p, i){
+    var X = tauX(p.tt), Y = yc3 - p.xv * xScale;
+    if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  });
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  /* 지금까지 그려진 부분 (진하게) */
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.8; ctx.beginPath();
+  started = false;
+  xs.forEach(function(p){
+    if (p.tt > t + 1e-9) return;
+    var X = tauX(p.tt), Y = yc3 - p.xv * xScale;
+    if (!started){ ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y);
+  });
+  var xNow = convTrue(t);
+  ctx.lineTo(tX, yc3 - xNow * xScale); ctx.stroke();
+
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(tX, yc3 - xNow * xScale, 4.8, 0, Math.PI * 2); ctx.fill();
+
+  /* 막대합 궤적 + 조각별 응답 */
+  var xBar = null;
+  if (st.barsOn){
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = PAL.ok; ctx.lineWidth = 1;
+    barCenters().forEach(function(b){
+      var fhat = fFun(b.tau) * b.d;
+      if (Math.abs(fhat) < 1e-5) return;
+      ctx.beginPath();
+      var s0 = false;
+      for (var px4 = tauX(b.tau); px4 <= PR; px4 += 2){
+        var tt = (px4 - PL) / (PR - PL) * TMAX;
+        var y4 = yc3 - fhat * hFun(tt - b.tau) * xScale;
+        if (!s0){ ctx.moveTo(px4, y4); s0 = true; } else ctx.lineTo(px4, y4);
+      }
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = PAL.ok; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (var px5 = PL; px5 <= PR; px5 += 2){
+      var tt5 = (px5 - PL) / (PR - PL) * TMAX;
+      var y5 = yc3 - convBars(tt5) * xScale;
+      if (px5 === PL) ctx.moveTo(px5, y5); else ctx.lineTo(px5, y5);
+    }
+    ctx.stroke();
+    xBar = convBars(t);
+  }
+  ctx.restore();
+
+  /* 현재 시각 t 세로 마커 (세 패널 관통) — 패널 배경보다 뒤에 그려야 지워지지 않는다 */
+  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+  ctx.globalAlpha = 0.55;
+  ctx.beginPath();
+  [p1, p2, p3].forEach(function(p){ ctx.moveTo(tX, p.top); ctx.lineTo(tX, p.bot); });
+  ctx.stroke();
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 13px ' + FONT;
+  if (tX > PR - 110){ ctx.textAlign = 'right'; ctx.fillText('τ = t = ' + t.toFixed(2) + ' s', tX - 6, p1.top + 13); }
+  else { ctx.textAlign = 'left'; ctx.fillText('τ = t = ' + t.toFixed(2) + ' s', tX + 6, p1.top + 13); }
+
+  /* 시간 눈금 */
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (var s = 0; s <= TMAX; s += 2) ctx.fillText(s + ' s', tauX(s), p3.bot + 18);
+
+  /* ③ 우상단 모노 판독 */
+  ctx.textAlign = 'right'; ctx.font = 'bold 15px ' + MONO;
+  ctx.fillStyle = PAL.accent;
+  ctx.fillText('x(t) = ' + xNow.toFixed(4), PR, p3.top + 16);
+  if (st.barsOn && xBar !== null){
+    ctx.fillStyle = PAL.ok; ctx.font = '14px ' + MONO;
+    ctx.fillText('막대합(N=' + st.N + ') = ' + xBar.toFixed(4), PR, p3.top + 36);
+  }
+  ctx.textAlign = 'left';
+
+  /* ---- DOM 판독값 ---- */
+  var fmt = function(v, d){ return isFinite(v) ? v.toFixed(d) : '—'; };
+  $('xt').textContent = fmt(xNow, 4);
+  $('wd').textContent = fmt(omegaD(), 2);
+  var relErr = null;
+  if (st.barsOn && xBar !== null){
+    $('xb').textContent = fmt(xBar, 4);
+    relErr = Math.abs(xBar - xNow) / tj.xmax * 100;
+    $('err').textContent = fmt(relErr, 1) + ' %';
+  } else {
+    $('xb').textContent = '—';
+    $('err').textContent = '—';
+  }
+
+  /* ---- 판정 ---- */
+  var vd = $('verdict'), tEnd = FEND[st.fType];
+  if (st.barsOn && relErr !== null){
+    if (relErr < 5){
+      vd.className = 'verdict good';
+      vd.innerHTML = '✓ N=' + st.N + ' — 막대합 오차 <b>' + relErr.toFixed(1) + '%</b>, 합이 적분과 사실상 일치';
+    } else if (relErr < 20){
+      vd.className = 'verdict mid';
+      vd.innerHTML = '△ N=' + st.N + ' — 오차 <b>' + relErr.toFixed(1) + '%</b>, N을 더 키우면 수렴합니다';
+    } else {
+      vd.className = 'verdict bad';
+      vd.innerHTML = '⚠️ N=' + st.N + ' — 오차 <b>' + relErr.toFixed(1) + '%</b>, Δτ가 너무 커 합 ≠ 적분';
+    }
+  } else if (t < 0.5){
+    vd.className = 'verdict mid';
+    vd.innerHTML = '△ t = ' + t.toFixed(2) + ' s — 힘이 아직 없어 겹침 구간 0 → <b>x(t) = 0</b>';
+  } else if (t <= tEnd){
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ 가진 중 (' + FNAME[st.fType] + ', ~' + tEnd.toFixed(1) + ' s) — 겹친 <b>곱의 면적</b>이 쌓이는 중';
+  } else {
+    vd.className = 'verdict good';
+    vd.innerHTML = '✓ 힘 종료 (t &gt; ' + tEnd.toFixed(1) + ' s) — 남은 것은 <b>e<sup>−ζωₙt</sup></b> 로 잦아드는 잔류 진동';
+  }
+  markPreset();
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('tv').textContent = st.t.toFixed(2);
+  $('zv').textContent = st.zeta.toFixed(2);
+  $('wv').textContent = st.wn.toFixed(1);
+  $('nv').textContent = st.N;
+  $('t').value = st.t; $('z').value = st.zeta; $('w').value = st.wn; $('n').value = st.N;
+  Array.prototype.forEach.call(shapeBtns, function(b){
+    b.classList.toggle('btn-acc', b.getAttribute('data-f') === st.fType);
+  });
+  var bb = $('bars');
+  bb.textContent = st.barsOn ? '막대 근사 끄기' : '막대 근사 켜기';
+  bb.classList.toggle('btn-acc', st.barsOn);
+}
+function setPlay(on){
+  st.running = on;
+  $('play').textContent = on ? '⏸ 일시정지' : '▶ 재생';
+  $('play').classList.toggle('btn-acc', on);
+}
+
+var shapeBtns = document.querySelectorAll('[data-f]');
+Array.prototype.forEach.call(shapeBtns, function(b){
+  b.addEventListener('click', function(){
+    st.fType = this.getAttribute('data-f');
+    syncSpans(); draw();
+  });
+});
+
+$('t').addEventListener('input', function(){
+  st.t = parseFloat(this.value); $('tv').textContent = st.t.toFixed(2);
+  setPlay(false); draw();
+});
+$('z').addEventListener('input', function(){
+  st.zeta = parseFloat(this.value); $('zv').textContent = st.zeta.toFixed(2); draw();
+});
+$('w').addEventListener('input', function(){
+  st.wn = parseFloat(this.value); $('wv').textContent = st.wn.toFixed(1); draw();
+});
+$('n').addEventListener('input', function(){
+  st.N = parseInt(this.value, 10); $('nv').textContent = st.N; draw();
+});
+$('bars').addEventListener('click', function(){
+  st.barsOn = !st.barsOn; syncSpans(); draw();
+});
+
+/* ---- 프리셋 : fType, ζ, ωₙ, t, bars, N ---- */
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var p = b.getAttribute('data-p').split(',');
+    var on = p[0] === st.fType &&
+             Math.abs(+p[1] - st.zeta) < 1e-9 &&
+             Math.abs(+p[2] - st.wn) < 1e-9 &&
+             ((+p[4] === 1) === st.barsOn) &&
+             (+p[5] === st.N);
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var p = this.getAttribute('data-p').split(',');
+    st.fType = p[0]; st.zeta = +p[1]; st.wn = +p[2]; st.t = +p[3];
+    st.barsOn = (+p[4] === 1); st.N = +p[5];
+    syncSpans(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){ setPlay(!st.running); });
+$('reset').addEventListener('click', function(){
+  st.fType = 'rect'; st.zeta = 0.10; st.wn = 6.0; st.t = 1.6; st.N = 16; st.barsOn = false;
+  setPlay(true); syncSpans(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running){
+    st.t += dt * 0.9;
+    if (st.t > TMAX) st.t = 0;
+    $('t').value = st.t.toFixed(2);
+    $('tv').textContent = st.t.toFixed(2);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSpans();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

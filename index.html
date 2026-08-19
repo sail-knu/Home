@@ -108,7 +108,9 @@
     <nav id="navbar">
         <div class="nav-container">
             <a href="#home" class="logo-header">
-                <img class="nav-sail" src="images/logos/sail.png" alt="SAIL Lab">
+                <img class="nav-sail" src="logo/SAIL_Logo.png" alt="">
+                <span class="sail">SAIL</span>
+                <span class="lab">Lab</span>
             </a>
             <button type="button" class="hamburger" aria-label="Open menu" aria-expanded="false">
                 <span></span><span></span><span></span>
@@ -215,7 +217,7 @@
                                 <svg class="icon" aria-hidden="true"><use href="#i-marine"></use></svg>
                             </div>
                         </div>
-                        <h3>Marine &amp; Mobile Autonomy</h3>
+                        <h3>Mobile Autonomy</h3>
                         <ul>
                             <li>Autonomous ships &amp; USVs</li>
                             <li>Mobile robots</li>
@@ -1047,20 +1049,23 @@
             <div class="lecture-year">
                 <h3 class="subsection-title">2026 Fall</h3>
                 <div class="lecture-grid">
-                    <a href="#lecture-future" class="lecture-card lecture-card-link">
+                    <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
                         <h3>미래첨단기술의이해 II</h3>
-                        <p class="small-text">Undergraduate · 실습 시뮬레이터 포함</p>
-                    </a>
+                        <p class="small-text">Undergraduate</p>
+                        <a href="#lecture-future" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
+                    </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
                         <h3>메카트로닉스</h3>
                         <p class="small-text">Undergraduate</p>
+                        <a href="#lecture-mechatronics" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
                     </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
                         <h3>기계진동학</h3>
                         <p class="small-text">Undergraduate</p>
+                        <a href="#lecture-vibrations" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
                     </div>
                 </div>
             </div>
@@ -1091,6 +1096,7 @@
                         <div class="lecture-term">2025 Fall</div>
                         <h3>메카트로닉스</h3>
                         <p class="small-text">Undergraduate</p>
+                        <a href="#lecture-mechatronics" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
                     </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2025 Fall</div>
@@ -1137,6 +1143,42 @@
                 <h3 class="subsection-title">MPPI 선박 충돌 회피</h3>
                 <p class="small-text">샘플링 기반 모델 예측 제어로 장애물 피해 가기</p>
                 <iframe class="course-frame" data-src="lecture/future-tech/MPPI_Ship_Collision_Avoidance_Mobile.html" title="MPPI 선박 충돌 회피" allow="accelerometer"></iframe>
+            </article>
+        </div>
+    </section>
+
+    <section id="lecture-mechatronics" class="section page-section hidden-page">
+        <div class="section-container course-wrap course-wrap-wide">
+            <a href="#lecture" class="page-back">← Lecture</a>
+            <div class="section-header">
+                <h2 class="section-title">메카트로닉스</h2>
+                <div class="underline"></div>
+            </div>
+            <p class="small-text" data-i18n="course_intro_mech">센서·필터·모델링 실습용 데모입니다. 강의를 고른 뒤 시뮬레이터를 조작할 수 있습니다.</p>
+            <nav class="sim-lec-nav" id="mech-lec-nav" aria-label="메카트로닉스 강의"></nav>
+            <nav class="sim-nav sim-nav-dense" id="mech-sim-nav" aria-label="메카트로닉스 데모"></nav>
+            <article class="sim-block">
+                <h3 class="subsection-title" id="mech-title"></h3>
+                <p class="small-text" id="mech-desc"></p>
+                <iframe class="course-frame" id="mech-frame" title="메카트로닉스 데모" allow="accelerometer"></iframe>
+            </article>
+        </div>
+    </section>
+
+    <section id="lecture-vibrations" class="section page-section hidden-page">
+        <div class="section-container course-wrap course-wrap-wide">
+            <a href="#lecture" class="page-back">← Lecture</a>
+            <div class="section-header">
+                <h2 class="section-title">기계진동학</h2>
+                <div class="underline"></div>
+            </div>
+            <p class="small-text" data-i18n="course_intro_vib">강의별 인터랙티브 데모입니다. 강의를 고른 뒤 시뮬레이터를 조작할 수 있습니다.</p>
+            <nav class="sim-lec-nav" id="vib-lec-nav" aria-label="기계진동학 강의"></nav>
+            <nav class="sim-nav sim-nav-dense" id="vib-sim-nav" aria-label="기계진동학 데모"></nav>
+            <article class="sim-block">
+                <h3 class="subsection-title" id="vib-title"></h3>
+                <p class="small-text" id="vib-desc"></p>
+                <iframe class="course-frame" id="vib-frame" title="기계진동학 데모" allow="accelerometer"></iframe>
             </article>
         </div>
     </section>
@@ -1233,7 +1275,9 @@
         "robot_lemo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance experiments.`,
         "email_tba": `Email to be added`,
         "no_pub_yet": `No publications listed yet.`,
-        "course_intro": `Undergraduate lab simulators. Pick one with the buttons below.`
+        "course_intro": `Undergraduate lab simulators. Pick one with the buttons below.`,
+        "course_intro_mech": `Interactive demos for sensing, filtering, and modeling. Pick a lecture, then a simulator.`,
+        "course_intro_vib": `Interactive demos for each lecture. Pick a lecture, then a simulator.`
       };
       var origKO = {};
       function cacheKO() {

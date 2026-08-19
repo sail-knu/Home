@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q와 R — 필터의 성격 튜닝 — 5강 데모</title>
+<style>
+/* ================= tokens (강의 웹교안과 동일 팔레트) ================= */
+:root{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+    --border:#223d43; --border2:#32525a;
+    --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+    --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --warn:#e0b95f; --warn-soft:#3a2f14;
+    --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c181b; --surface:#122227; --surface2:#172c31;
+  --border:#223d43; --border2:#32525a;
+  --text:#d9e8e8; --muted:#9db3b6; --faint:#748d91;
+  --accent:#3cb7c0; --accent-ink:#06272a; --accent-soft:#113a3f; --accent-line:#1f5b61;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --warn:#e0b95f; --warn-soft:#3a2f14;
+  --c-true:#e0a458; --c-meas:#8ea4a8; --c-avg:#82b4f0; --c-band:#5cc793; --c-alias:#b58ae6;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f2f6f6; --surface:#ffffff; --surface2:#e9f0f0;
+  --border:#d3dfdf; --border2:#b9cccc;
+  --text:#182b2f; --muted:#54696e; --faint:#7e9296;
+  --accent:#00747e; --accent-ink:#ffffff; --accent-soft:#d9edee; --accent-line:#9ecfd2;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --warn:#a4700c; --warn-soft:#fdf3dd;
+  --c-true:#b5651d; --c-meas:#7e9296; --c-avg:#2f66ad; --c-band:#177a4c; --c-alias:#8a56c8;
+  --shadow:0 1px 2px rgba(20,40,44,.05),0 8px 24px -14px rgba(20,40,44,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+
+.hero{padding:30px 0 14px}
+.eyebrow{margin:0 0 5px;color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
+
+.eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+.eq sub,.eq sup{font-size:.72em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:18px 20px}
+.sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  width:100%;height:auto;display:block}
+.ctl{display:flex;flex-direction:column;gap:11px}
+.ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
+.lg i.o{width:9px;height:9px;border-radius:50%}
+.lg i.d{height:0;background:none;border-top:3px dashed currentColor}
+.verdict{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
+.verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.tips b{color:var(--text)}
+.tips .t{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;display:block;margin-bottom:3px}
+
+footer{color:var(--faint);font-size:12.5px;text-align:center;padding:22px 20px 36px}
+footer a{margin-left:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강 · 인터랙티브 데모</p>
+  <h1>Q와 R — 필터의 성격 튜닝</h1>
+  <p class="lede">참 높이 50 m를 σ = 2 m 센서로 30번 잽니다. <b>Q</b>·<b>R</b>을 움직여 추정 곡선이 매끈해지는지 측정을 바짝 따라가는지 보세요.</p>
+</header>
+
+<main class="wrap">
+
+<div class="eq">
+  <b>P<sup>−</sup></b> = P + Q &nbsp;→&nbsp; <b>K</b> = P<sup>−</sup> / (P<sup>−</sup> + R)
+  &nbsp;→&nbsp; <b>x̂</b> = x̂<sup>−</sup> + K(z − x̂<sup>−</sup>), &nbsp;<b>P</b> = (1 − K)P<sup>−</sup>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">성격을 정하는 것은 비율 Q/R</span>
+</div>
+
+<section class="card">
+  <div class="sim">
+    <div>
+      <canvas id="cv" width="900" height="540"></canvas>
+      <div class="legend">
+        <span class="lg" style="color:var(--c-true)"><i class="d"></i>참 높이 50 m</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="o"></i>측정값 z<sub>k</sub> (30개)</span>
+        <span class="lg" style="color:var(--c-avg)"><i></i>칼만 추정 x̂<sub>k</sub></span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>고정한 비교 곡선</span>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-box">
+        <label>과정 잡음 Q (모델 불신) <span class="value" id="qV">0.05</span></label>
+        <input type="range" id="qS" min="0" max="0.5" step="0.01" value="0.05">
+      </div>
+
+      <div class="ctl-box">
+        <label>측정 잡음 R (센서 불신) <span class="value" id="rV">4.0</span></label>
+        <input type="range" id="rS" min="0.1" max="10" step="0.1" value="4">
+      </div>
+
+      <div class="btn-row">
+        <button id="pR" class="btn">R↑ 측정 불신</button>
+        <button id="pM" class="btn">R↓ 측정 신뢰</button>
+        <button id="pQ" class="btn">Q↑ 모델 불신</button>
+      </div>
+      <div class="btn-row">
+        <button id="pinBtn" class="btn">📌 곡선 고정</button>
+        <button id="reroll" class="btn">🎲 다시 생성</button>
+      </div>
+
+      <div class="ctl-box">
+        <div class="stat-grid">
+          <div class="stat"><div class="k">정상상태 게인 K<sub>∞</sub></div><div class="v" id="kssV" style="color:var(--accent)">—</div></div>
+          <div class="stat"><div class="k">비율 Q/R</div><div class="v" id="ratioV">—</div></div>
+          <div class="stat"><div class="k">추정 RMS 오차</div><div class="v" id="rmsV" style="color:var(--c-avg)">—</div></div>
+          <div class="stat"><div class="k">측정 RMS 오차</div><div class="v" id="mrmsV" style="color:var(--c-meas)">—</div></div>
+        </div>
+      </div>
+
+      <div class="verdict mid" id="verdict">—</div>
+
+      <div class="tips"><span class="t">관찰 포인트</span>
+        • R↑ → K↓ → <b>부드럽고 둔함</b><br>
+        • R↓ → K↑ → <b>민첩하고 거침</b><br>
+        • Q↑ → 예측 분산이 매 스텝 +Q → 측정 추종<br>
+        • 성격은 절대값이 아니라 <b>비율 Q/R</b><br>
+        • Q = 0이면 K가 0으로 계속 감소
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>메카트로닉스 5강 데모 · 오프라인 단독 실행<a href="index.html">데모 목차</a></footer>
+
+<script>
+(function () {
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = { l: 60, r: 28, t: 44, b: 58 };
+var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+
+var TRUE_H = 50;   /* 참 높이 (m) — 강의 7절 예제 */
+var SIG = 2;       /* 실제 센서 표준편차 (m) → 참 R = 4 */
+var X0 = 60;       /* 초기 추정 (일부러 틀리게) */
+var P0 = 225;      /* 초기 분산 */
+var NM = 30;       /* 측정 개수 */
+
+var state = { Q: 0.05, R: 4.0, base: [], ghost: null };
+
+function cvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function palette(){
+  return {
+    grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
+    surface: cvar('--surface'), tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'),
+    band: cvar('--c-band'), alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+  };
+}
+function genBase(seed){
+  var t = seed >>> 0;
+  function rnd(){
+    t = (t + 0x6D2B79F5) | 0;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+  var a = [], i;
+  for (i = 0; i < NM; i++){
+    var u = Math.max(1e-9, rnd()), v = rnd();
+    a.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v));
+  }
+  return a;
+}
+state.base = genBase(20260518);
+
+function measurements(){
+  var z = [], i;
+  for (i = 0; i < NM; i++) z.push(TRUE_H + SIG * state.base[i]);
+  return z;
+}
+
+/* 정적 칼만 1D: 예측 P⁻ = P + Q → 게인 → 업데이트 (강의 5수식, u = 0) */
+function runKalman(z, Q, R){
+  var xh = X0, P = P0, est = [xh], Ks = [], k;
+  for (k = 0; k < z.length; k++){
+    var Pm = P + Q;
+    var K = Pm / (Pm + R);
+    xh = xh + K * (z[k] - xh);
+    P = (1 - K) * Pm;
+    est.push(xh); Ks.push(K);
+  }
+  return { est: est, Ks: Ks };
+}
+
+/* 정상상태 게인: P⁻∞ = (Q + √(Q² + 4QR))/2, K∞ = P⁻∞/(P⁻∞ + R). Q = 0이면 K → 0 */
+function steadyK(Q, R){
+  if (Q <= 0) return 0;
+  var Pm = (Q + Math.sqrt(Q * Q + 4 * Q * R)) / 2;
+  return Pm / (Pm + R);
+}
+
+var yLo = 42, yHi = 63, xLo = -0.5, xHi = NM + 0.5;
+function xToPx(k){ return M.l + (k - xLo) / (xHi - xLo) * plotW; }
+function yToPx(y){ return M.t + plotH - (y - yLo) / (yHi - yLo) * plotH; }
+function clampY(y){ return Math.max(yLo, Math.min(yHi, y)); }
+
+function draw(){
+  var C = palette();
+  var Q = state.Q, R = state.R, k, y, d;
+  var z = measurements();
+  var run = runKalman(z, Q, R);
+  var est = run.est, Ks = run.Ks;
+  var Kss = steadyK(Q, R);
+  var Klast = Ks[Ks.length - 1];
+
+  /* RMS 오차 (초기 추정 제외, 업데이트 후 30개) */
+  var se = 0, sm = 0;
+  for (k = 0; k < NM; k++){
+    d = est[k + 1] - TRUE_H; se += d * d;
+    d = z[k] - TRUE_H;       sm += d * d;
+  }
+  var rmsE = Math.sqrt(se / NM), rmsM = Math.sqrt(sm / NM);
+  var ratio = rmsE / rmsM;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (y = 42; y <= 62; y += 2){
+    ctx.beginPath(); ctx.moveTo(M.l, yToPx(y)); ctx.lineTo(M.l + plotW, yToPx(y)); ctx.stroke();
+  }
+  for (k = 0; k <= NM; k += 5){
+    ctx.beginPath(); ctx.moveTo(xToPx(k), M.t); ctx.lineTo(xToPx(k), M.t + plotH); ctx.stroke();
+  }
+
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, M.t + plotH); ctx.lineTo(M.l + plotW, M.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = C.muted; ctx.font = '13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('높이 [m]', 14, M.t - 16);
+  ctx.textAlign = 'end'; ctx.fillText('측정 순서 k →', W - M.r, H - 16);
+  ctx.fillStyle = C.faint; ctx.font = '12px sans-serif'; ctx.textAlign = 'end';
+  for (y = 42; y <= 62; y += 2) ctx.fillText(String(y), M.l - 8, yToPx(y) + 4);
+  ctx.textAlign = 'center';
+  for (k = 0; k <= NM; k += 5) ctx.fillText(String(k), xToPx(k), M.t + plotH + 18);
+
+  /* 참 높이 */
+  ctx.strokeStyle = C.tru; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  var yTrue = yToPx(TRUE_H);
+  ctx.beginPath(); ctx.moveTo(M.l, yTrue); ctx.lineTo(M.l + plotW, yTrue); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.tru; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('참 높이 50 m', M.l + 8, yTrue - 8);
+
+  /* 측정값 */
+  ctx.fillStyle = C.meas;
+  for (k = 0; k < NM; k++){
+    ctx.beginPath(); ctx.arc(xToPx(k + 1), yToPx(clampY(z[k])), 3.4, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* 고정한 비교 곡선 */
+  if (state.ghost){
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    for (k = 0; k <= NM; k++){
+      if (k === 0) ctx.moveTo(xToPx(0), yToPx(clampY(state.ghost.est[0])));
+      else ctx.lineTo(xToPx(k), yToPx(clampY(state.ghost.est[k])));
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = C.alias; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'end';
+    ctx.fillText('고정: Q = ' + state.ghost.Q.toFixed(2) + ', R = ' + state.ghost.R.toFixed(1),
+      M.l + plotW - 6, yToPx(clampY(state.ghost.est[NM])) + 20);
+  }
+
+  /* 칼만 추정 곡선 */
+  ctx.strokeStyle = C.avg; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (k = 0; k <= NM; k++){
+    if (k === 0) ctx.moveTo(xToPx(0), yToPx(clampY(est[0])));
+    else ctx.lineTo(xToPx(k), yToPx(clampY(est[k])));
+  }
+  ctx.stroke();
+
+  /* 초기 추정 마커 */
+  ctx.fillStyle = C.avg;
+  ctx.beginPath(); ctx.arc(xToPx(0), yToPx(X0), 5, 0, Math.PI * 2); ctx.fill();
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'start';
+  ctx.fillText('초기 추정 60 m', xToPx(0) + 8, yToPx(X0) - 8);
+
+  /* 마지막 추정 마커 */
+  var mpx = xToPx(NM), mpy = yToPx(clampY(est[NM]));
+  ctx.fillStyle = C.avg;
+  ctx.beginPath(); ctx.arc(mpx, mpy, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.avg; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'end';
+  ctx.fillText('x̂ = ' + est[NM].toFixed(2) + ' m', mpx - 10, mpy - 12);
+
+  /* 통계 */
+  $('kssV').textContent = Q <= 0 ? '→ 0' : Kss.toFixed(3);
+  $('ratioV').textContent = (Q / R).toFixed(3);
+  $('rmsV').textContent = rmsE.toFixed(2) + ' m';
+  $('mrmsV').textContent = rmsM.toFixed(2) + ' m';
+
+  /* 판정 */
+  var vd = $('verdict'), cls, msg;
+  var pct = (Kss * 100).toFixed(1);
+  if (Q <= 0){
+    cls = ratio >= 0.8 ? 'bad' : (ratio < 0.45 ? 'good' : 'mid');
+    msg = '<b>Q = 0</b> — 게인이 매 스텝 줄어 0으로 향합니다 (마지막 K = ' + Klast.toFixed(3)
+      + '). 정지한 빌딩엔 최적이라 추정 RMS ' + rmsE.toFixed(2) + ' m로 작지만, 대상이 변하면 따라가지 못합니다.';
+  } else if (Kss >= 0.28){
+    var reasons = [];
+    if (state.R <= 1) reasons.push('R↓ 측정 신뢰');
+    if (Q >= 0.3) reasons.push('Q↑ 모델 불신');
+    var label = reasons.length ? reasons.join(' + ') : 'Q/R 비율이 큰 설정';
+    cls = ratio >= 0.8 ? 'bad' : 'mid';
+    msg = '<b>' + label + '</b> — K<sub>∞</sub> = <b>' + Kss.toFixed(3) + '</b>, 혁신의 ' + pct
+      + '%를 반영해 측정을 바짝 따라갑니다. <b>민첩하지만 거친</b> 성격 (추정 RMS ' + rmsE.toFixed(2)
+      + ' m = 측정의 ' + (ratio * 100).toFixed(0) + '%).';
+  } else if (Kss <= 0.08){
+    cls = ratio < 0.45 ? 'good' : 'mid';
+    msg = '<b>R↑ 측정 불신 성향</b> — K<sub>∞</sub> = <b>' + Kss.toFixed(3) + '</b>, 혁신의 ' + pct
+      + '%만 반영합니다. <b>부드럽고 둔한</b> 성격 (추정 RMS ' + rmsE.toFixed(2) + ' m). 대상이 변하면 따라가는 데 오래 걸립니다.';
+  } else {
+    cls = ratio >= 0.8 ? 'bad' : (ratio < 0.45 ? 'good' : 'mid');
+    msg = '<b>균형 잡힌 설정</b> — K<sub>∞</sub> = <b>' + Kss.toFixed(3) + '</b>, 혁신의 ' + pct
+      + '%를 반영합니다. 추정 RMS ' + rmsE.toFixed(2) + ' m로 측정 RMS ' + rmsM.toFixed(2)
+      + ' m의 ' + (ratio * 100).toFixed(0) + '%까지 줄었습니다.';
+  }
+  msg += ' 현재 <b>Q/R = ' + (Q / R).toFixed(3) + '</b>.';
+  vd.className = 'verdict ' + cls;
+  vd.innerHTML = msg;
+}
+
+var qS = $('qS'), rS = $('rS');
+function syncLabels(){
+  $('qV').textContent = state.Q.toFixed(2);
+  $('rV').textContent = state.R.toFixed(1);
+}
+qS.addEventListener('input', function(){ state.Q = parseFloat(this.value); syncLabels(); draw(); });
+rS.addEventListener('input', function(){ state.R = parseFloat(this.value); syncLabels(); draw(); });
+
+function applyPreset(q, r){
+  state.Q = q; state.R = r;
+  qS.value = q; rS.value = r;
+  syncLabels(); draw();
+}
+$('pR').addEventListener('click', function(){ applyPreset(0.05, 10); });   /* R↑ 부드럽고 둔함 */
+$('pM').addEventListener('click', function(){ applyPreset(0.05, 0.1); });  /* R↓ 민첩하고 거침 */
+$('pQ').addEventListener('click', function(){ applyPreset(0.5, 4); });     /* Q↑ 측정 추종 */
+
+$('pinBtn').addEventListener('click', function(){
+  if (state.ghost){
+    state.ghost = null;
+    this.textContent = '📌 곡선 고정';
+    this.classList.remove('on');
+  } else {
+    var run = runKalman(measurements(), state.Q, state.R);
+    state.ghost = { est: run.est.slice(), Q: state.Q, R: state.R };
+    this.textContent = '고정 해제';
+    this.classList.add('on');
+  }
+  draw();
+});
+
+var seedTick = 1;
+$('reroll').addEventListener('click', function(){
+  state.base = genBase(20260518 + seedTick * 7919); seedTick++;
+  if (state.ghost){
+    var run = runKalman(measurements(), state.ghost.Q, state.ghost.R);
+    state.ghost.est = run.est.slice();
+  }
+  draw();
+});
+
+if (window.matchMedia){
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
+}
+if (window.MutationObserver){
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+syncLabels();
+draw();
+})();
+</script>
+</body>
+</html>
