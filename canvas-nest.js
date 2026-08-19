@@ -144,7 +144,7 @@
     var locked = false;
     var headOn = 0;
 
-    function avoidPoint(ox, oy, rad, lockKey, preferRight) {
+    function avoidPoint(ox, oy, rad, lockKey) {
       var dx = bot.x - ox;
       var dy = bot.y - oy;
       var dist = Math.hypot(dx, dy) || 1;
@@ -159,13 +159,17 @@
       var ny = dy / dist;
       var tx = ny;
       var ty = -nx;
+      var approach = vx * (-nx) + vy * (-ny);
       if (!bot[lockKey]) {
         var align = vx * tx + vy * ty;
-        bot[lockKey] = preferRight ? 1 : (align >= 0 ? 1 : -1);
+        if (Math.abs(align) < 0.3 || approach > 0.7) {
+          bot[lockKey] = Math.random() < 0.5 ? 1 : -1;
+        } else {
+          bot[lockKey] = align >= 0 ? 1 : -1;
+        }
       }
       tx *= bot[lockKey];
       ty *= bot[lockKey];
-      var approach = vx * (-nx) + vy * (-ny);
       if (approach > headOn) headOn = approach;
       var push = 1 - Math.max(0, gap) / range;
       push *= push;
@@ -175,12 +179,12 @@
       vy += ny * push * radial + ty * push * tang;
     }
 
-    if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, "passMouse", false);
+    if (mouse.x !== null) avoidPoint(mouse.x, mouse.y, mouse.r, "passMouse");
     else bot.passMouse = 0;
     var other = bot === robots[0] ? robots[1] : robots[0];
     var nearBot = lidarRange;
     if (activeCount > 1) {
-      avoidPoint(other.x, other.y, robotR, "passBot", true);
+      avoidPoint(other.x, other.y, robotR, "passBot");
       nearBot = Math.hypot(bot.x - other.x, bot.y - other.y) - robotR * 2;
     } else {
       bot.passBot = 0;
