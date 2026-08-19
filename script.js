@@ -11,7 +11,7 @@
     document.querySelectorAll(".chip-btn[data-theme]").forEach((btn) => {
       btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
     });
-    try { localStorage.setItem("sail-theme", theme); } catch (e) {}
+    try { localStorage.setItem("sail-appearance", theme); } catch (e) {}
     if (typeof window.refreshParticles === "function") window.refreshParticles();
   }
 
