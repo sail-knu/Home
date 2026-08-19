@@ -148,6 +148,25 @@
     });
   });
 
+  function showSim(id) {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    document.querySelectorAll(".sim-block").forEach((el) => {
+      el.classList.toggle("is-hidden", el.id !== id);
+    });
+    document.querySelectorAll(".sim-nav-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-sim") === id);
+    });
+    const frame = panel.querySelector("iframe");
+    if (frame && frame.dataset.src && !frame.getAttribute("src")) {
+      frame.src = frame.dataset.src;
+    }
+  }
+
+  document.querySelectorAll(".sim-nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => showSim(btn.getAttribute("data-sim")));
+  });
+
   document.addEventListener("DOMContentLoaded", () => {
     if (window.location.hash) navigateToSection(window.location.hash);
   });
@@ -181,7 +200,7 @@
 
     const ring = root.querySelector(".sail-cursor-ring");
     const dot = root.querySelector(".sail-cursor-dot");
-    const hoverSel = "a, button, .chip-btn, .tab-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
     let rx = x;
@@ -190,7 +209,7 @@
     window.addEventListener("mousemove", (e) => {
       x = e.clientX;
       y = e.clientY;
-      const overFrame = e.target.closest("iframe");
+      const overFrame = e.target.closest("iframe, video");
       root.classList.toggle("is-on", !overFrame);
       document.documentElement.classList.toggle("has-sail-cursor", !overFrame);
       root.classList.toggle("is-hover", !overFrame && !!e.target.closest(hoverSel));
