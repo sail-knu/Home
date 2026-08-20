@@ -773,7 +773,7 @@
     document.documentElement.classList.add("has-sail-cursor");
 
     const obstacle = root.querySelector(".sail-cursor-obstacle");
-    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card, .core-method-skip, .core-method-arrow";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
 
