@@ -2497,41 +2497,10 @@ html.has-sail-cursor textarea {
   height: 48px;
   margin: -24px 0 0 -24px;
   border-radius: 50%;
-  background: rgba(29, 78, 137, 0.32);
-  border: 1.5px solid rgba(29, 78, 137, 0.55);
-  box-shadow:
-    0 0 0 4px rgba(29, 78, 137, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  background: transparent;
+  border: 1.5px solid rgba(29, 78, 137, 0.45);
   will-change: transform;
   transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease;
-}
-
-.sail-cursor-obstacle::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(29, 78, 137, 0.42);
-  animation: sail-cursor-spin 9s linear infinite;
-}
-
-.sail-cursor-pointer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
-  overflow: visible;
-  filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
-  will-change: transform;
-}
-
-.sail-cursor-pointer path {
-  fill: #1d4e89;
-  stroke: #fff;
-  stroke-width: 1.6;
-  stroke-linejoin: round;
-  paint-order: stroke fill;
 }
 
 .sail-cursor.is-hover .sail-cursor-obstacle {
@@ -2544,10 +2513,6 @@ html.has-sail-cursor textarea {
   width: 38px;
   height: 38px;
   margin: -19px 0 0 -19px;
-}
-
-@keyframes sail-cursor-spin {
-  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
