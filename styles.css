@@ -1138,6 +1138,11 @@ a.project-page:hover {
   background: var(--secondary-color);
 }
 
+.bento-badge.interest {
+  background: #2a6f7a;
+  color: #f3fafb;
+}
+
 .robot-grid {
   grid-template-columns: 1fr;
 }
