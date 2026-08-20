@@ -357,7 +357,7 @@ function readTheme(){
       grid:g('--grid')||'#dae7ee', gridM:g('--grid-major')||'#bed4e0',
       fg:g('--text')||'#0b2130', fg2:g('--text-2')||'#42606f', fg3:g('--text-3')||'#6b8798', rule:g('--rule')||'#cfdde5',
       track:g('--track')||'#0369a1', mark:g('--mark')||'#b45309', markH:g('--mark-hot')||'#92400e', hull:g('--hull')||'#15803d',
-      devi:g('--devi')||'#be123c', sight:g('--sight')||'#4d7c0f', course:g('--course')||'#6d28d9', accent:g('--accent')||'#0c7a73' };
+      devi:g('--devi')||'#be123c', sight:g('--sight')||'#4d7c0f', course:g('--course')||'#0d2644', accent:g('--accent')||'#1d4e89' };
 }
 
 /* ---------- devicePixelRatio 대응 리사이즈 ----------

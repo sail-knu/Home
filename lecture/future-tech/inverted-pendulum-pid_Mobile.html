@@ -8,7 +8,7 @@
 :root{
   --bg:#f5f7fa; --panel:#ffffff; --line:#dde3ec; --line2:#eef2f7;
   --ink:#1a2233; --ink2:#5c6a7e; --ink3:#8a97a8;
-  --accent:#2563eb; --ok:#059669; --warn:#dc2626; --purple:#7c3aed;
+  --accent:#1d4e89; --ok:#059669; --warn:#dc2626; --purple:#0d2644;
   --mono:'Consolas','D2Coding','Menlo',monospace;
 }
 *{box-sizing:border-box}
@@ -829,11 +829,11 @@ function drawStage() {
   const thW = Math.atan2(Math.sin(th), Math.cos(th));
   if (Math.abs(thW) > 0.02 && Math.abs(thW) < 2.4) {
     const r = Math.min(40, p.L * ppm * 0.42);
-    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.6;
+    ctx.strokeStyle = '#1d4e89'; ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(px, py, r, -Math.PI / 2, -Math.PI / 2 - thW, thW > 0);
     ctx.stroke();
-    ctx.fillStyle = '#2563eb'; ctx.font = '600 12px sans-serif';
+    ctx.fillStyle = '#1d4e89'; ctx.font = '600 12px sans-serif';
     ctx.fillText('θ', px - Math.sin(thW / 2) * (r + 13), py - Math.cos(thW / 2) * (r + 13) + 4);
   }
 
@@ -849,7 +849,7 @@ function drawStage() {
   // 추
   const br = Math.max(11, ppm * 0.115);
   ctx.beginPath(); ctx.arc(tipX, tipY, br, 0, Math.PI * 2);
-  ctx.fillStyle = fellOver ? '#dc2626' : '#2563eb'; ctx.fill();
+  ctx.fillStyle = fellOver ? '#dc2626' : '#1d4e89'; ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = '600 10px sans-serif';
   ctx.fillText(p.mb + 'kg', tipX, tipY + 3.5);
 
@@ -872,7 +872,7 @@ function drawStage() {
   if (Math.abs(p.FD) > 0.05) {
     const dlen = 46 * Math.sign(p.FD);
     const dy = cyTop - 16;
-    ctx.strokeStyle = '#7c3aed'; ctx.fillStyle = '#7c3aed'; ctx.lineWidth = 3;
+    ctx.strokeStyle = '#0d2644'; ctx.fillStyle = '#0d2644'; ctx.lineWidth = 3;
     const dfrom = cx + Math.sign(p.FD) * (cw / 2 + 3);
     ctx.beginPath(); ctx.moveTo(dfrom, dy); ctx.lineTo(dfrom + dlen, dy); ctx.stroke();
     ctx.beginPath();
@@ -1016,7 +1016,7 @@ function renderScores() {
  *  7. 결과 그래프 (의존성 없이 직접 그림)
  * ============================================================ */
 const SERIES = [
-  { key:'th', label:'θ (rad)', color:'#2563eb', axis:'L', on:true  },
+  { key:'th', label:'θ (rad)', color:'#1d4e89', axis:'L', on:true  },
   { key:'x',  label:'x (m)',   color:'#059669', axis:'L', on:true  },
   { key:'F',  label:'F (N)',   color:'#dc2626', axis:'R', on:true  },
 ];

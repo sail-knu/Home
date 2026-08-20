@@ -8,32 +8,32 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
     color: #e8eef5; min-height: 100vh; padding: 20px;
   }
   .container { max-width: 1180px; margin: 0 auto; }
   h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #ffd86b, #b6f0c0);
+    background: linear-gradient(90deg, #8eb4d8, #6ea3d8);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
     border-radius:20px; padding:2px 10px; margin-top:4px; }
   .layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
   .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px; padding: 18px; }
   .controls { display: flex; flex-direction: column; gap: 14px; }
   .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
     text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #ffd86b;
+  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
     font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #ffd86b; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
   .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #b8901f, #ffd86b);
-    color: #2a1f04; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
+    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
     transition: transform 0.1s; }
   button:hover { transform: translateY(-1px); }
   button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
@@ -41,11 +41,11 @@
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     font-family: "SF Mono", Consolas, monospace; }
   .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .k { color: #9bb0c0; font-size: 11px; }
   .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
-    background: rgba(255, 216, 107, 0.08); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #ffd86b; }
+  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
+    background: rgba(110, 163, 216, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #6ea3d8; }
   .verdict { font-size: 13px; font-weight: 700; padding: 9px 11px; border-radius: 6px; text-align: center;
     font-family: "SF Mono", Consolas, monospace; }
   .verdict.good { background: rgba(0,184,148,0.16); color:#55efc4; border:1px solid rgba(85,239,196,0.4); }
@@ -68,8 +68,8 @@
     <div>
       <canvas id="cv" width="900" height="540"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>대각 = 1 (정규화)</div>
-        <div class="legend-item"><span class="dot" style="background:#ffd86b"></span>대각 = ω² = λ (Λ)</div>
+        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>대각 = 1 (정규화)</div>
+        <div class="legend-item"><span class="dot" style="background:#6ea3d8"></span>대각 = ω² = λ (Λ)</div>
         <div class="legend-item"><span class="dot" style="background:#55efc4"></span>비대각 ≈ 0 (직교)</div>
         <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>0에서 벗어남 (비직교)</div>
       </div>
@@ -103,13 +103,13 @@
         <div class="stats">
           <div class="stat-item"><div class="k">λ₁ = ω₁²</div><div class="v" id="lam1" style="color:#b6f0c0">—</div></div>
           <div class="stat-item"><div class="k">λ₂ = ω₂²</div><div class="v" id="lam2" style="color:#b6f0c0">—</div></div>
-          <div class="stat-item"><div class="k">ω₁</div><div class="v" id="w1" style="color:#6dd5ed">—</div></div>
-          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#6dd5ed">—</div></div>
+          <div class="stat-item"><div class="k">ω₁</div><div class="v" id="w1" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#8eb4d8">—</div></div>
         </div>
       </div>
       <div class="control-group">
         <label>임의 벡터로 시험 — v = R(θ)·u₁</label>
-        <div style="font-size:11px; color:#9bb3cc; margin-bottom:4px;">θ=0이면 v=u₁ (고유벡터). θ를 돌리면 vᵀMu₂ ≠ 0.</div>
+        <div style="font-size:11px; color:#9bb0c0; margin-bottom:4px;">θ=0이면 v=u₁ (고유벡터). θ를 돌리면 vᵀMu₂ ≠ 0.</div>
         <label>시험각 θ <span class="value" id="thv">0°</span></label>
         <input type="range" id="th" min="-90" max="90" step="1" value="0">
         <div class="stats" style="margin-top:8px;">
@@ -215,7 +215,7 @@ function clean(x){ return (Math.abs(x) < 1e-9) ? 0 : x; }
 // mode: 'plain' | 'identity' (diag=1) | 'lambda' (diag=λ)
 function drawMatrix(x, y, title, A, mode) {
   const cell = 58, pad = 2;
-  ctx.fillStyle = '#cfe0f0'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle = '#d5e2ee'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline='alphabetic';
   ctx.fillText(title, x, y - 10);
   for (let i = 0; i < 2; i++) {
     for (let j = 0; j < 2; j++) {
@@ -230,14 +230,14 @@ function drawMatrix(x, y, title, A, mode) {
           fg = '#dff6ff';
         } else {
           const off = Math.abs(val);
-          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb3cc'; }
+          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb0c0'; }
           else { bg = 'rgba(255,107,157,0.28)'; fg = '#ffd0e0'; }
         }
       } else if (mode === 'lambda') {
         if (isDiag) { bg = 'rgba(255,216,107,0.30)'; fg = '#fff3d0'; }
         else {
           const off = Math.abs(val);
-          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb3cc'; }
+          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb0c0'; }
           else { bg = 'rgba(255,107,157,0.28)'; fg = '#ffd0e0'; }
         }
       } else { // plain M / K / S
@@ -274,14 +274,14 @@ function drawVectorPlane(cx, cy, R, sol) {
   ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(cx-R, cy); ctx.lineTo(cx+R, cy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx, cy-R); ctx.lineTo(cx, cy+R); ctx.stroke();
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif'; ctx.textAlign='center';
   ctx.fillText('고유벡터 (물리 좌표축 x₁,x₂)', cx, cy - R - 10);
   ctx.textAlign='left'; ctx.fillText('x₁', cx+R-14, cy+14); ctx.fillText('x₂', cx+6, cy-R+12);
 
   // scale: use max component magnitude across shown vectors
   const vecs = [];
-  if (state.showMode === 0 || state.showMode === 1) vecs.push({v: sol.u1, c:'#6dd5ed', name:'u₁'});
-  if (state.showMode === 0 || state.showMode === 2) vecs.push({v: sol.u2, c:'#ffd86b', name:'u₂'});
+  if (state.showMode === 0 || state.showMode === 1) vecs.push({v: sol.u1, c:'#8eb4d8', name:'u₁'});
+  if (state.showMode === 0 || state.showMode === 2) vecs.push({v: sol.u2, c:'#6ea3d8', name:'u₂'});
   let mx = 0; [sol.u1, sol.u2].forEach(v => { mx = Math.max(mx, Math.abs(v[0]), Math.abs(v[1])); });
   const sc = (R*0.82) / (mx || 1);
 
@@ -328,7 +328,7 @@ function draw() {
   const StKS = matMul(matMul(St, K), S);
 
   // Title band
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '13px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '13px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 
   // Row 1: input matrices M, K, S
   const topY = 44, colGap = 40, base = 40;
@@ -339,7 +339,7 @@ function draw() {
 
   // arrow / equation labels row2
   const midY = 232;
-  ctx.fillStyle = '#ffd86b'; ctx.font = 'bold 15px sans-serif';
+  ctx.fillStyle = '#6ea3d8'; ctx.font = 'bold 15px sans-serif';
   ctx.fillText('검산  ⇒', base, midY - 14);
 
   // Row 2: SᵀMS = I , SᵀKS = Λ
@@ -350,7 +350,7 @@ function draw() {
   // verdict strings for on-canvas note
   const offMax = Math.max(Math.abs(StMS[0][1]), Math.abs(StMS[1][0]));
   const diagErr = Math.max(Math.abs(StMS[0][0]-1), Math.abs(StMS[1][1]-1));
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '12px sans-serif';
   ctx.fillText('대각 → 1 (질량 정규화),  비대각 → 0 (M-직교)', base + 90, midY + 145);
   ctx.fillText('대각 → λ = ω² (스펙트럼 Λ),  비대각 → 0', base + 90 + 300 + 8, midY + 145);
 
@@ -361,14 +361,14 @@ function draw() {
   // "임의 벡터로 시험" numeric block on canvas (bottom-right)
   const vmu1 = tv[0]*M[0][0]*sol.u1[0] + tv[1]*M[1][1]*sol.u1[1];
   const vmu2 = tv[0]*M[0][0]*sol.u2[0] + tv[1]*M[1][1]*sol.u2[1];
-  ctx.fillStyle = '#cfe0f0'; ctx.font = '13px "SF Mono", Consolas, monospace'; ctx.textAlign='left';
+  ctx.fillStyle = '#d5e2ee'; ctx.font = '13px "SF Mono", Consolas, monospace'; ctx.textAlign='left';
   const bx = W - 300, by = 400;
   ctx.fillText('시험 벡터 v = R(θ)·u₁', bx, by);
   ctx.fillStyle = (Math.abs(vmu1-1) < 0.02) ? '#55efc4' : '#ffd86b';
   ctx.fillText('vᵀM u₁ = ' + vmu1.toFixed(4), bx, by + 24);
   ctx.fillStyle = (Math.abs(vmu2) < 0.02) ? '#55efc4' : '#ff6b9d';
   ctx.fillText('vᵀM u₂ = ' + vmu2.toFixed(4), bx, by + 46);
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif';
   ctx.fillText('θ=0 → v=u₁ 이면 vᵀMu₂=0 (직교).', bx, by + 68);
   ctx.fillText('θ≠0 → v가 고유벡터를 벗어나 vᵀMu₂≠0.', bx, by + 84);
 

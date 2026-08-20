@@ -515,11 +515,11 @@ function drawStage() {
   const thW = Math.atan2(Math.sin(th), Math.cos(th));
   if (Math.abs(thW) > 0.02 && Math.abs(thW) < 2.4) {
     const r = Math.min(40, p.L * ppm * 0.42);
-    ctx.strokeStyle = '#0c7a73'; ctx.lineWidth = 1.6;
+    ctx.strokeStyle = '#1d4e89'; ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(px, py, r, -Math.PI / 2, -Math.PI / 2 - thW, thW > 0);
     ctx.stroke();
-    ctx.fillStyle = '#0c7a73'; ctx.font = '600 12px sans-serif';
+    ctx.fillStyle = '#1d4e89'; ctx.font = '600 12px sans-serif';
     ctx.fillText('θ', px - Math.sin(thW / 2) * (r + 13), py - Math.cos(thW / 2) * (r + 13) + 4);
   }
 
@@ -535,7 +535,7 @@ function drawStage() {
   // 추
   const br = Math.max(11, ppm * 0.115);
   ctx.beginPath(); ctx.arc(tipX, tipY, br, 0, Math.PI * 2);
-  ctx.fillStyle = fellOver ? '#c8433a' : '#0c7a73'; ctx.fill();
+  ctx.fillStyle = fellOver ? '#c8433a' : '#1d4e89'; ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = '600 10px sans-serif';
   ctx.fillText(p.mb + 'kg', tipX, tipY + 3.5);
 
@@ -703,7 +703,7 @@ function renderScores() {
  *  7. 결과 그래프 (의존성 없이 직접 그림)
  * ============================================================ */
 const SERIES = [
-  { key:'th', label:'θ (rad)', color:'#0c7a73', axis:'L', on:true  },
+  { key:'th', label:'θ (rad)', color:'#1d4e89', axis:'L', on:true  },
   { key:'x',  label:'x (m)',   color:'#177a4c', axis:'L', on:true  },
   { key:'F',  label:'F (N)',   color:'#c8433a', axis:'R', on:true  },
 ];

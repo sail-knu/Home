@@ -8,49 +8,49 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
     color: #e8eef5; min-height: 100vh; padding: 20px;
   }
   .container { max-width: 1180px; margin: 0 auto; }
   h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #f0a6ca, #b388ff);
+    background: linear-gradient(90deg, #8eb4d8, #6ea3d8);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
     border-radius:20px; padding:2px 10px; margin-top:4px; }
   .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
   .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px; padding: 18px; }
   .controls { display: flex; flex-direction: column; gap: 14px; }
   .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
     text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #f0a6ca;
+  .control-group .value { font-size: 17px; font-weight: 600; color: #8eb4d8;
     font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #b388ff; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
   .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #7b52c9, #b388ff);
-    color: #1a0b33; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
+    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
     transition: transform 0.1s; }
   button:hover { transform: translateY(-1px); }
   button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
   button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
-  button.mode-active { background: linear-gradient(135deg, #f0a6ca, #b388ff); color:#1a0b33;
-    box-shadow: 0 0 0 2px rgba(240,166,202,.5); }
+  button.mode-active { background: linear-gradient(135deg, #1d4e89, #6ea3d8); color:#0d1622;
+    box-shadow: 0 0 0 2px rgba(29, 78, 137,.5); }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     font-family: "SF Mono", Consolas, monospace; }
   .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .k { color: #9bb0c0; font-size: 11px; }
   .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
-    background: rgba(179, 136, 255, 0.09); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #b388ff; }
+  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
+    background: rgba(29, 78, 137, 0.09); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #6ea3d8; }
   .verdict { font-size: 13px; font-weight: 600; padding: 9px 11px; border-radius: 6px; text-align:center; }
   .verdict.good { background: rgba(0,184,148,0.16); color:#7effc4; border:1px solid rgba(0,184,148,0.4); }
-  .verdict.mid  { background: rgba(240,166,202,0.14); color:#f7c1dc; border:1px solid rgba(240,166,202,0.4); }
+  .verdict.mid  { background: rgba(29, 78, 137,0.14); color:#f7c1dc; border:1px solid rgba(29, 78, 137,0.4); }
   .verdict.bad  { background: rgba(255,107,157,0.14); color:#ff9dbf; border:1px solid rgba(255,107,157,0.4); }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -67,8 +67,8 @@
     <div>
       <canvas id="cv" width="900" height="540"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>m₁ = 9 kg (x₁)</div>
-        <div class="legend-item"><span class="dot" style="background:#f0a6ca"></span>m₂ = 1 kg (x₂)</div>
+        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>m₁ = 9 kg (x₁)</div>
+        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>m₂ = 1 kg (x₂)</div>
         <div class="legend-item"><span class="dot" style="background:#ff6d2c"></span>중간 스프링 k₂ 변형(클수록 주황)</div>
       </div>
     </div>
@@ -80,7 +80,7 @@
           <button id="m2btn">2차 모드</button>
           <button id="mixbtn">혼합</button>
         </div>
-        <div style="font-size:11px; color:#9bb3cc; margin-top:8px;">
+        <div style="font-size:11px; color:#9bb0c0; margin-top:8px;">
 시스템: m₁=9, m₂=1 kg / k₁=24, k₂=3 N/m
         </div>
       </div>
@@ -88,19 +88,19 @@
       <div class="control-group">
         <label>현재 상태</label>
         <div id="verdict" class="verdict good">1차 모드 — 동상</div>
-        <div style="font-size:11.5px; color:#cfe0f0; margin-top:8px; line-height:1.6;" id="modedesc">
+        <div style="font-size:11.5px; color:#d5e2ee; margin-top:8px; line-height:1.6;" id="modedesc">
           두 질량이 같은 방향, m₂가 3배 크게. 느린 진동수 ω₁으로만 진동.
         </div>
       </div>
 
       <div class="control-group">
         <div class="stats">
-          <div class="stat-item"><div class="k">ω₁ (1차)</div><div class="v" id="w1" style="color:#6dd5ed">—</div></div>
-          <div class="stat-item"><div class="k">ω₂ (2차)</div><div class="v" id="w2" style="color:#f0a6ca">—</div></div>
-          <div class="stat-item"><div class="k">고유벡터 u₁</div><div class="v" id="u1" style="color:#6dd5ed">—</div></div>
-          <div class="stat-item"><div class="k">고유벡터 u₂</div><div class="v" id="u2" style="color:#f0a6ca">—</div></div>
-          <div class="stat-item"><div class="k">현재 x₁</div><div class="v" id="cx1" style="color:#6dd5ed">—</div></div>
-          <div class="stat-item"><div class="k">현재 x₂</div><div class="v" id="cx2" style="color:#f0a6ca">—</div></div>
+          <div class="stat-item"><div class="k">ω₁ (1차)</div><div class="v" id="w1" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">ω₂ (2차)</div><div class="v" id="w2" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">고유벡터 u₁</div><div class="v" id="u1" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">고유벡터 u₂</div><div class="v" id="u2" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">현재 x₁</div><div class="v" id="cx1" style="color:#8eb4d8">—</div></div>
+          <div class="stat-item"><div class="k">현재 x₂</div><div class="v" id="cx2" style="color:#8eb4d8">—</div></div>
         </div>
       </div>
 
@@ -219,10 +219,10 @@ function drawSpring(x1, y, x2, coils, color, thick) {
 
 function drawMass(x, y, label, color, sub) {
   const s = massHalf;
-  ctx.fillStyle = color; ctx.strokeStyle = '#0a1628'; ctx.lineWidth = 2;
+  ctx.fillStyle = color; ctx.strokeStyle = '#0b1420'; ctx.lineWidth = 2;
   ctx.fillRect(x - s, y - s, 2*s, 2*s);
   ctx.strokeRect(x - s, y - s, 2*s, 2*s);
-  ctx.fillStyle = '#1a0b33'; ctx.font = 'bold 20px sans-serif';
+  ctx.fillStyle = '#0d1622'; ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, x, y - 6);
   ctx.font = '11px sans-serif';
@@ -260,7 +260,7 @@ function draw() {
     ctx.beginPath(); ctx.moveTo(ex, chainTop + 8); ctx.lineTo(ex, chainBot - 22); ctx.stroke();
   });
   ctx.setLineDash([]);
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('m₁ 평형', eq1, chainBot - 6);
   ctx.fillText('m₂ 평형', eq2, chainBot - 6);
 
@@ -278,16 +278,16 @@ function draw() {
   const k2col = `rgb(${Math.round(155 + 100*strainMag)}, ${Math.round(179 - 70*strainMag)}, ${Math.round(204 - 160*strainMag)})`;
 
   // 스프링 k₁ (벽→m₁), k₂ (m₁→m₂)
-  drawSpring(wallX, chainY, mx1 - massHalf, 12, '#9bb3cc', 2);
+  drawSpring(wallX, chainY, mx1 - massHalf, 12, '#9bb0c0', 2);
   drawSpring(mx1 + massHalf, chainY, mx2 - massHalf, 10, k2col, 2.5 + 1.5*strainMag);
 
   // 질량
-  drawMass(mx1, chainY, 'm₁', '#6dd5ed', 'x₁');
-  drawMass(mx2, chainY, 'm₂', '#f0a6ca', 'x₂');
+  drawMass(mx1, chainY, 'm₁', '#8eb4d8', 'x₁');
+  drawMass(mx2, chainY, 'm₂', '#8eb4d8', 'x₂');
 
   // 변위 화살표(평형 기준)
-  arrow(eq1, chainY - massHalf - 14, d1, '#6dd5ed', null);
-  arrow(eq2, chainY - massHalf - 14, d2, '#f0a6ca', null);
+  arrow(eq1, chainY - massHalf - 14, d1, '#8eb4d8', null);
+  arrow(eq2, chainY - massHalf - 14, d2, '#8eb4d8', null);
 
   // k₂ 상태 라벨
   ctx.fillStyle = k2col; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
@@ -297,8 +297,8 @@ function draw() {
   ctx.fillText(k2txt, (mx1 + mx2) / 2, chainTop + 24);
 
   // ---- 시간 궤적 2줄 ----
-  drawPlot(p1Top, p1Bot, 'x₁(t)', '#6dd5ed', p => p.x1);
-  drawPlot(p2Top, p2Bot, 'x₂(t)', '#f0a6ca', p => p.x2);
+  drawPlot(p1Top, p1Bot, 'x₁(t)', '#8eb4d8', p => p.x1);
+  drawPlot(p2Top, p2Bot, 'x₂(t)', '#8eb4d8', p => p.x2);
 
   // 판넬 라이브 수치
   document.getElementById('cx1').textContent = x1.toFixed(3);
@@ -315,7 +315,7 @@ function drawPlot(top, bot, label, color, sel) {
   ctx.beginPath(); ctx.moveTo(plotL, top); ctx.lineTo(plotL, bot); ctx.stroke();
   ctx.fillStyle = color; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText(label, plotL + 6, top + 14);
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
   ctx.fillText('시간 →', plotR - 4, bot - 4);
 
   // 진폭 정규화(고정 스케일 — 순수/혼합 비교 가능). 혼합 모드 x₂ 최대 |x| = 3.0

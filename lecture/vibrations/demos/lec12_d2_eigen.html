@@ -8,32 +8,32 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%);
+    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
     color: #e8eef5; min-height: 100vh; padding: 20px;
   }
   .container { max-width: 1180px; margin: 0 auto; }
   h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #ffb86c, #ff6b9d);
+    background: linear-gradient(90deg, #8eb4d8, #6ea3d8);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9bb3cc; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#9bb3cc; border:1px solid rgba(255,255,255,.15);
+  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
     border-radius:20px; padding:2px 10px; margin-top:4px; }
   .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0a1628; border-radius: 10px; width: 100%; height: auto; display: block; }
+  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
   .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px; padding: 18px; }
   .controls { display: flex; flex-direction: column; gap: 14px; }
   .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #9bb3cc; margin-bottom: 6px;
+  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
     text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #ffb86c;
+  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
     font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #ffb86c; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
   .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #c76b2b, #ffb86c);
-    color: #2a1404; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
+    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
     transition: transform 0.1s; }
   button:hover { transform: translateY(-1px); }
   button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
@@ -41,19 +41,19 @@
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     font-family: "SF Mono", Consolas, monospace; }
   .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #9bb3cc; font-size: 11px; }
+  .stat-item .k { color: #9bb0c0; font-size: 11px; }
   .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #cfe0f0; line-height: 1.65;
-    background: rgba(255, 184, 108, 0.08); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #ffb86c; }
+  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
+    background: rgba(110, 163, 216, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #6ea3d8; }
   .poly { font-family: "SF Mono", Consolas, monospace; font-size: 12.5px; color: #dbe7f5;
     background: rgba(0,0,0,0.28); padding: 10px; border-radius: 6px; line-height: 1.7;
     word-break: break-all; }
-  .poly b { color: #ffb86c; }
+  .poly b { color: #6ea3d8; }
   .verdict { font-size: 12.5px; line-height: 1.6; padding: 10px 11px; border-radius: 6px;
     border-left: 3px solid; }
   .verdict.good { background: rgba(0,184,148,0.12); border-color: #00b894; color: #b6f0c0; }
-  .verdict.mid  { background: rgba(255,184,108,0.12); border-color: #ffb86c; color: #ffe0b8; }
+  .verdict.mid  { background: rgba(255,184,108,0.12); border-color: #6ea3d8; color: #ffe0b8; }
   .verdict.bad  { background: rgba(255,107,157,0.12); border-color: #ff6b9d; color: #ffc2d6; }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -70,10 +70,10 @@
     <div>
       <canvas id="cv" width="900" height="540"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#6dd5ed"></span>특성다항식 p(λ)</div>
-        <div class="legend-item"><span class="dot" style="background:#ffb86c"></span>근 λ₁, λ₂ (x축 교차)</div>
+        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>특성다항식 p(λ)</div>
+        <div class="legend-item"><span class="dot" style="background:#6ea3d8"></span>근 λ₁, λ₂ (x축 교차)</div>
         <div class="legend-item"><span class="dot" style="background:#b6f0c0"></span>1차 모드 u₁</div>
-        <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>2차 모드 u₂</div>
+        <div class="legend-item"><span class="dot" style="background:#1d4e89"></span>2차 모드 u₂</div>
       </div>
     </div>
     <div class="panel controls">
@@ -88,7 +88,7 @@
       <div class="control-group">
         <label>강성 k₁ (벽 스프링) <span class="value" id="k1v">24</span> N/m</label>
         <input type="range" id="k1" min="0" max="40" step="1" value="24">
-        <div style="font-size:11px; color:#9bb3cc; margin-top:6px;">0으로 두면 강체모드(λ=0) 등장</div>
+        <div style="font-size:11px; color:#9bb0c0; margin-top:6px;">0으로 두면 강체모드(λ=0) 등장</div>
       </div>
       <div class="control-group">
         <label>강성 k₂ (연결 스프링) <span class="value" id="k2v">3</span> N/m</label>
@@ -96,10 +96,10 @@
       </div>
       <div class="control-group">
         <div class="stats">
-          <div class="stat-item"><div class="k">λ₁ = ω₁²</div><div class="v" id="lam1" style="color:#ffb86c">—</div></div>
-          <div class="stat-item"><div class="k">λ₂ = ω₂²</div><div class="v" id="lam2" style="color:#ffb86c">—</div></div>
+          <div class="stat-item"><div class="k">λ₁ = ω₁²</div><div class="v" id="lam1" style="color:#6ea3d8">—</div></div>
+          <div class="stat-item"><div class="k">λ₂ = ω₂²</div><div class="v" id="lam2" style="color:#6ea3d8">—</div></div>
           <div class="stat-item"><div class="k">ω₁</div><div class="v" id="w1" style="color:#b6f0c0">—</div></div>
-          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#ff6b9d">—</div></div>
+          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#1d4e89">—</div></div>
         </div>
       </div>
       <div class="control-group">
@@ -214,7 +214,7 @@ function draw() {
   ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(plotL, y0); ctx.lineTo(plotR, y0); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.stroke();
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif';
   ctx.textAlign = 'left';  ctx.fillText('p(λ)', plotL - 40, plotTop + 12);
   ctx.textAlign = 'right'; ctx.fillText('λ = ω² →', plotR, plotBot + 15);
   ctx.textAlign = 'left';  ctx.fillText('p = 0', plotL + 4, y0 - 4);
@@ -242,14 +242,14 @@ function draw() {
       const X = xOfLam(sv.v);
       ctx.strokeStyle = 'rgba(155,179,204,0.55)';
       ctx.beginPath(); ctx.moveTo(X, plotTop + 4); ctx.lineTo(X, plotBot - 4); ctx.stroke();
-      ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#9bb0c0'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(sv.label, X, plotTop + 14);
     }
   });
   ctx.setLineDash([]);
 
   // 곡선
-  ctx.strokeStyle = '#6dd5ed'; ctx.lineWidth = 2.5; ctx.beginPath();
+  ctx.strokeStyle = '#8eb4d8'; ctx.lineWidth = 2.5; ctx.beginPath();
   for (let i = 0; i <= NS; i++) {
     const lam = (i / NS) * lamMax;
     const X = xOfLam(lam), Y = yOfP(pOf(lam));
@@ -260,10 +260,10 @@ function draw() {
   // 근 마커
   [ [r.lam1, 'λ₁'], [r.lam2, 'λ₂'] ].forEach(rt => {
     const X = xOfLam(rt[0]);
-    ctx.fillStyle = '#ffb86c';
+    ctx.fillStyle = '#6ea3d8';
     ctx.beginPath(); ctx.arc(X, y0, 6, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#2a1404'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = '#ffb86c'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.strokeStyle = '#0d1622'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#6ea3d8'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(rt[1] + ' = ' + rt[0].toFixed(3), X, y0 + 22);
   });
 
@@ -272,7 +272,7 @@ function draw() {
   ctx.fillRect(plotL, modeTop, plotW, modeBot - modeTop);
   ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
   ctx.strokeRect(plotL, modeTop, plotW, modeBot - modeTop);
-  ctx.fillStyle = '#9bb3cc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText('고유벡터(모드형상) — 각 질량의 진동 방향·상대 크기', plotL + 8, modeTop + 16);
 
   // 진동 위상 (running이면 sin으로 흔들림, 정지 시 정적 방향 표시)
@@ -280,7 +280,7 @@ function draw() {
   const halfW = plotW / 2;
   const modes = [
     { vec: r.u1, cx: plotL + halfW * 0.5,       col: '#b6f0c0', name: '1차 모드', w: r.w1, lam: r.lam1 },
-    { vec: r.u2, cx: plotL + halfW + halfW*0.5,  col: '#ff6b9d', name: '2차 모드', w: r.w2, lam: r.lam2 }
+    { vec: r.u2, cx: plotL + halfW + halfW*0.5,  col: '#1d4e89', name: '2차 모드', w: r.w2, lam: r.lam2 }
   ];
   const rowY = [ (modeTop + modeBot)/2 - 22, (modeTop + modeBot)/2 + 40 ];
   const arrowMax = 62;
@@ -321,7 +321,7 @@ function draw() {
         ctx.beginPath(); ctx.arc(ax0, y, 3, 0, Math.PI*2); ctx.fill();
       }
       // 성분 값
-      ctx.fillStyle = '#9bb3cc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillStyle = '#9bb0c0'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
       ctx.fillText('u=' + cmp.u.toFixed(3), ax0 + arrowMax + 12, y + 3);
     });
     // 기준 축
@@ -343,7 +343,7 @@ function draw() {
     'det(K − λM) = 0 :<br>' +
     '<b>' + r.a.toFixed(1) + '</b> λ² ' + bSign + ' <b>' + bAbs.toFixed(1) + '</b> λ + <b>' +
     r.c.toFixed(1) + '</b> = 0<br>' +
-    '<span style="color:#9bb3cc">a=m₁m₂, b=−(m₁k₂+m₂k₁+m₂k₂), c=k₁k₂</span>';
+    '<span style="color:#9bb0c0">a=m₁m₂, b=−(m₁k₂+m₂k₁+m₂k₂), c=k₁k₂</span>';
 
   // 판정 (verdict)
   const vd = document.getElementById('verdict');

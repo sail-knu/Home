@@ -8,57 +8,57 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #2a1e4f 0%, #14102d 100%);
+    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
     color: #e8eef5; min-height: 100vh; padding: 20px;
   }
   .container { max-width: 1180px; margin: 0 auto; }
   h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #c084fc, #7dd3fc);
+    background: linear-gradient(90deg, #6ea3d8, #8eb4d8);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #b0a9d0; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#b0a9d0; border:1px solid rgba(255,255,255,.15);
+  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
     border-radius:20px; padding:2px 10px; margin-top:4px; }
   .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0b0a1f; border-radius: 10px; width: 100%; height: auto; display: block; }
+  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
   .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px; padding: 18px; }
   .controls { display: flex; flex-direction: column; gap: 14px; }
   .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #b0a9d0; margin-bottom: 6px;
+  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
     text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #c084fc;
+  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
     font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #c084fc; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
   .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #7c3aed, #c084fc);
-    color: #160b2e; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #0d2644, #6ea3d8);
+    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
     transition: transform 0.1s; }
   button:hover { transform: translateY(-1px); }
   button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  button.secondary { background: rgba(255,255,255,0.08); color: #d5cde6; }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
   button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
   .stepbar { display:flex; gap:6px; margin-bottom:4px; }
   .stepdot { flex:1; text-align:center; font-size:12px; font-weight:700; padding:7px 0;
-    border-radius:6px; background:rgba(255,255,255,0.06); color:#8a83a8; border:1px solid rgba(255,255,255,0.06); }
-  .stepdot.active { background:linear-gradient(135deg,#7c3aed,#c084fc); color:#160b2e; }
-  .stepdot.done { background:rgba(192,132,252,0.18); color:#c084fc; }
+    border-radius:6px; background:rgba(255,255,255,0.06); color:#9bb0c0; border:1px solid rgba(255,255,255,0.06); }
+  .stepdot.active { background:linear-gradient(135deg,#0d2644,#6ea3d8); color:#0d1622; }
+  .stepdot.done { background:rgba(110,163,216,0.18); color:#6ea3d8; }
   .steptitle { font-size:14px; font-weight:700; color:#e8eef5; margin-bottom:6px; }
-  .stepdesc { font-size:12px; color:#cbc3e0; line-height:1.6; }
+  .stepdesc { font-size:12px; color:#c5d4e6; line-height:1.6; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     font-family: "SF Mono", Consolas, monospace; }
   .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #b0a9d0; font-size: 11px; }
+  .stat-item .k { color: #9bb0c0; font-size: 11px; }
   .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #ddd4f0; line-height: 1.65;
-    background: rgba(192, 132, 252, 0.10); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #c084fc; }
+  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
+    background: rgba(110, 163, 216, 0.10); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #6ea3d8; }
   .verdict { font-size:12px; padding:9px 11px; border-radius:6px; line-height:1.5; font-weight:600; }
   .verdict.good { background: rgba(0,184,148,0.14); border-left:3px solid #00b894; color:#8ef0d0; }
   .verdict.mid  { background: rgba(253,203,110,0.14); border-left:3px solid #fdcb6e; color:#ffe3a3; }
   .verdict.bad  { background: rgba(255,107,107,0.14); border-left:3px solid #ff6b6b; color:#ffb3b3; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #d5cde6; margin-top: 8px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .dot { width: 12px; height: 12px; border-radius: 3px; }
 </style>
@@ -73,8 +73,8 @@
     <div>
       <canvas id="cv" width="900" height="540"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#c084fc"></span>모드 1 (ω₁=√2)</div>
-        <div class="legend-item"><span class="dot" style="background:#7dd3fc"></span>모드 2 (ω₂=2)</div>
+        <div class="legend-item"><span class="dot" style="background:#6ea3d8"></span>모드 1 (ω₁=√2)</div>
+        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>모드 2 (ω₂=2)</div>
         <div class="legend-item"><span class="dot" style="background:#ffd166"></span>물리 x₁(t)</div>
         <div class="legend-item"><span class="dot" style="background:#06d6a0"></span>물리 x₂(t)</div>
       </div>
@@ -110,8 +110,8 @@
 
       <div class="control-group">
         <div class="stats">
-          <div class="stat-item"><div class="k">r₁(t)</div><div class="v" id="r1" style="color:#c084fc">—</div></div>
-          <div class="stat-item"><div class="k">r₂(t)</div><div class="v" id="r2" style="color:#7dd3fc">—</div></div>
+          <div class="stat-item"><div class="k">r₁(t)</div><div class="v" id="r1" style="color:#6ea3d8">—</div></div>
+          <div class="stat-item"><div class="k">r₂(t)</div><div class="v" id="r2" style="color:#8eb4d8">—</div></div>
           <div class="stat-item"><div class="k">x₁(t)</div><div class="v" id="x1" style="color:#ffd166">—</div></div>
           <div class="stat-item"><div class="k">x₂(t)</div><div class="v" id="x2" style="color:#06d6a0">—</div></div>
         </div>
@@ -215,10 +215,10 @@ function drawVector(cx, cy, vec, title, color, fmt){
 
 // ===== 각 단계 그리기 =====
 function drawStep1(){
-  txt('① 시스템 행렬 M, K 와 초기조건 제시', 30, 40, '#c084fc', 'bold 18px sans-serif');
+  txt('① 시스템 행렬 M, K 와 초기조건 제시', 30, 40, '#6ea3d8', 'bold 18px sans-serif');
   txt('2자유도 자유진동. 질량행렬 M, 강성행렬 K 가 서로 결합(off-diagonal ≠ 0)되어 있다.',
-      30, 68, '#cbc3e0', '13px sans-serif');
-  drawMatrix(120, 150, M, 'M', '#7dd3fc');
+      30, 68, '#c5d4e6', '13px sans-serif');
+  drawMatrix(120, 150, M, 'M', '#8eb4d8');
   drawMatrix(430, 150, K, 'K', '#06d6a0');
   drawVector(700, 150, x0, 'x(0)', '#ffd166');
   txt('ẋ(0) = 0', 700, 300, '#ffd166', '15px "SF Mono",monospace','left');
@@ -227,28 +227,28 @@ function drawStep1(){
   txt('이대로는 두 방정식을 따로 풀 수 없다. → 좌표를 바꾸자.', 30, 406, '#ff9db0','13px sans-serif');
   // 물리 그림 (두 질량 사슬)
   drawChain(180, 470, 0, 0);
-  txt('결합된 2자유도계: m₁–k–m₂ (벽)', 30, 520, '#8a83a8','12px sans-serif');
+  txt('결합된 2자유도계: m₁–k–m₂ (벽)', 30, 520, '#9bb0c0','12px sans-serif');
 }
 function drawStep2(){
-  txt('② 고유값 문제  K u = λ M u  →  ω₁, ω₂ 와 고유벡터', 30, 40, '#c084fc', 'bold 18px sans-serif');
-  txt('특성방정식 |K − λM| = 9(λ²−6λ+8)=0  →  λ₁=2, λ₂=4', 30, 68, '#cbc3e0','13px sans-serif');
+  txt('② 고유값 문제  K u = λ M u  →  ω₁, ω₂ 와 고유벡터', 30, 40, '#6ea3d8', 'bold 18px sans-serif');
+  txt('특성방정식 |K − λM| = 9(λ²−6λ+8)=0  →  λ₁=2, λ₂=4', 30, 68, '#c5d4e6','13px sans-serif');
   txt('ω₁ = √2 ≈ 1.414 rad/s     ω₂ = 2 rad/s', 30, 92, '#e8eef5','14px "SF Mono",monospace');
 
   // 고유벡터 화살표 다이어그램 (M-정규화된 방향)
   // u1 ∝ [1,3] (동위상), u2 ∝ [-1,3] (역위상)
   const cy = 300, ax1=260, ax2=650, scale=70;
   // 모드1
-  txt('모드 1  ω₁=√2  (동위상)', ax1, 160, '#c084fc','bold 15px sans-serif','center');
-  txt('u₁ = (1/3√2)[1, 3]ᵀ', ax1, 184, '#b0a9d0','13px "SF Mono",monospace','center');
-  drawModeArrows(ax1, cy, 1, 3, '#c084fc');
+  txt('모드 1  ω₁=√2  (동위상)', ax1, 160, '#6ea3d8','bold 15px sans-serif','center');
+  txt('u₁ = (1/3√2)[1, 3]ᵀ', ax1, 184, '#9bb0c0','13px "SF Mono",monospace','center');
+  drawModeArrows(ax1, cy, 1, 3, '#6ea3d8');
   // 모드2
-  txt('모드 2  ω₂=2  (역위상)', ax2, 160, '#7dd3fc','bold 15px sans-serif','center');
-  txt('u₂ = (1/3√2)[−1, 3]ᵀ', ax2, 184, '#b0a9d0','13px "SF Mono",monospace','center');
-  drawModeArrows(ax2, cy, -1, 3, '#7dd3fc');
+  txt('모드 2  ω₂=2  (역위상)', ax2, 160, '#8eb4d8','bold 15px sans-serif','center');
+  txt('u₂ = (1/3√2)[−1, 3]ᵀ', ax2, 184, '#9bb0c0','13px "SF Mono",monospace','center');
+  drawModeArrows(ax2, cy, -1, 3, '#8eb4d8');
 
-  txt('u₁ 은 두 성분 같은 부호 = 두 질량이 같은 방향(동위상).', 30, 470, '#cbc3e0','13px sans-serif');
-  txt('u₂ 는 반대 부호 = 두 질량이 반대 방향(역위상). 고유벡터는 방향만 의미.', 30, 494, '#cbc3e0','13px sans-serif');
-  txt('크기는 질량 정규화(uᵀMu=1)로 확정 → S 구성에 사용.', 30, 518, '#8a83a8','12px sans-serif');
+  txt('u₁ 은 두 성분 같은 부호 = 두 질량이 같은 방향(동위상).', 30, 470, '#c5d4e6','13px sans-serif');
+  txt('u₂ 는 반대 부호 = 두 질량이 반대 방향(역위상). 고유벡터는 방향만 의미.', 30, 494, '#c5d4e6','13px sans-serif');
+  txt('크기는 질량 정규화(uᵀMu=1)로 확정 → S 구성에 사용.', 30, 518, '#9bb0c0','12px sans-serif');
 }
 function drawModeArrows(cx, cy, c1, c2, col){
   // 두 질량 상자, 각 성분 부호/크기에 따라 화살표
@@ -263,7 +263,7 @@ function drawModeArrows(cx, cy, c1, c2, col){
     const px=positions[i];
     ctx.fillStyle=col; ctx.globalAlpha=0.85;
     ctx.fillRect(px-box/2, cy-box/2, box, box); ctx.globalAlpha=1;
-    txt('m'+(i+1), px, cy+5, '#160b2e','bold 15px sans-serif','center');
+    txt('m'+(i+1), px, cy+5, '#0d1622','bold 15px sans-serif','center');
     // 방향 화살표: 위(양)/아래(음), 길이=|성분|
     const len = comps[i]*sc;
     arrow(px, cy-box/2, px, cy-box/2 - len, col, 3);
@@ -271,35 +271,35 @@ function drawModeArrows(cx, cy, c1, c2, col){
   }
 }
 function drawStep3(){
-  txt('③ 모드행렬 S 구성  &  초기조건 변환  r₀ = SᵀM x₀', 30, 40, '#c084fc','bold 18px sans-serif');
-  txt('고유벡터를 열로 세워 S 를 만든다. 질량 정규화 덕분에 SᵀMS = I, SᵀKS = Λ.', 30, 68, '#cbc3e0','13px sans-serif');
-  drawMatrix(90, 150, [[1,-1],[3,3]], 'S  (×1/3√2)', '#c084fc');
-  drawMatrix(390, 150, [[3,1],[-3,1]], 'S⁻¹=SᵀM  (×1/√2)', '#7dd3fc');
+  txt('③ 모드행렬 S 구성  &  초기조건 변환  r₀ = SᵀM x₀', 30, 40, '#6ea3d8','bold 18px sans-serif');
+  txt('고유벡터를 열로 세워 S 를 만든다. 질량 정규화 덕분에 SᵀMS = I, SᵀKS = Λ.', 30, 68, '#c5d4e6','13px sans-serif');
+  drawMatrix(90, 150, [[1,-1],[3,3]], 'S  (×1/3√2)', '#6ea3d8');
+  drawMatrix(390, 150, [[3,1],[-3,1]], 'S⁻¹=SᵀM  (×1/√2)', '#8eb4d8');
   // 변환 화살표
   arrow(680, 195, 750, 195, '#ffd166', 2.5);
   drawVector(600, 320, x0, 'x₀', '#ffd166', v=>v.toFixed(0));
   txt('r₀ = SᵀM x₀', 700, 300, '#ffd166','bold 15px sans-serif','left');
   drawVector(760, 320, [r10, r20], 'r₀', '#06d6a0', v=>v.toFixed(3));
-  txt('r₀ = [ 3/√2,  −3/√2 ]ᵀ ≈ [2.121, −2.121]ᵀ,   ṙ₀ = 0', 30, 470, '#cbc3e0','13px sans-serif');
-  txt('물리 초기조건을 모드 초기조건으로 옮겨 심었다 — 이제 각 모드가 얼마나 흔들릴지 정해졌다.', 30, 500, '#8a83a8','12px sans-serif');
+  txt('r₀ = [ 3/√2,  −3/√2 ]ᵀ ≈ [2.121, −2.121]ᵀ,   ṙ₀ = 0', 30, 470, '#c5d4e6','13px sans-serif');
+  txt('물리 초기조건을 모드 초기조건으로 옮겨 심었다 — 이제 각 모드가 얼마나 흔들릴지 정해졌다.', 30, 500, '#9bb0c0','12px sans-serif');
 }
 function drawStep4(){
-  txt('④ 분리된 모드방정식  r̈ᵢ + ωᵢ² rᵢ = 0  (독립된 1자유도 2개)', 30, 38, '#c084fc','bold 17px sans-serif');
+  txt('④ 분리된 모드방정식  r̈ᵢ + ωᵢ² rᵢ = 0  (독립된 1자유도 2개)', 30, 38, '#6ea3d8','bold 17px sans-serif');
   // 두 개의 분리된 방정식 + 해
-  txt('모드 1', 240, 78, '#c084fc','bold 15px sans-serif','center');
+  txt('모드 1', 240, 78, '#6ea3d8','bold 15px sans-serif','center');
   txt('r̈₁ + 2 r₁ = 0', 240, 104, '#e8eef5','15px "SF Mono",monospace','center');
-  txt('r₁(t) = (3/√2)·cos(√2 t)', 240, 128, '#c084fc','13px "SF Mono",monospace','center');
-  txt('모드 2', 660, 78, '#7dd3fc','bold 15px sans-serif','center');
+  txt('r₁(t) = (3/√2)·cos(√2 t)', 240, 128, '#6ea3d8','13px "SF Mono",monospace','center');
+  txt('모드 2', 660, 78, '#8eb4d8','bold 15px sans-serif','center');
   txt('r̈₂ + 4 r₂ = 0', 660, 104, '#e8eef5','15px "SF Mono",monospace','center');
-  txt('r₂(t) = −(3/√2)·cos(2 t)', 660, 128, '#7dd3fc','13px "SF Mono",monospace','center');
+  txt('r₂(t) = −(3/√2)·cos(2 t)', 660, 128, '#8eb4d8','13px "SF Mono",monospace','center');
 
   // 나란히 진동하는 1자유도 2개 (질량-스프링 애니메이션 + 미니 그래프)
-  drawModeOscillator(240, 210, r1f(t), r10, '#c084fc', 'r₁');
-  drawModeOscillator(660, 210, r2f(t), Math.abs(r20), '#7dd3fc', 'r₂');
+  drawModeOscillator(240, 210, r1f(t), r10, '#6ea3d8', 'r₁');
+  drawModeOscillator(660, 210, r2f(t), Math.abs(r20), '#8eb4d8', 'r₂');
 
   // 미니 시간 그래프
-  drawModePlot(40, 350, 400, 170, r1f, r10, '#c084fc', 'r₁(t)');
-  drawModePlot(470, 350, 400, 170, r2f, Math.abs(r20), '#7dd3fc', 'r₂(t)');
+  drawModePlot(40, 350, 400, 170, r1f, r10, '#6ea3d8', 'r₁(t)');
+  drawModePlot(470, 350, 400, 170, r2f, Math.abs(r20), '#8eb4d8', 'r₂(t)');
   // 현재시각 마커 라인은 plot 내부에서
 }
 function drawModeOscillator(cx, cy, val, amp, col, label){
@@ -312,7 +312,7 @@ function drawModeOscillator(cx, cy, val, amp, col, label){
   ctx.beginPath(); ctx.moveTo(cx-70, cy+40); ctx.lineTo(cx+70, cy+40); ctx.stroke(); ctx.setLineDash([]);
   txt(label+' = '+val.toFixed(2), cx, topY-8, col,'13px "SF Mono",monospace','center');
   // 스프링 (세그먼트 길이에 양수 하한 가드 → 어떤 위상에서도 정상 스프링)
-  ctx.strokeStyle='#8a83a8'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx, topY);
+  ctx.strokeStyle='#9bb0c0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx, topY);
   const coils=6, segEnd=my-box/2, seg=Math.max((segEnd-topY)/(coils*2), 1);
   for(let i=0;i<coils*2;i++) ctx.lineTo(cx+(i%2===0?-10:10), topY+seg*(i+0.5));
   ctx.lineTo(cx, segEnd); ctx.stroke();
@@ -337,8 +337,8 @@ function drawModePlot(x, y, w, h, fn, amp, col, label){
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(mx,cyv,4,0,7); ctx.fill();
 }
 function drawStep5(){
-  txt('⑤ 합성  x(t) = S r(t)  →  물리 응답 완성', 30, 36, '#c084fc','bold 18px sans-serif');
-  txt('x₁ = 0.5(cos√2 t + cos2t),   x₂ = 1.5(cos√2 t − cos2t)', 30, 62, '#cbc3e0','13px "SF Mono",monospace');
+  txt('⑤ 합성  x(t) = S r(t)  →  물리 응답 완성', 30, 36, '#6ea3d8','bold 18px sans-serif');
+  txt('x₁ = 0.5(cos√2 t + cos2t),   x₂ = 1.5(cos√2 t − cos2t)', 30, 62, '#c5d4e6','13px "SF Mono",monospace');
   // 물리 응답 곡선
   drawPhysPlot(40, 92, 830, 250);
   // 파이프라인 요약 다이어그램
@@ -349,7 +349,7 @@ function drawPhysPlot(x, y, w, h){
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y+h); ctx.lineTo(x+w, y+h); ctx.stroke();
   const midY=y+h/2, amp=3.2;   // x₂=1.5(cos√2t−cos2t) 의 실제 최대 진폭 3.0 이 잘리지 않도록
   ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.moveTo(x,midY); ctx.lineTo(x+w,midY); ctx.stroke();
-  txt('시간 t →', x+w-56, y+h+16, '#8a83a8','11px sans-serif','left');
+  txt('시간 t →', x+w-56, y+h+16, '#9bb0c0','11px sans-serif','left');
   const plot=(fn,col)=>{ ctx.strokeStyle=col; ctx.lineWidth=2.2; ctx.beginPath();
     for(let i=0;i<=w;i++){ const tt=i/w*TMAX; const Y=midY-(fn(tt)/amp)*(h/2*0.9);
       i?ctx.lineTo(x+i,Y):ctx.moveTo(x+i,Y);} ctx.stroke(); };
@@ -368,8 +368,8 @@ function drawPipeline(x, y){
   const boxes=[
     ['복잡한\n2자유도','#ff9db0'],
     ['좌표변환\nr=SᵀMx','#ffd166'],
-    ['아는 문제\n1자유도 ×2','#c084fc'],
-    ['해 r₁,r₂','#7dd3fc'],
+    ['아는 문제\n1자유도 ×2','#6ea3d8'],
+    ['해 r₁,r₂','#8eb4d8'],
     ['합성\nx=Sr','#06d6a0']
   ];
   const bw=140, bh=64, gap=(830-bw*5)/4;
@@ -379,9 +379,9 @@ function drawPipeline(x, y){
     ctx.fillRect(bx,y,bw,bh); ctx.strokeRect(bx,y,bw,bh);
     const lines=boxes[i][0].split('\n');
     lines.forEach((ln,k)=>txt(ln, bx+bw/2, y+bh/2-2+k*17-(lines.length-1)*8, boxes[i][1],'13px sans-serif','center'));
-    if(i<boxes.length-1){ const ax=bx+bw+2; arrow(ax, y+bh/2, ax+gap-4, y+bh/2, '#8a83a8', 2.5); }
+    if(i<boxes.length-1){ const ax=bx+bw+2; arrow(ax, y+bh/2, ax+gap-4, y+bh/2, '#9bb0c0', 2.5); }
   }
-  txt('복잡한 문제 → 좌표 변환 → 아는 문제 2개 → 다시 합성 : 모드해석의 사고 패턴', x, y+bh+34, '#cbc3e0','13px sans-serif','left');
+  txt('복잡한 문제 → 좌표 변환 → 아는 문제 2개 → 다시 합성 : 모드해석의 사고 패턴', x, y+bh+34, '#c5d4e6','13px sans-serif','left');
 }
 
 // ===== 메인 draw =====
@@ -404,15 +404,15 @@ function drawChain(x, y, off1, off2){
   ctx.fillStyle='#5a4b7a'; ctx.fillRect(x-16, y-40, 14, 80);
   // 스프링1
   spring(x, y, x+k, y);
-  ctx.fillStyle='#7dd3fc'; ctx.fillRect(x+k, y-box/2, box, box);
-  txt('m₁', x+k+box/2, y+5, '#160b2e','bold 14px sans-serif','center');
+  ctx.fillStyle='#8eb4d8'; ctx.fillRect(x+k, y-box/2, box, box);
+  txt('m₁', x+k+box/2, y+5, '#0d1622','bold 14px sans-serif','center');
   // 스프링2
   spring(x+k+box, y, x+2*k+box, y);
   ctx.fillStyle='#06d6a0'; ctx.fillRect(x+2*k+box, y-box/2, box, box);
-  txt('m₂', x+2*k+box+box/2, y+5, '#160b2e','bold 14px sans-serif','center');
+  txt('m₂', x+2*k+box+box/2, y+5, '#0d1622','bold 14px sans-serif','center');
 }
 function spring(x1,y,x2){
-  ctx.strokeStyle='#8a83a8'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1,y);
+  ctx.strokeStyle='#9bb0c0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1,y);
   const coils=6, seg=(x2-x1)/(coils*2);
   for(let i=0;i<coils*2;i++) ctx.lineTo(x1+seg*(i+0.5), y+(i%2===0?-9:9));
   ctx.lineTo(x2,y); ctx.stroke();

@@ -8,50 +8,50 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #2a1e5f 0%, #140f3d 100%);
+    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
     color: #e8eef5; min-height: 100vh; padding: 20px;
   }
   .container { max-width: 1180px; margin: 0 auto; }
   h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #b39dff, #7ee8c8);
+    background: linear-gradient(90deg, #8eb4d8, #6ea3d8);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #b3a9cc; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#b3a9cc; border:1px solid rgba(255,255,255,.15);
+  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
+  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
     border-radius:20px; padding:2px 10px; margin-top:4px; }
   .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0a0f28; border-radius: 10px; width: 100%; height: auto; display: block; }
+  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
   .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px; padding: 18px; }
   .controls { display: flex; flex-direction: column; gap: 14px; }
   .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #b3a9cc; margin-bottom: 6px;
+  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
     text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #b39dff;
+  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
     font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #b39dff; }
+  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
   .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #6a4ca8, #b39dff);
-    color: #1a0a3a; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
+    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
     transition: transform 0.1s; }
   button:hover { transform: translateY(-1px); }
-  button.secondary { background: rgba(255,255,255,0.08); color: #d4c5e6; }
+  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
   button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     font-family: "SF Mono", Consolas, monospace; }
   .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #b3a9cc; font-size: 11px; }
+  .stat-item .k { color: #9bb0c0; font-size: 11px; }
   .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #e0d8f0; line-height: 1.65;
-    background: rgba(179, 157, 255, 0.08); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #b39dff; }
+  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
+    background: rgba(29, 78, 137, 0.08); padding: 11px; border-radius: 6px;
+    border-left: 3px solid #6ea3d8; }
   .verdict { font-size: 14px; font-weight: 700; text-align: center; padding: 11px; border-radius: 8px;
     line-height: 1.5; }
   .verdict.good { background: rgba(0,184,148,0.18); color: #7ee8c8; border: 1px solid rgba(0,184,148,0.45); }
   .verdict.mid  { background: rgba(255,196,0,0.16);  color: #ffd45e; border: 1px solid rgba(255,196,0,0.45); }
   .verdict.bad  { background: rgba(255,71,87,0.16);   color: #ff8b96; border: 1px solid rgba(255,71,87,0.45); }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #d4c5e6; margin-top: 8px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .dot { width: 12px; height: 12px; border-radius: 3px; }
 </style>
@@ -66,7 +66,7 @@
     <div>
       <canvas id="cv" width="900" height="540"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#b39dff"></span>흡진기 부착 후 |Xk/F₀|</div>
+        <div class="legend-item"><span class="dot" style="background:#6ea3d8"></span>흡진기 부착 후 |Xk/F₀|</div>
         <div class="legend-item"><span class="dot" style="background:rgba(255,255,255,0.32)"></span>흡진기 없는 원래 1자유도</div>
         <div class="legend-item"><span class="dot" style="background:rgba(0,184,148,0.14)"></span>안전 영역 |Xk/F₀| ≤ 1</div>
         <div class="legend-item"><span class="dot" style="background:#ff8b96"></span>새 공진 2개</div>
@@ -76,12 +76,12 @@
       <div class="control-group">
         <label>질량비 μ = mₐ/m <span class="value" id="muv">0.250</span></label>
         <input type="range" id="mu" min="0.02" max="0.6" step="0.005" value="0.25">
-        <div style="font-size:11px; color:#b3a9cc; margin-top:6px;">μ↑ → 두 공진이 멀어져 안전대역↑ (대신 무거워짐)</div>
+        <div style="font-size:11px; color:#9bb0c0; margin-top:6px;">μ↑ → 두 공진이 멀어져 안전대역↑ (대신 무거워짐)</div>
       </div>
       <div class="control-group">
         <label>진동수비 β = ωₐ/ωₚ <span class="value" id="bev">1.000</span></label>
         <input type="range" id="be" min="0.6" max="1.4" step="0.005" value="1">
-        <div style="font-size:11px; color:#b3a9cc; margin-top:6px;">β=1이면 ωₐ=ωₚ (표준 설계조건) · 조정조건은 ω=ωₐ 즉 r=1</div>
+        <div style="font-size:11px; color:#9bb0c0; margin-top:6px;">β=1이면 ωₐ=ωₚ (표준 설계조건) · 조정조건은 ω=ωₐ 즉 r=1</div>
       </div>
       <div class="control-group">
         <label>구동 주파수 마커 r = ω/ωₐ <span class="value" id="rv">1.000</span></label>
@@ -93,7 +93,7 @@
           <div class="stat-item"><div class="k">새 공진 r₂</div><div class="v" id="p2" style="color:#ff8b96">—</div></div>
           <div class="stat-item"><div class="k">안전대역 하한</div><div class="v" id="lo" style="color:#7ee8c8">—</div></div>
           <div class="stat-item"><div class="k">안전대역 상한</div><div class="v" id="hi" style="color:#7ee8c8">—</div></div>
-          <div class="stat-item"><div class="k">현재 |Xk/F₀|</div><div class="v" id="amp" style="color:#b39dff">—</div></div>
+          <div class="stat-item"><div class="k">현재 |Xk/F₀|</div><div class="v" id="amp" style="color:#6ea3d8">—</div></div>
           <div class="stat-item"><div class="k">고주파 안전 r ≥</div><div class="v" id="hf" style="color:#7ee8c8">—</div></div>
         </div>
       </div>
@@ -103,7 +103,7 @@
           <button id="play" class="toggle-on">⏸ 스윕정지</button>
           <button id="reset" class="secondary">↺ 초기화</button>
         </div>
-        <div style="font-size:11px; color:#b3a9cc; margin-top:8px;">스윕: 마커 r이 자동으로 좌우를 오갑니다</div>
+        <div style="font-size:11px; color:#9bb0c0; margin-top:8px;">스윕: 마커 r이 자동으로 좌우를 오갑니다</div>
       </div>
       <div class="info">
         <b>관찰 포인트</b><br>
@@ -217,7 +217,7 @@ function draw() {
   // ---- 축 ----
   ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.4;
   ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.lineTo(plotR, plotBot); ctx.stroke();
-  ctx.fillStyle = '#b3a9cc'; ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif';
   ctx.textAlign = 'center';
   for (let t = 0; t <= R_MAX + 0.001; t += 0.25) {
     const X = rx(t);
@@ -230,10 +230,10 @@ function draw() {
     const Y = ry(y);
     ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath();
     ctx.moveTo(plotL, Y); ctx.lineTo(plotR, Y); ctx.stroke();
-    ctx.fillStyle = '#b3a9cc'; ctx.fillText(String(y), plotL - 8, Y + 4);
+    ctx.fillStyle = '#9bb0c0'; ctx.fillText(String(y), plotL - 8, Y + 4);
   }
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#d4c5e6'; ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#c5d4e6'; ctx.font = '12px sans-serif';
   ctx.fillText('r = ω / ωₐ  (구동 주파수비)', (plotL + plotR) / 2, H - 8);
   ctx.save(); ctx.translate(16, (plotTop + plotBot) / 2); ctx.rotate(-Math.PI/2);
   ctx.fillText('|Xk/F₀| (무차원 진폭)', 0, 0); ctx.restore();
@@ -254,7 +254,7 @@ function draw() {
   // 원래 1자유도(옅게)
   curve(r0 => ampOrig(r0, be), 'rgba(255,255,255,0.32)', 1.6);
   // 흡진기 부착 후(굵게)
-  curve(r0 => ampWith(r0, mu, be), '#b39dff', 2.8);
+  curve(r0 => ampWith(r0, mu, be), '#6ea3d8', 2.8);
 
   // ---- 새 공진 세로선 + 라벨 ----
   p.res.forEach((rr, i) => {

@@ -766,7 +766,7 @@ function readTheme(){
   C={ ink:g('--ink')||'#e7eef2', ink2:g('--ink-2')||'#ffffff', ink4:g('--ink-4')||'#d3dfe7', rule:g('--rule')||'#cfdde5',
       fg:g('--text')||'#0b2130', fg2:g('--text-2')||'#42606f', fg3:g('--text-3')||'#6b8798',
       track:g('--track')||'#0369a1', mark:g('--mark')||'#b45309', hull:g('--hull')||'#15803d', devi:g('--devi')||'#be123c',
-      course:g('--course')||'#6d28d9', rock:g('--rock')||'#8a7443', accent:g('--accent')||'#0c7a73' };
+      course:g('--course')||'#0d2644', rock:g('--rock')||'#8a7443', accent:g('--accent')||'#1d4e89' };
   buildRamp();
 }
 function hex2rgb(h){
