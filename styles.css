@@ -494,10 +494,6 @@ html[data-lang="ko"] .univ-lockup {
   cursor: pointer;
 }
 
-#home-news .news-item:hover {
-  border-color: color-mix(in srgb, var(--primary-color) 35%, var(--surface-border));
-}
-
 .scroll-chevron {
   width: 28px;
   height: 28px;
@@ -731,7 +727,7 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 .details-grid {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 28px;
 }
 
@@ -1287,8 +1283,47 @@ a.member-card {
   color: inherit;
 }
 
-a.member-card:hover {
-  border-color: color-mix(in srgb, var(--primary-color) 40%, var(--surface-border));
+.member-card,
+.news-item {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition);
+}
+
+.member-card:hover:not(.selected),
+.news-item:hover:not(.selected) {
+  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
+}
+
+.member-card.selected,
+.news-item.selected {
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
+    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+.member-card.selected::before,
+.news-item.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+}
+
+#members:has(.member-card:hover) .member-card:not(:hover):not(.selected),
+#members:has(.member-card.selected) .member-card:not(.selected):not(:hover),
+.news-list:has(.news-item:hover) .news-item:not(:hover):not(.selected),
+.news-list:has(.news-item.selected) .news-item:not(.selected):not(:hover) {
+  opacity: 0.38;
 }
 
 .lecture-sim-btn {

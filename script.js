@@ -43,9 +43,7 @@
     const items = document.querySelectorAll("#news .news-list > .news-item");
     if (!dest || !items.length) return;
     [...items].slice(0, 3).forEach((item) => {
-      const clone = item.cloneNode(true);
-      clone.addEventListener("click", () => navigateToSection("#news"));
-      dest.appendChild(clone);
+      dest.appendChild(item.cloneNode(true));
     });
   })();
 
@@ -163,6 +161,30 @@
       if (!on) card.classList.add("selected");
       syncOverviewVideos();
     });
+  });
+
+  document.querySelectorAll(".news-list").forEach((list) => {
+    list.querySelectorAll(".news-item").forEach((card) => {
+      card.addEventListener("click", () => {
+        const on = card.classList.contains("selected");
+        list.querySelectorAll(".news-item.selected").forEach((c) => c.classList.remove("selected"));
+        if (!on) card.classList.add("selected");
+      });
+    });
+  });
+
+  document.querySelectorAll("#members .member-card").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      const on = card.classList.contains("selected");
+      document.querySelectorAll("#members .member-card.selected").forEach((c) => {
+        c.classList.remove("selected");
+      });
+      if (!on) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        card.classList.add("selected");
+      }
+    }, true);
   });
 
   function toggleDetails(wrapperId) {
@@ -797,7 +819,7 @@
     document.documentElement.classList.add("has-sail-cursor");
 
     const obstacle = root.querySelector(".sail-cursor-obstacle");
-    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card";
+    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card, .news-item";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
 

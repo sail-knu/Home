@@ -73,6 +73,12 @@
             <circle cx="16" cy="16" r="9"/>
             <path d="M16 7v4.8M16 20.2V25M7 16h4.8M20.2 16H25M9.6 9.6l3.4 3.4M19 19l3.4 3.4M22.4 9.6l-3.4 3.4M13 19l-3.4 3.4"/>
         </symbol>
+        <symbol id="i-perk" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6.5" y="14" width="19" height="12.2" rx="2"/>
+            <path d="M6.5 18.2h19"/>
+            <path d="M16 10.2v16"/>
+            <path d="M12.2 10.4c0-2.1 1.7-3.6 3.8-3.6s3.8 1.5 3.8 3.6"/>
+        </symbol>
         <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 12h13"/>
             <path d="M12 6l7 6-7 6"/>
@@ -187,9 +193,12 @@
 
         <section id="research-overview" class="section pt-50">
             <div class="section-container">
-                <div class="section-header">
-                    <h2 class="section-title">Research Overview</h2>
-                    <div class="underline"></div>
+                <div class="section-header home-news-header">
+                    <div>
+                        <h2 class="section-title">Research Overview</h2>
+                        <div class="underline"></div>
+                    </div>
+                    <a href="#research" class="home-news-more" data-i18n="news_view_all">전체 보기</a>
                 </div>
                 <div class="research-grid">
                     <div class="research-card cursor-pointer" data-core="safe">
@@ -294,7 +303,17 @@
                         <ul class="custom-bullet-list">
                             <li>제어·로봇·자율주행에 관심이 있는 학부생·대학원생</li>
                             <li>수학/동역학 기초를 실제 시스템에 적용하고 싶은 학생</li>
-                            <li>프로그래밍(Python, C++, MATLAB)으로 실험을 해보고 싶은 학생</li>
+                            <li>프로그래밍(Python, C++, MATLAB)으로 실험해보고 싶은 학생</li>
+                        </ul>
+                    </div>
+                    <div class="details-list glass-panel" data-i18n="perk_block">
+                        <h3><svg class="icon" aria-hidden="true"><use href="#i-perk"></use></svg> 참여하면</h3>
+                        <ul class="custom-bullet-list">
+                            <li>개인 연구 기자재(PC, 모바일로봇 등) 제공</li>
+                            <li>등록금 &amp; 생활비 지원</li>
+                            <li>국가, 기업 연구과제 참여</li>
+                            <li>국내외 학회 참여 지원</li>
+                            <li>국내외 저널 논문 인센티브 지급</li>
                         </ul>
                     </div>
                 </div>
@@ -1435,6 +1454,7 @@
         "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and robot control.</p>`,
         "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
         "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li></ul>`,
+        "perk_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-perk"></use></svg> What you get</h3><ul class="custom-bullet-list"><li>Personal research equipment (PC, mobile robots, and more)</li><li>Tuition and living-expense support</li><li>National and industry research projects</li><li>Support for domestic and international conferences</li><li>Incentives for domestic and international journal papers</li></ul>`,
         "r1_card": `We treat the turning radius of nonholonomic vehicles as a constraint and generate several behavior candidates—tracking, avoidance, and berthing—instead of a single trajectory. A turning-circle control barrier function then certifies each mode so that multimodal planning can pick a safe one.`,
         "r2_card": `We learn surface-vehicle dynamics and imitate nonlinear MPC policies with behavior cloning. Perception-guided MPC follows detected navigable regions, and MARQA connects planning and control through LLM-based ship question answering.`,
         "r3_card": `Disturbance and model error are wrapped in a tube so cascade tube-MPC and L1 adaptation keep a safe region. We apply this to ship berthing, USV recovery, and quadrotor flight, and model nonlinear dynamics with a parameter-varying Koopman operator.`,
