@@ -939,9 +939,15 @@ html[data-lang="ko"] .univ-lockup {
   justify-items: center;
 }
 
-.video-stack:has(> :only-child) > * {
+.video-stack:has(> :only-child) > *,
+.video-stack > :last-child:nth-child(odd) {
   width: 100%;
   max-width: calc(50% - 8px);
+}
+
+.video-stack > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
 }
 
 .video-item {
@@ -2328,7 +2334,8 @@ a.member-card {
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }
   .video-stack { grid-template-columns: 1fr; }
-  .video-stack:has(> :only-child) > * { max-width: 100%; }
+  .video-stack:has(> :only-child) > *,
+  .video-stack > :last-child:nth-child(odd) { max-width: 100%; }
   .robot-media { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
