@@ -731,6 +731,10 @@ html[data-lang="ko"] .univ-lockup {
   margin-top: 28px;
 }
 
+#professor .details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .details-list h3 {
   display: flex;
   align-items: center;
