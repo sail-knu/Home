@@ -932,7 +932,23 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 a.project-page {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
+  text-decoration: none;
+  vertical-align: 0.08em;
+  background: rgba(214, 122, 40, 0.16);
+  color: #b65f12;
+}
+
+a.project-page:hover {
+  background: rgba(214, 122, 40, 0.28);
+  color: #8f480c;
 }
 
 #research .bento-content h3,
@@ -2243,7 +2259,6 @@ a.member-card:hover {
   .robot-media { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
-  a.project-page,
   .collab-card .member-role {
     white-space: normal;
   }
