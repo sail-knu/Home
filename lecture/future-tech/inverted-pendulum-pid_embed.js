@@ -94,7 +94,7 @@ const ctrl = {
 /* ============================================================
  *  3. 상태 / 파라미터 / 게인
  * ============================================================ */
-const K  = { kPt:100, kIt:0, kDt:20, kPx:2, kDx:4 };
+const K  = { kPt:0, kIt:0, kDt:0, kPx:2, kDx:4 };
 const p  = { mc:1, mb:1, L:2, b:0, FD:0 };     // 물성은 고정 (모바일판에서는 조절 UI 제거)
 const s0 = { x:0, v:0, th:0.35, om:0 };
 let S    = [0, 0, 0.35, 0];                    // 현재 상태벡터
@@ -108,7 +108,22 @@ let chartAcc = 0;
 let fellOver = false;
 let iseTh = 0;
 let scoreSaved = false;
+let thRef = 0.35;
+let settleAcc = 0;
+let everOut = false;
+let settled = false;
+const SETTLE_RATIO = 0.01;
+const SETTLE_HOLD = 5;
 const LS_SCORE = 'sail-pid-personal-v1';
+
+function settleBand() {
+  return SETTLE_RATIO * Math.max(Math.abs(thRef), 0.10);
+}
+function resetScoreState() {
+  iseTh = 0; scoreSaved = false;
+  settleAcc = 0; everOut = false; settled = false;
+  thRef = Math.abs(s0.th);
+}
 
 /* 외란 */
 const PUSH_F = 25;         // 외란 크기 [N]
@@ -254,9 +269,7 @@ function updateHint() {
  *  5. 시뮬레이션 루프                    (원본과 동일)
  * ============================================================ */
 function stepPhysics() {
-  // 외란력 갱신 (누르고 있는 동안 지속 / 버튼은 짧은 충격)
-  if (pulseLeft > 0) { pulseLeft -= PHYS_DT; if (pulseLeft <= 0) { pulseLeft = 0; pulseDir = 0; } }
-  p.FD = holdDir ? holdDir * PUSH_F : (pulseLeft > 0 ? pulseDir * PUSH_F : 0);
+  p.FD = 0;
 
   // 제어기: CTRL_HZ 주기로만 갱신 (ZOH)
   const ctrlDt = 1 / CTRL_HZ;
@@ -266,7 +279,7 @@ function stepPhysics() {
   S = rk4(S, ctrl.F, p, PHYS_DT);
   simT += PHYS_DT;
 
-  if (!fellOver) iseTh += S[2] * S[2] * PHYS_DT;
+  if (!fellOver && !settled) iseTh += S[2] * S[2] * PHYS_DT;
 
   // 데이터 기록
   logAcc += PHYS_DT;
@@ -282,6 +295,21 @@ function stepPhysics() {
     const first = !fellOver;
     fellOver = true;
     if (first) commitScore();
+    return;
+  }
+
+  if (!settled) {
+    if (Math.abs(S[2]) > settleBand()) {
+      everOut = true;
+      settleAcc = 0;
+    } else if (everOut) {
+      settleAcc += PHYS_DT;
+      if (settleAcc >= SETTLE_HOLD) {
+        settled = true;
+        commitScore();
+        stop();
+      }
+    }
   }
 }
 
@@ -296,7 +324,7 @@ function frame(ts) {
 
     physAcc += wall;
     let guard = 0;
-    while (physAcc >= PHYS_DT && guard++ < 5000) { stepPhysics(); physAcc -= PHYS_DT; }
+    while (mode === 'running' && physAcc >= PHYS_DT && guard++ < 5000) { stepPhysics(); physAcc -= PHYS_DT; }
 
     chartAcc += wall;
     if (chartAcc >= 0.1) { chartAcc = 0; drawChart(); }   // 그래프는 10 Hz로 갱신
@@ -314,7 +342,7 @@ function start() {
     readGains();
     S = [s0.x, s0.v, s0.th, s0.om];
     simT = 0; fellOver = false;
-    iseTh = 0; scoreSaved = false;
+    resetScoreState();
     ctrl.reset(); clearLog();
     physAcc = logAcc = chartAcc = 0;
     ctrlAcc = 1 / CTRL_HZ - PHYS_DT;      // 첫 물리 스텝에서 바로 제어기가 돌도록
@@ -342,7 +370,7 @@ function reset() {
   clearPush();
   S = [s0.x, s0.v, s0.th, s0.om];
   simT = 0; fellOver = false;
-  iseTh = 0; scoreSaved = false;
+  resetScoreState();
   ctrl.reset(); clearLog();
   camX = S[0];
   $('sth').disabled = false;
@@ -351,13 +379,7 @@ function reset() {
   drawChart();
 }
 
-function clearPush() { holdDir = 0; pulseDir = 0; pulseLeft = 0; p.FD = 0; }
-
-/** 버튼 외란: 짧은 충격 */
-function pulsePush(dir) {
-  if (mode !== 'running') start();
-  pulseDir = dir; pulseLeft = PUSH_T;
-}
+function clearPush() { p.FD = 0; }
 
 /* ============================================================
  *  6. 무대 렌더링 (Canvas 2D)  — 좌표는 모두 CSS 픽셀 기준
@@ -552,6 +574,8 @@ function drawStage() {
   ctx.font = '600 12px sans-serif';
   if (fellOver) {
     ctx.fillStyle = '#c8433a'; ctx.fillText('넘어짐 (|θ| > 90°)', 12, 22);
+  } else if (settled) {
+    ctx.fillStyle = '#177a4c'; ctx.fillText('성공 — 1% 오차 5초 유지', 12, 22);
   } else if (mode === 'running') {
     ctx.fillStyle = '#177a4c'; ctx.fillText('● 실행 중', 12, 22);
   } else if (mode === 'paused') {
@@ -591,6 +615,36 @@ function updateReadout() {
   bar.style.width = pct + '%';
   $('rScore').textContent = currentScore().toFixed(1);
   $('rBest').textContent = bestScoreText();
+  updateSettleCd();
+}
+
+function updateSettleCd() {
+  const el = $('settleCd');
+  const rs = $('rSettle');
+  if (!el || !rs) return;
+  const left = Math.max(0, SETTLE_HOLD - settleAcc);
+  const inHold = mode === 'running' && everOut && settleAcc > 0 && !fellOver && !settled;
+  if (settled) {
+    el.hidden = false;
+    el.classList.add('ok');
+    $('settleCdNum').textContent = '성공';
+    $('settleCdMsg').textContent = '기록됨';
+    rs.textContent = '성공';
+    rs.className = 'val ok';
+    return;
+  }
+  el.classList.remove('ok');
+  if (inHold) {
+    el.hidden = false;
+    $('settleCdNum').textContent = String(Math.max(1, Math.ceil(left - 1e-9)));
+    $('settleCdMsg').textContent = '1% 오차 유지';
+    rs.textContent = left.toFixed(1);
+    rs.className = 'val';
+  } else {
+    el.hidden = true;
+    rs.textContent = fellOver ? '실격' : '5.0';
+    rs.className = 'val' + (fellOver ? ' bad' : '');
+  }
 }
 
 function currentScore() {
@@ -604,12 +658,12 @@ function saveScores(list) {
   try { localStorage.setItem(LS_SCORE, JSON.stringify(list)); } catch (_) {}
 }
 function bestScoreText() {
-  const ok = loadScores().filter(e => !e.fell);
+  const ok = loadScores().filter(e => e.settled);
   if (!ok.length) return '–';
   return Math.max.apply(null, ok.map(e => e.score)).toFixed(1);
 }
 function commitScore() {
-  if (scoreSaved || simT < 2) return;
+  if (scoreSaved || (!settled && !fellOver) || simT < 2) return;
   scoreSaved = true;
   const list = loadScores();
   list.unshift({
@@ -617,6 +671,7 @@ function commitScore() {
     t: +simT.toFixed(2),
     ise: +iseTh.toFixed(3),
     fell: fellOver,
+    settled: settled,
     kPt: K.kPt, kIt: K.kIt, kDt: K.kDt,
     at: Date.now()
   });
@@ -628,15 +683,17 @@ function renderScores() {
   if (!el) return;
   const list = loadScores();
   if (!list.length) {
-    el.innerHTML = '<div class="hintline" style="margin:0">아직 기록이 없습니다. 2초 이상 실행한 뒤 초기화하면 남습니다.</div>';
+    el.innerHTML = '<div class="hintline" style="margin:0">아직 기록이 없습니다. |θ|가 초기각의 1% 안에 5초 머물면 성공으로 저장됩니다.</div>';
     return;
   }
   el.innerHTML = list.slice(0, 8).map(e => {
     const d = new Date(e.at);
     const p = n => String(n).padStart(2, '0');
     const when = p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    return '<div class="score-row' + (e.fell ? ' fail' : '') + '">'
-      + '<span class="sc">' + (e.fell ? '실격 ' : '') + e.score.toFixed(1) + '</span>'
+    const tag = e.fell ? '실격 ' : (e.settled ? '성공 ' : '');
+    const cls = e.fell ? ' fail' : (e.settled ? ' ok' : '');
+    return '<div class="score-row' + cls + '">'
+      + '<span class="sc">' + tag + e.score.toFixed(1) + '</span>'
       + '<span class="meta">' + e.t.toFixed(1) + 's · P' + e.kPt + ' I' + e.kIt + ' D' + e.kDt
       + ' · ' + when + '</span></div>';
   }).join('');
@@ -647,7 +704,7 @@ function renderScores() {
  * ============================================================ */
 const SERIES = [
   { key:'th', label:'θ (rad)', color:'#0c7a73', axis:'L', on:true  },
-  { key:'x',  label:'x (m)',   color:'#177a4c', axis:'L', on:false },
+  { key:'x',  label:'x (m)',   color:'#177a4c', axis:'L', on:true  },
   { key:'F',  label:'F (N)',   color:'#c8433a', axis:'R', on:true  },
 ];
 
@@ -771,28 +828,10 @@ function fmtTick(v) {
 /* ============================================================
  *  8. 터치 / 포인터 입력
  * ============================================================ */
-function pointerDir(e) {
-  const r = stage.getBoundingClientRect();
-  return (e.clientX - r.left) >= lastCartPx ? 1 : -1;
-}
-
 stage.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (mode !== 'running') start();
-  try { stage.setPointerCapture(e.pointerId); } catch (_) {}
-  holdDir = pointerDir(e);
 }, { passive: false });
-
-stage.addEventListener('pointermove', e => {
-  if (!holdDir) return;
-  e.preventDefault();
-  holdDir = pointerDir(e);
-}, { passive: false });
-
-const endHold = () => { holdDir = 0; if (!pulseLeft) p.FD = 0; };
-stage.addEventListener('pointerup', endHold);
-stage.addEventListener('pointercancel', endHold);
-stage.addEventListener('pointerleave', endHold);
 
 /* ============================================================
  *  9. 초기화
@@ -806,11 +845,10 @@ camX = S[0];
 showValues();
 updateHint();
 updatePosNote();
+setPos(true);
 
 $('btnRun').onclick   = () => (mode === 'running' ? stop() : start());
 $('btnReset').onclick = reset;
-$('btnPushL').onclick = () => pulsePush(-1);
-$('btnPushR').onclick = () => pulsePush(1);
 $('btnPos').onclick   = () => setPos(!posOn);
 if ($('btnClearScores')) {
   $('btnClearScores').onclick = () => {

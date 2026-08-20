@@ -50,11 +50,25 @@ body{
   box-shadow:0 5px 12px -7px #0f172a40;
 }
 .stagewrap > .card{margin-bottom:0}
+.stage-canvas{position:relative}
 
 #stage{
   width:100%; height:220px; display:block;
   touch-action:none; user-select:none; -webkit-user-select:none;
 }
+.settle-cd{
+  position:absolute; inset:0; z-index:4;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events:none; background:#0f172a28;
+}
+.settle-cd[hidden]{display:none}
+.settle-cd-num{
+  font-family:var(--mono); font-size:84px; font-weight:800; line-height:1;
+  color:var(--accent); text-shadow:0 1px 0 #fff, 0 8px 24px #0f172a33;
+}
+.settle-cd-msg{margin-top:4px; font-size:13px; font-weight:700; color:#1e3a8a}
+.settle-cd.ok .settle-cd-num{font-size:40px; color:var(--ok)}
+.settle-cd.ok .settle-cd-msg{color:#046c50}
 
 /* 핵심 수치 한 줄 (compact) */
 .robar{border-top:1px solid var(--line2)}
@@ -98,6 +112,9 @@ body{
 .score-row .sc{font-family:var(--mono); font-weight:700}
 .score-row .meta{font-family:var(--mono); font-size:11px; color:var(--ink3)}
 .score-row.fail .sc{color:var(--warn)}
+.score-row.ok .sc{color:var(--ok)}
+.scorebar .val.ok{color:var(--ok)}
+.scorebar .val.bad{color:var(--warn)}
 
 /* ---------- 버튼 ---------- */
 button{
@@ -194,16 +211,20 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
 <div class="wrap">
 
   <div class="tip">
-    <b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요.
-    화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다.
-    아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다.
-    초기화하거나 넘어지면 이번 점수가 <b>이 기기</b>에만 남습니다.
+    <b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub>와 위치 게인을 직접 움직이며 진자를 세우고 카트를 x = 0으로 되돌리세요.
+    |θ|가 초기각의 <b>1%</b> 안에 <b>5초</b> 머물면 성공으로 멈추고 이 기기에 기록됩니다.
   </div>
 
   <!-- ================= 무대 (화면 상단 고정) ================= -->
   <div class="stagewrap" id="stageWrap">
     <div class="card">
-      <canvas id="stage"></canvas>
+      <div class="stage-canvas">
+        <canvas id="stage"></canvas>
+        <div id="settleCd" class="settle-cd" hidden>
+          <span class="settle-cd-num" id="settleCdNum">5</span>
+          <span class="settle-cd-msg" id="settleCdMsg">1% 오차 유지</span>
+        </div>
+      </div>
       <div class="robar" id="roBar">
         <div class="readout">
           <div class="cell c-t"><span class="k">t</span><span class="val" id="rT">0.00</span><span class="u">s</span></div>
@@ -214,6 +235,7 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
         <div class="fbar"><u></u><i id="fBar"></i></div>
         <div class="scorebar">
           <div class="cell"><span class="k">점수 (높을수록 좋음)</span><span class="val" id="rScore">0.0</span></div>
+          <div class="cell"><span class="k">남은 시간</span><span class="val" id="rSettle">5.0</span></div>
           <div class="cell"><span class="k">내 최고</span><span class="val" id="rBest">–</span></div>
         </div>
       </div>
@@ -225,7 +247,7 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
     <h2>내 기록 (이 기기)</h2>
     <div class="body">
       <div id="scoreList" class="scorelist"></div>
-      <div class="hintline">점수 = t / (0.25 + ∫θ² dt). 넘어지지 않고 오래, 작게 흔들수록 높습니다.</div>
+      <div class="hintline">|θ| ≤ 0.01·|θ₀| 를 5초 유지하면 성공. 점수 = t / (0.25 + ∫θ² dt).</div>
       <button type="button" id="btnClearScores" style="width:100%;margin-top:8px">기록 지우기</button>
     </div>
   </div>
@@ -235,19 +257,19 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
     <h2>PID 게인 (실행 중에도 조절 가능)</h2>
     <div class="body">
       <div class="sl">
-        <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="vPt">100</span></div>
-        <input type="range" id="kPt" min="0" max="300" step="1" value="100">
+        <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="vPt">0</span></div>
+        <input type="range" id="kPt" min="0" max="300" step="1" value="0">
       </div>
       <div class="sl">
         <div class="sl-top"><span class="sl-name">k<sub>I</sub></span><span class="sl-desc">적분 — 남은 오차 제거</span><span class="sl-val" id="vIt">0</span></div>
         <input type="range" id="kIt" min="0" max="150" step="1" value="0">
       </div>
       <div class="sl">
-        <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="vDt">20</span></div>
-        <input type="range" id="kDt" min="0" max="100" step="0.5" value="20">
+        <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="vDt">0.0</span></div>
+        <input type="range" id="kDt" min="0" max="100" step="0.5" value="0">
       </div>
       <div class="note" id="hint"></div>
-      <div class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω &nbsp;(각도만 제어하면 진자는 서지만 카트는 멈추지 않고 계속 흘러갑니다 — 아래 <b>위치 제어</b>를 켜 보세요)</div>
+      <div class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω + k<sub>Px</sub>·x + k<sub>Dx</sub>·v</div>
     </div>
   </div>
 
@@ -255,8 +277,8 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
   <div class="card">
     <h2>위치 제어 (카트를 x = 0으로 되돌리기)</h2>
     <div class="body">
-      <button id="btnPos" style="width:100%" aria-controls="posBody" aria-expanded="false">위치 제어 켜기</button>
-      <div id="posBody" hidden>
+      <button id="btnPos" class="on" style="width:100%" aria-controls="posBody" aria-expanded="true">✓ 위치 제어 켜짐 — 누르면 끄기</button>
+      <div id="posBody">
         <div class="sl" style="margin-top:10px">
           <div class="sl-top"><span class="sl-name">k<sub>Px</sub></span><span class="sl-desc">위치 — x = 0으로 되돌림</span><span class="sl-val" id="vPx">2.0</span></div>
           <input type="range" id="kPx" min="0" max="10" step="0.1" value="2">
@@ -273,19 +295,14 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--ink3)}
     </div>
   </div>
 
-  <!-- ================= 초기 각도 / 외란 ================= -->
+  <!-- ================= 초기 각도 ================= -->
   <div class="card">
-    <h2>초기 각도 · 외란</h2>
+    <h2>초기 각도</h2>
     <div class="body">
       <div class="sl">
         <div class="sl-top"><span class="sl-name">θ₀</span><span class="sl-desc">시작할 때 기운 정도</span><span class="sl-val" id="vTh">0.35</span></div>
         <input type="range" id="sth" min="-0.60" max="0.60" step="0.01" value="0.35">
       </div>
-      <div class="grid2" style="margin-top:8px">
-        <button class="purple" id="btnPushL">← 밀기</button>
-        <button class="purple" id="btnPushR">밀기 →</button>
-      </div>
-      <div class="hintline">밀기 버튼은 짧은 충격(25 N × 0.1 s), 화면을 길게 누르면 누르는 동안 계속 힘이 가해집니다.</div>
     </div>
   </div>
 
@@ -393,7 +410,7 @@ const ctrl = {
 /* ============================================================
  *  3. 상태 / 파라미터 / 게인
  * ============================================================ */
-const K  = { kPt:100, kIt:0, kDt:20, kPx:2, kDx:4 };
+const K  = { kPt:0, kIt:0, kDt:0, kPx:2, kDx:4 };
 const p  = { mc:1, mb:1, L:2, b:0, FD:0 };     // 물성은 고정 (모바일판에서는 조절 UI 제거)
 const s0 = { x:0, v:0, th:0.35, om:0 };
 let S    = [0, 0, 0.35, 0];                    // 현재 상태벡터
@@ -407,7 +424,22 @@ let chartAcc = 0;
 let fellOver = false;
 let iseTh = 0;
 let scoreSaved = false;
+let thRef = 0.35;
+let settleAcc = 0;
+let everOut = false;
+let settled = false;
+const SETTLE_RATIO = 0.01;
+const SETTLE_HOLD = 5;
 const LS_SCORE = 'sail-pid-personal-v1';
+
+function settleBand() {
+  return SETTLE_RATIO * Math.max(Math.abs(thRef), 0.10);
+}
+function resetScoreState() {
+  iseTh = 0; scoreSaved = false;
+  settleAcc = 0; everOut = false; settled = false;
+  thRef = Math.abs(s0.th);
+}
 
 /* 외란 */
 const PUSH_F = 25;         // 외란 크기 [N]
@@ -553,9 +585,7 @@ function updateHint() {
  *  5. 시뮬레이션 루프                    (원본과 동일)
  * ============================================================ */
 function stepPhysics() {
-  // 외란력 갱신 (누르고 있는 동안 지속 / 버튼은 짧은 충격)
-  if (pulseLeft > 0) { pulseLeft -= PHYS_DT; if (pulseLeft <= 0) { pulseLeft = 0; pulseDir = 0; } }
-  p.FD = holdDir ? holdDir * PUSH_F : (pulseLeft > 0 ? pulseDir * PUSH_F : 0);
+  p.FD = 0;
 
   // 제어기: CTRL_HZ 주기로만 갱신 (ZOH)
   const ctrlDt = 1 / CTRL_HZ;
@@ -565,7 +595,7 @@ function stepPhysics() {
   S = rk4(S, ctrl.F, p, PHYS_DT);
   simT += PHYS_DT;
 
-  if (!fellOver) iseTh += S[2] * S[2] * PHYS_DT;
+  if (!fellOver && !settled) iseTh += S[2] * S[2] * PHYS_DT;
 
   // 데이터 기록
   logAcc += PHYS_DT;
@@ -581,6 +611,21 @@ function stepPhysics() {
     const first = !fellOver;
     fellOver = true;
     if (first) commitScore();
+    return;
+  }
+
+  if (!settled) {
+    if (Math.abs(S[2]) > settleBand()) {
+      everOut = true;
+      settleAcc = 0;
+    } else if (everOut) {
+      settleAcc += PHYS_DT;
+      if (settleAcc >= SETTLE_HOLD) {
+        settled = true;
+        commitScore();
+        stop();
+      }
+    }
   }
 }
 
@@ -594,7 +639,7 @@ function frame(ts) {
 
     physAcc += wall;
     let guard = 0;
-    while (physAcc >= PHYS_DT && guard++ < 5000) { stepPhysics(); physAcc -= PHYS_DT; }
+    while (mode === 'running' && physAcc >= PHYS_DT && guard++ < 5000) { stepPhysics(); physAcc -= PHYS_DT; }
 
     chartAcc += wall;
     if (chartAcc >= 0.1) { chartAcc = 0; drawChart(); }   // 그래프는 10 Hz로 갱신
@@ -612,7 +657,7 @@ function start() {
     readGains();
     S = [s0.x, s0.v, s0.th, s0.om];
     simT = 0; fellOver = false;
-    iseTh = 0; scoreSaved = false;
+    resetScoreState();
     ctrl.reset(); clearLog();
     physAcc = logAcc = chartAcc = 0;
     ctrlAcc = 1 / CTRL_HZ - PHYS_DT;      // 첫 물리 스텝에서 바로 제어기가 돌도록
@@ -640,7 +685,7 @@ function reset() {
   clearPush();
   S = [s0.x, s0.v, s0.th, s0.om];
   simT = 0; fellOver = false;
-  iseTh = 0; scoreSaved = false;
+  resetScoreState();
   ctrl.reset(); clearLog();
   camX = S[0];
   $('sth').disabled = false;
@@ -649,13 +694,7 @@ function reset() {
   drawChart();
 }
 
-function clearPush() { holdDir = 0; pulseDir = 0; pulseLeft = 0; p.FD = 0; }
-
-/** 버튼 외란: 짧은 충격 */
-function pulsePush(dir) {
-  if (mode !== 'running') start();
-  pulseDir = dir; pulseLeft = PUSH_T;
-}
+function clearPush() { p.FD = 0; }
 
 /* ============================================================
  *  6. 무대 렌더링 (Canvas 2D)  — 좌표는 모두 CSS 픽셀 기준
@@ -849,6 +888,8 @@ function drawStage() {
   ctx.font = '600 12px sans-serif';
   if (fellOver) {
     ctx.fillStyle = '#dc2626'; ctx.fillText('넘어짐 (|θ| > 90°)', 12, 22);
+  } else if (settled) {
+    ctx.fillStyle = '#059669'; ctx.fillText('성공 — 1% 오차 5초 유지', 12, 22);
   } else if (mode === 'running') {
     ctx.fillStyle = '#059669'; ctx.fillText('● 실행 중', 12, 22);
   } else if (mode === 'paused') {
@@ -888,6 +929,35 @@ function updateReadout() {
   bar.style.width = pct + '%';
   $('rScore').textContent = currentScore().toFixed(1);
   $('rBest').textContent = bestScoreText();
+  updateSettleCd();
+}
+
+function updateSettleCd() {
+  const el = $('settleCd');
+  const rs = $('rSettle');
+  const left = Math.max(0, SETTLE_HOLD - settleAcc);
+  const inHold = mode === 'running' && everOut && settleAcc > 0 && !fellOver && !settled;
+  if (settled) {
+    el.hidden = false;
+    el.classList.add('ok');
+    $('settleCdNum').textContent = '성공';
+    $('settleCdMsg').textContent = '기록됨';
+    rs.textContent = '성공';
+    rs.className = 'val ok';
+    return;
+  }
+  el.classList.remove('ok');
+  if (inHold) {
+    el.hidden = false;
+    $('settleCdNum').textContent = String(Math.max(1, Math.ceil(left - 1e-9)));
+    $('settleCdMsg').textContent = '1% 오차 유지';
+    rs.textContent = left.toFixed(1);
+    rs.className = 'val';
+  } else {
+    el.hidden = true;
+    rs.textContent = fellOver ? '실격' : '5.0';
+    rs.className = 'val' + (fellOver ? ' bad' : '');
+  }
 }
 
 function currentScore() {
@@ -901,12 +971,12 @@ function saveScores(list) {
   try { localStorage.setItem(LS_SCORE, JSON.stringify(list)); } catch (_) {}
 }
 function bestScoreText() {
-  const ok = loadScores().filter(e => !e.fell);
+  const ok = loadScores().filter(e => e.settled);
   if (!ok.length) return '–';
   return Math.max.apply(null, ok.map(e => e.score)).toFixed(1);
 }
 function commitScore() {
-  if (scoreSaved || simT < 2) return;
+  if (scoreSaved || (!settled && !fellOver) || simT < 2) return;
   scoreSaved = true;
   const list = loadScores();
   list.unshift({
@@ -914,6 +984,7 @@ function commitScore() {
     t: +simT.toFixed(2),
     ise: +iseTh.toFixed(3),
     fell: fellOver,
+    settled: settled,
     kPt: K.kPt, kIt: K.kIt, kDt: K.kDt,
     at: Date.now()
   });
@@ -925,15 +996,17 @@ function renderScores() {
   if (!el) return;
   const list = loadScores();
   if (!list.length) {
-    el.innerHTML = '<div class="hintline" style="margin:0">아직 기록이 없습니다. 2초 이상 실행한 뒤 초기화하면 남습니다.</div>';
+    el.innerHTML = '<div class="hintline" style="margin:0">아직 기록이 없습니다. |θ|가 초기각의 1% 안에 5초 머물면 성공으로 저장됩니다.</div>';
     return;
   }
   el.innerHTML = list.slice(0, 8).map(e => {
     const d = new Date(e.at);
     const p = n => String(n).padStart(2, '0');
     const when = p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    return '<div class="score-row' + (e.fell ? ' fail' : '') + '">'
-      + '<span class="sc">' + (e.fell ? '실격 ' : '') + e.score.toFixed(1) + '</span>'
+    const tag = e.fell ? '실격 ' : (e.settled ? '성공 ' : '');
+    const cls = e.fell ? ' fail' : (e.settled ? ' ok' : '');
+    return '<div class="score-row' + cls + '">'
+      + '<span class="sc">' + tag + e.score.toFixed(1) + '</span>'
       + '<span class="meta">' + e.t.toFixed(1) + 's · P' + e.kPt + ' I' + e.kIt + ' D' + e.kDt
       + ' · ' + when + '</span></div>';
   }).join('');
@@ -944,7 +1017,7 @@ function renderScores() {
  * ============================================================ */
 const SERIES = [
   { key:'th', label:'θ (rad)', color:'#2563eb', axis:'L', on:true  },
-  { key:'x',  label:'x (m)',   color:'#059669', axis:'L', on:false },
+  { key:'x',  label:'x (m)',   color:'#059669', axis:'L', on:true  },
   { key:'F',  label:'F (N)',   color:'#dc2626', axis:'R', on:true  },
 ];
 
@@ -1068,28 +1141,10 @@ function fmtTick(v) {
 /* ============================================================
  *  8. 터치 / 포인터 입력
  * ============================================================ */
-function pointerDir(e) {
-  const r = stage.getBoundingClientRect();
-  return (e.clientX - r.left) >= lastCartPx ? 1 : -1;
-}
-
 stage.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (mode !== 'running') start();
-  try { stage.setPointerCapture(e.pointerId); } catch (_) {}
-  holdDir = pointerDir(e);
 }, { passive: false });
-
-stage.addEventListener('pointermove', e => {
-  if (!holdDir) return;
-  e.preventDefault();
-  holdDir = pointerDir(e);
-}, { passive: false });
-
-const endHold = () => { holdDir = 0; if (!pulseLeft) p.FD = 0; };
-stage.addEventListener('pointerup', endHold);
-stage.addEventListener('pointercancel', endHold);
-stage.addEventListener('pointerleave', endHold);
 
 /* ============================================================
  *  9. 초기화
@@ -1103,11 +1158,10 @@ camX = S[0];
 showValues();
 updateHint();
 updatePosNote();
+setPos(true);
 
 $('btnRun').onclick   = () => (mode === 'running' ? stop() : start());
 $('btnReset').onclick = reset;
-$('btnPushL').onclick = () => pulsePush(-1);
-$('btnPushR').onclick = () => pulsePush(1);
 $('btnPos').onclick   = () => setPos(!posOn);
 $('btnClearScores').onclick = () => {
   if (!confirm('이 기기의 점수를 모두 지울까요?')) return;

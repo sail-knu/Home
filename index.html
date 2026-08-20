@@ -1242,15 +1242,19 @@
 
             <article class="sim-block" id="sim-pid">
                 <h3 class="subsection-title">역진자 PID 제어</h3>
-                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 외란 밀기, 위치 제어</p>
+                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 위치 제어</p>
                 <div class="demo-pid" id="demo-pid">
-                    <p class="tip"><b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요. 화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다. 아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다. 초기화하거나 넘어지면 이번 점수가 이 기기에만 남습니다.</p>
+                    <p class="tip"><b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub>와 위치 게인을 직접 움직이며 진자를 세우고 카트를 x = 0으로 되돌리세요. |θ|가 초기각의 <b>1%</b> 안에 <b>5초</b> 머물면 성공으로 멈추고 이 기기에 기록됩니다.</p>
                     <div class="demo-layout">
                     <div class="demo-stage-col">
                     <div class="stagewrap" id="pid-stageWrap">
                         <div class="card">
                             <div class="stage-canvas">
                                 <canvas id="pid-stage"></canvas>
+                                <div id="pid-settleCd" class="settle-cd" hidden>
+                                    <span class="settle-cd-num" id="pid-settleCdNum">5</span>
+                                    <span class="settle-cd-msg" id="pid-settleCdMsg">1% 오차 유지</span>
+                                </div>
                                 <div class="demo-toolbar">
                                     <button type="button" id="pid-btnRun" class="primary">시작</button>
                                     <button type="button" id="pid-btnReset">초기화</button>
@@ -1266,6 +1270,7 @@
                                 <div class="fbar"><u></u><i id="pid-fBar"></i></div>
                                 <div class="scorebar">
                                     <div class="cell"><span class="k">점수 (높을수록 좋음)</span><span class="val" id="pid-rScore">0.0</span></div>
+                                    <div class="cell"><span class="k">남은 시간</span><span class="val" id="pid-rSettle">5.0</span></div>
                                     <div class="cell"><span class="k">내 최고</span><span class="val" id="pid-rBest">–</span></div>
                                 </div>
                             </div>
@@ -1275,7 +1280,7 @@
                         <h2>내 기록 (이 기기)</h2>
                         <div class="body">
                             <div id="pid-scoreList" class="scorelist"></div>
-                            <p class="hintline">점수 = t / (0.25 + ∫θ² dt). 넘어지지 않고 오래, 작게 흔들수록 높습니다.</p>
+                            <p class="hintline">|θ| ≤ 0.01·|θ₀| 를 5초 유지하면 성공. 점수 = t / (0.25 + ∫θ² dt).</p>
                             <button type="button" id="pid-btnClearScores" style="width:100%;margin-top:8px">기록 지우기</button>
                         </div>
                     </div>
@@ -1291,26 +1296,26 @@
                         <h2>PID 게인 (실행 중에도 조절 가능)</h2>
                         <div class="body">
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="pid-vPt">100</span></div>
-                                <input type="range" id="pid-kPt" min="0" max="300" step="1" value="100">
+                                <div class="sl-top"><span class="sl-name">k<sub>P</sub></span><span class="sl-desc">비례 — 기울면 되미는 힘</span><span class="sl-val" id="pid-vPt">0</span></div>
+                                <input type="range" id="pid-kPt" min="0" max="300" step="1" value="0">
                             </div>
                             <div class="sl">
                                 <div class="sl-top"><span class="sl-name">k<sub>I</sub></span><span class="sl-desc">적분 — 남은 오차 제거</span><span class="sl-val" id="pid-vIt">0</span></div>
                                 <input type="range" id="pid-kIt" min="0" max="150" step="1" value="0">
                             </div>
                             <div class="sl">
-                                <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="pid-vDt">20</span></div>
-                                <input type="range" id="pid-kDt" min="0" max="100" step="0.5" value="20">
+                                <div class="sl-top"><span class="sl-name">k<sub>D</sub></span><span class="sl-desc">미분 — 흔들림 감쇠</span><span class="sl-val" id="pid-vDt">0.0</span></div>
+                                <input type="range" id="pid-kDt" min="0" max="100" step="0.5" value="0">
                             </div>
                             <div class="note" id="pid-hint"></div>
-                            <p class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω &nbsp;(각도만 제어하면 진자는 서지만 카트는 멈추지 않고 계속 흘러갑니다 — 아래 <b>위치 제어</b>를 켜 보세요)</p>
+                            <p class="hintline">F = −k<sub>P</sub>·θ − k<sub>I</sub>·∫θdt − k<sub>D</sub>·ω + k<sub>Px</sub>·x + k<sub>Dx</sub>·v</p>
                         </div>
                     </div>
                     <div class="card">
                         <h2>위치 제어 (카트를 x = 0으로 되돌리기)</h2>
                         <div class="body">
-                            <button type="button" id="pid-btnPos" aria-controls="pid-posBody" aria-expanded="false">위치 제어 켜기</button>
-                            <div id="pid-posBody" hidden>
+                            <button type="button" id="pid-btnPos" class="on" aria-controls="pid-posBody" aria-expanded="true">✓ 위치 제어 켜짐 — 누르면 끄기</button>
+                            <div id="pid-posBody">
                                 <div class="sl" style="margin-top:10px">
                                     <div class="sl-top"><span class="sl-name">k<sub>Px</sub></span><span class="sl-desc">위치 — x = 0으로 되돌림</span><span class="sl-val" id="pid-vPx">2.0</span></div>
                                     <input type="range" id="pid-kPx" min="0" max="10" step="0.1" value="2">
@@ -1325,17 +1330,12 @@
                         </div>
                     </div>
                     <div class="card">
-                        <h2>초기 각도 · 외란</h2>
+                        <h2>초기 각도</h2>
                         <div class="body">
                             <div class="sl">
                                 <div class="sl-top"><span class="sl-name">θ₀</span><span class="sl-desc">시작할 때 기운 정도</span><span class="sl-val" id="pid-vTh">0.35</span></div>
                                 <input type="range" id="pid-sth" min="-0.60" max="0.60" step="0.01" value="0.35">
                             </div>
-                            <div class="grid2" style="margin-top:8px">
-                                <button type="button" class="purple" id="pid-btnPushL">← 밀기</button>
-                                <button type="button" class="purple" id="pid-btnPushR">밀기 →</button>
-                            </div>
-                            <p class="hintline">밀기 버튼은 짧은 충격(25 N × 0.1 s), 화면을 길게 누르면 누르는 동안 계속 힘이 가해집니다.</p>
                         </div>
                     </div>
                     </div>

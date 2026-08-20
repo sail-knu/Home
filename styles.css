@@ -1854,6 +1854,43 @@ a.member-card {
   position: relative;
 }
 
+.demo-pid .settle-cd {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: #0f172a28;
+}
+
+.demo-pid .settle-cd[hidden] {
+  display: none;
+}
+
+.demo-pid .settle-cd-num {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 84px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--demo-accent, #0c7a73);
+  text-shadow: 0 1px 0 #fff, 0 8px 24px #0f172a33;
+}
+
+.demo-pid .settle-cd-msg {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--demo-text, #1e3a8a);
+}
+
+.demo-pid .settle-cd.ok .settle-cd-num {
+  font-size: 40px;
+  color: var(--demo-ok, #177a4c);
+}
+
 .demo-pid #pid-stage {
   width: 100%;
   height: 240px;
@@ -1986,6 +2023,15 @@ a.member-card {
 }
 
 .demo-pid .score-row.fail .sc {
+  color: var(--demo-warn);
+}
+
+.demo-pid .score-row.ok .sc,
+.demo-pid .scorebar .val.ok {
+  color: var(--demo-ok, #177a4c);
+}
+
+.demo-pid .scorebar .val.bad {
   color: var(--demo-warn);
 }
 
