@@ -2467,17 +2467,6 @@ a.member-card {
   }
 }
 
-html.has-sail-cursor,
-html.has-sail-cursor * {
-  cursor: none !important;
-}
-
-html.has-sail-cursor iframe,
-html.has-sail-cursor input,
-html.has-sail-cursor textarea {
-  cursor: auto !important;
-}
-
 .sail-cursor {
   position: fixed;
   inset: 0;
