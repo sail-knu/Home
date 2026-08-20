@@ -806,10 +806,10 @@
   window.refreshParticles();
 
   (function initSailCursor() {
-    if (window.matchMedia("(hover: none), (pointer: coarse), (prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) return;
 
     const root = document.createElement("div");
-    root.className = "sail-cursor";
+    root.className = "sail-cursor is-on";
     root.setAttribute("aria-hidden", "true");
     root.innerHTML =
       '<div class="sail-cursor-obstacle"></div>' +

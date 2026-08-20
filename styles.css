@@ -2459,93 +2459,87 @@ a.member-card {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html.has-sail-cursor,
-  html.has-sail-cursor * {
-    cursor: none !important;
-  }
+html.has-sail-cursor,
+html.has-sail-cursor * {
+  cursor: none !important;
+}
 
-  html.has-sail-cursor iframe,
-  html.has-sail-cursor input,
-  html.has-sail-cursor textarea {
-    cursor: auto !important;
-  }
+html.has-sail-cursor iframe,
+html.has-sail-cursor input,
+html.has-sail-cursor textarea {
+  cursor: auto !important;
+}
 
-  .sail-cursor {
-    position: fixed;
-    inset: 0;
-    z-index: 4000;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
+.sail-cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
 
-  .sail-cursor.is-on { opacity: 1; }
+.sail-cursor.is-on { opacity: 1; }
 
-  .sail-cursor-obstacle {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 48px;
-    height: 48px;
-    margin: -24px 0 0 -24px;
-    border-radius: 50%;
-    background: rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), 0.32);
-    border: 1.5px solid rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), 0.55);
-    box-shadow:
-      0 0 0 4px rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), 0.08),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-    will-change: transform;
-    transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease;
-  }
+.sail-cursor-obstacle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border-radius: 50%;
+  background: rgba(29, 78, 137, 0.32);
+  border: 1.5px solid rgba(29, 78, 137, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(29, 78, 137, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  will-change: transform;
+  transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease;
+}
 
-  .sail-cursor-obstacle::after {
-    content: "";
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    border: 1.5px dashed rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), 0.42);
-    animation: sail-cursor-spin 9s linear infinite;
-  }
+.sail-cursor-obstacle::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(29, 78, 137, 0.42);
+  animation: sail-cursor-spin 9s linear infinite;
+}
 
-  .sail-cursor-pointer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 22px;
-    height: 22px;
-    overflow: visible;
-    filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
-    will-change: transform;
-  }
+.sail-cursor-pointer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
+  will-change: transform;
+}
 
-  .sail-cursor-pointer path {
-    fill: var(--primary-color);
-    stroke: #fff;
-    stroke-width: 1.6;
-    stroke-linejoin: round;
-    paint-order: stroke fill;
-  }
+.sail-cursor-pointer path {
+  fill: #1d4e89;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
 
-  .sail-cursor.is-hover .sail-cursor-obstacle {
-    width: 58px;
-    height: 58px;
-    margin: -29px 0 0 -29px;
-  }
+.sail-cursor.is-hover .sail-cursor-obstacle {
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+}
 
-  .sail-cursor.is-hover .sail-cursor-pointer {
-    transform-origin: 2px 2px;
-  }
+.sail-cursor.is-down .sail-cursor-obstacle {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+}
 
-  .sail-cursor.is-down .sail-cursor-obstacle {
-    width: 38px;
-    height: 38px;
-    margin: -19px 0 0 -19px;
-  }
-
-  @keyframes sail-cursor-spin {
-    to { transform: rotate(360deg); }
-  }
+@keyframes sail-cursor-spin {
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
