@@ -164,12 +164,25 @@
                     </a>
                 </div>
             </div>
-            <button type="button" class="scroll-indicator" id="explore-next" aria-label="Explore Research Overview">
+            <button type="button" class="scroll-indicator" id="explore-next" aria-label="Explore latest news">
                 <div class="scroll-chevron" aria-hidden="true">
                     <svg class="icon"><use href="#i-chevron"></use></svg>
                 </div>
                 <p>Explore</p>
             </button>
+        </section>
+
+        <section id="home-news" class="section pt-50">
+            <div class="section-container">
+                <div class="section-header home-news-header">
+                    <div>
+                        <h2 class="section-title">News</h2>
+                        <div class="underline"></div>
+                    </div>
+                    <a href="#news" class="home-news-more" data-i18n="news_view_all">전체 보기</a>
+                </div>
+                <div class="news-list" id="home-news-list"></div>
+            </div>
         </section>
 
         <section id="research-overview" class="section pt-50">
@@ -179,7 +192,7 @@
                     <div class="underline"></div>
                 </div>
                 <div class="research-grid">
-                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
+                    <div class="research-card cursor-pointer">
                         <div class="research-top">
                             <span class="research-index">01</span>
                             <div class="research-icon research-icon-safe">
@@ -193,7 +206,7 @@
                             <li>Safety-critical planning</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
+                    <div class="research-card cursor-pointer">
                         <div class="research-top">
                             <span class="research-index">02</span>
                             <div class="research-icon research-icon-predict">
@@ -208,7 +221,7 @@
                             <li>Data-driven modeling</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
+                    <div class="research-card cursor-pointer">
                         <div class="research-top">
                             <span class="research-index">03</span>
                             <div class="research-icon">
@@ -1402,6 +1415,7 @@
         "r7_card": `Bearing-based formation tracking keeps multiple vehicles in a relative formation while they move. Output regulation and control barrier functions hold the formation and avoid obstacles under disturbance.`,
         "robot_lemo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance experiments.`,
         "email_tba": `Email to be added`,
+        "news_view_all": `View all`,
         "no_pub_yet": `No publications listed yet.`,
         "course_intro": `Undergraduate lab simulators. Pick one with the buttons below.`,
         "course_intro_mech": `Interactive demos for sensing, filtering, and modeling. Pick a lecture, then a simulator.`,

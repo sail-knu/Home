@@ -35,8 +35,19 @@
   });
 
   document.getElementById("explore-next")?.addEventListener("click", () => {
-    document.getElementById("research-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("home-news")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+
+  (function fillHomeNews() {
+    const dest = document.getElementById("home-news-list");
+    const items = document.querySelectorAll("#news .news-list > .news-item");
+    if (!dest || !items.length) return;
+    [...items].slice(0, 3).forEach((item) => {
+      const clone = item.cloneNode(true);
+      clone.addEventListener("click", () => navigateToSection("#news"));
+      dest.appendChild(clone);
+    });
+  })();
 
   if (hamburger && navPanel) {
     hamburger.addEventListener("click", () => {
@@ -135,10 +146,11 @@
     collapseResearchCards();
   }
 
-  document.querySelectorAll("#lecture .lecture-card").forEach((card) => {
+  document.querySelectorAll("#lecture .lecture-card, .research-grid .research-card").forEach((card) => {
     card.addEventListener("click", () => {
       const on = card.classList.contains("selected");
-      document.querySelectorAll("#lecture .lecture-card.selected").forEach((c) => {
+      const scope = card.closest(".research-grid") || document.getElementById("lecture");
+      scope.querySelectorAll(".lecture-card.selected, .research-card.selected").forEach((c) => {
         c.classList.remove("selected");
       });
       if (!on) card.classList.add("selected");
