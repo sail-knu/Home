@@ -804,46 +804,4 @@
   };
 
   window.refreshParticles();
-
-  (function initSailCursor() {
-    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) return;
-
-    const root = document.createElement("div");
-    root.className = "sail-cursor is-on";
-    root.setAttribute("aria-hidden", "true");
-    root.innerHTML =
-      '<div class="sail-cursor-obstacle"></div>' +
-      '<svg class="sail-cursor-pointer" viewBox="0 0 24 24" fill="none">' +
-        '<path d="M3.1 2.6 3.2 18.8 8.3 13.9 13.4 22.5 16.9 20.7 11.6 12.4 20.1 12.4Z"/>' +
-      '</svg>';
-    document.body.appendChild(root);
-    document.documentElement.classList.add("has-sail-cursor");
-
-    const obstacle = root.querySelector(".sail-cursor-obstacle");
-    const pointer = root.querySelector(".sail-cursor-pointer");
-    const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card, .news-item";
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
-
-    window.addEventListener("mousemove", (e) => {
-      x = e.clientX;
-      y = e.clientY;
-      const overFrame = e.target.closest("iframe, video");
-      root.classList.toggle("is-on", !overFrame);
-      document.documentElement.classList.toggle("has-sail-cursor", !overFrame);
-      root.classList.toggle("is-hover", !overFrame && !!e.target.closest(hoverSel));
-    });
-    window.addEventListener("mousedown", () => root.classList.add("is-down"));
-    window.addEventListener("mouseup", () => root.classList.remove("is-down"));
-    document.addEventListener("mouseleave", () => root.classList.remove("is-on"));
-    document.addEventListener("mouseenter", () => root.classList.add("is-on"));
-
-    function tick() {
-      const pos = "translate3d(" + x + "px," + y + "px,0)";
-      obstacle.style.transform = pos;
-      pointer.style.transform = pos;
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  })();
 })();

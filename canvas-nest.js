@@ -336,6 +336,15 @@
       var k;
       for (k = 0; k < n; k++) robots[k].hits = scanLidar(robots[k]);
       for (k = 0; k < n; k++) steer(robots[k], robots[k].hits);
+      if (mouse.x !== null) {
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, mouse.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(" + color + "," + opacity + ")";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(" + color + ",0.55)";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+      }
       for (k = 0; k < n; k++) {
         drawTrail(robots[k]);
         drawLidar(robots[k], robots[k].hits);
