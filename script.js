@@ -812,13 +812,15 @@
     root.className = "sail-cursor";
     root.setAttribute("aria-hidden", "true");
     root.innerHTML =
-      '<div class="sail-cursor-obstacle">' +
-        '<div class="sail-cursor-core"></div>' +
-      '</div>';
+      '<div class="sail-cursor-obstacle"></div>' +
+      '<svg class="sail-cursor-pointer" viewBox="0 0 24 24" fill="none">' +
+        '<path d="M3.1 2.6 3.2 18.8 8.3 13.9 13.4 22.5 16.9 20.7 11.6 12.4 20.1 12.4Z"/>' +
+      '</svg>';
     document.body.appendChild(root);
     document.documentElement.classList.add("has-sail-cursor");
 
     const obstacle = root.querySelector(".sail-cursor-obstacle");
+    const pointer = root.querySelector(".sail-cursor-pointer");
     const hoverSel = "a, button, .chip-btn, .tab-btn, .sim-nav-btn, .sim-lec-btn, .sim-pick-btn, .bento-item, .cursor-pointer, .member-card, .lecture-card-link, .hamburger, .research-card, .news-item";
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
@@ -837,7 +839,9 @@
     document.addEventListener("mouseenter", () => root.classList.add("is-on"));
 
     function tick() {
-      obstacle.style.transform = "translate3d(" + x + "px," + y + "px,0)";
+      const pos = "translate3d(" + x + "px," + y + "px,0)";
+      obstacle.style.transform = pos;
+      pointer.style.transform = pos;
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
