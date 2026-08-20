@@ -164,22 +164,22 @@
                     </a>
                 </div>
             </div>
-            <div class="scroll-indicator">
+            <button type="button" class="scroll-indicator" id="explore-next" aria-label="Explore Research Overview">
                 <div class="scroll-chevron" aria-hidden="true">
                     <svg class="icon"><use href="#i-chevron"></use></svg>
                 </div>
                 <p>Explore</p>
-            </div>
+            </button>
         </section>
 
-        <section class="section pt-50">
+        <section id="research-overview" class="section pt-50">
             <div class="section-container">
                 <div class="section-header">
                     <h2 class="section-title">Research Overview</h2>
                     <div class="underline"></div>
                 </div>
                 <div class="research-grid">
-                    <div class="research-card cursor-pointer is-active" data-core="safe" role="button" tabindex="0" aria-pressed="true">
+                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
                         <div class="research-top">
                             <span class="research-index">01</span>
                             <div class="research-icon research-icon-safe">
@@ -193,7 +193,7 @@
                             <li>Safety-critical planning</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer" data-core="predict" role="button" tabindex="0" aria-pressed="false">
+                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
                         <div class="research-top">
                             <span class="research-index">02</span>
                             <div class="research-icon research-icon-predict">
@@ -208,7 +208,7 @@
                             <li>Data-driven modeling</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer" data-core="mobile" role="button" tabindex="0" aria-pressed="false">
+                    <div class="research-card cursor-pointer" onclick="navigateToSection('#research')">
                         <div class="research-top">
                             <span class="research-index">03</span>
                             <div class="research-icon">
@@ -222,38 +222,6 @@
                             <li>Field experiments</li>
                         </ul>
                     </div>
-                </div>
-
-                <div class="core-method" id="coreMethod">
-                    <div class="core-method-bar">
-                        <div>
-                            <p class="core-method-kicker">Insight</p>
-                            <h3 class="core-method-title" data-i18n="core_method_title">한 장면으로 보는 방법론</h3>
-                        </div>
-                        <button type="button" class="core-method-skip" id="coreMethodSkip">애니메이션 건너뛰기</button>
-                    </div>
-                    <p class="core-method-lead" data-i18n="core_method_lead">코어를 고르면 방법론이 세 박자로 재생됩니다. 수식 없이, 무엇이 안전한지·어떻게 예측하는지·어디서 닫히는지.</p>
-
-                    <div class="core-method-stage">
-                        <canvas id="coreMethodCanvas" width="960" height="400" aria-hidden="true"></canvas>
-                        <div class="core-method-progress" aria-hidden="true"><i id="coreMethodProg"></i></div>
-                    </div>
-
-                    <div class="core-method-caption">
-                        <div class="core-method-step" id="coreMethodStep">1 / 3</div>
-                        <p class="core-method-beat-title" id="coreMethodBeatTitle"></p>
-                        <p class="core-method-body" id="coreMethodBeatBody"></p>
-                    </div>
-
-                    <div class="core-method-nav">
-                        <button type="button" class="core-method-arrow" id="coreMethodPrev" aria-label="Previous beat">←</button>
-                        <div class="core-method-dots" id="coreMethodDots"></div>
-                        <button type="button" class="core-method-arrow" id="coreMethodNext" aria-label="Next beat">→</button>
-                    </div>
-
-                    <p class="core-method-foot">
-                        <a href="#research" class="core-method-more" data-i18n="core_method_more">논문·영상은 Research에서</a>
-                    </p>
                 </div>
             </div>
         </section>
@@ -1408,7 +1376,6 @@
     </section>
 
     <script src="script.js" defer></script>
-    <script src="core-method.js" defer></script>
     <script src="lecture/future-tech/inverted-pendulum-pid_embed.js" defer></script>
     <script
       color="29,78,137"
@@ -1426,9 +1393,6 @@
         "lab_overview": `<p><strong>SAIL</strong> (Safe Autonomy &amp; Intelligence Lab) studies planning and control algorithms that let mobile robots and other autonomous vehicles move in complex environments <strong>with formal safety guarantees</strong>. We build controllers that can be reasoned about, and systems that run on real robots.</p><p>Our main tools are <strong>model predictive control (MPC)</strong>, <strong>control barrier functions (CBFs)</strong>, <strong>reachability analysis</strong>, and learning / data-driven modeling. We validate the work through indoor and outdoor autonomous navigation, collision avoidance, and robot control.</p>`,
         "do_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-scope"></use></svg> What we do</h3><ul class="custom-bullet-list"><li>Safe trajectory planning and control</li><li>Collision avoidance with MPC, CBFs, and reachability</li><li>Learning-based dynamics modeling and control</li><li>Field tests and international publications</li></ul>`,
         "career_block": `<h3><svg class="icon" aria-hidden="true"><use href="#i-helm"></use></svg> Who should apply</h3><ul class="custom-bullet-list"><li>Undergraduates and graduate students interested in control, robotics, and autonomy</li><li>Students who want to put math and dynamics onto real systems</li><li>Students who like to experiment in Python, C++, or MATLAB</li></ul>`,
-        "core_method_title": `The method, in one scene`,
-        "core_method_lead": `Pick a core. The method plays in three beats — what stays safe, how we predict, and where the loop closes. No equations.`,
-        "core_method_more": `Papers and videos are on Research`,
         "r1_card": `We treat the turning radius of nonholonomic vehicles as a constraint and generate several behavior candidates—tracking, avoidance, and berthing—instead of a single trajectory. A turning-circle control barrier function then certifies each mode so that multimodal planning can pick a safe one.`,
         "r2_card": `We learn surface-vehicle dynamics and imitate nonlinear MPC policies with behavior cloning. Perception-guided MPC follows detected navigable regions, and MARQA connects planning and control through LLM-based ship question answering.`,
         "r3_card": `Disturbance and model error are wrapped in a tube so cascade tube-MPC and L1 adaptation keep a safe region. We apply this to ship berthing, USV recovery, and quadrotor flight, and model nonlinear dynamics with a parameter-varying Koopman operator.`,
