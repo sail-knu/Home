@@ -934,6 +934,16 @@ html[data-lang="ko"] .univ-lockup {
   margin-top: 16px;
 }
 
+.video-stack:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.video-stack:has(> :only-child) > * {
+  width: 100%;
+  max-width: calc(50% - 8px);
+}
+
 .video-item {
   margin: 0;
   max-width: none;
@@ -1444,12 +1454,20 @@ a.member-card {
 
 .jcr-pill {
   display: inline-block;
-  margin-left: 8px;
-  font-size: 0.72rem;
-  padding: 2px 8px;
+  vertical-align: 0.12em;
+  margin-left: 0.4em;
+  padding: 0.12em 0.58em;
   border-radius: 999px;
-  background: rgba(46, 196, 182, 0.14);
-  color: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 38%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
+  font-family: "Outfit", sans-serif;
+  font-size: 0.68em;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .year-heading {
@@ -2310,6 +2328,7 @@ a.member-card {
   .glass-panel { padding: 22px; }
   .banner-content { padding: 22px 18px; }
   .video-stack { grid-template-columns: 1fr; }
+  .video-stack:has(> :only-child) > * { max-width: 100%; }
   .robot-media { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
