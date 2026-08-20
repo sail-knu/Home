@@ -146,6 +146,13 @@
     collapseResearchCards();
   }
 
+  function syncOverviewVideos() {
+    const core = document.querySelector(".research-grid .research-card.selected")?.dataset.core;
+    document.querySelectorAll(".overview-videos").forEach((el) => {
+      el.hidden = el.dataset.core !== core;
+    });
+  }
+
   document.querySelectorAll("#lecture .lecture-card, .research-grid .research-card").forEach((card) => {
     card.addEventListener("click", () => {
       const on = card.classList.contains("selected");
@@ -154,6 +161,7 @@
         c.classList.remove("selected");
       });
       if (!on) card.classList.add("selected");
+      syncOverviewVideos();
     });
   });
 

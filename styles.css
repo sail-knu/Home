@@ -673,6 +673,18 @@ html[data-lang="ko"] .univ-lockup {
     color-mix(in srgb, var(--primary-color) 12%, #fff);
 }
 
+.overview-videos {
+  margin-top: 18px;
+}
+
+.overview-videos[hidden] {
+  display: none;
+}
+
+#research-overview .video-stack {
+  margin-top: 0;
+}
+
 .research-card:hover .research-icon-predict {
   background:
     radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 28%, #fff), transparent 60%),
@@ -1365,6 +1377,13 @@ a.member-card:hover {
 }
 
 .pub-list a:hover {
+  color: var(--primary-color);
+}
+
+.pub-list em,
+.news-item em {
+  font-style: italic;
+  font-weight: 700;
   color: var(--primary-color);
 }
 

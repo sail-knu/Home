@@ -192,7 +192,7 @@
                     <div class="underline"></div>
                 </div>
                 <div class="research-grid">
-                    <div class="research-card cursor-pointer">
+                    <div class="research-card cursor-pointer" data-core="safe">
                         <div class="research-top">
                             <span class="research-index">01</span>
                             <div class="research-icon research-icon-safe">
@@ -206,7 +206,7 @@
                             <li>Safety-critical planning</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer">
+                    <div class="research-card cursor-pointer" data-core="predict">
                         <div class="research-top">
                             <span class="research-index">02</span>
                             <div class="research-icon research-icon-predict">
@@ -221,7 +221,7 @@
                             <li>Data-driven modeling</li>
                         </ul>
                     </div>
-                    <div class="research-card cursor-pointer">
+                    <div class="research-card cursor-pointer" data-core="mobility">
                         <div class="research-top">
                             <span class="research-index">03</span>
                             <div class="research-icon">
@@ -234,6 +234,36 @@
                             <li>Mobile robots</li>
                             <li>Field experiments</li>
                         </ul>
+                    </div>
+                </div>
+                <div class="overview-videos" data-core="safe" hidden>
+                    <div class="video-stack">
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/nMzKQgqXK3o" title="Safety-Guaranteed Ship Berthing using Cascade Tube-based MPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/t__N0BX2tBQ" title="CBF-based COLREGs-compliant collision avoidance, multi vessels" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-videos" data-core="predict" hidden>
+                    <div class="video-stack">
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/NskstBwB5Mk" title="Multimodal Trajectory Planning - Unicycle" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/p2MESqGvOSE" title="NMPC autonomous navigation in a canal environment" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-videos" data-core="mobility" hidden>
+                    <div class="video-stack">
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/vTFZQQuFJvI" title="Navigable Area Detection and Perception-guided MPC" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                        <div class="video-embed">
+                            <iframe src="https://www.youtube-nocookie.com/embed/rMhYUBd4eCY" title="Mobile Robot MPC — Human Avoidance Control" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -570,7 +600,7 @@
                                 </div>
                                 <h4 class="rep-pub-title">Representative publications</h4>
                                 <ul class="pub-list">
-                                    <li>김응현, <strong>이찬규</strong>, 김진환*, "혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획," 한국로봇종합학술대회, 2024. (Most Outstanding Paper Award)</li>
+                                    <li>김응현, <strong>이찬규</strong>, 김진환*, "혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획," <em>한국로봇종합학술대회</em>, 2024. (Most Outstanding Paper Award)</li>
                                 </ul>
                             </div>
                         </div>
@@ -963,7 +993,7 @@
                     </div>
                     <h3 class="subsection-title mt-5">Publications</h3>
                     <ul class="pub-list">
-                        <li>유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," 제어로봇시스템학회 학술대회, 2026.</li>
+                        <li>유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," <em>제어로봇시스템학회 학술대회</em>, 2026.</li>
                     </ul>
                 </div>
             </div>
@@ -1078,25 +1108,25 @@
             <div id="domestic-conference" class="tab-content" style="display:none;">
                 <h4 class="year-heading">KNU ~</h4>
                 <ul class="pub-list">
-                    <li>[16] 유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," 제어로봇시스템학회 학술대회, 2026.</li>
-                    <li>[15] 이찬규*, "회전원 기반 제어 장벽 함수를 이용한 멀티모달 경로 계획," 제어로봇시스템학회 학술대회, 2026.</li>
-                    <li>[14] 신영하, 이찬규, 김진환*, "유무인 상호작용을 고려한 대형 언어모델 기반 자율 운항 선박 질의응답 프레임워크," 한국해양과학기술협의회 춘계 공동학술대회, 2026.</li>
-                    <li>[13] 이찬규*, 박진욱, 김진환, "제어 장벽함수를 활용한 효율적인 국제해상충돌예방규칙 준수 충돌회피 알고리즘," 한국 수중수상로봇기술연구회 추계학술대회, 2025.</li>
+                    <li>[16] 유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," <em>제어로봇시스템학회 학술대회</em>, 2026.</li>
+                    <li>[15] 이찬규*, "회전원 기반 제어 장벽 함수를 이용한 멀티모달 경로 계획," <em>제어로봇시스템학회 학술대회</em>, 2026.</li>
+                    <li>[14] 신영하, 이찬규, 김진환*, "유무인 상호작용을 고려한 대형 언어모델 기반 자율 운항 선박 질의응답 프레임워크," <em>한국해양과학기술협의회 춘계 공동학술대회</em>, 2026.</li>
+                    <li>[13] 이찬규*, 박진욱, 김진환, "제어 장벽함수를 활용한 효율적인 국제해상충돌예방규칙 준수 충돌회피 알고리즘," <em>한국 수중수상로봇기술연구회 추계학술대회</em>, 2025.</li>
                 </ul>
                 <h4 class="year-heading">Before KNU</h4>
                 <ul class="pub-list">
-                    <li>[12] 김응현, 이찬규, 김진환*, "혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획," 한국로봇종합학술대회, 2024. (Most Outstanding Paper Award)</li>
-                    <li>[11] 정동하, 김종휘, 이찬규, 김진환*, "자율운항 연구를 위한 다중 센서 데이터 소개," 한국해양공학회, 2023.</li>
-                    <li>[10] 김종휘, 정동하, 이찬규, 김진환*, "가항영역 탐지를 통한 운하 환경에서의 자율 경로 생성," 대한조선학회, 2023.</li>
-                    <li>[9] 박기용, 이찬규, 김진환*, "비선형 모델 예측 제어 기법을 이용한 두 개의 전방향 추진기를 갖는 선박의 자동 접안," 한국로봇종합학술대회, 2023. 02.</li>
-                    <li>[8] 이찬규, 김진환*, "선박을 위한 강인한 모델예측제어기반 경로 추종 및 장애물 회피," 제어로봇시스템학회, 2022. 06.</li>
-                    <li>[7] 이찬규, 김진환*, "불규칙파 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2022. 06.</li>
-                    <li>[6] 이찬규, 정동하, 김종휘, 조용훈, 김진환*, 최휘용, 이준식, "포항 운하에서의 자율 운항 실험을 위한 최적 경로 추종," 대한조선학회 추계학술대회, 2021. 11.</li>
-                    <li>[5] 김종휘, 정동하, 이찬규, 조용훈, 김진환*, 장왕석, 박세용, "포항 운하에서의 자율 운항 실험을 위한 다중 센서 융합," 한국해양공학회 추계학술대회, 2021. 10.</li>
-                    <li>[4] 이찬규, 김진환*, "파랑 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2021. 05.</li>
-                    <li>[3] 이찬규, 김진환*, "쌍축 쌍타 선박의 자동접안을 위한 모델예측제어," 한국해양과학기술협의회 공동학술대회, 2020. 07. (Outstanding Student Paper Presentation Award)</li>
-                    <li>[2] 장준우, 이찬규, 김진환*, "표적 운동 추정 과정에서의 다중모델 기반 필터의 모호성 해결," 제어로봇시스템학회, 2019. 05.</li>
-                    <li>[1] 김종휘, 김근환, 이찬규, 김진환*, 이필엽, "단안 카메라 영상을 이용한 합성곱 신경망 기반 선박 탐지 및 추적," 한국해양공학회 추계학술대회, 2018. 11.</li>
+                    <li>[12] 김응현, 이찬규, 김진환*, "혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획," <em>한국로봇종합학술대회</em>, 2024. (Most Outstanding Paper Award)</li>
+                    <li>[11] 정동하, 김종휘, 이찬규, 김진환*, "자율운항 연구를 위한 다중 센서 데이터 소개," <em>한국해양공학회</em>, 2023.</li>
+                    <li>[10] 김종휘, 정동하, 이찬규, 김진환*, "가항영역 탐지를 통한 운하 환경에서의 자율 경로 생성," <em>대한조선학회</em>, 2023.</li>
+                    <li>[9] 박기용, 이찬규, 김진환*, "비선형 모델 예측 제어 기법을 이용한 두 개의 전방향 추진기를 갖는 선박의 자동 접안," <em>한국로봇종합학술대회</em>, 2023. 02.</li>
+                    <li>[8] 이찬규, 김진환*, "선박을 위한 강인한 모델예측제어기반 경로 추종 및 장애물 회피," <em>제어로봇시스템학회</em>, 2022. 06.</li>
+                    <li>[7] 이찬규, 김진환*, "불규칙파 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," <em>한국해양과학기술협의회 공동학술대회</em>, 2022. 06.</li>
+                    <li>[6] 이찬규, 정동하, 김종휘, 조용훈, 김진환*, 최휘용, 이준식, "포항 운하에서의 자율 운항 실험을 위한 최적 경로 추종," <em>대한조선학회 추계학술대회</em>, 2021. 11.</li>
+                    <li>[5] 김종휘, 정동하, 이찬규, 조용훈, 김진환*, 장왕석, 박세용, "포항 운하에서의 자율 운항 실험을 위한 다중 센서 융합," <em>한국해양공학회 추계학술대회</em>, 2021. 10.</li>
+                    <li>[4] 이찬규, 김진환*, "파랑 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어," <em>한국해양과학기술협의회 공동학술대회</em>, 2021. 05.</li>
+                    <li>[3] 이찬규, 김진환*, "쌍축 쌍타 선박의 자동접안을 위한 모델예측제어," <em>한국해양과학기술협의회 공동학술대회</em>, 2020. 07. (Outstanding Student Paper Presentation Award)</li>
+                    <li>[2] 장준우, 이찬규, 김진환*, "표적 운동 추정 과정에서의 다중모델 기반 필터의 모호성 해결," <em>제어로봇시스템학회</em>, 2019. 05.</li>
+                    <li>[1] 김종휘, 김근환, 이찬규, 김진환*, 이필엽, "단안 카메라 영상을 이용한 합성곱 신경망 기반 선박 탐지 및 추적," <em>한국해양공학회 추계학술대회</em>, 2018. 11.</li>
                 </ul>
             </div>
         </div>
@@ -1158,7 +1188,6 @@
                         <div class="lecture-term">2025 Fall</div>
                         <h3>메카트로닉스</h3>
                         <p class="small-text">Undergraduate</p>
-                        <a href="#lecture-mechatronics" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
                     </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2025 Fall</div>
