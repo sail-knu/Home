@@ -1242,9 +1242,9 @@
 
             <article class="sim-block" id="sim-pid">
                 <h3 class="subsection-title">역진자 PID 제어</h3>
-                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 외란 밀기, 위치 제어 · <a href="lecture/future-tech/inverted-pendulum-arena_Mobile.html">교실 튜닝 경쟁</a></p>
+                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 외란 밀기, 위치 제어</p>
                 <div class="demo-pid" id="demo-pid">
-                    <p class="tip"><b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요. 화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다. 아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다. 같은 과제·같은 점수식으로 겨루려면 <a href="lecture/future-tech/inverted-pendulum-arena_Mobile.html">튜닝 경쟁</a>을 여세요.</p>
+                    <p class="tip"><b>실습:</b> k<sub>P</sub>·k<sub>I</sub>·k<sub>D</sub> 슬라이더를 직접 움직이며 진자가 어떻게 버티는지 보세요. 화면(카트)의 왼쪽/오른쪽을 <b>누르고 있으면</b> 그 방향으로 외란이 가해집니다. 아래 <b>위치 제어</b> 버튼을 켜면 카트를 x = 0으로 되돌리는 제어가 추가됩니다. 초기화하거나 넘어지면 이번 점수가 이 기기에만 남습니다.</p>
                     <div class="demo-layout">
                     <div class="demo-stage-col">
                     <div class="stagewrap" id="pid-stageWrap">
@@ -1264,7 +1264,19 @@
                                     <div class="cell c-f"><span class="k">F</span><span class="val" id="pid-rF">0.00</span><span class="u">N</span></div>
                                 </div>
                                 <div class="fbar"><u></u><i id="pid-fBar"></i></div>
+                                <div class="scorebar">
+                                    <div class="cell"><span class="k">점수 (높을수록 좋음)</span><span class="val" id="pid-rScore">0.0</span></div>
+                                    <div class="cell"><span class="k">내 최고</span><span class="val" id="pid-rBest">–</span></div>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>내 기록 (이 기기)</h2>
+                        <div class="body">
+                            <div id="pid-scoreList" class="scorelist"></div>
+                            <p class="hintline">점수 = t / (0.25 + ∫θ² dt). 넘어지지 않고 오래, 작게 흔들수록 높습니다.</p>
+                            <button type="button" id="pid-btnClearScores" style="width:100%;margin-top:8px">기록 지우기</button>
                         </div>
                     </div>
                     <div class="card" id="pid-chartCard">

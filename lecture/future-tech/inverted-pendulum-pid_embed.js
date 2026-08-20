@@ -106,6 +106,9 @@ let physAcc = 0, ctrlAcc = 0, logAcc = 0;
 let lastFrame = 0;
 let chartAcc = 0;
 let fellOver = false;
+let iseTh = 0;
+let scoreSaved = false;
+const LS_SCORE = 'sail-pid-personal-v1';
 
 /* 외란 */
 const PUSH_F = 25;         // 외란 크기 [N]
@@ -263,6 +266,8 @@ function stepPhysics() {
   S = rk4(S, ctrl.F, p, PHYS_DT);
   simT += PHYS_DT;
 
+  if (!fellOver) iseTh += S[2] * S[2] * PHYS_DT;
+
   // 데이터 기록
   logAcc += PHYS_DT;
   if (logAcc >= 1 / LOG_HZ - 1e-12) {
@@ -273,7 +278,11 @@ function stepPhysics() {
   }
 
   // 넘어짐 판정 (|θ| > 90°) — 계속 진행하되 배지로 표시
-  if (Math.abs(S[2]) > Math.PI / 2) fellOver = true;
+  if (Math.abs(S[2]) > Math.PI / 2) {
+    const first = !fellOver;
+    fellOver = true;
+    if (first) commitScore();
+  }
 }
 
 function frame(ts) {
@@ -305,6 +314,7 @@ function start() {
     readGains();
     S = [s0.x, s0.v, s0.th, s0.om];
     simT = 0; fellOver = false;
+    iseTh = 0; scoreSaved = false;
     ctrl.reset(); clearLog();
     physAcc = logAcc = chartAcc = 0;
     ctrlAcc = 1 / CTRL_HZ - PHYS_DT;      // 첫 물리 스텝에서 바로 제어기가 돌도록
@@ -327,10 +337,12 @@ function stop() {
 }
 
 function reset() {
+  commitScore();
   mode = 'idle';
   clearPush();
   S = [s0.x, s0.v, s0.th, s0.om];
   simT = 0; fellOver = false;
+  iseTh = 0; scoreSaved = false;
   ctrl.reset(); clearLog();
   camX = S[0];
   $('sth').disabled = false;
@@ -577,6 +589,57 @@ function updateReadout() {
   const bar = $('fBar');
   bar.style.left  = (ctrl.F >= 0 ? 50 : 50 - pct) + '%';
   bar.style.width = pct + '%';
+  $('rScore').textContent = currentScore().toFixed(1);
+  $('rBest').textContent = bestScoreText();
+}
+
+function currentScore() {
+  return simT / (0.25 + iseTh);
+}
+function loadScores() {
+  try { return JSON.parse(localStorage.getItem(LS_SCORE) || '[]'); }
+  catch (_) { return []; }
+}
+function saveScores(list) {
+  try { localStorage.setItem(LS_SCORE, JSON.stringify(list)); } catch (_) {}
+}
+function bestScoreText() {
+  const ok = loadScores().filter(e => !e.fell);
+  if (!ok.length) return '–';
+  return Math.max.apply(null, ok.map(e => e.score)).toFixed(1);
+}
+function commitScore() {
+  if (scoreSaved || simT < 2) return;
+  scoreSaved = true;
+  const list = loadScores();
+  list.unshift({
+    score: +currentScore().toFixed(2),
+    t: +simT.toFixed(2),
+    ise: +iseTh.toFixed(3),
+    fell: fellOver,
+    kPt: K.kPt, kIt: K.kIt, kDt: K.kDt,
+    at: Date.now()
+  });
+  saveScores(list.slice(0, 20));
+  renderScores();
+}
+function renderScores() {
+  const el = $('scoreList');
+  if (!el) return;
+  const list = loadScores();
+  if (!list.length) {
+    el.innerHTML = '<div class="hintline" style="margin:0">아직 기록이 없습니다. 2초 이상 실행한 뒤 초기화하면 남습니다.</div>';
+    return;
+  }
+  el.innerHTML = list.slice(0, 8).map(e => {
+    const d = new Date(e.at);
+    const p = n => String(n).padStart(2, '0');
+    const when = p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    return '<div class="score-row' + (e.fell ? ' fail' : '') + '">'
+      + '<span class="sc">' + (e.fell ? '실격 ' : '') + e.score.toFixed(1) + '</span>'
+      + '<span class="meta">' + e.t.toFixed(1) + 's · P' + e.kPt + ' I' + e.kIt + ' D' + e.kDt
+      + ' · ' + when + '</span></div>';
+  }).join('');
 }
 
 /* ============================================================
@@ -749,6 +812,16 @@ $('btnReset').onclick = reset;
 $('btnPushL').onclick = () => pulsePush(-1);
 $('btnPushR').onclick = () => pulsePush(1);
 $('btnPos').onclick   = () => setPos(!posOn);
+if ($('btnClearScores')) {
+  $('btnClearScores').onclick = () => {
+    if (!confirm('이 기기의 점수를 모두 지울까요?')) return;
+    saveScores([]);
+    renderScores();
+    $('rBest').textContent = '–';
+  };
+}
+renderScores();
+window.addEventListener('pagehide', () => { if (mode !== 'idle') commitScore(); });
 
 window.addEventListener('resize', sizeCanvases);
 window.addEventListener('orientationchange', () => setTimeout(sizeCanvases, 250));

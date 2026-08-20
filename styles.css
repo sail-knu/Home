@@ -1929,6 +1929,66 @@ a.member-card {
   background: var(--demo-muted);
 }
 
+.demo-pid .scorebar {
+  display: flex;
+  border-top: 1px solid var(--demo-line);
+  background: color-mix(in srgb, var(--surface) 88%, var(--demo-line));
+}
+
+.demo-pid .scorebar .cell {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  text-align: center;
+  border-right: 1px solid var(--demo-line);
+}
+
+.demo-pid .scorebar .cell:last-child {
+  border-right: 0;
+}
+
+.demo-pid .scorebar .k {
+  display: block;
+  font-size: 10px;
+  color: var(--demo-muted);
+}
+
+.demo-pid .scorebar .val {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--demo-accent, #0c7a73);
+}
+
+.demo-pid .score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--demo-line);
+}
+
+.demo-pid .score-row:last-child {
+  border-bottom: 0;
+}
+
+.demo-pid .score-row .sc {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+}
+
+.demo-pid .score-row .meta {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--demo-muted);
+}
+
+.demo-pid .score-row.fail .sc {
+  color: var(--demo-warn);
+}
+
 .demo-pid button {
   font: inherit;
   font-weight: 600;
