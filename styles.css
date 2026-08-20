@@ -1143,6 +1143,14 @@ a.project-page:hover {
   color: #f3fafb;
 }
 
+#research-interest .bento-item {
+  cursor: default;
+}
+
+#research-interest .bento-content {
+  justify-content: flex-start;
+}
+
 .robot-grid {
   grid-template-columns: 1fr;
 }
