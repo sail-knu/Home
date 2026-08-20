@@ -52,9 +52,13 @@ var S={
   ei:0, myawPrev:null, dFilt:0,
   trail:[], hist:[], log:[],
   sumE2:0, nE:0, maxE:0, dist:0, g:null,
-  nRev:0, wSgn:0          // 조타 반전 누적 횟수 / 마지막 non-zero ω 부호 (표시용 파생 지표)
+  nRev:0, wSgn:0,          // 조타 반전 누적 횟수 / 마지막 non-zero ω 부호 (표시용 파생 지표)
+  iaeE:0, iseE:0, jw:0, scoreSaved:false
 };
 var W_DEAD = 1e-3;        // |ω| 가 이보다 작으면 '중립' — 0 근처 떨림을 반전으로 세지 않는다
+var LS_LOS='sail-los-cte-smooth-v1';
+var LAMBDA_REV=0.5;       // 종합 J = ∫|e| dt + λ·조타 반전
+function comboJ(iae, nRev){ return iae + LAMBDA_REV*nRev; }
 var drag=null;
 
 /* ---------- 뷰(월드↔스크린) ----------
@@ -206,7 +210,7 @@ function switchCheck(g, mx, my){
   if(!hit) return;
   if(P.loop){ S.k=(S.k+1)%N(); }
   else if(S.k < N()-2){ S.k++; }
-  else { S.done=true; S.running=false; syncStatus(); }
+  else { S.done=true; S.running=false; commitLosScore(); syncStatus(); }
 }
 
 /* =========================================================================
@@ -277,6 +281,7 @@ function step(dt){
   attachTrue(g);
   var ae=Math.abs(g.eTrue);
   S.sumE2+=g.eTrue*g.eTrue; S.nE++; if(ae>S.maxE) S.maxE=ae;
+  S.iaeE+=ae*dt; S.iseE+=g.eTrue*g.eTrue*dt; S.jw+=S.omega*S.omega*dt;
 
   /* 조타 반전 — ω 부호가 뒤집힌 횟수. 채터링(조타 진동)의 대가를 정량화한다.
      기존 상태량 S.omega 에서 파생만 하므로 운동 방정식에는 아무 영향이 없다. */
@@ -307,6 +312,7 @@ function reset(keepPose){
   S.v=0; S.omega=0; S.trail=[]; S.hist=[]; S.log=[];
   S.sumE2=0; S.nE=0; S.maxE=0; S.dist=0; S.g=null;
   S.nRev=0; S.wSgn=0;
+  S.iaeE=0; S.iseE=0; S.jw=0; S.scoreSaved=false;
   if(!keepPose){
     if(N()>=2){
       var g=segGeom(0);
@@ -364,7 +370,9 @@ var STAGE_FRAC=0.45;
 function fitStage(){
   var vh=window.innerHeight||640;
   var cells=document.getElementById('los-cells');
+  var bar=document.getElementById('los-scorebar');
   var rh=cells ? Math.round(cells.getBoundingClientRect().height) : 44;
+  if(bar) rh+=Math.round(bar.getBoundingClientRect().height);
   if(!rh) rh=44;
   var wide=window.matchMedia('(min-width:900px)').matches;
   var h=wide
@@ -752,6 +760,89 @@ function updateRail(){
   var ln=document.getElementById('los-lawName'); if(ln) ln.textContent=L.n;
   var le=document.getElementById('los-lawEq');   if(le) le.textContent=L.eq;
   var no=document.getElementById('los-lawNote'); if(no) no.textContent=L.s;
+  updateLosHud();
+}
+
+function loadLosScores(){ try{ return JSON.parse(localStorage.getItem(LS_LOS)||'[]'); }catch(_){ return []; } }
+function saveLosScores(list){ try{ localStorage.setItem(LS_LOS, JSON.stringify(list)); }catch(_){} }
+function bestJText(){
+  var list=loadLosScores();
+  if(!list.length) return '–';
+  return Math.min.apply(null, list.map(function(e){ return e.j; })).toFixed(2);
+}
+function commitLosScore(){
+  if(S.scoreSaved || !S.done || S.t<2) return;
+  S.scoreSaved=true;
+  var rms=S.nE?Math.sqrt(S.sumE2/S.nE):0;
+  var list=loadLosScores();
+  list.unshift({
+    iae:+S.iaeE.toFixed(3), ise:+S.iseE.toFixed(3), jw:+S.jw.toFixed(3),
+    nRev:S.nRev, j:+comboJ(S.iaeE, S.nRev).toFixed(3),
+    t:+S.t.toFixed(2), rms:+rms.toFixed(4), maxE:+S.maxE.toFixed(3),
+    delta:P.delta, law:P.law, at:Date.now()
+  });
+  saveLosScores(list.slice(0,20));
+  renderLosScores();
+}
+function renderLosScores(){
+  var el=document.getElementById('los-scoreList'); if(!el) return;
+  var list=loadLosScores();
+  var emptyNote='점수 = ∫|e| dt + 0.5×조타 반전. 경로를 완주하면 CTE와 부드러움이 함께 저장됩니다.';
+  var note=document.getElementById('los-scoreNote');
+  if(!list.length){
+    el.innerHTML='<div class="note" style="margin:0">아직 기록이 없습니다. 경로를 완주하면 누적 |e|와 조타 반전이 함께 저장됩니다.</div>';
+    if(note) note.textContent=emptyNote;
+    return;
+  }
+  var minJ=Math.min.apply(null, list.map(function(e){ return e.j; }));
+  var minIae=Math.min.apply(null, list.map(function(e){ return e.iae; }));
+  var minRev=Math.min.apply(null, list.map(function(e){ return e.nRev; }));
+  el.innerHTML=list.slice(0,8).map(function(e){
+    var d=new Date(e.at);
+    var p=function(n){ return String(n).padStart(2,'0'); };
+    var when=p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+    var tags=[];
+    if(e.iae===minIae) tags.push('최저|e|');
+    if(e.nRev===minRev) tags.push('최저반전');
+    var tag=tags.length?tags.join(' ')+' ':'완주 ';
+    var cls=(e.j===minJ)?' ok':'';
+    return '<div class="score-row'+cls+'"><span class="sc">J '+e.j.toFixed(2)+'</span>'
+      +'<span class="meta">'+tag+'|e| '+e.iae.toFixed(2)+' · 반전 '+e.nRev+' · Δ '+Number(e.delta).toFixed(1)
+      +' · '+e.t.toFixed(1)+'s · '+when+'</span></div>';
+  }).join('');
+  var note=document.getElementById('los-scoreNote');
+  if(note){
+    note.textContent='최저 |e| '+minIae.toFixed(2)+' · 최저 반전 '+minRev+'회 · 최저 J '+minJ.toFixed(2)
+      +'  ·  J = ∫|e| dt + 0.5×반전';
+  }
+}
+function updateLosHud(){
+  var iae=document.getElementById('los-rIae');
+  var rv=document.getElementById('los-rRev');
+  var rj=document.getElementById('los-rJ');
+  var rb=document.getElementById('los-rBest');
+  var J=comboJ(S.iaeE, S.nRev);
+  if(iae) iae.textContent=S.iaeE.toFixed(2);
+  if(rv){
+    rv.textContent=String(S.nRev);
+    rv.className='v'+(S.nRev>=20?' bad':'');
+  }
+  if(rj){
+    rj.textContent=J.toFixed(2);
+    rj.className='v'+(S.done?' ok':'');
+  }
+  if(rb) rb.textContent=bestJText();
+  var el=document.getElementById('los-finishCd');
+  if(!el) return;
+  if(S.done){
+    el.hidden=false; el.classList.add('ok');
+    var num=document.getElementById('los-finishCdNum');
+    var msg=document.getElementById('los-finishCdMsg');
+    if(num) num.textContent='완주';
+    if(msg) msg.textContent='기록됨';
+  }else{
+    el.hidden=true; el.classList.remove('ok');
+  }
 }
 
 /* =========================================================================
@@ -984,6 +1075,11 @@ function togglePlay(){
 /* ---------- 하단 고정 바 · 헤더 ---------- */
 document.getElementById('los-btn_play').onclick=function(){ togglePlay(); };
 document.getElementById('los-btn_rst').onclick =function(){ reset(false); autoFit(); };
+var clrLos=document.getElementById('los-btnClearScores');
+if(clrLos) clrLos.onclick=function(){
+  if(!confirm('이 기기의 LOS 점수를 모두 지울까요?')) return;
+  saveLosScores([]); renderLosScores(); updateLosHud();
+};
 (function(){          // 하단 고정 배속 슬라이더
   var spd=document.getElementById('los-spd'), spdv=document.getElementById('los-spdv');
   var upd=function(){ spdv.textContent=Number(P.speedMul).toFixed(2)+' ×'; };
@@ -1004,6 +1100,7 @@ try{
   readTheme(); buildRail(); buildChips(); buildPrimary(); buildPanel();
   resize();
   loadPreset('지그재그'); autoFit();
+  renderLosScores(); updateLosHud();
 
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', function(){ setTimeout(onResize, 250); });

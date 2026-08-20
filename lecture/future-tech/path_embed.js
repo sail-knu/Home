@@ -37,10 +37,10 @@ const P={
   speedMul:1, dt:0.01,
   /* 제어 구조 · 피드백 항 선택(복수 선택) */
   struct:'par',            // 모바일 판은 병렬 합산 고정
-  useCTE:false, useHead:true,      // 초기에는 방위 오차만 잡는다
+  useCTE:true, useHead:true,
 
   /* 횡방향 오차 루프 PID */
-  kpe:0.40, kie:0.00, kde:0.00, iLimE:6.0,
+  kpe:0.00, kie:0.00, kde:0.00, iLimE:6.0,
   /* 방위 오차 루프 PID */
   kph:1.40, kih:0.00, kdh:0.00, iLimH:1.5,
   /* 종속 LOS 외루프(모바일 미노출 · 해석식 호환용) */
@@ -67,8 +67,11 @@ const S={
   ie:0, ih:0, eDot:0, ehDot:0, ePrev:0, ehPrev:0, yint:0,
   uc:0, uh:0, wcmd:0, chid:0, e:0, eh:0, s:0,
   trail:[], hist:[],
-  sumE2:0, nE:0, maxE:0, eMinS:0, eMaxS:0, tViol:0, dist:0
+  sumE2:0, nE:0, maxE:0, eMinS:0, eMaxS:0, tViol:0, dist:0,
+  iaeE:0, iseE:0, eRef:1.5, settleAcc:0, everOut:false, settled:false, scoreSaved:false
 };
+const SETTLE_RATIO=0.01, SETTLE_HOLD=5, LS_CTE='sail-path-cte-personal-v1';
+function settleBand(){ return SETTLE_RATIO*Math.max(Math.abs(S.eRef), 0.15); }
 
 /* ---------- 뷰(월드↔스크린) — CSS 픽셀 기준 + auto-fit 오프셋 ---------- */
 const view={W:0,H:0,scale:12,ox:0,oy:0,cx:16,cy:10,dpr:1};
@@ -151,7 +154,7 @@ function controller(e, myaw, dt){
    4. 한 스텝 (측정 → 제어 → 차량 모델 → 지표) — 원본 그대로
    ========================================================================= */
 function step(dt){
-  if(S.done) return;
+  if(S.done || S.settled) return;
 
   /* (0) 센서 측정 — 잡음 주입(제어기는 '측정값'만 본다) */
   const mx  = S.x   + P.noiseP*gauss();
@@ -187,6 +190,17 @@ function step(dt){
   if(tr.e<S.eMinS) S.eMinS=tr.e;
   if(tr.e>S.eMaxS) S.eMaxS=tr.e;
   if(ae>P.tol) S.tViol=S.t;                       // 마지막으로 허용대를 벗어난 시각
+  if(!S.settled){ S.iaeE+=ae*dt; S.iseE+=tr.e*tr.e*dt; }
+  if(!S.settled){
+    if(ae>settleBand()){ S.everOut=true; S.settleAcc=0; }
+    else if(S.everOut){
+      S.settleAcc+=dt;
+      if(S.settleAcc>=SETTLE_HOLD){
+        S.settled=true; S.running=false;
+        commitCteScore(); syncStatus();
+      }
+    }
+  }
 
   /* (6) 기록 */
   const tl=S.trail[S.trail.length-1];
@@ -197,7 +211,7 @@ function step(dt){
   if(S.hist.length>40000) S.hist.shift();
 
   /* (7) 완주 판정 */
-  if(tr.s>=P.plen){ S.done=true; S.running=false; syncStatus(); }
+  if(tr.s>=P.plen){ S.done=true; S.running=false; commitCteScore(); syncStatus(); }
 }
 
 /* =========================================================================
@@ -210,6 +224,8 @@ function reset(keepPose){
   S.v=0; S.omega=0; S.uc=0; S.uh=0; S.wcmd=0;
   S.trail=[]; S.hist=[];
   S.sumE2=0; S.nE=0; S.maxE=0; S.eMinS=0; S.eMaxS=0; S.tViol=0; S.dist=0;
+  S.iaeE=0; S.iseE=0; S.settleAcc=0; S.everOut=false; S.settled=false; S.scoreSaved=false;
+  S.eRef=Math.abs(P.e0);
   if(!keepPose){
     const {a,ca,sa}=pathDir(), A=pathA();
     S.x=A.x - P.e0*sa;                 // along-track 0 지점에서 e₀ 만큼 옆으로
@@ -779,6 +795,73 @@ function drawStats(){
   rset('w',    (S.omega*R2D).toFixed(0)+'°/s',
                Math.abs(S.wcmd)>=P.wmax*D2R*0.995?'warn':'');
   rset('mx',   S.maxE.toFixed(2)+' m');
+  updateCteHud();
+}
+
+function loadCteScores(){ try{ return JSON.parse(localStorage.getItem(LS_CTE)||'[]'); }catch(_){ return []; } }
+function saveCteScores(list){ try{ localStorage.setItem(LS_CTE, JSON.stringify(list)); }catch(_){} }
+function bestCteText(){
+  const ok=loadCteScores().filter(e=>e.settled);
+  if(!ok.length) return '–';
+  return Math.min.apply(null, ok.map(e=>e.iae)).toFixed(2);
+}
+function commitCteScore(){
+  if(S.scoreSaved || S.t<2 || (!S.settled && !S.done)) return;
+  S.scoreSaved=true;
+  const list=loadCteScores();
+  list.unshift({
+    iae:+S.iaeE.toFixed(3), ise:+S.iseE.toFixed(3), t:+S.t.toFixed(2),
+    maxE:+S.maxE.toFixed(3), settled:!!S.settled, done:!!S.done,
+    kpe:P.kpe, kde:P.kde, kie:P.kie, kph:P.kph, at:Date.now()
+  });
+  saveCteScores(list.slice(0,20));
+  renderCteScores();
+}
+function renderCteScores(){
+  const el=document.getElementById('path-scoreList'); if(!el) return;
+  const list=loadCteScores();
+  if(!list.length){
+    el.innerHTML='<div class="hint" style="margin:0;padding:0">아직 기록이 없습니다. |e|가 초기 오차의 1% 안에 5초 머물면 성공으로 저장됩니다.</div>';
+    return;
+  }
+  el.innerHTML=list.slice(0,8).map(e=>{
+    const d=new Date(e.at);
+    const p=n=>String(n).padStart(2,'0');
+    const when=p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+    const tag=e.settled?'성공 ': (e.done?'완주 ':'');
+    const cls=e.settled?' ok':'';
+    return '<div class="score-row'+cls+'"><span class="sc">'+tag+e.iae.toFixed(2)+'</span>'
+      +'<span class="meta">'+e.t.toFixed(1)+'s · Pe '+e.kpe+' · '+when+'</span></div>';
+  }).join('');
+}
+function updateCteHud(){
+  const iae=document.getElementById('path-rIae');
+  const rs=document.getElementById('path-rSettle');
+  const rb=document.getElementById('path-rBest');
+  const el=document.getElementById('path-settleCd');
+  if(iae) iae.textContent=S.iaeE.toFixed(2);
+  if(rb) rb.textContent=bestCteText();
+  if(!rs || !el) return;
+  const left=Math.max(0, SETTLE_HOLD-S.settleAcc);
+  const inHold=S.running && S.everOut && S.settleAcc>0 && !S.settled && !S.done;
+  if(S.settled){
+    el.hidden=false; el.classList.add('ok');
+    document.getElementById('path-settleCdNum').textContent='성공';
+    document.getElementById('path-settleCdMsg').textContent='기록됨';
+    rs.textContent='성공'; rs.className='v ok';
+    return;
+  }
+  el.classList.remove('ok');
+  if(inHold){
+    el.hidden=false;
+    document.getElementById('path-settleCdNum').textContent=String(Math.max(1, Math.ceil(left-1e-9)));
+    document.getElementById('path-settleCdMsg').textContent='1% 오차 유지';
+    rs.textContent=left.toFixed(1); rs.className='v';
+  }else{
+    el.hidden=true;
+    rs.textContent=S.done?'완주':'5.0';
+    rs.className='v'+(S.done?' ok':'');
+  }
 }
 
 /* =========================================================================
@@ -788,7 +871,7 @@ function loop(now){
   const real=Math.min((now-last)/1000, .1); last=now;
   if(S.running){
     acc+=real*P.speedMul;
-    let n=0; while(acc>=P.dt && n<800){ step(P.dt); acc-=P.dt; n++; }
+    let n=0; while(S.running && acc>=P.dt && n<800){ step(P.dt); acc-=P.dt; n++; }
   }else acc=0;
   drawStats(); draw(); drawRecorder();
   requestAnimationFrame(loop);
@@ -953,18 +1036,23 @@ const pillEl =document.getElementById('path-statusPill');
 const playEl =document.getElementById('path-playBtn');
 const resetEl=document.getElementById('path-resetBtn');
 function syncStatus(){
-  const s=S.done?'done':(S.running?'run':'hold');
-  pillEl.dataset.s=s;
-  pillEl.textContent = s==='done'?'완주':(s==='run'?'주행 중':'대기');
+  const s=S.settled?'done':(S.done?'done':(S.running?'run':'hold'));
+  if(pillEl){ pillEl.dataset.s=s; pillEl.textContent = S.settled?'성공':(S.done?'완주':(S.running?'주행 중':'대기')); }
   playEl.textContent = S.running?'정지':'시작';
   playEl.className = S.running?'danger':'pri';
 }
 function togglePlay(){
-  if(S.done) reset(false);
+  if(S.done || S.settled) reset(false);
+  if(!S.running && S.t<1e-9) S.eRef=Math.max(Math.abs(S.e), Math.abs(P.e0));
   S.running=!S.running; syncStatus();
 }
 playEl.onclick =()=>togglePlay();
 resetEl.onclick=()=>{ reset(false); fitView(true); };
+const clr=document.getElementById('path-btnClearScores');
+if(clr) clr.onclick=()=>{
+  if(!confirm('이 기기의 CTE 점수를 모두 지울까요?')) return;
+  saveCteScores([]); renderCteScores(); updateCteHud();
+};
 
 const themeBtn=document.getElementById('path-themeBtn');
 if(themeBtn) themeBtn.onclick=function(){};
@@ -972,7 +1060,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>readTh
 
 /* ---------- 부트 ---------- */
 readTheme(); buildStats(); buildChips(); buildPanel(); resize();
-reset(false); fitView(true);
+reset(false); fitView(true); renderCteScores(); updateCteHud();
 
 let rzT=0;
 const onResize=()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ readTheme(); resize(); }, 90); };

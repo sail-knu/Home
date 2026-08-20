@@ -90,6 +90,50 @@
   overflow: hidden;
   margin-bottom: 12px;
 }
+#los-host .scorebar {
+  display: flex;
+  background: var(--ink-2);
+  border-top: 1px solid var(--rule);
+}
+#los-host .scorebar .cell {
+  flex: 1; min-width: 0; padding: 6px 6px; text-align: center;
+  border-right: 1px solid var(--rule);
+}
+#los-host .scorebar .cell:last-child { border-right: 0; }
+#los-host .scorebar .k { display: block; font-size: 9px; font-weight: 700; color: var(--text-3); }
+#los-host .scorebar .v {
+  display: block; font-family: ui-monospace, Consolas, monospace;
+  font-size: 16px; font-weight: 700; color: var(--accent);
+}
+#los-host .scorebar .v.ok { color: var(--accent); }
+#los-host .scorebar .v.bad { color: var(--devi); }
+#los-host .finish-cd {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none; background: #0f172a28;
+}
+#los-host .finish-cd[hidden] { display: none; }
+#los-host .finish-cd-num {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 40px; font-weight: 800; line-height: 1; color: var(--accent);
+  text-shadow: 0 1px 0 #fff, 0 8px 24px #0f172a33;
+}
+#los-host .finish-cd-msg { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--text); }
+#los-host .scorelist { padding: 4px 0; }
+#los-host .score-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 13px;
+}
+#los-host .score-row:last-child { border-bottom: 0; }
+#los-host .score-row .sc { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
+#los-host .score-row .meta { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--text-3); }
+#los-host .score-row.ok .sc { color: var(--accent); }
+#los-host #los-btnClearScores {
+  width: 100%; min-height: 44px; margin-top: 8px;
+  border-radius: 11px; font-size: 14px; font-weight: 700; cursor: pointer;
+  background: var(--ink-3); border: 1px solid var(--rule); color: var(--text);
+}
 
 #los-host .chips {
   display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 8px;
@@ -246,19 +290,39 @@
   <button id="los-themeBtn" type="button" aria-label="주간·야간 전환" hidden>◐</button>
 </header>
 
-<p class="tip"><b>Δ</b>를 줄이면 <b>RMS |e|</b>는 작아지지만 <b>조타 반전</b>이 늘어납니다 — 슬라이더로 균형점을 찾아보세요.</p>
+<p class="tip"><b>Δ</b>를 줄이면 <b>누적 |e|</b>는 작아지지만 <b>조타 반전</b>이 늘어납니다. 완주하면 둘을 함께 비교합니다. 종합 <b>J = ∫|e| dt + 0.5×반전</b> (낮을수록 좋음).</p>
 
 <div class="demo-layout">
   <div class="demo-stage-col">
     <div class="stage" id="los-stage">
       <div class="stage-canvas">
-        <div class="chart"><canvas id="los-cv"></canvas></div>
+        <div class="chart">
+          <canvas id="los-cv"></canvas>
+          <div id="los-finishCd" class="finish-cd" hidden>
+            <span class="finish-cd-num" id="los-finishCdNum">완주</span>
+            <span class="finish-cd-msg" id="los-finishCdMsg">기록됨</span>
+          </div>
+        </div>
         <div class="demo-toolbar">
           <button type="button" id="los-btn_play">시작</button>
           <button type="button" id="los-btn_rst">초기화</button>
         </div>
       </div>
       <div class="readout key" id="los-cells"></div>
+      <div class="scorebar" id="los-scorebar">
+        <div class="cell"><span class="k">누적 |e|</span><span class="v" id="los-rIae">0.00</span></div>
+        <div class="cell"><span class="k">조타 반전</span><span class="v" id="los-rRev">0</span></div>
+        <div class="cell"><span class="k">종합 J</span><span class="v" id="los-rJ">0.00</span></div>
+        <div class="cell"><span class="k">내 최고</span><span class="v" id="los-rBest">–</span></div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="sec-h" type="button" onclick="this.parentElement.classList.toggle('closed')"><span class="t">내 기록 (이 기기)</span><span class="ln"></span><span class="car">▼</span></button>
+      <div class="sec-b">
+        <div id="los-scoreList" class="scorelist"></div>
+        <p class="note" id="los-scoreNote" style="margin-top:8px">점수 = ∫|e| dt + 0.5×조타 반전. 경로를 완주하면 CTE와 부드러움이 함께 저장됩니다.</p>
+        <button type="button" id="los-btnClearScores">기록 지우기</button>
+      </div>
     </div>
     <div class="primary" id="los-primary"></div>
     <div class="readout sub" id="los-cells2"></div>

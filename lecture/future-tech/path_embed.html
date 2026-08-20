@@ -82,6 +82,45 @@
   overflow: hidden;
   margin-bottom: 12px;
 }
+#path-host .scorebar {
+  display: flex;
+  background: var(--ink-2);
+  border-top: 1px solid var(--rule);
+}
+#path-host .scorebar .cell {
+  flex: 1; min-width: 0; padding: 6px 6px; text-align: center;
+  border-right: 1px solid var(--rule);
+}
+#path-host .scorebar .cell:last-child { border-right: 0; }
+#path-host .scorebar .k { display: block; font-size: 9px; font-weight: 700; color: var(--text-3); }
+#path-host .scorebar .v {
+  display: block; font-family: ui-monospace, Consolas, monospace;
+  font-size: 16px; font-weight: 700; color: var(--accent);
+}
+#path-host .scorebar .v.ok { color: var(--accent); }
+#path-host .scorebar .v.bad { color: var(--devi); }
+#path-host .settle-cd {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none; background: #0f172a28;
+}
+#path-host .settle-cd[hidden] { display: none; }
+#path-host .settle-cd-num {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 84px; font-weight: 800; line-height: 1; color: var(--accent);
+  text-shadow: 0 1px 0 #fff, 0 8px 24px #0f172a33;
+}
+#path-host .settle-cd-msg { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--text); }
+#path-host .settle-cd.ok .settle-cd-num { font-size: 40px; }
+#path-host .scorelist { padding: 4px 0; }
+#path-host .score-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 13px;
+}
+#path-host .score-row:last-child { border-bottom: 0; }
+#path-host .score-row .sc { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
+#path-host .score-row .meta { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--text-3); }
+#path-host .score-row.ok .sc { color: var(--accent); }
 
 #path-host .chips { display: flex; gap: 6px; padding: 0 0 8px; background: transparent; }
 #path-host .chips button {
@@ -117,6 +156,10 @@
 #path-host .sec.closed .car { transform: rotate(-90deg); }
 #path-host .sec-b { padding: 2px 12px 14px; }
 #path-host .sec.closed .sec-b { display: none; }
+#path-host #path-btnClearScores {
+  font: inherit; font-weight: 600; min-height: 44px;
+  border: 1px solid var(--rule); border-radius: 9px; background: var(--ink-2); color: var(--text);
+}
 
 #path-host .ctl { margin: 10px 0; }
 #path-host .ctl.off { display: none; }
@@ -212,21 +255,40 @@
   <button class="iconbtn" id="path-themeBtn" type="button" aria-label="주·야간 전환" hidden>◐</button>
 </header>
 
-<p class="hint"><b>실습:</b> 시작 후 게인을 바꿔 수렴 거동을 비교하세요. 정지 중에는 배를 끌어 초기 위치를, 앞쪽 초록 점을 끌어 초기 침로를 바꿀 수 있습니다.</p>
+<p class="hint"><b>실습:</b> CTE 게인(K<sub>p,e</sub> 등)을 올려 경로에 붙이세요. |e|가 초기 오차의 <b>1%</b> 안에 <b>5초</b> 머물면 성공입니다. 점수는 누적 |e| (낮을수록 좋음)입니다. 정지 중에는 배를 끌어 초기 위치를, 앞쪽 초록 점을 끌어 초기 침로를 바꿀 수 있습니다.</p>
 
 <div class="demo-layout">
   <div class="demo-stage-col">
     <div class="stage" id="path-stage">
       <div class="stage-canvas">
-        <div class="chart"><canvas id="path-cv"></canvas></div>
+        <div class="chart">
+          <canvas id="path-cv"></canvas>
+          <div id="path-settleCd" class="settle-cd" hidden>
+            <span class="settle-cd-num" id="path-settleCdNum">5</span>
+            <span class="settle-cd-msg" id="path-settleCdMsg">1% 오차 유지</span>
+          </div>
+        </div>
         <div class="demo-toolbar">
           <button type="button" id="path-playBtn" class="pri">시작</button>
           <button type="button" id="path-resetBtn">초기화</button>
         </div>
       </div>
       <div class="stats core" id="path-cells"></div>
+      <div class="scorebar">
+        <div class="cell"><span class="k">누적 |e| (낮을수록 좋음)</span><span class="v" id="path-rIae">0.00</span></div>
+        <div class="cell"><span class="k">남은 시간</span><span class="v" id="path-rSettle">5.0</span></div>
+        <div class="cell"><span class="k">내 최고</span><span class="v" id="path-rBest">–</span></div>
+      </div>
     </div>
     <div class="stats aux" id="path-cellsAux"></div>
+    <div class="sec">
+      <button class="sec-h" type="button" onclick="this.parentElement.classList.toggle('closed')"><span class="t">내 기록 (이 기기)</span><span class="ln"></span><span class="car">▼</span></button>
+      <div class="sec-b">
+        <div id="path-scoreList" class="scorelist"></div>
+        <p class="hint" style="margin:8px 0">점수 = ∫|e| dt. |e| ≤ 0.01·|e₀| 를 5초 유지하면 성공.</p>
+        <button type="button" id="path-btnClearScores" style="width:100%;min-height:44px">기록 지우기</button>
+      </div>
+    </div>
     <div class="chips" id="path-chips"></div>
     <div id="path-recwrap"><canvas id="path-rec"></canvas></div>
   </div>

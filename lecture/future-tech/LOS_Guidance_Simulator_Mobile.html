@@ -149,6 +149,35 @@ header h1{font-size:12.5px;margin:0;font-weight:700;white-space:nowrap;overflow:
 .readout .v.warn{color:var(--devi)}
 .readout .v.ok{color:var(--accent)}
 
+.scorebar{display:flex;background:var(--ink-2);border-top:1px solid var(--rule)}
+.scorebar .cell{flex:1;min-width:0;padding:6px 6px;text-align:center;border-right:1px solid var(--rule)}
+.scorebar .cell:last-child{border-right:0}
+.scorebar .k{display:block;font-size:9px;font-weight:700;color:var(--text-3)}
+.scorebar .v{display:block;font-family:ui-monospace,Consolas,monospace;font-size:16px;font-weight:700;color:var(--accent)}
+.scorebar .v.ok{color:var(--accent)}
+.scorebar .v.bad{color:var(--devi)}
+.finish-cd{
+  position:absolute;inset:0;z-index:3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;background:#0f172a40;
+}
+.finish-cd[hidden]{display:none}
+.finish-cd-num{
+  font-family:ui-monospace,Consolas,monospace;font-size:40px;font-weight:800;line-height:1;color:var(--accent);
+  text-shadow:0 1px 0 #fff,0 8px 24px #0f172a33;
+}
+.finish-cd-msg{margin-top:4px;font-size:13px;font-weight:700;color:var(--text)}
+.scorelist{padding:8px 12px}
+.score-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.score-row:last-child{border-bottom:0}
+.score-row .sc{font-family:ui-monospace,Consolas,monospace;font-weight:700}
+.score-row .meta{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--text-3)}
+.score-row.ok .sc{color:var(--accent)}
+#btnClearScores{
+  width:100%;min-height:44px;margin-top:8px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;
+  background:var(--ink-3);border:1px solid var(--rule);color:var(--text);
+}
+
 /* ── 레코더(스트립 차트) + 범례 칩 ────────────────────────────────── */
 .chips{
   display:flex;gap:6px;flex-wrap:wrap;padding:7px 10px;
@@ -268,12 +297,33 @@ input[type=range]::-moz-range-thumb{
   <button id="themeBtn" aria-label="주간·야간 전환">◐</button>
 </header>
 
-<div class="tip"><b>Δ</b>를 줄이면 <b>RMS |e|</b>는 작아지지만 <b>조타 반전</b>이 늘어납니다 — 슬라이더로 균형점을 찾아보세요.</div>
+<div class="tip"><b>Δ</b>를 줄이면 <b>누적 |e|</b>는 작아지지만 <b>조타 반전</b>이 늘어납니다. 완주하면 둘을 함께 비교합니다. 종합 <b>J = ∫|e| dt + 0.5×반전</b> (낮을수록 좋음).</div>
 
 <!-- 고정 스테이지: 스크롤해도 화면 상단에 남는다 -->
 <div class="stage" id="stage">
-  <div class="chart"><canvas id="cv"></canvas></div>
+  <div class="chart">
+    <canvas id="cv"></canvas>
+    <div id="finishCd" class="finish-cd" hidden>
+      <span class="finish-cd-num" id="finishCdNum">완주</span>
+      <span class="finish-cd-msg" id="finishCdMsg">기록됨</span>
+    </div>
+  </div>
   <div class="readout key" id="cells"></div>
+  <div class="scorebar" id="scorebar">
+    <div class="cell"><span class="k">누적 |e|</span><span class="v" id="rIae">0.00</span></div>
+    <div class="cell"><span class="k">조타 반전</span><span class="v" id="rRev">0</span></div>
+    <div class="cell"><span class="k">종합 J</span><span class="v" id="rJ">0.00</span></div>
+    <div class="cell"><span class="k">내 최고</span><span class="v" id="rBest">–</span></div>
+  </div>
+</div>
+
+<div class="sec">
+  <button class="sec-h" type="button" onclick="this.parentElement.classList.toggle('closed')"><span class="t">내 기록 (이 기기)</span><span class="ln"></span><span class="car">▼</span></button>
+  <div class="sec-b">
+    <div id="scoreList" class="scorelist"></div>
+    <p class="note" id="scoreNote">점수 = ∫|e| dt + 0.5×조타 반전. 경로를 완주하면 CTE와 부드러움이 함께 저장됩니다.</p>
+    <button type="button" id="btnClearScores">기록 지우기</button>
+  </div>
 </div>
 
 <div class="primary" id="primary"></div>
@@ -343,9 +393,13 @@ var S={
   ei:0, myawPrev:null, dFilt:0,
   trail:[], hist:[], log:[],
   sumE2:0, nE:0, maxE:0, dist:0, g:null,
-  nRev:0, wSgn:0          // 조타 반전 누적 횟수 / 마지막 non-zero ω 부호 (표시용 파생 지표)
+  nRev:0, wSgn:0,          // 조타 반전 누적 횟수 / 마지막 non-zero ω 부호 (표시용 파생 지표)
+  iaeE:0, iseE:0, jw:0, scoreSaved:false
 };
 var W_DEAD = 1e-3;        // |ω| 가 이보다 작으면 '중립' — 0 근처 떨림을 반전으로 세지 않는다
+var LS_LOS='sail-los-cte-smooth-v1';
+var LAMBDA_REV=0.5;       // 종합 J = ∫|e| dt + λ·조타 반전
+function comboJ(iae, nRev){ return iae + LAMBDA_REV*nRev; }
 var drag=null;
 
 /* ---------- 뷰(월드↔스크린) ----------
@@ -497,7 +551,7 @@ function switchCheck(g, mx, my){
   if(!hit) return;
   if(P.loop){ S.k=(S.k+1)%N(); }
   else if(S.k < N()-2){ S.k++; }
-  else { S.done=true; S.running=false; syncStatus(); }
+  else { S.done=true; S.running=false; commitLosScore(); syncStatus(); }
 }
 
 /* =========================================================================
@@ -568,6 +622,7 @@ function step(dt){
   attachTrue(g);
   var ae=Math.abs(g.eTrue);
   S.sumE2+=g.eTrue*g.eTrue; S.nE++; if(ae>S.maxE) S.maxE=ae;
+  S.iaeE+=ae*dt; S.iseE+=g.eTrue*g.eTrue*dt; S.jw+=S.omega*S.omega*dt;
 
   /* 조타 반전 — ω 부호가 뒤집힌 횟수. 채터링(조타 진동)의 대가를 정량화한다.
      기존 상태량 S.omega 에서 파생만 하므로 운동 방정식에는 아무 영향이 없다. */
@@ -598,6 +653,7 @@ function reset(keepPose){
   S.v=0; S.omega=0; S.trail=[]; S.hist=[]; S.log=[];
   S.sumE2=0; S.nE=0; S.maxE=0; S.dist=0; S.g=null;
   S.nRev=0; S.wSgn=0;
+  S.iaeE=0; S.iseE=0; S.jw=0; S.scoreSaved=false;
   if(!keepPose){
     if(N()>=2){
       var g=segGeom(0);
@@ -654,7 +710,9 @@ var STAGE_FRAC=0.45;
 function fitStage(){
   var vh=window.innerHeight||640;
   var cells=document.getElementById('cells');
+  var bar=document.getElementById('scorebar');
   var rh=cells ? Math.round(cells.getBoundingClientRect().height) : 44;
+  if(bar) rh+=Math.round(bar.getBoundingClientRect().height);
   if(!rh) rh=44;
   var h=Math.round(clamp(vh*STAGE_FRAC-rh, 150, 360));
   var cur=document.documentElement.style.getPropertyValue('--chartH');
@@ -1038,6 +1096,89 @@ function updateRail(){
   var ln=document.getElementById('lawName'); if(ln) ln.textContent=L.n;
   var le=document.getElementById('lawEq');   if(le) le.textContent=L.eq;
   var no=document.getElementById('lawNote'); if(no) no.textContent=L.s;
+  updateLosHud();
+}
+
+function loadLosScores(){ try{ return JSON.parse(localStorage.getItem(LS_LOS)||'[]'); }catch(_){ return []; } }
+function saveLosScores(list){ try{ localStorage.setItem(LS_LOS, JSON.stringify(list)); }catch(_){} }
+function bestJText(){
+  var list=loadLosScores();
+  if(!list.length) return '–';
+  return Math.min.apply(null, list.map(function(e){ return e.j; })).toFixed(2);
+}
+function commitLosScore(){
+  if(S.scoreSaved || !S.done || S.t<2) return;
+  S.scoreSaved=true;
+  var rms=S.nE?Math.sqrt(S.sumE2/S.nE):0;
+  var list=loadLosScores();
+  list.unshift({
+    iae:+S.iaeE.toFixed(3), ise:+S.iseE.toFixed(3), jw:+S.jw.toFixed(3),
+    nRev:S.nRev, j:+comboJ(S.iaeE, S.nRev).toFixed(3),
+    t:+S.t.toFixed(2), rms:+rms.toFixed(4), maxE:+S.maxE.toFixed(3),
+    delta:P.delta, law:P.law, at:Date.now()
+  });
+  saveLosScores(list.slice(0,20));
+  renderLosScores();
+}
+function renderLosScores(){
+  var el=document.getElementById('scoreList'); if(!el) return;
+  var list=loadLosScores();
+  var emptyNote='점수 = ∫|e| dt + 0.5×조타 반전. 경로를 완주하면 CTE와 부드러움이 함께 저장됩니다.';
+  var noteEl=document.getElementById('scoreNote');
+  if(!list.length){
+    el.innerHTML='<div class="note" style="margin:0">아직 기록이 없습니다. 경로를 완주하면 누적 |e|와 조타 반전이 함께 저장됩니다.</div>';
+    if(noteEl) noteEl.textContent=emptyNote;
+    return;
+  }
+  var minJ=Math.min.apply(null, list.map(function(e){ return e.j; }));
+  var minIae=Math.min.apply(null, list.map(function(e){ return e.iae; }));
+  var minRev=Math.min.apply(null, list.map(function(e){ return e.nRev; }));
+  el.innerHTML=list.slice(0,8).map(function(e){
+    var d=new Date(e.at);
+    var p=function(n){ return String(n).padStart(2,'0'); };
+    var when=p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+    var tags=[];
+    if(e.iae===minIae) tags.push('최저|e|');
+    if(e.nRev===minRev) tags.push('최저반전');
+    var tag=tags.length?tags.join(' ')+' ':'완주 ';
+    var cls=(e.j===minJ)?' ok':'';
+    return '<div class="score-row'+cls+'"><span class="sc">J '+e.j.toFixed(2)+'</span>'
+      +'<span class="meta">'+tag+'|e| '+e.iae.toFixed(2)+' · 반전 '+e.nRev+' · Δ '+Number(e.delta).toFixed(1)
+      +' · '+e.t.toFixed(1)+'s · '+when+'</span></div>';
+  }).join('');
+  var note=document.getElementById('scoreNote');
+  if(note){
+    note.textContent='최저 |e| '+minIae.toFixed(2)+' · 최저 반전 '+minRev+'회 · 최저 J '+minJ.toFixed(2)
+      +'  ·  J = ∫|e| dt + 0.5×반전';
+  }
+}
+function updateLosHud(){
+  var iae=document.getElementById('rIae');
+  var rv=document.getElementById('rRev');
+  var rj=document.getElementById('rJ');
+  var rb=document.getElementById('rBest');
+  var J=comboJ(S.iaeE, S.nRev);
+  if(iae) iae.textContent=S.iaeE.toFixed(2);
+  if(rv){
+    rv.textContent=String(S.nRev);
+    rv.className='v'+(S.nRev>=20?' bad':'');
+  }
+  if(rj){
+    rj.textContent=J.toFixed(2);
+    rj.className='v'+(S.done?' ok':'');
+  }
+  if(rb) rb.textContent=bestJText();
+  var el=document.getElementById('finishCd');
+  if(!el) return;
+  if(S.done){
+    el.hidden=false; el.classList.add('ok');
+    var num=document.getElementById('finishCdNum');
+    var msg=document.getElementById('finishCdMsg');
+    if(num) num.textContent='완주';
+    if(msg) msg.textContent='기록됨';
+  }else{
+    el.hidden=true; el.classList.remove('ok');
+  }
 }
 
 /* =========================================================================
@@ -1267,6 +1408,11 @@ function togglePlay(){
 /* ---------- 하단 고정 바 · 헤더 ---------- */
 document.getElementById('btn_play').onclick=function(){ togglePlay(); };
 document.getElementById('btn_rst').onclick =function(){ reset(false); autoFit(); };
+var clrLos=document.getElementById('btnClearScores');
+if(clrLos) clrLos.onclick=function(){
+  if(!confirm('이 기기의 LOS 점수를 모두 지울까요?')) return;
+  saveLosScores([]); renderLosScores(); updateLosHud();
+};
 (function(){          // 하단 고정 배속 슬라이더
   var spd=document.getElementById('spd'), spdv=document.getElementById('spdv');
   var upd=function(){ spdv.textContent=Number(P.speedMul).toFixed(2)+' ×'; };
@@ -1291,6 +1437,7 @@ try{
   readTheme(); buildRail(); buildChips(); buildPrimary(); buildPanel();
   resize();
   loadPreset('지그재그'); autoFit();
+  renderLosScores(); updateLosHud();
 
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', function(){ setTimeout(onResize, 250); });
