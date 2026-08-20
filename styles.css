@@ -2467,6 +2467,17 @@ a.member-card {
   }
 }
 
+html.has-sail-cursor,
+html.has-sail-cursor * {
+  cursor: none !important;
+}
+
+html.has-sail-cursor iframe,
+html.has-sail-cursor input,
+html.has-sail-cursor textarea {
+  cursor: auto !important;
+}
+
 .sail-cursor {
   position: fixed;
   inset: 0;
@@ -2490,6 +2501,25 @@ a.member-card {
   border: 1.5px solid rgba(29, 78, 137, 0.45);
   will-change: transform;
   transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease;
+}
+
+.sail-cursor-pointer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
+  will-change: transform;
+}
+
+.sail-cursor-pointer path {
+  fill: #1d4e89;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
 }
 
 .sail-cursor.is-hover .sail-cursor-obstacle {
