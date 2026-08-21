@@ -1,0 +1,759 @@
+% AUTHOR: Sina Atalay
+% LICENSE: https://github.com/sinaatalay/rendercv/blob/main/LICENSE
+
+\documentclass[10pt, letterpaper]{article}
+
+% Packages:
+\usepackage[
+        ignoreheadfoot, % set margins without considering header and footer
+        top=2 cm, % seperation between body and page edge from the top
+        bottom=2 cm, % seperation between body and page edge from the bottom
+        left=2 cm, % seperation between body and page edge from the left
+        right=2 cm, % seperation between body and page edge from the right
+        footskip=1.0 cm, % seperation between body and footer
+        % showframe % for debugging 
+    ]{geometry} % for adjusting page geometry
+\usepackage[explicit]{titlesec} % for customizing section titles
+\usepackage{tabularx} % for making tables with fixed width columns
+\usepackage{array} % tabularx requires this
+\usepackage{kotex} % tabularx requires this
+\usepackage[dvipsnames, opacity]{xcolor} % opacity 옵션 활성화
+\definecolor{primaryColor}{RGB}{0, 79, 144} % define primary color
+\usepackage{enumitem} % for customizing lists
+\usepackage{fontawesome5} % for using icons
+\usepackage{amsmath} % for math
+\usepackage[
+    pdftitle={Changyu Lee's CV},
+    pdfauthor={Changyu Lee},
+    colorlinks=true,
+    urlcolor=primaryColor
+]{hyperref} % for links, metadata and bookmarks
+\usepackage[pscoord]{eso-pic} % for floating text on the page
+\usepackage{calc} % for calculating lengths
+\usepackage{bookmark} % for bookmarks
+\usepackage{lastpage} % for getting the total number of pages
+\usepackage[default, type1]{sourcesanspro} % for using source sans 3 font
+\usepackage{ifthen}
+\ExplSyntaxOn
+
+\NewDocumentCommand \softbold { m }
+{
+	\tl_set:Nn \l_tmpa_tl { #1 }
+	\regex_replace_all:nnN { (.)(.)(.) } { \0, } \l_tmpa_tl
+	\clist_set:NV \l_tmpa_clist \l_tmpa_tl
+	\clist_map_inline:Nn \l_tmpa_clist
+	{
+		\sft_bold:n { ##1 }
+	}
+}
+
+\cs_new:Npn \sft_bold:n #1
+{
+	\ifvmode\leavevmode\fi
+	\hbox_set:Nn \l_tmpa_box { #1 }
+	\rlap{\box_use:N \l_tmpa_box}
+	\kern.035pt\rlap{\box_use:N \l_tmpa_box}
+	\kern.07pt\rlap{\box_use:N \l_tmpa_box}
+	\kern.105pt\rlap{\box_use:N \l_tmpa_box}
+	\kern.14pt\box_use_drop:N \l_tmpa_box
+}
+
+\ExplSyntaxOff
+
+% Some settings:
+\pagestyle{empty} % no header or footer
+\setcounter{secnumdepth}{0} % no section numbering
+\setlength{\parindent}{0pt} % no indentation
+\setlength{\topskip}{0pt} % no top skip
+\makeatletter
+\let\ps@customFooterStyle\ps@plain % Copy the plain style to customFooterStyle
+\patchcmd{\ps@customFooterStyle}{\thepage}{
+    \color{gray}\textit{\small Changyu Lee - Page \thepage{} of \pageref*{LastPage}}
+}{}{} % replace number by desired string
+\makeatother
+\pagestyle{customFooterStyle}
+
+\titleformat{\section}{
+        % make the font size of the section title large and color it with the primary color
+        \Large\color{primaryColor}
+    }{
+    }{
+    }{
+        % print bold title, give 0.15 cm space and draw a line of 0.8 pt thickness
+        % from the end of the title to the end of the body
+        \textbf{#1}\hspace{0.15cm}\titlerule[0.8pt]\hspace{-0.1cm}
+    }[] % section title formatting
+
+\titlespacing{\section}{
+        % left space:
+        0pt
+    }{
+        % top space:
+        0.3 cm
+    }{
+        % bottom space:
+        0.2 cm
+    } % section title spacing
+
+\newcolumntype{L}[1]{
+    >{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}
+} % left-aligned fixed width column type
+\newcolumntype{R}[1]{
+    >{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}
+} % right-aligned fixed width column type
+\newcolumntype{K}[1]{
+    >{\let\newline\\\arraybackslash\hspace{0pt}}X
+} % justified flexible width column type
+\setlength\tabcolsep{-1.5pt} % no space between columns
+\newenvironment{highlights}{
+        \begin{itemize}[
+                topsep=0pt,
+                parsep=0.10 cm,
+                partopsep=0pt,
+                itemsep=0pt,
+                after=\vspace{-1\baselineskip},
+                leftmargin=0.4 cm + 3pt
+            ]
+    }{
+        \end{itemize}
+    } % new environment for highlights
+
+\newenvironment{header}{
+        \setlength{\topsep}{0pt}\par\kern\topsep\centering\color{primaryColor}\linespread{1.5}
+    }{
+        \par\kern\topsep
+    } % new environment for the header
+
+\newcommand{\placelastupdatedtext}{% \placetextbox{<horizontal pos>}{<vertical pos>}{<stuff>}
+  \AddToShipoutPictureFG*{% Add <stuff> to current page foreground
+    \put(
+        \LenToUnit{\paperwidth-2 cm-0.2 cm+0.05cm},
+        \LenToUnit{\paperheight-1.0 cm}
+    ){\vtop{{\null}\makebox[0pt][c]{
+        \small\color{gray}\textit{Last updated in August 2026}\hspace{\widthof{Last updated in Oct 2024}}
+    }}}%
+  }%
+}%
+
+% save the original href command in a new command:
+\let\hrefWithoutArrow\href
+ % new command for external links:
+\renewcommand{\href}[2]{\hrefWithoutArrow{#1}{\mbox{\ifthenelse{\equal{#2}{}}{ }{#2 }\raisebox{.15ex}{\footnotesize \faExternalLink*}}}}
+
+\let\originalTabularx\tabularx
+\let\originalEndTabularx\endtabularx
+
+\renewenvironment{tabularx}{\bgroup\centering\originalTabularx}{\originalEndTabularx\par\egroup}
+
+% For TextEntrys (see https://tex.stackexchange.com/a/600/287984):
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1\topsep=0pt\itemsep=0pt\parsep=0pt\parskip=0pt\labelwidth=0pt\itemindent=0pt\labelsep=0pt}\item[]}
+\let\endchangemargin=\endlist 
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+\begin{document}
+    \placelastupdatedtext
+    \begin{header}
+        \fontsize{15 pt}{15 pt}
+        \textbf{Changyu Lee}
+
+        \vspace{0.3 cm}
+
+        \normalsize
+        \mbox{\hrefWithoutArrow{tel:+82-41-521-9248}{{\footnotesize\faPhone*}\hspace*{0.13cm}+82-41-521-9248}}
+        \hspace*{0.5 cm}
+        \mbox{\hrefWithoutArrow{mailto:leeck@kongju.ac.kr}{{\small\faEnvelope[regular]}\hspace*{0.13cm}leeck@kongju.ac.kr}}
+        \hspace*{0.5 cm}
+        \mbox{\hrefWithoutArrow{mailto:leechangyu95@gmail.com}{{\small\faEnvelope[regular]}\hspace*{0.13cm}leechangyu95@gmail.com}}
+        \hspace*{0.5 cm}
+        \mbox{{\small\faMapMarker*}\hspace*{0.13cm}Cheonan, Korea}
+        \hspace*{0.5 cm}
+        \mbox{\hrefWithoutArrow{https://sail-knu.github.io/Home/}{{\small\faLink}\hspace*{0.13cm}sail-knu.github.io}}
+    \end{header}
+
+    \vspace{0.3 cm}
+
+
+    % \section{Summary}
+
+    %     \begin{changemargin}{0.2 cm}{0.2 cm}
+    %     This is an example resume to showcase the capabilities of the open-source LaTeX CV generator, \href{https://github.com/sinaatalay/rendercv}{RenderCV}. A substantial part of the content is taken from \href{https://www.careercup.com/resume}{here}, where a \textit{clean and tidy CV} pattern is proposed by \textbf{Gayle L. McDowell}.
+    %     \end{changemargin}
+
+
+    \section{Experience}
+        \begin{tabularx}
+        {
+            \textwidth-0.4 cm-0.13cm
+        }
+        {
+            L{2.2 cm}
+            K{0.2 cm}
+            R{4.1 cm}
+        }
+        \textbf{Asst. Prof.}
+        &
+        \textbf{Kongju National University}, Cheonan, Korea
+        \vspace{0.10 cm}
+        \begin{highlights}
+            \item {Division of Mechanical and Automotive Engineering} 
+            \item {Safe Autonomy \& Intelligence Lab (SAIL)} 
+        \end{highlights}
+        &
+        2025.09 - Present
+        \end{tabularx}
+
+        \vspace{0.2 cm}
+
+        \begin{tabularx}
+        {
+            \textwidth-0.4 cm-0.13cm
+        }
+        {
+            L{2.2 cm}
+            K{0.2 cm}
+            R{4.1 cm}
+        }
+        \textbf{Postdoc.}
+        &
+        \textbf{KAIST, ME Research Institute}, Daejeon, Korea
+        \vspace{0.10 cm}
+        \begin{highlights}
+            \item {Mobile Robotics \& Intelligence Laboratory (MORIN Lab)} 
+            \item {Advisor: Prof. Jinwhan Kim} 
+        \end{highlights}
+        &
+        2025.04 - 2025.08
+        \end{tabularx}
+    
+    \section{Education}
+
+        \begin{tabularx}
+        {
+            \textwidth-0.4 cm-0.13cm
+        }
+        {
+            L{1.3cm}
+            K{0.2 cm}
+            R{4.1 cm}
+        }
+        \textbf{Ph.D.}
+        &
+        \textbf{KAIST, Mechanical Engineering}, Daejeon, Korea
+        \vspace{0.10 cm}
+        \begin{highlights}
+            \item {Mobile Robotics \& Intelligence Laboratory (MORIN Lab)} 
+            \item {Thesis title: Safety-Enhanced Model Predictive Control for Autonomous Surface Vehicle} 
+            \item {Advisor: Prof. Jinwhan Kim} 
+        \end{highlights}
+        &
+        2020.03 - 2025.02
+        \end{tabularx}
+
+
+        \begin{tabularx}
+        {
+            \textwidth-0.4 cm-0.13cm
+        }
+        {
+            L{1.3 cm}
+            K{0.2 cm}
+            R{4.1 cm}
+        }
+        \textbf{M.S.}
+        &
+        \textbf{KAIST, Mechanical Engineering}, Daejeon, Korea
+        \vspace{0.10 cm}
+        \begin{highlights}
+            \item {Mobile Robotics \& Intelligence Laboratory (MORIN Lab)} 
+            \item {Thesis title: Stochastic Model Predictive Control for Motion Control of an Unmanned Underwater Vehicle} 
+            \item {Advisor: Prof. Jinwhan Kim} 
+        \end{highlights}
+        &
+        2018.03 - 2020.02
+        \end{tabularx}
+
+
+        \vspace{0.2 cm}
+        
+        
+        \begin{tabularx}
+        {
+            \textwidth-0.4 cm-0.13cm
+        }
+        {
+            L{1.3 cm}
+            K{0.2 cm}
+            R{4.1 cm}
+        }
+        \textbf{B.S.}
+        &
+        \textbf{Hanyang University, Mathematics}, Seoul, Korea
+        \vspace{0.10 cm}
+        \begin{highlights}
+            \item {Mechanical Engineering (double major), \textit{Summa Cum Laude}} 
+            \item {Advisor: Prof. Hojong Jang}            
+        \end{highlights}
+        &
+        2014.03 - 2018.02
+        \end{tabularx}     
+    
+    
+    
+    \section{Publications}
+           
+
+    \subsection{\textcolor{BrickRed}{5 representative papers}}
+        \begin{enumerate}
+            \item \textbf{[J11]} \textbf{Changyu Lee}, Kiyong Park, Jinwhan Kim*, “Turning Circle-based Control Barrier Function for Efficient Collision Avoidance of Nonholonomic Vehicles”, \textcolor{BrickRed}{IEEE Transactions on Control Systems Technology}, 2026, Accepted.
+            
+            \vspace{0.2 cm}
+
+            \item \textbf{[J10]} \textbf{Changyu Lee}, Jinwook Park, Jinwhan Kim*, “Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function”, \textcolor{BrickRed}{Mechatronics}, 2026, Accepted. (IFAC World Congress 2026)
+            
+            \vspace{0.2 cm}
+
+            \item \textbf{[J9]} \textbf{Changyu Lee}, Quoc Van Tran, Jinwhan Kim*, “Safety-Guaranteed Ship Berthing using Cascade Tube-based Model Predictive Control”, \textcolor{BrickRed}{IEEE Transactions on Control Systems Technology}, 2024.
+            
+            \vspace{0.2 cm}
+
+            \item \textbf{[J8]} \textbf{Changyu Lee}, Dongha Chung, Jonghwi Kim, Jinwhan Kim*, “Nonlinear Model Predictive Control with Obstacle Avoidance Constraints for Autonomous Navigation in a Canal Environment”, \textcolor{BrickRed}{IEEE/ASME Transactions on Mechatronics}, 2024. \textbf{(JCR rank, Top 10\%)}
+            
+            \vspace{0.2 cm}
+
+             \item \textbf{[J4]}  Jonghwi Kim\textsuperscript{\textdagger}, \textbf{Changyu Lee}\textsuperscript{\textdagger}, Dongha Chung, Jinwhan Kim*, “Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways”, \textcolor{BrickRed}{IEEE Robotics and Automation Letters}, 2023 (\textsuperscript{\textdagger}: equally contributed; presented at IEEE ICRA 2024).
+            \end{enumerate}
+
+    
+    % \subsection{\textcolor{gray}{To do}}
+    %     \begin{itemize}          
+
+    %         \item [\textcolor{gray}{\textbf{[J17]}}]  \textcolor{gray}{\textbf{Changyu Lee}, Jinwhan Kim*, “Koopman Operator-based Robust Ship Heading Control”}
+    %         \vspace{0.2 cm}  
+            
+    %         \item [\textcolor{gray}{\textbf{[J16]}}] \textcolor{gray}{\textbf{Changyu Lee}\textsuperscript{\textdagger}, Kiyong Park\textsuperscript{\textdagger}, Jinwhan Kim*, “Launch and Recovery Trajectory Planning and Control”}
+            
+    %         \vspace{0.2 cm}  
+    %         \item [\textcolor{gray}{\textbf{[J15]}}] \textcolor{gray}{\textbf{Changyu Lee}, Hyunkuen Cho, Jinwhan Kim*, “Belief CBF + Terrain Aids Navigation for UUV”}
+            
+    %         \vspace{0.2 cm}             
+    %         \item [\textcolor{gray}{\textbf{[J14]}}] \textcolor{gray}{Yeongha Shin, \textbf{Changyu Lee}, Jinwhan Kim*, “LLM + COLREGs”}
+    %     \end{itemize}
+
+    \subsection{Preprints}
+        \begin{itemize}
+            \item \textbf{Changyu Lee}, Kiyong Park, Jinwhan Kim*, “Dynamic Tube-based MPC with $\mathcal{L}_1$ Adaptation for Improved Uncertainty Compensation”, \textcolor{NavyBlue}{In Prep.}
+            \vspace{0.2 cm}
+
+            \item Kiyong Park, \textbf{Changyu Lee}, Donghoon Kim, Woongki Lee, Jiwan Kim, Junhyuk Choi, Jinwhan Kim*, “Safe USV Recovery Using Disturbance-Aware Predictive Control with Control Barrier Functions”, \textcolor{NavyBlue}{In Prep.} (\url{https://kyong3005.github.io/usv-recovery/})
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee*}, Byungkwan Lee, “Physics-Consistent Behavior Cloning of Nonlinear Model Predictive Control for Surface Vehicle Trajectory Tracking”, \textcolor{NavyBlue}{In Prep.} (Collaboration with NVIDIA)
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee}, “Robust Exact-Geometry MPC-CBF for Autonomous Boat Docking in Narrow Slips”, \textcolor{NavyBlue}{In Prep.} (\url{https://sail-knu.github.io/Exact-Geometry-MPC-CBF-for-Autonomous-Boat-Docking-in-Narrow-Slips/})
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee}, “Three-Dimensional Turning-Circle Control Barrier Function for Obstacle Avoidance of Unmanned Underwater Vehicles”, \textcolor{NavyBlue}{Submitted}.
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee}, “Reducing Conservatism in Robust Quadrotor Trajectory Planning via Cascade Tube-based Model Predictive Control”, \textcolor{NavyBlue}{Submitted}.
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee}, “Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based Control Barrier Function”, \textcolor{NavyBlue}{Submitted}. (\url{https://leechangyu95.github.io/Multimodal-Trajectory-Planning-for-Surface-Vehicles/})
+            \vspace{0.2 cm}
+
+            \item \textbf{Changyu Lee}, “Safe Waypoint Tracking and Obstacle Avoidance for Surface Vehicles using Tube-based MPC”, \textcolor{NavyBlue}{Submitted}.
+            \vspace{0.2 cm}
+
+            \item Kiyong Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Model Predictive Control with Actuation Dead-Time Compensation for Trajectory Tracking of Autonomous Surface Vessels”, \textcolor{NavyBlue}{Under Revision}.
+            \vspace{0.2 cm}
+
+            \item Kiyong Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Hand Position-based $\mathcal{L}_1$-Model Predictive Control for Robust Trajectory Tracking of Underactuated Surface Vehicles”, \textcolor{NavyBlue}{Under Revision}.
+            \vspace{0.2 cm}
+
+            \item Jinwook Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Robust Collision Avoidance for Autonomous Ships with Enhanced COLREGs Compliance Using Hamilton-Jacobi Reachability”, \textcolor{NavyBlue}{Under Revision}.
+            \vspace{0.2 cm}
+
+            \item Yeongha Shin, \textbf{Changyu Lee}, Jinwhan Kim*, “MARQA: LLM-Based Question Answering for Negotiation-Capable Autonomous Ship Navigation”, \textcolor{NavyBlue}{Under Revision}. (\url{https://yeongha-shin.github.io/MARQA/})
+        \end{itemize}
+
+        
+    \subsection{International Journals}
+        \begin{itemize}
+            \item [\textbf{[J12]}] Jinwook Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Safety-Enhanced Control Strategy for Surface Ships Berthing Using Backward and Forward Reachability Analysis”, \textcolor{NavyBlue}{International Journal of Control, Automation and Systems}, 2026, Accepted.
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J11]}] \textbf{Changyu Lee}, Kiyong Park, Jinwhan Kim*, “Turning Circle-based Control Barrier Function for Efficient Collision Avoidance of Nonholonomic Vehicles”, \textcolor{NavyBlue}{IEEE Transactions on Control Systems Technology}, 2026, Accepted. (\url{https://arxiv.org/abs/2503.20280})
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J10]}] \textbf{Changyu Lee}, Jinwook Park, Jinwhan Kim*, “Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function”, \textcolor{NavyBlue}{Mechatronics}, 2026, Accepted. (IFAC World Congress 2026) (\url{https://arxiv.org/abs/2504.19247})
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J9]}] \textbf{Changyu Lee}, Quoc Van Tran, Jinwhan Kim*, “Safety-Guaranteed Ship Berthing using Cascade Tube-based Model Predictive Control”, \textcolor{NavyBlue}{IEEE Transactions on Control Systems Technology}, July 2024.
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J8]}] \textbf{Changyu Lee}, Dongha Chung, Jonghwi Kim, Jinwhan Kim*, “Nonlinear Model Predictive Control with Obstacle Avoidance Constraints for Autonomous Navigation in a Canal Environment”, \textcolor{NavyBlue}{IEEE/ASME Transactions on Mechatronics}, June 2024. \textbf{(JCR rank, Top 10\%)}
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J7]}] Quoc Van Tran*, \textbf{Changyu Lee}, Jinwhan Kim, Hoang Quang Nguyen, “Robust Bearing-based Formation Tracking Control of Underactuated Surface Vessels: An Output Regulation Approach”, \textcolor{NavyBlue}{IEEE Transactions on Control of Network Systems}, Dec 2023.
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J6]}] Jonghwi Kim, \textbf{Changyu Lee}, Dongha Chung, Yonghoon Cho, Jinwhan Kim*, Wangseok Jang, Saeyong Park, “Field experiment of autonomous ship navigation in canal and surrounding nearshore environments”, \textcolor{NavyBlue}{Journal of Field Robotics}, 2024. (\textcolor{NavyBlue}{Editor's Choice at Science Robotics})
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J5]}] Dongha Chung, Jonghwi Kim, \textbf{Changyu Lee}, Jinwhan Kim*, “Pohang Canal Dataset: A Multimodal Maritime Dataset for Autonomous Navigation in Restricted Waters”, \textcolor{NavyBlue}{The International Journal of Robotics Research}, Oct 2023.
+
+            \vspace{0.2 cm}
+
+             \item [\textbf{[J4]}] Jonghwi Kim\textsuperscript{\textdagger}, \textbf{Changyu Lee}\textsuperscript{\textdagger}, Dongha Chung, Jinwhan Kim*, “Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways”, \textcolor{NavyBlue}{IEEE Robotics and Automation Letters}, Sep 2023 (\textsuperscript{\textdagger}: equally contributed; presented at IEEE ICRA 2024).
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J3]}] \textbf{Changyu Lee}, Jinwhan Kim*, “Model Predictive Anti-spin Thruster Control for Efficient Ship Propulsion in Irregular Waves”, \textcolor{NavyBlue}{Control Engineering Practice}, July 2023.
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J2]}] Junwoo Jang, \textbf{Changyu Lee}, Jinwhan Kim*, “A learning-based approach to surface vehicle dynamics modeling for robust multistep prediction”, \textcolor{NavyBlue}{Autonomous Robots}, June 2023.
+
+            \vspace{0.2 cm}
+
+            \item [\textbf{[J1]}] Junwoo Jang, \textbf{Changyu Lee}, Jinwhan Kim*, “Ambiguity Resolution Between Constant Velocity and Coordinated Turn Models for Multimodel Target Tracking”, \textcolor{NavyBlue}{IEEE Sensors Letters}, May 2022.
+        \end{itemize}
+       
+    
+    \subsection{International Conferences} % Subtitle for the section
+    \begin{itemize}
+        \item [\textbf{[C9]}] \textbf{Changyu Lee}, Jinwook Park, Jinwhan Kim*, “Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function”, \textcolor{NavyBlue}{IFAC World Congress}, 2026, Accepted.
+
+            \vspace{0.2 cm}
+
+        \item [\textbf{[C8]}] Quoc Van Tran*, \textbf{Changyu Lee}, Xin Yuan, Hyosung Ahn, “Control Barrier Function-Based Bearing-Only Formation Tracking of Mobile Agents with Obstacle Avoidance”, \textcolor{NavyBlue}{IFAC World Congress}, 2026, Accepted.
+
+            \vspace{0.2 cm}
+
+        \item 
+        [\textbf{[C7]}]   Kiyong Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Robust Trajectory Tracking for Surface Vehicles via L1-Augmented Model Predictive Control”, \textcolor{NavyBlue}{IEEE/MTS OCEANS}, 2025.
+            
+            \vspace{0.2 cm}
+
+        \item
+        [\textbf{[C6]}]   \textbf{Changyu Lee}, Kiyong Park, Jinwhan Kim*, “Parameter-Varying Koopman Operator for Nonlinear System Modeling and Control”, \textcolor{NavyBlue}{IEEE Conference on Decision and Control}, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[C5]}]   Jinwook Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Robust Ship Berthing Control with Wind Disturbance Compensation using Reachability Analysis”, \textcolor{NavyBlue}{22nd IFAC World Congress}, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[C4]}]   Kiyong Park, \textbf{Changyu Lee}, Jinwhan Kim*, “Robust Path Tracking and Obstacle Avoidance of Autonomous Ship using Stochastic Model Predictive Control”, \textcolor{NavyBlue}{20th International Conference on Ubiquitous Robots}, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[C3]}]   \textbf{Changyu Lee}, Quoc Van Tran, Jinwhan Kim*, “Robust Path Tracking and Obstacle Avoidance Using Tube-Based Model Predictive Control for Surface Vehicles”, \textcolor{NavyBlue}{14th IFAC Conference on Control Applications in Marine Systems, Robotics, and Vehicles}, 2022.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[C2]}]   \textbf{Changyu Lee}, Jinwhan Kim*, “Energy Efficient Control for Electric Ship Propulsion Considering Thrust Fluctuation in Regular Waves”, \textcolor{NavyBlue}{13th IFAC Conference on Control Applications in Marine Systems, Robotics, and Vehicles}, 2021.
+            
+            \vspace{0.2 cm}
+
+        \item [\textbf{[C1]}]  \textbf{Changyu Lee}, Jinwhan Kim*, “Nonlinear Model Predictive Control of an Autonomous Underwater Vehicle for Terrain Profile Tracking”, \textcolor{NavyBlue}{International Conference on Ubiquitous Robots and Ambient Intelligence}, 2019.
+    \end{itemize}
+
+    
+    \subsection{Domestic Journals}        
+    \begin{itemize}
+        \item [\textbf{[D4]}] Jinwook Park, \textbf{Changyu Lee}, Jinyong Choi, Jinwhan Kim*, “A Ship Collision Avoidance Algorithm Using Control Barrier Functions Based on Velocity Obstacles with Consideration of COLREGs”, \textcolor{NavyBlue}{Journal of Institute of Control, Robotics and Systems (제어·로봇·시스템학회 논문지)}, 2025.
+
+            \vspace{0.2 cm}
+
+        \item [\textbf{[D3]}] \softbold{이찬규}, 김진환*, “Trajectory Optimization for Autonomous Berthing of a Twin-Propeller Twin-Rudder Ship”, \textcolor{NavyBlue}{Journal of Ocean Engineering and Technology (한국해양공학회지)}, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[D2]}] \softbold{이찬규}, 김경서, 김진환*, “2023 MBZIRC Maritime Grand Challenge 대회 소개”, \textcolor{NavyBlue}{로봇과 인간}, 2022.
+            
+            \vspace{0.2 cm}
+        
+        \item [\textbf{[D1]}] \softbold{이찬규}, 장준우, 김진환*, “확률 모델예측제어 알고리즘을 이용한 작동기 수가 부족한 무인잠수정 운동 제어”, \textcolor{NavyBlue}{제어로봇시스템학회지}, 2020.
+     \end{itemize}
+
+    \subsection{Domestic Conferences} % Subtitle for the section
+    \begin{itemize}
+        \item 유재민, \softbold{이찬규}*, “효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수”, 제어로봇시스템학회 학술대회, 2026.
+
+            \vspace{0.2 cm}
+
+        \item \softbold{이찬규}*, “회전원 기반 제어 장벽 함수를 이용한 멀티모달 경로 계획”, 제어로봇시스템학회 학술대회, 2026.
+
+            \vspace{0.2 cm}
+
+        \item 신영하, \softbold{이찬규}, 김진환*, “유무인 상호작용을 고려한 대형 언어모델 기반 자율 운항 선박 질의응답 프레임워크”, 한국해양과학기술협의회 춘계 공동학술대회, 2026.
+
+            \vspace{0.2 cm}
+
+        \item \softbold{이찬규}*, 박진욱, 김진환, “제어 장벽함수를 활용한 효율적인 국제해상충돌예방규칙 준수 충돌회피 알고리즘”, 한국 수중수상로봇기술연구회 추계학술대회, 2025.
+
+            \vspace{0.2 cm}
+
+        \item 김응현, \softbold{이찬규}, 김진환*, “혼잡한 보행자 공간에서 운용되는 모바일 로봇 자율주행을 위한 경로계획”, 한국로봇학회 한국로봇종합학술대회, 2024. (Outstanding Paper Award)
+            
+            \vspace{0.2 cm}
+        
+        \item 정동하, 김종휘, \softbold{이찬규}, 김진환*, “자율운항 연구를 위한 다중 센서 데이터 소개”, 한국해양공학회, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item 김종휘, 정동하, \softbold{이찬규}, 김진환*, “가항영역 탐지를 통한 운하 환경에서의 자율 경로 생성”, 대한조선학회, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item 박기용, \softbold{이찬규}, 김진환*, “비선형 모델 예측 제어 기법을 이용한 두 개의 전방향 추진기를 갖는 선박의 자동 접안”, 한국로봇학회 한국로봇종합학술대회, 2023.
+            
+            \vspace{0.2 cm}
+        
+        \item \softbold{이찬규}, 김진환*, “선박을 위한 강인한 모델예측제어기반 경로 추종 및 장애물 회피”, 제어로봇시스템학회, 2022.
+            
+            \vspace{0.2 cm}
+        
+        \item \softbold{이찬규}, 김진환*, “불규칙파 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어”, 한국해양과학기술협의회 공동학술대회, 2022.
+            
+            \vspace{0.2 cm}
+        
+        \item \softbold{이찬규}, 정동하, 김종휘, 조용훈, 김진환*, 최휘용, 이준식, “포항 운하에서의 자율 운항 실험을 위한 최적 경로 추종”, 대한조선학회 추계학술대회, 2021.
+            
+            \vspace{0.2 cm}
+        
+        \item 김종휘, 정동하, \softbold{이찬규}, 조용훈, 김진환*, 장왕석, 박세용, “포항 운하에서의 자율 운항 실험을 위한 다중 센서 융합”, 한국해양공학회 추계학술대회, 2021.
+            
+            \vspace{0.2 cm}
+        
+        \item \softbold{이찬규}, 김진환*, “파랑 중 전기추진선박의 에너지 효율 향상을 위한 모델예측제어”, 한국해양과학기술협의회 공동학술대회, 2021.
+            
+            \vspace{0.2 cm}
+        
+        \item \softbold{이찬규}, 김진환*, “쌍축 쌍타 선박의 자동접안을 위한 모델예측제어”, 한국해양과학기술협의회 공동학술대회, 2020. (Outstanding Student Paper Presentation Award)
+            
+            \vspace{0.2 cm}
+        
+        \item 장준우, \softbold{이찬규}, 김진환*, “표적 운동 추정 과정에서의 다중모델 기반 필터의 모호성 해결”, 제어로봇시스템학회, 2019. 
+            
+            \vspace{0.2 cm}
+        
+        \item 김종휘, 김근환, \softbold{이찬규}, 김진환*, 이필엽, “단안 카메라 영상을 이용한 합성곱 신경망 기반 선박 탐지 및 추적”, 한국해양공학회 추계학술대회, 2018.
+    \end{itemize}
+
+    \section{Awards}
+    \begin{itemize}
+        \item  \textcolor{NavyBlue}{Outstanding Paper Award}, Korea Robotics Society Annual Conference (KRoC), 2024
+            
+        \vspace{0.2 cm}
+        
+        \item  \textcolor{NavyBlue}{Outstanding Student Presentation}, 9th SJTU-KAIST-UTokyo Joint Academic Symposium, 2022
+            
+        \vspace{0.2 cm}
+        
+        \item \textcolor{NavyBlue}{Outstanding Student Paper Presentation}, Korean Society of Ocean Engineers (KSOE), 2020
+    \end{itemize}
+
+
+    \section{Projects}
+    \begin{itemize}
+        \item [\textbf{[P9]}] \textbf{National Research Foundation of Korea (NRF) (2026 -- 2029)}
+
+        Development of a Reachability Analysis-based MPPI Algorithm for Multimodal Safe Trajectory Planning and Control
+
+        \textcolor{NavyBlue}{Principal investigator}
+
+        \item [\textbf{[P8]}] \textbf{Kongju National University (2026 -- 2027)}
+
+        Development of Robust Unmanned Vehicle Control Algorithms via Model Predictive Control
+
+        \textcolor{NavyBlue}{New faculty settlement grant (신임교수정착연구비)}
+
+        \item [\textbf{[P7]}] \textbf{LIG NEX1 Co., Ltd (2024.10.01 - current)}
+        
+        Research on Precision Maneuvering Control Technology for Unmanned Surface Vehicles for Close Formation and Coordination
+        
+        \textcolor{NavyBlue}{Developed safe trajectory planning and control algorithms}
+        
+            
+        \item [\textbf{[P6]}] \textbf{MOBINN (2023.01.01 - 2023.12.31)}
+        
+        Development of Autonomous Driving Algorithms for Delivery Robots
+        
+        \textcolor{NavyBlue}{Developed MPC-based human avoidance and path-following algorithms}
+        
+        \item [\textbf{[P5]}] \textbf{Avikus (2021.01.01 - 2021.12.31)}
+        
+        Development of Autonomous Navigation Algorithm for Pohang Canal
+        
+        \textcolor{NavyBlue}{Developed autonomous navigation algorithms for canal environments}
+        
+        \item [\textbf{[P4]}] \textbf{KSOE (Korea Shipbuilding \& Offshore Engineering) (2020.01.01 - 2020.12.31)}
+        
+        Development of Autonomous Berthing Technology for Whale Watching Ships
+        
+        \textcolor{NavyBlue}{Developed autonomous berthing trajectory generation and control algorithms}
+        
+        \item [\textbf{[P3]}] \textbf{Korea Research Institute of Ships \& Ocean Engineering (KRISO) (2020.04.17 - 2023.12.31)}
+        
+        Development of Electrically-Propelled Car Ferry and Removable Power Supply Systems
+        
+        \textcolor{NavyBlue}{Developed control algorithms for efficiency improvement of electric propulsion ships}
+        
+        \item [\textbf{[P2]}] \textbf{Agency for Defense Development (ADD) (2020.01.01 - 2024.09.30)}
+        
+        Development of Core Technology for Long-Endurance Multipurpose Unmanned Underwater Vehicles
+        
+        \textcolor{NavyBlue}{Developed path tracking and control algorithms for unmanned underwater vehicles}
+        
+        \item [\textbf{[P1]}] \textbf{Agency for Defense Development (ADD) (2018.05.01 - 2019.12.31)}
+        
+        Research on Path Planning, Tracking, and Obstacle Avoidance Technologies for Unmanned Underwater Vehicles
+        
+        \textcolor{NavyBlue}{Developed path planning, tracking, and obstacle avoidance algorithms}
+        
+    \end{itemize}
+
+    \section{Reviewer Experiences}
+    \subsection{Journal}
+    \begin{itemize}                 
+         \item IEEE/ASME Transactions on Mechatronics
+         \item IEEE Transactions on Control Systems Technology
+         \item IEEE Transactions on Intelligent Transportation Systems
+         \item IEEE Transactions on Industrial Electronics
+         \item IEEE Control Systems Letters
+         \item IEEE Robotics and Automation Letters
+         \item Robotics and Autonomous Systems
+         \item Journal of Field Robotics
+         \item International Journal of Naval Architecture and Ocean Engineering
+         \item Journal of Aerospace Information Systems
+         \item Intelligent Service Robotics
+         \item Nonlinear Dynamics
+         \item The Journal of Korea Robotics Society
+    \end{itemize}                 
+    \subsection{Conference}
+    \begin{itemize}                 
+         \item IEEE Conference on Decision and Control (CDC)
+         \item IFAC World Congress (2023, 2026)
+         \item IFAC Conference on Control Applications in Marine Systems, Robotics, and Vehicles (CAMS)
+         \item International Conference on Control, Automation, and Systems (ICCAS)
+         \item Modeling, Estimation and Control Conference (MECC 2025)
+         \item IEEE International Conference on Ubiquitous Robots (UR 2026)
+    \end{itemize}   
+
+    % \section{Projects}
+
+    %     \begin{tabularx}{
+    %         \textwidth-0.4 cm-0.13cm
+    %     }{
+    %         K{0.2 cm}
+    %         R{4.1 cm}
+    %     }
+    %         \textbf{Multi-User Drawing Tool}
+
+    %         \vspace{0.10 cm}
+
+    %         \begin{highlights}
+    %             \item Developed an electronic classroom where multiple users can view and simultaneously draw on a "chalkboard" with each person's edits synchronized.
+    %             \item Used C++ and MFC.
+    %         \end{highlights}
+    %         &
+            
+
+    %         Jan. 2004
+    %     \end{tabularx}
+
+
+    %     \vspace{0.2 cm}
+    %     \begin{tabularx}{
+    %         \textwidth-0.4 cm-0.13cm
+    %     }{
+    %         K{0.2 cm}
+    %         R{4.1 cm}
+    %     }
+    %         \textbf{Synchronized Calendar}
+
+    %         \vspace{0.10 cm}
+
+    %         \begin{highlights}
+    %             \item Developed a desktop calendar with globally shared and synchronized calendars, allowing users to schedule meetings with other users.
+    %             \item Used C\#.NET, SQL, and XML.
+    %         \end{highlights}
+    %         &
+            
+
+    %         2003 to 2004
+    %     \end{tabularx}
+
+
+    %     \vspace{0.2 cm}
+    %     \begin{tabularx}{
+    %         \textwidth-0.4 cm-0.13cm
+    %     }{
+    %         K{0.2 cm}
+    %         R{4.1 cm}
+    %     }
+    %         \textbf{Operating System}
+
+    %         \vspace{0.10 cm}
+
+    %         \begin{highlights}
+    %             \item Developed a UNIX-style OS with a scheduler, file system, text editor, and calculator.
+    %             \item Used C.
+    %         \end{highlights}
+    %         &
+            
+
+    %         Jan. 2002
+    %     \end{tabularx}
+
+
+
+    
+    % \section{Additional Experience And Awards}
+
+    %     \begingroup\leftskip=0.2 cm
+    %     \advance\csname @rightskip\endcsname 0.2 cm
+    %     \advance\rightskip 0.2 cm
+
+    %     \textbf{Instructor (2003 - 2005):} Taught two full-credit Computer Science courses. \par\endgroup
+
+    %     \vspace{0.2 cm}
+    %     \begingroup\leftskip=0.2 cm
+    %     \advance\csname @rightskip\endcsname 0.2 cm
+    %     \advance\rightskip 0.2 cm
+
+    %     \textbf{Third Prize, Senior Design Projects:} Awarded 3rd prize for a synchronized calendar project out of 100 projects. \par\endgroup
+
+
+    
+    % \section{Technologies}
+
+    %     \begingroup\leftskip=0.2 cm
+    %     \advance\csname @rightskip\endcsname 0.2 cm
+    %     \advance\rightskip 0.2 cm
+
+    %     \textbf{Languages:} C++, C, Java, Objective-C, C\#.NET, SQL, JavaScript \par\endgroup
+
+    %     \vspace{0.2 cm}
+    %     \begingroup\leftskip=0.2 cm
+    %     \advance\csname @rightskip\endcsname 0.2 cm
+    %     \advance\rightskip 0.2 cm
+
+    %     \textbf{Software:} Visual Studio, Microsoft SQL Server, Eclipse, XCode, Interface Builder \par\endgroup
+
+
+    
+
+\end{document}
