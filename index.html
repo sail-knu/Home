@@ -28,22 +28,11 @@
     <style>
       html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
       html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
-      #sail-cursor-obstacle, #sail-cursor-pointer {
+      #sail-cursor-pointer {
         position: fixed;
         top: 0;
         left: 0;
         pointer-events: none;
-      }
-      #sail-cursor-obstacle {
-        z-index: 2147483646;
-        width: 52px;
-        height: 52px;
-        margin: -26px 0 0 -26px;
-        border-radius: 50%;
-        background: transparent;
-        border: 2px solid rgba(29, 78, 137, 0.45);
-      }
-      #sail-cursor-pointer {
         z-index: 2147483647;
         width: 24px;
         height: 24px;
@@ -51,7 +40,7 @@
         filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
       }
       @media (pointer: coarse) {
-        #sail-cursor-obstacle, #sail-cursor-pointer { display: none !important; }
+        #sail-cursor-pointer { display: none !important; }
         html.has-sail-cursor, html.has-sail-cursor * { cursor: auto !important; }
       }
     </style>
@@ -1515,8 +1504,6 @@
     </script>
     <script>
     (function () {
-      var obs = document.createElement("div");
-      obs.id = "sail-cursor-obstacle";
       var ptr = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       ptr.id = "sail-cursor-pointer";
       ptr.setAttribute("viewBox", "0 0 24 24");
@@ -1528,13 +1515,10 @@
       path.setAttribute("stroke-width", "1.6");
       path.setAttribute("stroke-linejoin", "round");
       ptr.appendChild(path);
-      document.documentElement.appendChild(obs);
       document.documentElement.appendChild(ptr);
       document.documentElement.classList.add("has-sail-cursor");
       document.addEventListener("mousemove", function (e) {
-        var t = "translate3d(" + e.clientX + "px," + e.clientY + "px,0)";
-        obs.style.transform = t;
-        ptr.style.transform = t;
+        ptr.style.transform = "translate3d(" + e.clientX + "px," + e.clientY + "px,0)";
       }, { passive: true });
     })();
     </script>
