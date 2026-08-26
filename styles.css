@@ -1551,6 +1551,88 @@ a.member-card {
   max-width: 1120px;
 }
 
+.note-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.note-step h3 {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.05rem;
+  margin: 10px 0 8px;
+}
+
+.note-step p {
+  color: var(--copy-color);
+  font-size: 0.95rem;
+}
+
+.note-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--chip-bg);
+  color: var(--primary-color);
+  font-family: "Outfit", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.note-math .note-math-obj {
+  font-size: 1.12rem;
+  color: var(--heading-color);
+  margin-bottom: 10px;
+}
+
+.note-math .note-math-st {
+  color: var(--muted-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.note-math ul {
+  margin: 0 0 16px 1.15em;
+  color: var(--copy-color);
+}
+
+.note-math p {
+  color: var(--copy-color);
+  margin-bottom: 12px;
+}
+
+.note-math p:last-child {
+  margin-bottom: 0;
+}
+
+.note-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.note-split h3 {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+}
+
+.note-refs {
+  margin-top: 8px;
+}
+
+@media (max-width: 800px) {
+  .note-steps,
+  .note-split {
+    grid-template-columns: 1fr;
+  }
+}
+
 .sim-lec-nav {
   display: flex;
   flex-wrap: wrap;

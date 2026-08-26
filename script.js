@@ -63,7 +63,8 @@
       "#member-yu": "#members",
       "#lecture-future": "#lecture",
       "#lecture-mechatronics": "#lecture",
-      "#lecture-vibrations": "#lecture"
+      "#lecture-vibrations": "#lecture",
+      "#lecture-mpc": "#lecture"
     };
     navItems.forEach((nav) => {
       const href = nav.getAttribute("href");

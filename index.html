@@ -24,7 +24,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260821">
+    <link rel="stylesheet" href="styles.css?v=20260826">
     <style>
       html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
       html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
@@ -492,7 +492,7 @@
                                 </div>
                                 <h4 class="rep-pub-title">Representative publications</h4>
                                 <ul class="pub-list">
-                                    <li><strong>Changyu Lee*</strong>, Byungkwan Lee, "Physics-Consistent Behavior Cloning of Nonlinear Model Predictive Control for Surface Vehicle Trajectory Tracking", In Prep. (Collaboration with NVIDIA)</li>
+                                    <li><strong>Changyu Lee*</strong>, Byungkwan Lee, Kanghoon Yoon, "Imitation Learning of Avoidance Modes for Computationally Efficient Multimodal Model Predictive Control", In Prep. (Collaboration with NVIDIA) <a class="project-page" href="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/" target="_blank" rel="noopener">Project page</a></li>
                                     <li>Yeongha Shin, <strong>Changyu Lee</strong>, Jinwhan Kim*, "MARQA: LLM-Based Question Answering for Negotiation-Capable Autonomous Ship Navigation", Under Revision. <a class="project-page" href="https://yeongha-shin.github.io/MARQA/" target="_blank" rel="noopener">Project page</a></li>
                                     <li>Jonghwi Kim**, <strong>Changyu Lee**</strong>, Dongha Chung, Jinwhan Kim*, <a href="https://doi.org/10.1109/LRA.2023.3291949" target="_blank" rel="noopener">"Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways,"</a> <em>IEEE Robotics and Automation Letters</em> <span class="jcr-pill">RA-L</span>, Sep 2023. (**: equally contributed)</li>
                                     <li>Junwoo Jang, <strong>Changyu Lee</strong>, Jinwhan Kim*, <a href="https://doi.org/10.1007/s10514-023-10114-8" target="_blank" rel="noopener">"A learning-based approach to surface vehicle dynamics modeling for robust multistep prediction,"</a> <em>Autonomous Robots</em> <span class="jcr-pill">AURO</span>, June 2023.</li>
@@ -1105,7 +1105,7 @@
                 <ul class="pub-list">
                     <li><strong>Changyu Lee</strong>, Kiyong Park, Jinwhan Kim*, "Dynamic Tube-based MPC with L1 Adaptation for Improved Uncertainty Compensation", In Prep.</li>
                     <li>Kiyong Park, <strong>Changyu Lee</strong>, Donghoon Kim, Woongki Lee, Jiwan Kim, Junhyuk Choi, Jinwhan Kim*, "Safe USV Recovery Using Disturbance-Aware Predictive Control with Control Barrier Functions", In Prep. <a class="project-page" href="https://kyong3005.github.io/usv-recovery/" target="_blank" rel="noopener">Project page</a></li>
-                    <li><strong>Changyu Lee*</strong>, Byungkwan Lee, "Physics-Consistent Behavior Cloning of Nonlinear Model Predictive Control for Surface Vehicle Trajectory Tracking", In Prep. (Collaboration with NVIDIA)</li>
+                    <li><strong>Changyu Lee*</strong>, Byungkwan Lee, Kanghoon Yoon, "Imitation Learning of Avoidance Modes for Computationally Efficient Multimodal Model Predictive Control", In Prep. (Collaboration with NVIDIA) <a class="project-page" href="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/" target="_blank" rel="noopener">Project page</a></li>
                     <li><strong>Changyu Lee</strong>, "Robust Exact-Geometry MPC-CBF for Autonomous Boat Docking in Narrow Slips", In Prep. <a class="project-page" href="https://sail-knu.github.io/Exact-Geometry-MPC-CBF-for-Autonomous-Boat-Docking-in-Narrow-Slips/" target="_blank" rel="noopener">Project page</a></li>
                     <li><strong>Changyu Lee</strong>, "Three-Dimensional Turning-Circle Control Barrier Function for Obstacle Avoidance of Unmanned Underwater Vehicles", Submitted.</li>
                     <li><strong>Changyu Lee</strong>, "Reducing Conservatism in Robust Quadrotor Trajectory Planning via Cascade Tube-based Model Predictive Control", Submitted.</li>
@@ -1258,6 +1258,17 @@
                         <div class="lecture-term">2025 Fall</div>
                         <h3>생산공정설계</h3>
                         <p class="small-text">Undergraduate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="lecture-year mt-5">
+                <h3 class="subsection-title" data-i18n="lecture_notes">Notes</h3>
+                <div class="lecture-grid">
+                    <div class="lecture-card">
+                        <div class="lecture-term">Notes</div>
+                        <h3>MPC</h3>
+                        <p class="small-text">Model Predictive Control</p>
+                        <a href="#lecture-mpc" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_mpc_open">설명 보기</a>
                     </div>
                 </div>
             </div>
@@ -1436,6 +1447,80 @@
         </div>
     </section>
 
+    <section id="lecture-mpc" class="section page-section hidden-page">
+        <div class="section-container course-wrap course-wrap-wide">
+            <a href="#lecture" class="page-back">← Lecture</a>
+            <div class="section-header">
+                <h2 class="section-title">MPC</h2>
+                <div class="underline"></div>
+            </div>
+            <p class="small-text" data-i18n="mpc_kicker">모델예측제어 · 학기·연도와 무관한 설명 노트</p>
+
+            <div class="overview-copy" data-i18n="mpc_lede">
+                <p><strong>모델예측제어(MPC)</strong>는 현재 상태에서 앞으로 몇 스텝을 예측하고, 그 구간에서 가장 좋은 입력 수열을 푼 뒤, <strong>첫 입력만 적용하고 다시 푸는</strong> 제어 방식입니다. 한 번 계산한 궤적을 끝까지 따라가는 것이 아니라, 매 순간 새로운 측정값으로 문제를 다시 엽니다. 이 반복을 receding horizon이라고 합니다.</p>
+            </div>
+
+            <div class="note-steps" data-i18n="mpc_steps">
+                <div class="note-step glass-panel">
+                    <span class="note-step-n">1</span>
+                    <h3>예측</h3>
+                    <p>모델 <em>x</em><sub><em>k</em>+1</sub> = <em>f</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>)로 현재 상태 <em>x</em>(<em>t</em>)부터 수평선 <em>N</em>까지 앞으로 봅니다.</p>
+                </div>
+                <div class="note-step glass-panel">
+                    <span class="note-step-n">2</span>
+                    <h3>최적화</h3>
+                    <p>비용과 제약(상태·입력·종단)을 넣고, 예측 구간에서 입력 수열을 풉니다.</p>
+                </div>
+                <div class="note-step glass-panel">
+                    <span class="note-step-n">3</span>
+                    <h3>적용 후 이동</h3>
+                    <p>수열의 첫 입력만 넣고, 다음 시각의 실제 상태로 수평선을 한 칸 밀어 같은 문제를 다시 풉니다.</p>
+                </div>
+            </div>
+
+            <h3 class="subsection-title mt-5" data-i18n="mpc_form_title">표준 문제</h3>
+            <div class="note-math glass-panel" data-i18n="mpc_form">
+                <p class="note-math-obj">min<sub><em>x</em>(·), <em>u</em>(·)</sub> &nbsp; &sum;<sub><em>k</em>=0</sub><sup><em>N</em>−1</sup> <em>q</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>) + <em>p</em>(<em>x</em><sub><em>N</em></sub>)</p>
+                <p class="note-math-st">subject to</p>
+                <ul>
+                    <li><em>x</em><sub>0</sub> = <em>x</em>(<em>t</em>)</li>
+                    <li><em>x</em><sub><em>k</em>+1</sub> = <em>f</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>)</li>
+                    <li><em>x</em><sub><em>k</em></sub> ∈ 𝕏, &nbsp; <em>u</em><sub><em>k</em></sub> ∈ 𝕌</li>
+                    <li><em>x</em><sub><em>N</em></sub> ∈ 𝕏<sub>f</sub></li>
+                </ul>
+                <p><em>q</em>는 stage cost, <em>p</em>는 terminal cost입니다. 모델 <em>f</em>가 선형이면 <strong>Linear MPC</strong>, 비선형이면 <strong>Nonlinear MPC (NMPC)</strong>입니다. 매 스텝마다 이 최적화 문제를 다시 풉니다.</p>
+                <p>유한 수평선만 보면 무한 수평선 문제를 그대로 풀 수 없습니다. 그래서 <strong>terminal cost</strong>와 <strong>terminal set</strong> 𝕏<sub>f</sub>로 나머지 무한 구간을 근사합니다. 잘 고르면 recursive feasibility와 안정성을 논할 수 있습니다.</p>
+            </div>
+
+            <div class="note-split">
+                <div class="glass-panel" data-i18n="mpc_pros">
+                    <h3>잘 쓰는 이유</h3>
+                    <ul class="custom-bullet-list">
+                        <li>미래를 보고 미리 움직이는 proactive 동작</li>
+                        <li>상태·입력 제약을 문제에 직접 넣음</li>
+                        <li>모델과 목적함수를 바꿔 같은 틀을 재사용</li>
+                    </ul>
+                </div>
+                <div class="glass-panel" data-i18n="mpc_cons">
+                    <h3>조심할 점</h3>
+                    <ul class="custom-bullet-list">
+                        <li>매 스텝 최적화를 풀어야 해서 계산량이 큼</li>
+                        <li>해가 없거나, 안정성이 자동으로 보장되지 않을 수 있음</li>
+                        <li>모델 오차·외란이 있으면 예측이 어긋남</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="subsection-title mt-5" data-i18n="mpc_refs_title">더 읽을 자료</h3>
+            <ul class="pub-list note-refs" data-i18n="mpc_refs">
+                <li>D. Q. Mayne et al., <a href="https://doi.org/10.1016/S0005-1098(99)00214-9" target="_blank" rel="noopener">"Constrained model predictive control: Stability and optimality,"</a> <em>Automatica</em>, 2000.</li>
+                <li>F. Borrelli, A. Bemporad, M. Morari, <a href="http://www.mpc.berkeley.edu/mpc-course-material" target="_blank" rel="noopener"><em>Predictive Control for Linear and Hybrid Systems</em></a>, Cambridge University Press, 2017.</li>
+                <li>S. V. Raković, W. S. Levine (eds.), <em>Handbook of Model Predictive Control</em>, Springer, 2018.</li>
+                <li>J. A. E. Andersson et al., <a href="https://web.casadi.org/" target="_blank" rel="noopener">CasADi</a> · <a href="https://docs.acados.org/" target="_blank" rel="noopener">acados</a> — 비선형 MPC 구현에 자주 쓰는 도구.</li>
+            </ul>
+        </div>
+    </section>
+
     <section id="gallery" class="section page-section hidden-page">
         <div class="section-container">
             <div class="section-header">
@@ -1494,7 +1579,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260821" defer></script>
+    <script src="script.js?v=20260826" defer></script>
     <script src="lecture/future-tech/inverted-pendulum-pid_embed.js" defer></script>
     <script
       color="29,78,137"
@@ -1547,7 +1632,18 @@
         "no_pub_yet": `No publications listed yet.`,
         "course_intro": `Undergraduate lab simulators. Pick one with the buttons below.`,
         "course_intro_mech": `Interactive demos for sensing, filtering, and modeling. Pick a lecture, then a simulator.`,
-        "course_intro_vib": `Interactive demos for each lecture. Pick a lecture, then a simulator.`
+        "course_intro_vib": `Interactive demos for each lecture. Pick a lecture, then a simulator.`,
+        "lecture_notes": `Notes`,
+        "lecture_mpc_open": `Read notes`,
+        "mpc_form_title": `Standard problem`,
+        "mpc_refs_title": `Further reading`,
+        "mpc_kicker": `Model Predictive Control · a year-independent note`,
+        "mpc_lede": `<p><strong>Model Predictive Control (MPC)</strong> predicts a few steps ahead from the current state, solves for the best input sequence on that horizon, then <strong>applies only the first input and solves again</strong>. It does not ride one open-loop plan to the end; at every step it reopens the problem with a new measurement. That loop is called a receding horizon.</p>`,
+        "mpc_steps": `<div class="note-step glass-panel"><span class="note-step-n">1</span><h3>Predict</h3><p>From the current state <em>x</em>(<em>t</em>), look ahead over the horizon <em>N</em> with the model <em>x</em><sub><em>k</em>+1</sub> = <em>f</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>).</p></div><div class="note-step glass-panel"><span class="note-step-n">2</span><h3>Optimize</h3><p>Put the cost and the constraints (state, input, terminal) into one problem and solve for the input sequence on the horizon.</p></div><div class="note-step glass-panel"><span class="note-step-n">3</span><h3>Apply, then shift</h3><p>Use only the first input, then slide the horizon forward and solve the same problem again from the next measured state.</p></div>`,
+        "mpc_form": `<p class="note-math-obj">min<sub><em>x</em>(·), <em>u</em>(·)</sub> &nbsp; &sum;<sub><em>k</em>=0</sub><sup><em>N</em>−1</sup> <em>q</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>) + <em>p</em>(<em>x</em><sub><em>N</em></sub>)</p><p class="note-math-st">subject to</p><ul><li><em>x</em><sub>0</sub> = <em>x</em>(<em>t</em>)</li><li><em>x</em><sub><em>k</em>+1</sub> = <em>f</em>(<em>x</em><sub><em>k</em></sub>, <em>u</em><sub><em>k</em></sub>)</li><li><em>x</em><sub><em>k</em></sub> ∈ 𝕏, &nbsp; <em>u</em><sub><em>k</em></sub> ∈ 𝕌</li><li><em>x</em><sub><em>N</em></sub> ∈ 𝕏<sub>f</sub></li></ul><p><em>q</em> is the stage cost and <em>p</em> is the terminal cost. If the model <em>f</em> is linear this is <strong>Linear MPC</strong>; if it is nonlinear it is <strong>Nonlinear MPC (NMPC)</strong>. The same problem is solved again at every step.</p><p>A finite horizon cannot replace an infinite-horizon problem by itself. A <strong>terminal cost</strong> and a <strong>terminal set</strong> 𝕏<sub>f</sub> stand in for the leftover tail. Chosen well, they let you talk about recursive feasibility and stability.</p>`,
+        "mpc_pros": `<h3>Why it is used</h3><ul class="custom-bullet-list"><li>Proactive motion that looks ahead</li><li>State and input limits go into the problem directly</li><li>The same template works with a different model or objective</li></ul>`,
+        "mpc_cons": `<h3>What to watch</h3><ul class="custom-bullet-list"><li>An optimization problem must be solved at every step</li><li>A solution may not exist, and stability is not automatic</li><li>Model error and disturbance throw the prediction off</li></ul>`,
+        "mpc_refs": `<li>D. Q. Mayne et al., <a href="https://doi.org/10.1016/S0005-1098(99)00214-9" target="_blank" rel="noopener">"Constrained model predictive control: Stability and optimality,"</a> <em>Automatica</em>, 2000.</li><li>F. Borrelli, A. Bemporad, M. Morari, <a href="http://www.mpc.berkeley.edu/mpc-course-material" target="_blank" rel="noopener"><em>Predictive Control for Linear and Hybrid Systems</em></a>, Cambridge University Press, 2017.</li><li>S. V. Raković, W. S. Levine (eds.), <em>Handbook of Model Predictive Control</em>, Springer, 2018.</li><li>J. A. E. Andersson et al., <a href="https://web.casadi.org/" target="_blank" rel="noopener">CasADi</a> · <a href="https://docs.acados.org/" target="_blank" rel="noopener">acados</a> — common tools for nonlinear MPC.</li>`
       };
       var origKO = {};
       function cacheKO() {
