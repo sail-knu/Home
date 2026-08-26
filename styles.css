@@ -1646,7 +1646,8 @@ a.member-card {
   font-weight: 700;
 }
 
-.note-math .note-math-obj {
+.note-math .note-math-obj,
+.note-article > .note-math-obj {
   font-size: 1.12rem;
   color: var(--heading-color);
   margin-bottom: 10px;

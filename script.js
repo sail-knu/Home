@@ -800,7 +800,7 @@
       { lec: "4", title: "Nonlinear (CasADi)", src: "lecture/mpc/04-nonlinear.html" },
       { lec: "5", title: "Tube-based MPC", src: "lecture/mpc/05-tube.html" }
     ];
-    const bust = "?v=20260826d";
+    const bust = "?v=20260826e";
     const state = { lec: "1", src: "", seq: 0 };
 
     function lectureName(id) {
