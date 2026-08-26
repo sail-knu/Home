@@ -1,0 +1,57 @@
+<div class="note-article">
+  <p>모델 불확실성이나 외란이 있을 때 쓰는 대표적인 robust MPC입니다. Reachability로 오차가 머물 집합을 구하고, 그 집합만큼 제약을 줄인 뒤 <strong>nominal</strong> 시스템에 일반 MPC를 겁니다.</p>
+
+  <h3>불확실 시스템과 nominal</h3>
+  <p>유계 외란 \(w_k\in\mathbb{W}\)를 가정합니다.</p>
+  \[
+    \begin{aligned}
+      x_{k+1} &= A x_k + B u_k + w_k \\
+      x_k &\in \mathbb{X},\qquad u_k \in \mathbb{U}
+    \end{aligned}
+  \]
+  <p>외란을 뺀 nominal 시스템:</p>
+  \[
+    z_{k+1} = A z_k + B \bar u_k
+  \]
+
+  <p>실제 입력은 nominal 입력에 오차 피드백을 더합니다.</p>
+  \[
+    u_k = \bar u_k + K(x_k - z_k),\qquad e_k = x_k - z_k
+  \]
+  \[
+    \begin{aligned}
+      e_{k+1}
+      &= A(x_k-z_k)+B(u_k-\bar u_k)+w_k \\
+      &= (A+BK)e_k + w_k
+    \end{aligned}
+  \]
+
+  <h3>RPI set</h3>
+  <div class="note-assume glass-panel">
+    <h4>Definition — RPI set</h4>
+    <p>집합 \(\Omega\subset\mathbb{R}^n\)이 LTI 시스템 \(x^+=Ax+w\)의 robust positively invariant (RPI) set이라는 것은, 모든 \(x\in\Omega\), \(w\in\mathbb{W}\)에 대해 \(Ax+w\in\Omega\)인 것입니다.</p>
+  </div>
+  <p>\(A+BK\)가 Schur stable이면 오차 시스템의 RPI set \(\mathbb{S}\)를 계산할 수 있습니다. 정확한 최소 RPI는 Minkowski sum을 무한히 더하는 식이라, 실무에서는 Raković et al. (TAC 2005)의 \(\varepsilon\)-approximation을 씁니다. 충분히 많이 더한 뒤 \((1-\alpha)^{-1}\)만큼 집합을 키워 불변에 가깝게 만듭니다.</p>
+
+  <h3>Tube-based MPC</h3>
+  \[
+    \begin{aligned}
+      \min_{z_{(\cdot)},\,\bar u_{(\cdot)}}
+      &\sum_{k=0}^{N-1} q(z_k,\bar u_k)+p(z_N) \\
+      \text{s.t. } z_{k+1} &= A z_k + B \bar u_k \\
+      z_k &\in \mathbb{X}\ominus\mathbb{S} \\
+      \bar u_k &\in \mathbb{U}\ominus K\mathbb{S} \\
+      z_N &\in \mathbb{X}_f\ominus\mathbb{S}
+    \end{aligned}
+  \]
+  <p>제약에서 \(\mathbb{S}\)를 빼 두었으므로, 실제 상태 \(x_k\in\{z_k\}\oplus\mathbb{S}\)는 원래 \(\mathbb{X}\) 안에 남습니다. Auxiliary gain \(K\)와 RPI는 <strong>offline</strong>에서 끝낼 수 있어, 온라인 계산량은 일반 선형 MPC와 같습니다.</p>
+
+  <p>예제 애니메이션은 <a href="https://github.com/HiroIshida/robust-tube-mpc" target="_blank" rel="noopener">HiroIshida / robust-tube-mpc</a>가 Mayne·Raković 논문을 잘 보여 줍니다.</p>
+
+  <h3>문헌</h3>
+  <ul class="pub-list note-refs">
+    <li>D. Q. Mayne et al., <a href="https://doi.org/10.1016/j.automatica.2004.08.019" target="_blank" rel="noopener">"Robust model predictive control of constrained linear systems with bounded disturbances,"</a> <em>Automatica</em>, 2005.</li>
+    <li>S. V. Raković et al., <a href="https://doi.org/10.1109/TAC.2005.843854" target="_blank" rel="noopener">"Invariant approximations of the minimal robust positively invariant set,"</a> <em>IEEE TAC</em>, 2005.</li>
+    <li>C. Lee et al., "Robust path tracking and obstacle avoidance using tube-based model predictive control for surface vehicles," <em>IFAC-PapersOnLine</em>, 2022.</li>
+  </ul>
+</div>

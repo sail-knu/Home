@@ -748,6 +748,43 @@ html[data-lang="ko"] .univ-lockup {
   color: var(--primary-color);
 }
 
+#lab-overview .details-list {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition);
+}
+
+#lab-overview .details-list:hover:not(.selected) {
+  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
+}
+
+#lab-overview .details-list.selected {
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
+    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+#lab-overview .details-list.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+}
+
+#lab-overview .details-grid:has(.details-list:hover) .details-list:not(:hover):not(.selected),
+#lab-overview .details-grid:has(.details-list.selected) .details-list:not(.selected):not(:hover) {
+  opacity: 0.38;
+}
+
 .disclaimer-box {
   display: flex;
   gap: 10px;
@@ -1037,8 +1074,35 @@ a.project-page:hover {
 
 .project-card,
 .project-card.bento-item {
-  cursor: default;
+  cursor: pointer;
   min-height: 0;
+}
+
+.project-card:hover:not(.selected) {
+  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
+}
+
+.project-card.selected {
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
+    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+.project-card.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+}
+
+.project-grid:has(.project-card:hover) .project-card:not(:hover):not(.selected),
+.project-grid:has(.project-card.selected) .project-card:not(.selected):not(:hover) {
+  opacity: 0.38;
 }
 
 .project-card .bento-content {
@@ -1626,6 +1690,114 @@ a.member-card {
   margin-top: 8px;
 }
 
+.note-host {
+  margin-top: 4px;
+}
+
+.note-article > p {
+  color: var(--copy-color);
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+
+.note-article h3 {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.12rem;
+  margin: 28px 0 12px;
+}
+
+.note-article h4 {
+  font-family: "Outfit", sans-serif;
+  font-size: 1rem;
+  margin: 20px 0 10px;
+}
+
+.note-article .note-steps,
+.note-article .note-split {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.note-callout {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 22%, var(--surface-border));
+  background: color-mix(in srgb, var(--primary-color) 7%, var(--surface));
+  color: var(--copy-color);
+  line-height: 1.65;
+}
+
+.note-callout p {
+  margin-bottom: 10px;
+}
+
+.note-callout p:last-child {
+  margin-bottom: 0;
+}
+
+.note-assume {
+  margin: 0 0 12px;
+}
+
+.note-assume h4 {
+  margin: 0 0 8px;
+  color: var(--primary-color);
+}
+
+.note-assume p {
+  color: var(--copy-color);
+  margin-bottom: 8px;
+}
+
+.note-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.note-tools h4 {
+  margin: 0 0 8px;
+}
+
+.note-tools p {
+  color: var(--muted-text);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.note-ol {
+  margin: 0 0 16px 1.2em;
+  color: var(--copy-color);
+}
+
+.note-ol li {
+  margin: 8px 0;
+}
+
+.note-code {
+  display: block;
+  overflow-x: auto;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background: #f3f5f8;
+  color: #1a2330;
+  font: 0.82rem/1.55 ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.note-host .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 12px 0 16px;
+}
+
+.note-host .note-math {
+  margin-bottom: 16px;
+}
+
 @media (max-width: 800px) {
   .note-steps,
   .note-split {
@@ -1670,6 +1842,10 @@ a.member-card {
 
 .sim-nav-dense {
   margin-top: 10px;
+}
+
+.sim-nav.is-empty {
+  display: none;
 }
 
 .sim-nav-btn,

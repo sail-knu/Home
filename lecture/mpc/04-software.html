@@ -1,0 +1,56 @@
+<div class="note-article">
+  <p>MPC를 짤 때 자주 쓰는 도구입니다. 선형이면 QP, 비선형이면 NLP, Tube면 집합 연산이 추가로 필요합니다.</p>
+
+  <h3>NMPC</h3>
+  <div class="note-tools">
+    <div class="glass-panel">
+      <h4><a href="https://acado.github.io/" target="_blank" rel="noopener">ACADO</a></h4>
+      <p>MATLAB 인터페이스. 임베디드에 쓰기 좋습니다.</p>
+    </div>
+    <div class="glass-panel">
+      <h4><a href="https://docs.acados.org/" target="_blank" rel="noopener">acados</a></h4>
+      <p>ACADO 후속. 더 빠르다고 하지만 ACADO도 실무에서 충분한 경우가 많습니다.</p>
+    </div>
+    <div class="glass-panel">
+      <h4><a href="https://web.casadi.org/" target="_blank" rel="noopener">CasADi</a></h4>
+      <p>Interior-point (IPOPT). 스케일이 큰 문제, 시스템 식별처럼 데이터가 많을 때. ACADO보다 커스터마이즈가 쉽습니다.</p>
+    </div>
+  </div>
+  <p class="small-text">비볼록 문제의 계산 시간 비교는 Robin Verschueren et al., “acados—a modular open-source framework for fast embedded optimal control,” <em>Mathematical Programming Computation</em>, 2022를 보면 됩니다.</p>
+
+  <h3>LMPC</h3>
+  <div class="note-tools">
+    <div class="glass-panel">
+      <h4><a href="http://cvxr.com/cvx/" target="_blank" rel="noopener">CVX</a></h4>
+      <p>MATLAB convex optimization. Gurobi, MOSEK 등을 붙일 수 있습니다.</p>
+    </div>
+    <div class="glass-panel">
+      <h4><a href="https://www.cvxpy.org/" target="_blank" rel="noopener">CVXPY</a></h4>
+      <p>Python용 convex optimization.</p>
+    </div>
+    <div class="glass-panel">
+      <h4><a href="https://cvxgen.com/docs/index.html" target="_blank" rel="noopener">CVXGEN</a></h4>
+      <p>Convex 문제용 코드 생성. 다음 노트에서 절차를 봅니다.</p>
+    </div>
+    <div class="glass-panel">
+      <h4>qpOASES, quadprog, …</h4>
+      <p>QP solver. 문제 크기가 작으면 이것만으로도 충분합니다.</p>
+    </div>
+  </div>
+  <p>2차원 toy example에서 본 속도 순서는 대략 다음과 같습니다.</p>
+  <p class="note-math-obj">qpSWIFT &gt; CVXGEN &gt; qpOASES &gt;&gt; quadprog</p>
+
+  <h3>Reachability · Tube MPC</h3>
+  <div class="note-tools">
+    <div class="glass-panel">
+      <h4><a href="https://tumcps.github.io/CORA/" target="_blank" rel="noopener">CORA</a></h4>
+      <p>Zonotope 연산. Tube의 RPI set을 구할 때 썼습니다.</p>
+    </div>
+    <div class="glass-panel">
+      <h4><a href="https://www.mpt3.org/" target="_blank" rel="noopener">MPT3</a></h4>
+      <p>집합·불변집합 계산에 가장 자주 씁니다.</p>
+    </div>
+  </div>
+
+  <p>관련 알고리즘은 active set, interior point, SQP입니다. 논문으로 보면 CasADi (Andersson 2019), ACADO (Houska 2011), CVXGEN (Mattingley 2012)이 출발점으로 좋습니다.</p>
+</div>

@@ -17,7 +17,8 @@
   const courseControllers = {};
   const coursePageKeys = {
     "#lecture-mechatronics": "mech",
-    "#lecture-vibrations": "vib"
+    "#lecture-vibrations": "vib",
+    "#lecture-mpc": "mpc"
   };
 
   function syncCourseDemos(targetId) {
@@ -169,6 +170,26 @@
       card.addEventListener("click", () => {
         const on = card.classList.contains("selected");
         list.querySelectorAll(".news-item.selected").forEach((c) => c.classList.remove("selected"));
+        if (!on) card.classList.add("selected");
+      });
+    });
+  });
+
+  document.querySelectorAll(".project-grid").forEach((grid) => {
+    grid.querySelectorAll(".project-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const on = card.classList.contains("selected");
+        grid.querySelectorAll(".project-card.selected").forEach((c) => c.classList.remove("selected"));
+        if (!on) card.classList.add("selected");
+      });
+    });
+  });
+
+  document.querySelectorAll("#lab-overview .details-grid").forEach((grid) => {
+    grid.querySelectorAll(".details-list").forEach((card) => {
+      card.addEventListener("click", () => {
+        const on = card.classList.contains("selected");
+        grid.querySelectorAll(".details-list.selected").forEach((c) => c.classList.remove("selected"));
         if (!on) card.classList.add("selected");
       });
     });
@@ -716,6 +737,150 @@
   }
 
   Object.entries(COURSE_DEMOS).forEach(([key, data]) => initCourseDemos(key, data));
+
+  let katexReady = null;
+  function ensureKatex() {
+    if (typeof window.renderMathInElement === "function") return Promise.resolve();
+    if (katexReady) return katexReady;
+    const ver = "0.16.22";
+    const base = "https://cdn.jsdelivr.net/npm/katex@" + ver + "/dist/";
+    katexReady = new Promise((resolve, reject) => {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = base + "katex.min.css";
+      document.head.appendChild(css);
+      const core = document.createElement("script");
+      core.src = base + "katex.min.js";
+      core.onload = () => {
+        const auto = document.createElement("script");
+        auto.src = base + "contrib/auto-render.min.js";
+        auto.onload = resolve;
+        auto.onerror = reject;
+        document.head.appendChild(auto);
+      };
+      core.onerror = reject;
+      document.head.appendChild(core);
+    });
+    return katexReady;
+  }
+
+  function renderNoteMath(host) {
+    if (typeof window.renderMathInElement !== "function") return;
+    window.renderMathInElement(host, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      ignoredClasses: ["note-code"],
+      throwOnError: false
+    });
+  }
+
+  (function initMpcNotes() {
+    const lecNav = document.getElementById("mpc-lec-nav");
+    const simNav = document.getElementById("mpc-sim-nav");
+    const titleEl = document.getElementById("mpc-title");
+    const descEl = document.getElementById("mpc-desc");
+    const host = document.getElementById("mpc-host");
+    if (!lecNav || !simNav || !titleEl || !descEl || !host) return;
+
+    const lectures = [
+      { id: "1", name: "1강 · 개요" },
+      { id: "2", name: "2강 · 표준 문제" },
+      { id: "3", name: "3강 · 안정성" },
+      { id: "4", name: "4강 · 구현" },
+      { id: "5", name: "5강 · Tube MPC" }
+    ];
+    const notes = [
+      { lec: "1", title: "개요", src: "lecture/mpc/01-overview.html" },
+      { lec: "2", title: "표준 문제", src: "lecture/mpc/02-problem.html" },
+      { lec: "3", title: "Linear MPC 안정성", src: "lecture/mpc/03-stability.html" },
+      { lec: "4", title: "소프트웨어", src: "lecture/mpc/04-software.html" },
+      { lec: "4", title: "Linear (CVXGEN)", src: "lecture/mpc/04-linear.html" },
+      { lec: "4", title: "Nonlinear (CasADi)", src: "lecture/mpc/04-nonlinear.html" },
+      { lec: "5", title: "Tube-based MPC", src: "lecture/mpc/05-tube.html" }
+    ];
+    const bust = "?v=20260826d";
+    const state = { lec: "1", src: "", seq: 0 };
+
+    function lectureName(id) {
+      return lectures.find((lec) => lec.id === id)?.name || id + "강";
+    }
+    function notesFor(lec) {
+      return notes.filter((note) => note.lec === lec);
+    }
+
+    function renderLectures() {
+      lecNav.replaceChildren();
+      lectures.forEach((lec) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
+        btn.textContent = lec.name;
+        btn.addEventListener("click", () => {
+          state.lec = lec.id;
+          renderLectures();
+          renderNotes();
+          showNote(notesFor(lec.id)[0]);
+        });
+        lecNav.appendChild(btn);
+      });
+    }
+
+    function renderNotes() {
+      const list = notesFor(state.lec);
+      simNav.replaceChildren();
+      simNav.classList.toggle("is-empty", list.length <= 1);
+      list.forEach((note) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-pick-btn" + (note.src === state.src ? " active" : "");
+        btn.textContent = note.title;
+        btn.addEventListener("click", () => showNote(note));
+        simNav.appendChild(btn);
+      });
+    }
+
+    function showNote(note) {
+      if (!note) return;
+      const seq = ++state.seq;
+      state.lec = note.lec;
+      state.src = note.src;
+      titleEl.textContent = note.title;
+      descEl.textContent = lectureName(note.lec);
+      host.innerHTML = '<p class="course-hint">노트를 불러오는 중…</p>';
+      renderLectures();
+      renderNotes();
+      fetch(note.src + bust).then((res) => {
+        if (!res.ok) throw new Error(res.status);
+        return res.text();
+      }).then((html) => {
+        if (state.seq !== seq) return;
+        host.innerHTML = html;
+        return ensureKatex().then(() => {
+          if (state.seq !== seq) return;
+          renderNoteMath(host);
+        });
+      }).catch(() => {
+        if (state.seq !== seq) return;
+        host.innerHTML = '<p class="course-hint">노트를 불러오지 못했습니다. 로컬 서버에서 다시 열어 주세요.</p>';
+      });
+    }
+
+    function openFirst() {
+      if (!state.src) showNote(notesFor(state.lec)[0]);
+    }
+
+    function unload() {
+      state.src = "";
+      state.seq += 1;
+      host.innerHTML = "";
+    }
+
+    renderLectures();
+    renderNotes();
+    courseControllers.mpc = { openFirst, unload };
+  })();
 
   function youtubeIdFromSrc(src) {
     const m = String(src || "").match(/(?:embed\/|youtu\.be\/|watch\?v=)([\w-]{11})/);

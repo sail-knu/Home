@@ -1,0 +1,40 @@
+<div class="note-article">
+  <p>매 시각 \(t\)에 아래 유한 수평선 문제를 풉니다. 목적함수는 자유롭게 둘 수 있고, 모델 \(f\)만 바꾸면 같은 틀을 재사용합니다.</p>
+
+  <div class="note-math glass-panel">
+    \[
+      \min_{x_{(\cdot)},\,u_{(\cdot)}} \sum_{k=0}^{N-1} q(x_k,u_k) + p(x_N)
+    \]
+    <p class="note-math-st">subject to</p>
+    \[
+      \begin{aligned}
+        x_0 &= x(t) \\
+        x_{k+1} &= f(x_k,u_k) \\
+        x_k &\in \mathbb{X} \\
+        u_k &\in \mathbb{U} \\
+        x_N &\in \mathbb{X}_f
+      \end{aligned}
+    \]
+  </div>
+
+  <ul class="custom-bullet-list">
+    <li>\(q\) — stage cost. 보통 \(x^\top Q x + u^\top R u\)</li>
+    <li>\(p\) — terminal cost. 수평선 밖을 한 번에 근사</li>
+    <li>\(\mathbb{X}_f\) — terminal set. 마지막 상태가 들어갈 집합</li>
+  </ul>
+
+  <p>모델 \(f\)가 선형이면 <strong>Linear MPC (LMPC)</strong>, 비선형이면 <strong>Nonlinear MPC (NMPC)</strong>입니다. 어느 쪽이든 매 스텝마다 이 최적화 문제를 다시 풉니다.</p>
+
+  <div class="note-callout">
+    무한 수평선 문제를 그대로 풀기 어려워서 유한 수평선으로 줄인 것이 MPC입니다. 그래서 terminal cost와 terminal set으로 나머지 무한 구간(무한 비용·무한 제약)을 근사적으로 반영합니다.
+  </div>
+
+  <p>이 둘을 잘 고르면 feasibility와 안정성을 논할 수 있습니다. 선형 MPC에서는 계산 경로가 비교적 분명하고, NMPC에서는 같은 논리를 그대로 쓰기 어렵습니다. 증명은 3강에서 이어갑니다.</p>
+
+  <h3>더 읽을 자료</h3>
+  <ul class="pub-list note-refs">
+    <li>D. Q. Mayne et al., <a href="https://doi.org/10.1016/S0005-1098(99)00214-9" target="_blank" rel="noopener">"Constrained model predictive control: Stability and optimality,"</a> <em>Automatica</em>, 2000.</li>
+    <li>F. Borrelli, A. Bemporad, M. Morari, <a href="http://www.mpc.berkeley.edu/mpc-course-material" target="_blank" rel="noopener"><em>Predictive Control for Linear and Hybrid Systems</em></a>, Cambridge University Press, 2017.</li>
+    <li>S. V. Raković, W. S. Levine (eds.), <em>Handbook of Model Predictive Control</em>, Springer, 2018. — 3강의 안정성 정리의 기준 문헌.</li>
+  </ul>
+</div>

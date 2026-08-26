@@ -1,0 +1,49 @@
+<div class="note-article">
+  <p><strong>모델예측제어(MPC)</strong>는 현재 상태에서 앞으로 몇 스텝을 예측하고, 그 구간에서 가장 좋은 입력 수열을 푼 뒤, <strong>첫 입력만 적용하고 다시 푸는</strong> 제어 방식입니다. 한 번 계산한 궤적을 끝까지 따라가는 것이 아니라, 매 순간 새로운 측정값으로 문제를 다시 엽니다. 이 반복을 receding horizon이라고 합니다.</p>
+
+  <div class="note-steps">
+    <div class="note-step glass-panel">
+      <span class="note-step-n">1</span>
+      <h3>예측</h3>
+      <p>모델 \(x_{k+1}=f(x_k,u_k)\)로 현재 상태 \(x(t)\)부터 수평선 \(N\)까지 앞으로 봅니다.</p>
+    </div>
+    <div class="note-step glass-panel">
+      <span class="note-step-n">2</span>
+      <h3>최적화</h3>
+      <p>비용과 제약(상태·입력·종단)을 넣고, 예측 구간에서 입력 수열을 풉니다.</p>
+    </div>
+    <div class="note-step glass-panel">
+      <span class="note-step-n">3</span>
+      <h3>적용 후 이동</h3>
+      <p>수열의 첫 입력만 넣고, 다음 시각의 실제 상태로 수평선을 한 칸 밀어 같은 문제를 다시 풉니다.</p>
+    </div>
+  </div>
+
+  <div class="note-split">
+    <div class="glass-panel">
+      <h3>잘 쓰는 이유</h3>
+      <ul class="custom-bullet-list">
+        <li>미래를 보고 미리 움직이는 proactive 동작</li>
+        <li>상태·입력 제약을 문제에 직접 넣음</li>
+        <li>모델과 목적함수를 바꿔 같은 틀을 재사용</li>
+      </ul>
+    </div>
+    <div class="glass-panel">
+      <h3>조심할 점</h3>
+      <ul class="custom-bullet-list">
+        <li>매 스텝 최적화를 풀어야 해서 계산량이 큼</li>
+        <li>해가 없거나, 안정성이 자동으로 보장되지 않을 수 있음</li>
+        <li>모델 오차·외란이 있으면 예측이 어긋남</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>연습 예제</h3>
+  <p>수식을 보기 전에, 같은 틀이 차와 진자에도 그대로 들어간다는 점만 보면 됩니다.</p>
+  <ul class="pub-list note-refs">
+    <li><a href="https://github.com/lee-ck/Model-Predictive-Control" target="_blank" rel="noopener">Vehicle example</a> — 평면 차량 경로 추종</li>
+    <li><a href="https://github.com/lee-ck/Inverted-pendulum-on-a-cart-control---MPC-LQR-PID" target="_blank" rel="noopener">Pendulum example</a> — 카트 위 역진자, MPC / LQR / PID 비교</li>
+  </ul>
+
+  <p class="small-text">개념 그림은 Rolf Findeisen 슬라이드에 잘 정리되어 있습니다. <a href="http://ifatwww.et.uni-magdeburg.de/syst/cdc2012/workshopallslides.pdf" target="_blank" rel="noopener">CDC 2012 workshop slides</a></p>
+</div>

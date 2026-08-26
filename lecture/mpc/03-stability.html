@@ -1,0 +1,125 @@
+<div class="note-article">
+  <p>선형 MPC의 안정성은 Raković 편 <em>Handbook of Model Predictive Control</em> (Ref. B2)의 논의를 따라갑니다. 아래 네 가정이 있으면 closed-loop 안정성을 말할 수 있습니다.</p>
+
+  <h3>가정</h3>
+  <div class="note-assume glass-panel">
+    <h4>Assumption 1</h4>
+    <p>Stage cost \(q\)는 positive definite입니다. 원점에서만 0이고 그 밖에서는 양수입니다.</p>
+    \[
+      q(x_k,u_k)=x_k^\top Q x_k + u_k^\top R u_k,\qquad p(x_N)=x_N^\top P x_N
+    \]
+  </div>
+  <div class="note-assume glass-panel">
+    <h4>Assumption 2</h4>
+    <p>Terminal set은 국소 제어 \(v(x_k)=Kx_k\) 아래에서 invariant입니다.</p>
+    \[
+      x_{k+1}=Ax_k+Bv(x_k)\in\mathbb{X}_f,\quad \forall\, x_k\in\mathbb{X}_f
+    \]
+  </div>
+  <div class="note-assume glass-panel">
+    <h4>Assumption 3</h4>
+    <p>Terminal cost는 \(\mathbb{X}_f\) 위에서 연속 Lyapunov 함수입니다.</p>
+    \[
+      p(x_{k+1})-p(x_k)\le -q(x_k,u_k),\quad \forall\, x_k\in\mathbb{X}_f
+    \]
+  </div>
+  <div class="note-assume glass-panel">
+    <h4>Assumption 4</h4>
+    <p>초기 시각에 MPC 문제가 실행 가능한 해를 가집니다.</p>
+  </div>
+
+  <h3>Terminal set과 cost를 어떻게 구할까</h3>
+  <p>제약 없는 LQR을 씁니다. \(P\)는 discrete-time algebraic Riccati equation의 해입니다.</p>
+  \[
+    \begin{aligned}
+      K &= -(B^\top PB+R)^{-1}B^\top PA \\
+      P &= A^\top PA + Q - A^\top PB(B^\top PB+R)^{-1}B^\top PA
+    \end{aligned}
+  \]
+  <p>이 \(K\), \(P\)는 Assumption 3을 만족합니다.</p>
+  \[
+    \begin{aligned}
+      p(x_{k+1})-p(x_k)
+      &= x_{k+1}^\top P x_{k+1}-x_k^\top P x_k \\
+      &= x_k^\top\bigl(-P+A^\top PA-A^\top PB(B^\top PB+R)^{-1}B^\top PA-K^\top RK\bigr)x_k \\
+      &= -x_k^\top Q x_k - u_k^\top R u_k
+    \end{aligned}
+  \]
+  <p>같은 \(K\)로 terminal set은 다음을 만족하는 invariant set입니다.</p>
+  \[
+    x_{k+1}=(A+BK)x_k\in\mathbb{X}_f,\quad \forall\, x_k\in\mathbb{X}_f
+  \]
+  <p>Invariant set은 Minkowski sum으로 구할 수 있습니다. <a href="https://www.mpt3.org/" target="_blank" rel="noopener">MPT3</a>, <a href="https://tumcps.github.io/CORA/" target="_blank" rel="noopener">CORA</a>로 polytope, zonotope, box, circle 형태를 계산합니다. 반드시</p>
+  \[
+    \mathbb{X}_f\subseteq\mathbb{X},\qquad Kx_k\in\mathbb{U},\quad \forall\, x_k\in\mathbb{X}_f
+  \]
+  <p>를 지켜야 합니다.</p>
+
+  <h3>정리 — 두 가지 경우</h3>
+
+  <h4>경우 1. Zero terminal state: \(x_N=\mathbf{0}\)</h4>
+  <p>Assumption 4로 초기 해가 있습니다.</p>
+  \[
+    U_t^*=[u_0^*,u_1^*,\ldots,u_{N-1}^*],\qquad
+    X_t^*=[x_0,x_1^*,\ldots,x_N^*]
+  \]
+  <p>다음 상태 \(x_1=x_1^*\)에서 한 칸 민 후보해도 가능합니다.</p>
+  \[
+    \hat U_{t+1}=[u_1^*,u_2^*,\ldots,u_{N-1}^*,\mathbf{0}],\qquad
+    \hat X_{t+1}=[x_1^*,x_2^*,\ldots,x_N^*,x_{N+1}]
+  \]
+  <p>\(x_N^*=\mathbf{0}\)이므로 \(x_{N+1}=Ax_N^*+B\mathbf{0}=\mathbf{0}\)입니다. 따라서 \(x_1\)에서 만든 해도 zero terminal 제약을 만족합니다. 이것이 <strong>recursive feasibility</strong>입니다.</p>
+  <p>비용을 Lyapunov 함수로 둡니다.</p>
+  \[
+    J(t)=\sum_{k=0}^{N-1}q(x_k,u_k)+p(x_N)
+  \]
+  <p>시각 \(t\)의 최적 비용을 \(J^*(t)\)라 하고, \(t+1\)의 위 후보는 최적이 아니므로 \(\hat J(t+1)\)로 씁니다.</p>
+  \[
+    \begin{aligned}
+      \hat J(t+1)
+      &= \sum_{k=0}^{N-2}q(x_{k+1}^*,u_{k+1}^*) + \underbrace{q(x_N^*,\mathbf{0})}_{=0} + \underbrace{p(x_{N+1})}_{=0} \\
+      &= J^*(t)-\underbrace{p(x_N^*)}_{=0}-\underbrace{q(x_0^*,u_0^*)}_{\ge 0} \\
+      &\le J^*(t)
+    \end{aligned}
+  \]
+  <p>따라서 \(J^*(t+1)\le\hat J(t+1)\le J^*(t)\)이고, 비용은 0으로 수렴합니다.</p>
+
+  <h4>경우 2. Terminal set: \(x_N\in\mathbb{X}_f\)</h4>
+  <p>초기 해는 같고, 다음 시각의 후보는 마지막 입력을 국소 제어로 채웁니다.</p>
+  \[
+    \hat U_{t+1}=[u_1^*,\ldots,u_{N-1}^*,K(x_N^*)],\qquad
+    \hat X_{t+1}=[x_1^*,\ldots,x_N^*,x_{N+1}]
+  \]
+  <p>\(x_N^*\in\mathbb{X}_f\)이고 Assumption 2로 \(x_{N+1}\in\mathbb{X}_f\)입니다. 다시 recursive feasibility입니다. 여기서 terminal set이 핵심입니다.</p>
+  \[
+    \begin{aligned}
+      \hat J(t+1)
+      &= \sum_{k=0}^{N-2}q(x_{k+1}^*,u_{k+1}^*) + q(x_N^*,Kx_N^*) + p(x_{N+1}) \\
+      &= J^*(t) - \underbrace{q(x_0^*,u_0^*)}_{\ge 0\ \text{(Assump. 1)}}
+        + \underbrace{p((A+BK)x_N^*)-p(x_N^*)+q(x_N^*,Kx_N^*)}_{\le 0\ \text{(Assump. 3)}} \\
+      &\Rightarrow\ J^*(t+1)-J^*(t)\le -q(x_0^*,u_0^*)
+    \end{aligned}
+  \]
+  <p>이 경우도 최적 비용은 0으로 수렴합니다.</p>
+
+  <div class="note-callout">
+    <p><strong>비선형 시스템에도 같은 분석을 쓸 수 있을까?</strong> 경우 1(zero terminal constraint)은 가능합니다. 경우 2에서 \(\mathbb{X}_f\)와 \(P\)를 구하는 일은 매우 어렵습니다.</p>
+    <p><strong>모델이 시간에 따라 바뀌면?</strong> 선형 시변·LPV에 대한 확장이 있습니다. 응용 논문보다 이론 논문이 많습니다. Tube-based MPC for LPV (Automatica 2019, 2021, 2022), CDC 2016·2019 등을 보면 됩니다.</p>
+  </div>
+
+  <h3>짧은 수치 예</h3>
+  <p><a href="https://kwonlecture.snu.ac.kr/wp-content/uploads/2019/08/MPC_Course_v1.pdf" target="_blank" rel="noopener">Manfred Morari short course</a>의 \(N=10\) 예제입니다.</p>
+  \[
+    A=\begin{bmatrix}1.2&1\\0&1\end{bmatrix},\quad
+    B=\begin{bmatrix}1\\0.5\end{bmatrix},\quad
+    Q=I,\quad R=1
+  \]
+  \[
+    \mathbb{X}=\{x\mid -50\le x_1\le 50,\ -10\le x_2\le 10\},\qquad
+    \mathbb{U}=\{u\mid \|u\|_\infty\le 1\}
+  \]
+  <p>유한 수평선만 두면 부족하고, terminal 상태를 제약해야 feasibility와 안정성을 볼 수 있습니다. 그림에서 오른쪽 아래 다각형이 terminal set입니다.</p>
+  <div class="note-callout">
+    실무에서는 \(\mathbb{X}_f\)를 꼭 쓰지 않는 경우가 많습니다. 그래도 terminal cost \(p\)를 잘 두는 일은 중요합니다.
+  </div>
+</div>

@@ -1,0 +1,61 @@
+<div class="note-article">
+  <p>비선형이면 예측이 선형식이 아니므로 NLP가 됩니다. <a href="https://web.casadi.org/" target="_blank" rel="noopener">CasADi</a>로 심볼 모델을 만들고 IPOPT로 풉니다. 아래는 초안의 MATLAB 스케치입니다.  integrators는 Euler 또는 RK45를 고릅니다.</p>
+
+  <p>먼저 경로를 넣고 import 합니다.</p>
+<pre class="note-code"><code>addpath('\casadi-windows-matlabR2016a-v3.5.5');
+import casadi.*
+
+Num = 50;          % prediction horizon
+q1 = 1; q2 = 1; r = 1;
+p1 = 1; p2 = 1;    % terminal weights</code></pre>
+
+  <p>상태·입력·예측 궤적을 심볼로 둡니다. \(X\)는 \(N+1\)개 상태, \(U\)는 \(N\)개 입력입니다.</p>
+<pre class="note-code"><code>x = SX.sym('x'); y = SX.sym('y');
+states = [x; y]; n_states = length(states);
+u = SX.sym('u'); controls = u; n_controls = length(controls);
+
+U = SX.sym('U', n_controls, Num);
+P = SX.sym('P', n_states + Num);
+X = SX.sym('X', n_states, (Num + 1));
+
+objective = 0; g = [];
+st = X(:,1);
+g = [g; st - P(1:n_states)];   % x_0 = x(t)</code></pre>
+
+  <p>수평선을 돌며 stage cost와 동역학 equality를 쌓습니다.</p>
+<pre class="note-code"><code>for k = 1:Num
+    st = X(:,k); con = U(:,k); param = P(n_states + k);
+    objective = objective + st(1)^2*q1 + st(2)^2*q2 + con(1)^2*r;
+
+    st_next = X(:,k+1);
+    if flag == 1
+        xdot = vanderpol(st, con, param);
+        st_next_int = st + dt * xdot;          % Euler
+    else
+        k1 = vanderpol(st, con, param);
+        k2 = vanderpol(st + dt/2*k1, con, param);
+        k3 = vanderpol(st + dt/2*k2, con, param);
+        k4 = vanderpol(st + dt*k3,   con, param);
+        st_next_int = st + dt/6*(k1 + 2*k2 + 2*k3 + k4);  % RK45
+    end
+    g = [g; st_next - st_next_int];
+end
+st = X(:,Num+1);
+objective = objective + st(1)^2*p1 + st(2)^2*p2;</code></pre>
+
+  <p>결정변수는 궤적과 입력을 한 벡터로 붙인 것입니다. 동역학은 equality, 상태·입력 한계는 bound입니다. 푼 뒤 <strong>첫 입력만</strong> 쓰고, 다음 스텝의 초기 추정은 이전 해를 한 칸 민 warm start를 씁니다.</p>
+<pre class="note-code"><code>OPT_variables = [reshape(X, n_states*(Num+1), 1);
+                 reshape(U, n_controls*Num, 1)];
+nlp_prob = struct('f', objective, 'x', OPT_variables, 'g', g, 'p', P);
+NMPC.solver = nlpsol('solver', 'ipopt', nlp_prob, opts);
+
+sol = NMPC.solver('x0', NMPC.args.x0, 'lbx', NMPC.args.lbx, ...
+    'ubx', NMPC.args.ubx, 'lbg', NMPC.args.lbg, 'ubg', NMPC.args.ubg, ...
+    'p', NMPC.args.p);
+usol = reshape(full(sol.x(n_states*(Num+1)+1:end))', n_controls, Num)';
+Q_command = usol(1);   % first input</code></pre>
+
+  <div class="note-callout">
+    초안 코드는 \(dt\), 모델 함수, bound를 바깥에서 둔다는 전제입니다. 강의에서는 “무엇을 equality로 두고, 무엇을 bound로 두는지”와 receding horizon warm start만 따라가면 됩니다. 실시간에 가까우면 acados로 같은 문제를 옮기는 경우가 많습니다.
+  </div>
+</div>
