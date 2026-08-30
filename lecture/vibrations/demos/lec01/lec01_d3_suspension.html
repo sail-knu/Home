@@ -224,6 +224,15 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 /* ================= demo 전용 ================= */
 .demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
 @media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+/* k·c·m·v 슬라이더 — 카드 전체 폭을 쓰는 가로 4열 바 */
+.ctrl-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-bar .cb{min-width:0}
+.ctrl-bar .ctrl-title{margin:0 0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrl-bar input[type=range]{width:100%;display:block}
+.ctrl-bar .mini{margin:5px 0 0;min-height:2.6em}
+@media (max-width:1000px){.ctrl-bar{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-bar .mini{min-height:0}}
+@media (max-width:620px){.ctrl-bar{grid-template-columns:1fr}}
 canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
   border:1px solid var(--border);border-radius:12px}
 .ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
@@ -268,6 +277,29 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
 <main class="wrap wide">
 <section id="sim" style="margin-top:6px">
   <div class="card">
+
+    <div class="ctrl-bar">
+      <div class="cb">
+        <p class="ctrl-title">코일 스프링 강성 k <span class="big-val" id="kVal">10.0</span> kN/m</p>
+        <input type="range" id="k" min="5" max="50" step="0.5" value="10">
+        <p class="mini">지금 리듬 fₙ = <b id="fnHint">0.92</b> Hz · 목표 1~1.5 Hz는 k ≈ <b id="kBand">11.8~26.6</b></p>
+      </div>
+      <div class="cb">
+        <p class="ctrl-title">쇼크업소버 c <span class="big-val" id="cVal">500</span> N·s/m</p>
+        <input type="range" id="c" min="0" max="8000" step="50" value="500">
+        <p class="mini">지금 감쇠비 ζ = <b id="zHint">0.144</b> · 목표 0.3~0.5 (임계 c_cr = <b id="ccrHint">3,464</b>)</p>
+      </div>
+      <div class="cb">
+        <p class="ctrl-title">차체 질량 m (바퀴당 1/4) <span class="big-val" id="mVal">300</span> kg</p>
+        <input type="range" id="m" min="200" max="500" step="10" value="300">
+        <p class="mini">m이 커지면 fₙ과 ζ가 함께 내려갑니다</p>
+      </div>
+      <div class="cb">
+        <p class="ctrl-title">주행 속도 v <span class="big-val" id="vVal">25</span> km/h</p>
+        <input type="range" id="v" min="10" max="40" step="1" value="25">
+        <p class="mini">방지턱 3.6 m × 10 cm · 통과 시간 <b id="tauHint">0.52</b> s</p>
+      </div>
+    </div>
     <div class="demo-layout">
       <div>
         <canvas id="cv" class="sim" width="900" height="500"></canvas>
@@ -278,6 +310,15 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
           <span><i id="lgMark" style="background:var(--ok)"></i>세어진 출렁임 ①②③ (색 = 판정)</span>
           <span><i style="background:var(--float)"></i>턱 이탈 · 정지 시각</span>
           <span id="cmpLegend" style="display:none"><i style="background:var(--high)"></i>ζ=0.1 <i style="background:var(--ok);margin-left:10px"></i>ζ=0.35 <i style="background:var(--float);margin-left:10px"></i>ζ=1</span>
+        </div>
+        <div class="verdict mid" id="verdict">—</div>
+        <div class="stats" style="margin:12px 0 8px">
+          <div class="stat"><div class="k">출렁임 횟수</div><div class="v hi" id="sN">—</div></div>
+          <div class="stat"><div class="k">리듬 fₙ [Hz]</div><div class="v acc" id="sFn" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v acc" id="sZeta">—</div></div>
+          <div class="stat"><div class="k">임계감쇠 c_cr</div><div class="v lo" id="sCcr">—</div></div>
+          <div class="stat"><div class="k">충격 (최대 가속도)</div><div class="v acc" id="sAmax" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">정지까지</div><div class="v lo" id="sTs">—</div></div>
         </div>
         <div class="note-box">
           • <b>k = 리듬</b> — 스프링이 딱딱할수록 빨리 흔들립니다. fₙ = √(k/m)/2π, 승용차는 <b>1~1.5 Hz</b>.<br>
@@ -316,30 +357,6 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
           </div>
         </div>
 
-        <div class="ctrl">
-          <p class="ctrl-title">코일 스프링 강성 k <span class="big-val" id="kVal">10.0</span> kN/m</p>
-          <input type="range" id="k" min="5" max="50" step="0.5" value="10" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">지금 리듬 fₙ = <b id="fnHint">0.92</b> Hz · 목표 1~1.5 Hz는 k ≈ <b id="kBand">11.8~26.6</b></p>
-          <p class="ctrl-title" style="margin-top:12px">쇼크업소버 c <span class="big-val" id="cVal">500</span> N·s/m</p>
-          <input type="range" id="c" min="0" max="8000" step="50" value="500" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">지금 감쇠비 ζ = <b id="zHint">0.144</b> · 목표 0.3~0.5 (임계 c_cr = <b id="ccrHint">3,464</b>)</p>
-          <p class="ctrl-title" style="margin-top:12px">차체 질량 m (바퀴당 1/4) <span class="big-val" id="mVal">300</span> kg</p>
-          <input type="range" id="m" min="200" max="500" step="10" value="300" style="width:100%">
-          <p class="ctrl-title" style="margin-top:12px">주행 속도 v <span class="big-val" id="vVal">25</span> km/h</p>
-          <input type="range" id="v" min="10" max="40" step="1" value="25" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">방지턱 3.6 m × 10 cm · 통과 시간 <b id="tauHint">0.52</b> s</p>
-        </div>
-
-        <div class="stats" style="margin:0 0 8px">
-          <div class="stat"><div class="k">출렁임 횟수</div><div class="v hi" id="sN">—</div></div>
-          <div class="stat"><div class="k">리듬 fₙ [Hz]</div><div class="v acc" id="sFn" style="font-size:14.5px">—</div></div>
-          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v acc" id="sZeta">—</div></div>
-          <div class="stat"><div class="k">임계감쇠 c_cr</div><div class="v lo" id="sCcr">—</div></div>
-          <div class="stat"><div class="k">충격 (최대 가속도)</div><div class="v acc" id="sAmax" style="font-size:14.5px">—</div></div>
-          <div class="stat"><div class="k">정지까지</div><div class="v lo" id="sTs">—</div></div>
-        </div>
-
-        <div class="verdict mid" id="verdict">—</div>
 
         <div class="ctrl" style="margin-top:10px">
           <div class="btn-row" style="margin:0">
@@ -352,6 +369,7 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
         </div>
       </div>
     </div>
+
   </div>
 </section>
 </main>
