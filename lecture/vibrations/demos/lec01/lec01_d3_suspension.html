@@ -249,6 +249,11 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
 .kv b{font-variant-numeric:tabular-nums}
 .mission{cursor:default} .mission input:disabled{opacity:1}
 .mission .ms-v{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
+/* 프리셋: 버튼 한 줄 + 결과 한 줄 설명 */
+.pset{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 10px;align-items:center;margin:0}
+.pset .btn{width:100%;white-space:nowrap}
+.pset .pd{font-size:12px;line-height:1.4;color:var(--muted)}
+.pset .pd b{color:var(--text)}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
@@ -257,7 +262,7 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
 <header class="hero wrap wide" style="padding-top:26px">
   <p class="eyebrow">기계진동학 1강</p>
   <h1>자동차 서스펜션 — <span style="color:var(--high)">한 번만 출렁이게</span></h1>
-  <p class="lede">차체 = <b>m</b>, 코일 스프링 = <b>k</b>, 쇼크업소버 = <b>c</b>. 과속방지턱(3.6 m × 10 cm)을 25 km/h로 넘을 때 차체가 <b>한 번만 부드럽게 출렁이고 멈추도록</b> k와 c를 고르세요 — k는 리듬(fₙ), c는 얼마나 빨리 잦아드는지(ζ)를 정합니다. 예제 차는 낡아서 물렁한 스프링 + 닳은 댐퍼 — 네 번 출렁입니다.</p>
+  <p class="lede">차체 = <b>m</b>, 코일 스프링 = <b>k</b>, 쇼크업소버 = <b>c</b>. 과속방지턱을 넘은 뒤 차체가 <b>한 번만 출렁이고 멈추도록</b> k와 c를 고르세요.</p>
 </header>
 
 <main class="wrap wide">
@@ -275,63 +280,63 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
           <span id="cmpLegend" style="display:none"><i style="background:var(--high)"></i>ζ=0.1 <i style="background:var(--ok);margin-left:10px"></i>ζ=0.35 <i style="background:var(--float);margin-left:10px"></i>ζ=1</span>
         </div>
         <div class="note-box">
-          • 차체(m)·코일 스프링(k)·쇼크업소버(c) — 자동차 서스펜션은 그대로 <b>m-k-c 1자유도 모델</b>입니다: <span class="mth">m ẍ + c(ẋ − ẏ) + k(x − y) = 0</span>, 노면 y(t)가 아래에서 밀어 올립니다.<br>
-          • <b>k는 리듬</b>: fₙ = √(k/m)/2π. 승용차 차체는 <b>1~1.5 Hz</b> — 1 Hz보다 낮으면 물침대처럼 붕 뜨고(특히 0.1~0.5 Hz는 멀미를 유발하는 대역), 높으면 잔진동이 그대로 전달됩니다.<br>
-          • <b>c는 사그라드는 속도</b>: ζ = c/(2√km). ζ ≈ 0.1이면 출렁출렁 여러 번, <b>0.3~0.5면 한 번 출렁이고 정지</b>, 1을 넘으면 출렁임은 없지만 댐퍼 힘 <span class="mth">c·ẏ</span>가 턱 모서리 충격을 차체로 그대로 전달합니다(a_max ↑). 충격은 ζ ≈ 0.4~0.5에서 가장 작습니다.<br>
-          • 같은 c라도 <b>k나 m을 바꾸면 ζ가 달라집니다</b> — 스프링만 딱딱하게 하면(k↑) ζ↓로 더 출렁이고, 4명이 타면(m↑) fₙ과 ζ가 함께 내려갑니다. 천천히(10 km/h) 넘으면 입력이 부드러워 되튐도 작습니다.
+          • <b>k = 리듬</b> — 스프링이 딱딱할수록 빨리 흔들립니다. fₙ = √(k/m)/2π, 승용차는 <b>1~1.5 Hz</b>.<br>
+          • <b>c = 멈추는 힘</b> — ζ = c/(2√km). 0.1이면 여러 번, <b>0.3~0.5면 한 번</b> 출렁이고 정지.<br>
+          • <b>c가 과하면 역효과</b> — ζ ≥ 1은 출렁임 0번이지만 턱 충격이 차체로 그대로 전달됩니다.
         </div>
       </div>
       <div>
         <div class="ctrl">
-          <p class="ctrl-title">미션 — 과속방지턱을 「한 번만 부드럽게」</p>
+          <p class="ctrl-title">미션 — 한 번만 출렁이게</p>
           <div class="stepbar">
             <span class="stepdot" id="sd1">1</span><span class="mini">리듬 k</span>
             <span class="stepdot" id="sd2">2</span><span class="mini">감쇠 c</span>
-            <span class="stepdot" id="sd3">★</span><span class="mini">탐험</span>
+            <span class="stepdot" id="sd3">★</span><span class="mini">확인</span>
           </div>
-          <label class="mission"><input type="checkbox" id="ms1" disabled><span>Step 1 · 스프링 k — 차체 리듬 fₙ을 <b>1.0~1.5 Hz</b>에 넣기 (지금 m이면 k ≈ <b id="kBand2">11.8~26.6</b> kN/m)</span><span class="ms-v" id="ms1v">0.92 Hz</span></label>
-          <label class="mission"><input type="checkbox" id="ms2" disabled><span>Step 2 · 쇼크업소버 c — 턱을 지난 뒤 <b>출렁임 딱 1회</b>, ζ = c/(2√km) ≈ 0.3~0.5 (힌트: c ≈ <b id="cBand">1,039~1,732</b> N·s/m)</span><span class="ms-v" id="ms2v">4회 · ζ 0.14</span></label>
-          <label class="mission"><input type="checkbox" id="ms3" disabled><span>탐험 · c를 c_cr 이상으로 올려 ζ ≥ 1 — 출렁임은 0회가 되지만 충격 a_max가 <b>오히려 커지는</b> 것을 확인</span><span class="ms-v" id="ms3v">a_max 0.49 g</span></label>
+          <label class="mission"><input type="checkbox" id="ms1" disabled><span><b>k</b>로 리듬 맞추기 — fₙ을 <b>1~1.5 Hz</b>로 (k ≈ <b id="kBand2">11.8~26.6</b>)</span><span class="ms-v" id="ms1v">0.92 Hz</span></label>
+          <label class="mission"><input type="checkbox" id="ms2" disabled><span><b>c</b>로 출렁임을 <b>1번</b>으로 (c ≈ <b id="cBand">1,039~1,732</b>)</span><span class="ms-v" id="ms2v">4회 · ζ 0.14</span></label>
+          <label class="mission"><input type="checkbox" id="ms3" disabled><span><b>c를 끝까지</b> 올려보기 — 안 출렁이는 대신 충격이 커집니다</span><span class="ms-v" id="ms3v">a_max 0.49 g</span></label>
         </div>
 
         <div class="ctrl">
           <p class="ctrl-title">프리셋</p>
-          <div class="btn-row" style="margin:0 0 6px">
-            <button class="btn btn-sm" data-p="300,10,500,25">노후 차 — 물렁 + 닳은 댐퍼</button>
-            <button class="btn btn-sm" data-p="300,20,500,25">댐퍼만 닳음 (k=20)</button>
+          <div class="pset">
+            <button class="btn btn-sm" data-p="300,10,500,25">노후 차</button>
+            <span class="pd">물렁 스프링 + 닳은 댐퍼 → <b>4번</b> 출렁</span>
+            <button class="btn btn-sm" data-p="300,20,500,25">스프링만 교체</button>
+            <span class="pd">딱딱하게만 바꾸면 오히려 <b>7번</b> 출렁</span>
+            <button class="btn btn-sm" data-p="300,20,1700,25">정답 예시</button>
+            <span class="pd">k·c를 함께 맞춤 → <b>1번</b> 출렁이고 정지</span>
+            <button class="btn btn-sm" data-p="300,20,3700,25">단단한 댐퍼</button>
+            <span class="pd">1번이지만 충격 커짐 (<b>0.76 g</b>)</span>
+            <button class="btn btn-sm" data-p="300,20,6000,25">과감쇠</button>
+            <span class="pd">출렁임 <b>0번</b>, 대신 충격 최대 (<b>1.21 g</b>)</span>
+            <button class="btn btn-sm" data-p="380,20,1700,25">4명 탑승</button>
+            <span class="pd">무거워지면 리듬이 느려짐 (<b>1.15 Hz</b>)</span>
           </div>
-          <div class="btn-row" style="margin:0 0 6px">
-            <button class="btn btn-sm" data-p="300,20,1700,25">권장 세팅 k=20, c=1,700</button>
-            <button class="btn btn-sm" data-p="300,20,3700,25">단단 ζ≈0.75</button>
-          </div>
-          <div class="btn-row" style="margin:0">
-            <button class="btn btn-sm" data-p="300,20,6000,25">과감쇠 ζ≈1.2</button>
-            <button class="btn btn-sm" data-p="380,20,1700,25">4명 탑승 m=380</button>
-          </div>
-          <p class="mini" style="margin-top:8px">복습 미션 — <b>노후 차 → 댐퍼만 닳음</b> 순서로 눌러 「스프링만 딱딱하게 하면 오히려 더 출렁인다」를 확인한 뒤, c를 올려 1회로 만드세요.</p>
         </div>
 
         <div class="ctrl">
           <p class="ctrl-title">코일 스프링 강성 k <span class="big-val" id="kVal">10.0</span> kN/m</p>
           <input type="range" id="k" min="5" max="50" step="0.5" value="10" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">fₙ = √(k/m)/2π = <b id="fnHint">0.92</b> Hz ← 승차감 대역 1.0~1.5 Hz → 지금 m이면 k ≈ <b id="kBand">11.8~26.6</b> kN/m</p>
+          <p class="mini" style="margin:2px 0 0">지금 리듬 fₙ = <b id="fnHint">0.92</b> Hz · 목표 1~1.5 Hz는 k ≈ <b id="kBand">11.8~26.6</b></p>
           <p class="ctrl-title" style="margin-top:12px">쇼크업소버 c <span class="big-val" id="cVal">500</span> N·s/m</p>
           <input type="range" id="c" min="0" max="8000" step="50" value="500" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">ζ = c/(2√(km)) = <b id="zHint">0.144</b> ← 목표 0.3~0.5 · c_cr = 2√(km) = <b id="ccrHint">3,464</b> N·s/m</p>
+          <p class="mini" style="margin:2px 0 0">지금 감쇠비 ζ = <b id="zHint">0.144</b> · 목표 0.3~0.5 (임계 c_cr = <b id="ccrHint">3,464</b>)</p>
           <p class="ctrl-title" style="margin-top:12px">차체 질량 m (바퀴당 1/4) <span class="big-val" id="mVal">300</span> kg</p>
           <input type="range" id="m" min="200" max="500" step="10" value="300" style="width:100%">
           <p class="ctrl-title" style="margin-top:12px">주행 속도 v <span class="big-val" id="vVal">25</span> km/h</p>
           <input type="range" id="v" min="10" max="40" step="1" value="25" style="width:100%">
-          <p class="mini" style="margin:2px 0 0">방지턱 길이 3.6 m · 높이 10 cm (반정현파) · 통과 시간 τ = L/v = <b id="tauHint">0.52</b> s</p>
+          <p class="mini" style="margin:2px 0 0">방지턱 3.6 m × 10 cm · 통과 시간 <b id="tauHint">0.52</b> s</p>
         </div>
 
         <div class="stats" style="margin:0 0 8px">
-          <div class="stat"><div class="k">출렁임 횟수 (턱 이탈 후)</div><div class="v hi" id="sN">—</div></div>
-          <div class="stat"><div class="k">고유진동수 fₙ [Hz]</div><div class="v acc" id="sFn" style="font-size:14.5px">—</div></div>
-          <div class="stat"><div class="k">감쇠비 ζ = c/2√km</div><div class="v acc" id="sZeta">—</div></div>
-          <div class="stat"><div class="k">임계감쇠 c_cr [N·s/m]</div><div class="v lo" id="sCcr">—</div></div>
-          <div class="stat"><div class="k">최대 차체 가속도 (충격)</div><div class="v acc" id="sAmax" style="font-size:14.5px">—</div></div>
-          <div class="stat"><div class="k">정지까지 (턱 이탈 후 |x| &lt; 5 mm)</div><div class="v lo" id="sTs">—</div></div>
+          <div class="stat"><div class="k">출렁임 횟수</div><div class="v hi" id="sN">—</div></div>
+          <div class="stat"><div class="k">리듬 fₙ [Hz]</div><div class="v acc" id="sFn" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ</div><div class="v acc" id="sZeta">—</div></div>
+          <div class="stat"><div class="k">임계감쇠 c_cr</div><div class="v lo" id="sCcr">—</div></div>
+          <div class="stat"><div class="k">충격 (최대 가속도)</div><div class="v acc" id="sAmax" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">정지까지</div><div class="v lo" id="sTs">—</div></div>
         </div>
 
         <div class="verdict mid" id="verdict">—</div>
@@ -539,42 +544,35 @@ function updateReadouts(){
 
   /* 판정 — 이 순서대로 평가 */
   var vd = $('verdict'), cls, html;
-  var am = D.amax.toFixed(1), gs = g.toFixed(2), z2 = z.toFixed(2);
-  var fnTail = D.fnOK ? '' : ' 리듬 fₙ = ' + fns + ' Hz도 승차감 대역(1~1.5 Hz) 밖입니다.';
+  var gs = g.toFixed(2), z2 = z.toFixed(2);
+  var fnTail = D.fnOK ? '' : ' (리듬 fₙ = ' + fns + ' Hz도 대역 밖)';
   if (z >= 1){
     cls = 'bad';
-    html = '✗ 임계·과감쇠 (ζ = ' + z2 + ' ≥ 1) — 출렁임은 0회지만 댐퍼가 막대처럼 굳어 차체가 노면을 그대로 따라갑니다. 충격 a_max = <b>' +
-      am + ' m/s² (' + gs + ' g)</b>. <b>c를 줄이세요.</b>';
+    html = '✗ <b>너무 단단</b> (ζ = ' + z2 + ') — 출렁임은 없지만 턱 충격이 <b>' + gs + ' g</b>로 그대로 전달됩니다. <b>c를 줄이세요.</b>';
   } else if (D.N >= 3){
     cls = 'bad';
-    html = '✗ 출렁출렁 — 턱을 지난 뒤 <b>' + Nn + '회</b> 출렁임 (ζ = ' + z2 + '). 쇼크업소버가 약합니다 → <b>c를 키워</b> ζ를 0.3~0.5로 (c ≈ ' +
-      cB + ' N·s/m).' + fnTail;
+    html = '✗ <b>출렁출렁 ' + Nn + '회</b> (ζ = ' + z2 + ') — 댐퍼가 약합니다. <b>c를 키우세요</b> (≈ ' + cB + ').' + fnTail;
   } else if (D.N === 2){
     cls = 'mid';
-    html = '△ 거의 됐어요 — 2번째 되튐이 <b>' + Math.abs(D.ext[1].x * 100).toFixed(1) + ' cm</b>로 아직 세어집니다 (ζ = ' + z2 +
-      '). <b>c를 조금 더 키워</b> 보세요 (c ≈ ' + cB + ').' + fnTail;
+    html = '△ <b>거의 다 왔어요</b> — 2번째 되튐이 <b>' + Math.abs(D.ext[1].x * 100).toFixed(1) + ' cm</b> 남았습니다. <b>c를 조금 더</b> (≈ ' + cB + ').' + fnTail;
   } else if (z > 0.6){
     cls = 'mid';
-    html = '△ 단단한 세팅 — 출렁임 ' + Nn + '회, ζ = ' + z2 + '. 댐퍼가 세서 턱의 충격이 그대로 전달됩니다 (a_max = <b>' +
-      am + ' m/s² (' + gs + ' g)</b>). <b>c를 조금 줄여</b> 부드럽게 만드세요.';
+    html = '△ <b>조금 단단</b> (ζ = ' + z2 + ') — 출렁임은 ' + Nn + '번으로 적지만 충격이 <b>' + gs + ' g</b>. <b>c를 조금 줄이세요.</b>';
   } else if (D.N === 0){
     cls = 'mid';
-    html = '△ 되튐 없음 — 첫 골이 ' + Math.abs(D.dip1 * 100).toFixed(1) + ' cm로 1.5 cm 문턱 아래입니다. 천천히 넘으면 입력이 부드러워 되튐이 작습니다 (지금 v = ' +
-      D.v + ' km/h). <b>25 km/h에서 확인</b>하거나 c를 살짝 줄여 보세요.';
+    html = '△ 되튐이 <b>' + Math.abs(D.dip1 * 100).toFixed(1) + ' cm</b>로 너무 작아 세지 않았습니다. <b>25 km/h</b>에서 다시 확인해 보세요.';
   } else if (!D.fnOK){
     cls = 'mid';
-    html = '△ 출렁임은 1회로 세어졌지만 리듬이 승차감 대역 밖 — fₙ = <b>' + fns + ' Hz</b> (목표 1.0~1.5 Hz). <b>k를 ' + (D.fn < 1 ? '키워' : '줄여') +
-      '</b> 보세요 (지금 m이면 k ≈ ' + kb + ' kN/m; ζ는 c로 다시 맞추기).' +
-      (z < 0.25 ? ' 참고로 ζ = <b>' + z2 + '</b>로 감쇠도 부족합니다 — 지금은 입력이 약해 되튐이 문턱 아래로 보일 뿐입니다.' : '');
+    html = '△ <b>리듬이 대역 밖</b> — fₙ = <b>' + fns + ' Hz</b> (목표 1~1.5). <b>k를 ' + (D.fn < 1 ? '키우세요' : '줄이세요') + '</b> (≈ ' + kb + ').' +
+      (z < 0.25 ? ' 감쇠도 부족합니다 (ζ = ' + z2 + ').' : '');
   } else if (z < 0.25){
     cls = 'mid';
-    html = '△ 1회로 <i>보이지만</i> 감쇠가 부족 — ζ = <b>' + z2 + '</b>라 잔진동이 오래 남습니다 (정지까지 ' +
-      (isFinite(D.Ts) ? '<b>' + fmt(D.Ts, 2) + ' s</b>' : '<b>6 s 안에 못 멈춤</b>') + '). 지금은 입력이 약해(v = ' + D.v +
-      ' km/h) 되튐이 1.5 cm 문턱 아래로 내려간 것뿐입니다 — <b>25 km/h에서 확인</b>하거나 c를 키워 ζ를 0.3~0.5로 (c ≈ ' + cB + ').';
+    html = '△ <b>1번처럼 보이지만 감쇠 부족</b> (ζ = ' + z2 + ') — 잔진동이 ' +
+      (isFinite(D.Ts) ? '<b>' + fmt(D.Ts, 2) + ' s</b>' : '<b>6 s 넘게</b>') + ' 남습니다. <b>c를 키우세요</b> (≈ ' + cB + ').';
   } else {
     cls = 'good';
-    html = '✓ 한 번 출렁이고 정지 — ζ = <b>' + z2 + '</b>, fₙ = <b>' + fns + ' Hz</b>. 충격 a_max = ' + am + ' m/s² (' + gs +
-      ' g), 정지까지 ' + fmt(D.Ts, 2) + ' s. <b>미션 완료!</b>' + (seenOver ? '' : ' (★ 탐험: c를 ' + fmtInt(D.ccr) + ' 이상으로 올려 보세요)');
+    html = '✓ <b>미션 완료!</b> 한 번 출렁이고 <b>' + fmt(D.Ts, 2) + ' s</b>에 정지 (ζ = ' + z2 + ', fₙ = ' + fns + ' Hz, 충격 ' + gs + ' g).' +
+      (seenOver ? '' : ' <b>★</b> c를 ' + fmtInt(D.ccr) + ' 이상으로도 올려 보세요.');
   }
   vd.className = 'verdict ' + cls; vd.innerHTML = html;
   D.good = cls === 'good';
@@ -662,8 +660,7 @@ function draw(){
   ctx.fillStyle = PAL.surface; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(ntxt, TEXT_X + nw / 2, 181); ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left'; ctx.fillStyle = PAL.faint; ctx.font = '11.5px ' + FONT;
-  ctx.fillText('턱 이탈 후 정지선에서 1.5 cm 이상 벗어난', TEXT_X, 218);
-  ctx.fillText('봉우리·골의 수 (직전의 45 % 미만은 잔진동으로 제외)', TEXT_X, 234);
+  ctx.fillText('턱을 지난 뒤 1.5 cm 넘게 흔들린 횟수', TEXT_X, 220);
   ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.text;
   var tt = 't = ' + tA.toFixed(2) + ' s';
   ctx.fillText(tt, TEXT_X, 272);
