@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1-D3 · 자동차 서스펜션 설계 미션</title>
+</head>
+<body>
+<style>
+/* ================= tokens ================= */
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --high-soft:#3c211d;
+    --low:#82b4f0; --low-soft:#182f4a;
+    --float:#b58ae6; --float-soft:#2b1e40;
+    --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --high-soft:#3c211d;
+  --low:#82b4f0; --low-soft:#182f4a;
+  --float:#b58ae6; --float-soft:#2b1e40;
+  --ok:#5cc793; --ok-soft:#153426; --bad:#f09289; --bad-soft:#3d1f1c;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --high-soft:#fbe9e6;
+  --low:#2f66ad; --low-soft:#e7eefb;
+  --float:#8a56c8; --float-soft:#f0e8fa;
+  --ok:#177a4c; --ok-soft:#e2f3e9; --bad:#bb4038; --bad-soft:#fbe9e8;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+}
+
+/* ================= base ================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.3;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1024px;margin:0 auto;padding:0 20px}
+.wrap.wide{max-width:1320px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ================= math ================= */
+.mth{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-size:1.06em}
+var{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;font-style:italic}
+.eq{display:block;text-align:center;margin:14px 0;font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif;
+  font-size:18px;line-height:2.1}
+.eq.boxed{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:8px 12px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.62em;text-align:center;margin:0 .22em}
+.frac>span:first-child{border-bottom:1.2px solid currentColor;padding:0 .35em;line-height:1.35}
+.frac>span:last-child{padding:0 .35em;line-height:1.35}
+.rad{border-top:1.2px solid currentColor;padding:0 .2em 0 .12em;margin-left:-.06em}
+
+/* ================= hero & nav ================= */
+.hero{padding-top:42px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.02em}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.nav{position:sticky;top:0;z-index:60;border-bottom:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav-inner{display:flex;gap:8px;overflow-x:auto;padding:10px 20px;max-width:1024px;margin:0 auto;scrollbar-width:thin}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.chip:hover{color:var(--accent);border-color:var(--accent-line)}
+
+/* ================= sections & cards ================= */
+section{scroll-margin-top:66px;margin:38px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px 24px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
+.sec-num{font-family:Consolas,ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.sec-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2.wide-left{grid-template-columns:1.35fr 1fr}
+@media (max-width:880px){.grid2,.grid2.wide-left{grid-template-columns:1fr}}
+.panel-label{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 8px}
+
+/* ================= buttons & controls ================= */
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-acc:hover{color:var(--accent-ink);opacity:.92}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.ctl-row{display:flex;align-items:center;gap:10px;font-size:13.5px;margin:9px 0}
+.ctl-row label{min-width:112px;color:var(--muted);font-weight:600}
+.ctl-row output{min-width:86px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=text]{padding:7px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;min-width:0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.conv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+/* ================= readouts ================= */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.stat .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v.acc{color:var(--accent)} .stat .v.hi{color:var(--high)} .stat .v.lo{color:var(--low)}
+.state-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 13px;border-radius:999px;
+  font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.st-mid{color:var(--float);background:var(--float-soft)}
+.verdict{padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.55;margin:10px 0 0}
+.verdict.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.verdict.mid{background:var(--float-soft);color:var(--float);border:1px solid var(--float)}
+
+/* ================= svg / plots ================= */
+.simsvg{width:100%;height:auto;display:block;overflow:visible}
+.plot{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:10px}
+.ax{stroke:var(--border2);stroke-width:1.4;fill:none}
+.gl{stroke:var(--grid);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.gl-a{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 5;fill:none;opacity:.65}
+.curve{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.c-x{stroke:var(--accent)} .c-v{stroke:var(--low)} .c-a{stroke:var(--high)} .c-r{stroke:var(--bad)}
+.c-ghost{stroke:var(--faint);stroke-width:1.8;stroke-dasharray:6 5;opacity:.75}
+.area{fill:var(--accent);opacity:.16;stroke:none}
+.lbl{fill:var(--muted);font-size:11.5px;font-family:inherit}
+.lbl-s{fill:var(--faint);font-size:10.5px;font-family:inherit}
+.lbl-b{fill:var(--text);font-size:12.5px;font-weight:700;font-family:inherit}
+.head-dot{fill:var(--text)}
+.wallr{fill:var(--wall)}
+.massr{fill:var(--mass)}
+.massl{fill:var(--mass-ink);font-size:13px;font-weight:700;font-family:inherit}
+.spr{fill:none;stroke:var(--spring);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.grnd{stroke:var(--border2);stroke-width:1.4}
+.farrow{stroke:var(--high);stroke-width:3;fill:none;stroke-linecap:round}
+.farrow-h{fill:var(--high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+
+/* ================= tables ================= */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;color:var(--faint);font-size:12.5px;letter-spacing:.03em}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr.cur td{background:var(--accent-soft);font-weight:700}
+td.num,th.num{font-variant-numeric:tabular-nums}
+
+/* ================= callouts, steps, details ================= */
+.note-box{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.warn-box{border-left:3px solid var(--high);background:var(--high-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+.ok-box{border-left:3px solid var(--ok);background:var(--ok-soft);
+  padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;margin:14px 0}
+details{border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:8px 0;background:var(--surface)}
+summary{cursor:pointer;font-weight:700;font-size:14.5px}
+summary::marker{color:var(--accent)}
+details[open]{padding-bottom:14px}
+.step{border:1.5px solid var(--border2);border-radius:11px;padding:11px 16px;background:var(--surface2);
+  transition:border-color .2s,background .2s;margin:0 0 8px}
+.step .st-t{font-weight:800;font-size:14.5px}
+.step .st-d{font-size:13.5px;color:var(--muted)}
+.step.hl{border-color:var(--accent);background:var(--accent-soft)}
+.step.hl .st-d{color:var(--text)}
+.step.dim{opacity:.55}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--accent);margin-top:4px;flex:none}
+.chk input:checked+span{color:var(--faint);text-decoration:line-through}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.pill-w{color:var(--high);background:var(--high-soft)}
+
+/* ================= quiz ================= */
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--surface)}
+.q-title{font-weight:700;margin:0 0 10px}
+.q-title .qn{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;padding:9px 13px;margin:6px 0;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.75}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700;opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.expl{margin-top:10px;font-size:13.5px;padding:10px 14px;border-radius:9px;background:var(--accent-soft)}
+.quiz-score{font-weight:800;font-size:15px;color:var(--accent)}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+/* ================= demo 전용 ================= */
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
+  border:1px solid var(--border);border-radius:12px}
+.ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
+.ctrl > .panel-label{margin-bottom:6px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 6px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:-.01em}
+.mini{font-size:12.5px;color:var(--muted)}
+.formula-chip{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+  border-radius:9px;padding:5px 12px;font-family:"Cambria Math",Cambria,"Times New Roman",serif;
+  font-size:15.5px;margin:4px 0}
+.stepbar{display:flex;gap:6px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.stepdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;background:var(--surface3);color:var(--faint);border:1.5px solid var(--border2)}
+.stepdot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepdot.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.mission{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:5px 0;cursor:pointer}
+.mission input{accent-color:var(--accent);margin-top:4px;flex:none}
+.mission input:checked+span{color:var(--faint);text-decoration:line-through}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:none}
+.kv b{font-variant-numeric:tabular-nums}
+.mission{cursor:default} .mission input:disabled{opacity:1}
+.mission .ms-v{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+<header class="hero wrap wide" style="padding-top:26px">
+  <p class="eyebrow">기계진동학 1강</p>
+  <h1>자동차 서스펜션 — <span style="color:var(--high)">한 번만 출렁이게</span></h1>
+  <p class="lede">차체 = <b>m</b>, 코일 스프링 = <b>k</b>, 쇼크업소버 = <b>c</b>. 과속방지턱(3.6 m × 10 cm)을 25 km/h로 넘을 때 차체가 <b>한 번만 부드럽게 출렁이고 멈추도록</b> k와 c를 고르세요 — k는 리듬(fₙ), c는 얼마나 빨리 잦아드는지(ζ)를 정합니다. 예제 차는 낡아서 물렁한 스프링 + 닳은 댐퍼 — 네 번 출렁입니다.</p>
+</header>
+
+<main class="wrap wide">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="demo-layout">
+      <div>
+        <canvas id="cv" class="sim" width="900" height="500"></canvas>
+        <div class="legend">
+          <span><i id="lgCurve" style="background:var(--float)"></i>차체 높이 x(t) — 색 = 판정</span>
+          <span><i style="background:var(--low)"></i>노면 y(t) (방지턱)</span>
+          <span><i style="background:var(--faint)"></i>±1.5 cm 판정 문턱</span>
+          <span><i id="lgMark" style="background:var(--ok)"></i>세어진 출렁임 ①②③ (색 = 판정)</span>
+          <span><i style="background:var(--float)"></i>턱 이탈 · 정지 시각</span>
+          <span id="cmpLegend" style="display:none"><i style="background:var(--high)"></i>ζ=0.1 <i style="background:var(--ok);margin-left:10px"></i>ζ=0.35 <i style="background:var(--float);margin-left:10px"></i>ζ=1</span>
+        </div>
+        <div class="note-box">
+          • 차체(m)·코일 스프링(k)·쇼크업소버(c) — 자동차 서스펜션은 그대로 <b>m-k-c 1자유도 모델</b>입니다: <span class="mth">m ẍ + c(ẋ − ẏ) + k(x − y) = 0</span>, 노면 y(t)가 아래에서 밀어 올립니다.<br>
+          • <b>k는 리듬</b>: fₙ = √(k/m)/2π. 승용차 차체는 <b>1~1.5 Hz</b> — 1 Hz보다 낮으면 물침대처럼 붕 뜨고(특히 0.1~0.5 Hz는 멀미를 유발하는 대역), 높으면 잔진동이 그대로 전달됩니다.<br>
+          • <b>c는 사그라드는 속도</b>: ζ = c/(2√km). ζ ≈ 0.1이면 출렁출렁 여러 번, <b>0.3~0.5면 한 번 출렁이고 정지</b>, 1을 넘으면 출렁임은 없지만 댐퍼 힘 <span class="mth">c·ẏ</span>가 턱 모서리 충격을 차체로 그대로 전달합니다(a_max ↑). 충격은 ζ ≈ 0.4~0.5에서 가장 작습니다.<br>
+          • 같은 c라도 <b>k나 m을 바꾸면 ζ가 달라집니다</b> — 스프링만 딱딱하게 하면(k↑) ζ↓로 더 출렁이고, 4명이 타면(m↑) fₙ과 ζ가 함께 내려갑니다. 천천히(10 km/h) 넘으면 입력이 부드러워 되튐도 작습니다.
+        </div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <p class="ctrl-title">미션 — 과속방지턱을 「한 번만 부드럽게」</p>
+          <div class="stepbar">
+            <span class="stepdot" id="sd1">1</span><span class="mini">리듬 k</span>
+            <span class="stepdot" id="sd2">2</span><span class="mini">감쇠 c</span>
+            <span class="stepdot" id="sd3">★</span><span class="mini">탐험</span>
+          </div>
+          <label class="mission"><input type="checkbox" id="ms1" disabled><span>Step 1 · 스프링 k — 차체 리듬 fₙ을 <b>1.0~1.5 Hz</b>에 넣기 (지금 m이면 k ≈ <b id="kBand2">11.8~26.6</b> kN/m)</span><span class="ms-v" id="ms1v">0.92 Hz</span></label>
+          <label class="mission"><input type="checkbox" id="ms2" disabled><span>Step 2 · 쇼크업소버 c — 턱을 지난 뒤 <b>출렁임 딱 1회</b>, ζ = c/(2√km) ≈ 0.3~0.5 (힌트: c ≈ <b id="cBand">1,039~1,732</b> N·s/m)</span><span class="ms-v" id="ms2v">4회 · ζ 0.14</span></label>
+          <label class="mission"><input type="checkbox" id="ms3" disabled><span>탐험 · c를 c_cr 이상으로 올려 ζ ≥ 1 — 출렁임은 0회가 되지만 충격 a_max가 <b>오히려 커지는</b> 것을 확인</span><span class="ms-v" id="ms3v">a_max 0.49 g</span></label>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">프리셋</p>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="300,10,500,25">노후 차 — 물렁 + 닳은 댐퍼</button>
+            <button class="btn btn-sm" data-p="300,20,500,25">댐퍼만 닳음 (k=20)</button>
+          </div>
+          <div class="btn-row" style="margin:0 0 6px">
+            <button class="btn btn-sm" data-p="300,20,1700,25">권장 세팅 k=20, c=1,700</button>
+            <button class="btn btn-sm" data-p="300,20,3700,25">단단 ζ≈0.75</button>
+          </div>
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-sm" data-p="300,20,6000,25">과감쇠 ζ≈1.2</button>
+            <button class="btn btn-sm" data-p="380,20,1700,25">4명 탑승 m=380</button>
+          </div>
+          <p class="mini" style="margin-top:8px">복습 미션 — <b>노후 차 → 댐퍼만 닳음</b> 순서로 눌러 「스프링만 딱딱하게 하면 오히려 더 출렁인다」를 확인한 뒤, c를 올려 1회로 만드세요.</p>
+        </div>
+
+        <div class="ctrl">
+          <p class="ctrl-title">코일 스프링 강성 k <span class="big-val" id="kVal">10.0</span> kN/m</p>
+          <input type="range" id="k" min="5" max="50" step="0.5" value="10" style="width:100%">
+          <p class="mini" style="margin:2px 0 0">fₙ = √(k/m)/2π = <b id="fnHint">0.92</b> Hz ← 승차감 대역 1.0~1.5 Hz → 지금 m이면 k ≈ <b id="kBand">11.8~26.6</b> kN/m</p>
+          <p class="ctrl-title" style="margin-top:12px">쇼크업소버 c <span class="big-val" id="cVal">500</span> N·s/m</p>
+          <input type="range" id="c" min="0" max="8000" step="50" value="500" style="width:100%">
+          <p class="mini" style="margin:2px 0 0">ζ = c/(2√(km)) = <b id="zHint">0.144</b> ← 목표 0.3~0.5 · c_cr = 2√(km) = <b id="ccrHint">3,464</b> N·s/m</p>
+          <p class="ctrl-title" style="margin-top:12px">차체 질량 m (바퀴당 1/4) <span class="big-val" id="mVal">300</span> kg</p>
+          <input type="range" id="m" min="200" max="500" step="10" value="300" style="width:100%">
+          <p class="ctrl-title" style="margin-top:12px">주행 속도 v <span class="big-val" id="vVal">25</span> km/h</p>
+          <input type="range" id="v" min="10" max="40" step="1" value="25" style="width:100%">
+          <p class="mini" style="margin:2px 0 0">방지턱 길이 3.6 m · 높이 10 cm (반정현파) · 통과 시간 τ = L/v = <b id="tauHint">0.52</b> s</p>
+        </div>
+
+        <div class="stats" style="margin:0 0 8px">
+          <div class="stat"><div class="k">출렁임 횟수 (턱 이탈 후)</div><div class="v hi" id="sN">—</div></div>
+          <div class="stat"><div class="k">고유진동수 fₙ [Hz]</div><div class="v acc" id="sFn" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">감쇠비 ζ = c/2√km</div><div class="v acc" id="sZeta">—</div></div>
+          <div class="stat"><div class="k">임계감쇠 c_cr [N·s/m]</div><div class="v lo" id="sCcr">—</div></div>
+          <div class="stat"><div class="k">최대 차체 가속도 (충격)</div><div class="v acc" id="sAmax" style="font-size:14.5px">—</div></div>
+          <div class="stat"><div class="k">정지까지 (턱 이탈 후 |x| &lt; 5 mm)</div><div class="v lo" id="sTs">—</div></div>
+        </div>
+
+        <div class="verdict mid" id="verdict">—</div>
+
+        <div class="ctrl" style="margin-top:10px">
+          <div class="btn-row" style="margin:0">
+            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+            <button class="btn" id="reset">↺ 노후 상태로</button>
+          </div>
+          <div class="btn-row" style="margin:8px 0 0">
+            <button class="btn" id="ghost">ζ 0.1 / 0.35 / 1 겹쳐보기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  기계진동학 1강
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+
+/* ---- 물리 상수 ---- */
+var L_BUMP = 3.6, H_BUMP = 0.10;            /* 한국 표준 과속방지턱: 길이 3.6 m, 높이 10 cm (반정현파) */
+var T0 = 0.5, T_SIM = 6.0;
+var DT = 1 / 600, NS = 3600;
+var TH_ABS = 0.15 * H_BUMP, REL = 0.45;     /* 출렁임 판정: 1.5 cm 절대 문턱 + 직전 45 % 상대 문턱 */
+var G = 9.81;
+
+/* ---- 상태 ---- */
+var DEF = { m: 300, k: 10, c: 500, v: 25 };
+var p = { m: DEF.m, k: DEF.k, c: DEF.c, v: DEF.v };
+var tAnim = 0, running = true, seenOver = false, ghostOn = false;
+
+/* ---- 테마 대응 팔레트 ---- */
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
+   'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float','float-soft',
+   'ok','ok-soft','bad','bad-soft','plot-bg','grid','mass','mass-ink','spring'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+  stateCol = PAL[stateVar] || stateCol;   /* 테마 전환 시 곡선·마커 색도 함께 갱신 */
+}
+readPalette();
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+}
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+/* ---- 포맷 ---- */
+function fmtInt(n){ return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtZ(z){ return z < 0.1 ? z.toFixed(3) : z.toFixed(2); }
+function fmt(v, n){ return isFinite(v) ? v.toFixed(n) : '—'; }
+function sgn(v, n){ return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(n); }
+
+/* ---- 적분 결과 (recompute 에서 채움) ---- */
+var XS = new Float64Array(NS + 1), YS = new Float64Array(NS + 1), AS = new Float64Array(NS + 1);
+var ghost = [null, null, null], GZ = [0.1, 0.35, 1.0];
+var D = {};                       /* 파생값·판독값 */
+var stateCol = '#888', stateVar = 'float';
+
+/* 1/4 차량 모델, 바닥가진:  m x'' + c(x' − y') + k(x − y) = 0
+   고전 RK4, 고정 h = 1/600 s. 슬라이더 최악 고유값 ≤ max(ωₙ_max 15.8, c_max/m_min 40) rad/s
+   → |λ|h = 0.067 ≪ 2.78 (RK4 실축 안정 한계) — 어떤 조합에서도 안정, 국소오차 (ωh)⁴ ≈ 5e-7.
+   ẏ 는 턱 진입·이탈에서 불연속(턱 모서리) — 그 순간 c·ẏ 가 차체에 전달되는 충격의 원천. */
+function integrate(m, k, c, tau, outX, outY, outA){
+  var Hh = H_BUMP, om = Math.PI / tau;
+  function y(t){ var s = t - T0; return (s >= 0 && s <= tau) ? Hh * Math.sin(om * s) : 0; }
+  function yd(t){ var s = t - T0; return (s >= 0 && s <= tau) ? Hh * om * Math.cos(om * s) : 0; }
+  function acc(t, x, xd){ return -(c / m) * (xd - yd(t)) - (k / m) * (x - y(t)); }
+  var x = 0, xd = 0, t = 0, i;
+  var k1x, k1v, k2x, k2v, k3x, k3v, k4x, k4v;
+  outX[0] = 0; if (outY) outY[0] = 0; if (outA) outA[0] = 0;
+  for (i = 1; i <= NS; i++){
+    k1x = xd;               k1v = acc(t, x, xd);
+    k2x = xd + .5*DT*k1v;   k2v = acc(t + .5*DT, x + .5*DT*k1x, xd + .5*DT*k1v);
+    k3x = xd + .5*DT*k2v;   k3v = acc(t + .5*DT, x + .5*DT*k2x, xd + .5*DT*k2v);
+    k4x = xd + DT*k3v;      k4v = acc(t + DT,     x + DT*k3x,     xd + DT*k3v);
+    x  += DT*(k1x + 2*k2x + 2*k3x + k4x)/6;
+    xd += DT*(k1v + 2*k2v + 2*k3v + k4v)/6;
+    t  += DT;
+    outX[i] = x; if (outY) outY[i] = y(t); if (outA) outA[i] = acc(t, x, xd);
+  }
+}
+
+/* 출렁임 1회 = 턱 이탈(및 최고점) 이후 정지선에서 1.5 cm 이상 벗어난 봉우리/골.
+   직전 출렁임의 45 % 미만이면 잔진동으로 보고 세기를 멈춘다 (ρ = e^(−πζ/√(1−ζ²)) 와 비교 → ζ* ≈ 0.246). */
+function countRebounds(iFrom){
+  var list = [], prev = -1, broke = false;
+  for (var i = iFrom + 1; i < NS; i++){
+    var d1 = XS[i] - XS[i-1], d2 = XS[i+1] - XS[i];
+    if (d1 * d2 < 0){
+      var a = Math.abs(XS[i]);
+      if (a >= TH_ABS && (prev < 0 || a >= REL * prev)){ list.push({ t: i * DT, x: XS[i] }); prev = a; }
+      else { broke = true; break; }
+    }
+  }
+  var truncated = !broke && list.length > 0 && prev * REL >= TH_ABS;
+  return { N: list.length, ext: list, truncated: truncated };
+}
+
+function recompute(){
+  var m = p.m, k = p.k * 1000, c = p.c, vms = p.v / 3.6, tau = L_BUMP / vms;
+  var wn = Math.sqrt(k / m), fn = wn / (2 * Math.PI), ccr = 2 * Math.sqrt(k * m), zeta = c / ccr;
+  integrate(m, k, c, tau, XS, YS, AS);
+
+  var i, xmax = -1, imax = -1, amax = 0, iLast = 0;
+  var i0 = Math.round(T0 / DT), iExit = Math.ceil((T0 + tau) / DT);
+  for (i = 0; i <= NS; i++){
+    var aa = Math.abs(AS[i]); if (aa > amax) amax = aa;
+    if (Math.abs(XS[i]) > 0.005) iLast = i;
+  }
+  /* 최고점 = 턱 진입 후 '첫' 극대. 전역 최댓값을 쓰면 c ≈ 0 에서 뒤쪽 봉우리가 잡혀
+     그 앞의 되튐이 통째로 건너뛰어진다(무감쇠인데 1회로 표시되는 문제). */
+  for (i = i0 + 1; i < NS; i++){
+    if (XS[i] >= XS[i-1] && XS[i] > XS[i+1] && XS[i] > 0.005){ imax = i; break; }
+  }
+  if (imax < 0){ imax = i0; for (i = i0; i <= NS; i++) if (XS[i] > XS[imax]) imax = i; }
+  xmax = XS[imax];
+  /* 정지 = 마지막 반주기 내내 ±5 mm 안. 마지막 표본이 우연히 영교차에 걸려
+     '정지'로 보고되는 것을 막는다. */
+  var win = Math.max(30, Math.ceil(Math.PI / wn / DT));
+  var Ts = (iLast > NS - win) ? Infinity : Math.max(0, iLast * DT - (T0 + tau));
+  /* 되튐은 '턱 이탈 후'부터 — 턱 위에서 흔들린 것은 세지 않는다. */
+  var iFrom = Math.max(imax, iExit);
+  var dip1 = 0;
+  for (i = iFrom + 1; i < NS; i++){
+    if ((XS[i] - XS[i-1]) * (XS[i+1] - XS[i]) < 0){ dip1 = XS[i]; break; }
+  }
+  var rb = countRebounds(iFrom);
+
+  if (ghostOn){
+    for (i = 0; i < 3; i++){
+      if (!ghost[i]) ghost[i] = new Float64Array(NS + 1);
+      integrate(m, k, GZ[i] * ccr, tau, ghost[i], null, null);
+    }
+  }
+
+  D = { m: m, k: k, c: c, v: p.v, vms: vms, tau: tau, wn: wn, fn: fn, ccr: ccr, zeta: zeta,
+        xmax: xmax, imax: imax, amax: amax, Ts: Ts, dip1: dip1,
+        N: rb.N, ext: rb.ext, truncated: rb.truncated,
+        kLo: m * Math.pow(2 * Math.PI * 1.0, 2) / 1000, kHi: m * Math.pow(2 * Math.PI * 1.5, 2) / 1000,
+        cLo: 0.3 * ccr, cHi: 0.5 * ccr,
+        fnOK: fn >= 1.0 && fn <= 1.5 };
+  /* 되튐 카운터의 45 % 규칙이 사실상 ζ* ≈ 0.246 에서 2회→1회로 넘어가므로,
+     미션 통과 하한도 같은 0.25 로 둔다(ζ 스탯 색 대역과 동일). */
+  D.step2 = D.N === 1 && zeta >= 0.25 && zeta <= 0.6;
+  if (zeta >= 1) seenOver = true;
+  updateReadouts();
+}
+
+function setCls(el, cls){ el.className = cls; }
+
+function updateReadouts(){
+  var z = D.zeta, zs = fmtZ(z), fns = D.fn.toFixed(2), Nn = D.N + (D.truncated ? '+' : ''), Ns = Nn + '회';
+  var g = D.amax / G;
+
+  /* 힌트 */
+  $('fnHint').textContent = fns;
+  var kb = D.kLo.toFixed(1) + '~' + D.kHi.toFixed(1);
+  $('kBand').textContent = kb; $('kBand2').textContent = kb;
+  $('zHint').textContent = zs;
+  $('ccrHint').textContent = fmtInt(D.ccr);
+  var cB = fmtInt(D.cLo) + '~' + fmtInt(D.cHi);
+  $('cBand').textContent = cB;
+  $('tauHint').textContent = D.tau.toFixed(2);
+
+  /* stats */
+  var e;
+  e = $('sN'); e.textContent = Ns; setCls(e, 'v ' + (D.N === 1 ? 'acc' : 'hi'));
+  e = $('sFn'); e.innerHTML = fns + ' <span style="font-size:11px;color:var(--muted);font-weight:600">(ωₙ ' + D.wn.toFixed(2) + ' rad/s)</span>';
+  setCls(e, 'v ' + (D.fnOK ? 'acc' : 'hi'));
+  e = $('sZeta'); e.textContent = zs; setCls(e, 'v ' + ((z >= 0.25 && z <= 0.6) ? 'acc' : 'hi'));
+  $('sCcr').textContent = fmtInt(D.ccr);
+  e = $('sAmax'); e.textContent = D.amax.toFixed(1) + ' m/s² (' + g.toFixed(2) + ' g)';
+  e.style.color = '';
+  if (D.amax < 7) setCls(e, 'v acc');
+  else if (D.amax < G){ setCls(e, 'v'); e.style.color = 'var(--float)'; }
+  else setCls(e, 'v hi');
+  $('sTs').textContent = isFinite(D.Ts) ? D.Ts.toFixed(2) + ' s' : '> ' + (T_SIM - T0 - D.tau).toFixed(2) + ' s';
+
+  /* 미션 */
+  $('ms1').checked = D.fnOK; $('ms2').checked = D.step2; $('ms3').checked = seenOver;
+  e = $('ms1v'); e.textContent = fns + ' Hz'; e.style.color = D.fnOK ? 'var(--ok)' : 'var(--bad)';
+  e = $('ms2v'); e.textContent = Ns + ' · ζ ' + zs; e.style.color = D.step2 ? 'var(--ok)' : 'var(--bad)';
+  e = $('ms3v'); e.textContent = 'a_max ' + g.toFixed(2) + ' g'; e.style.color = seenOver ? 'var(--ok)' : 'var(--faint)';
+  setCls($('sd1'), 'stepdot ' + (D.fnOK ? 'done' : 'on'));
+  setCls($('sd2'), 'stepdot ' + (D.step2 ? 'done' : (D.fnOK ? 'on' : '')));
+  setCls($('sd3'), 'stepdot ' + (seenOver ? 'done' : ((D.fnOK && D.step2) ? 'on' : '')));
+
+  /* 판정 — 이 순서대로 평가 */
+  var vd = $('verdict'), cls, html;
+  var am = D.amax.toFixed(1), gs = g.toFixed(2), z2 = z.toFixed(2);
+  var fnTail = D.fnOK ? '' : ' 리듬 fₙ = ' + fns + ' Hz도 승차감 대역(1~1.5 Hz) 밖입니다.';
+  if (z >= 1){
+    cls = 'bad';
+    html = '✗ 임계·과감쇠 (ζ = ' + z2 + ' ≥ 1) — 출렁임은 0회지만 댐퍼가 막대처럼 굳어 차체가 노면을 그대로 따라갑니다. 충격 a_max = <b>' +
+      am + ' m/s² (' + gs + ' g)</b>. <b>c를 줄이세요.</b>';
+  } else if (D.N >= 3){
+    cls = 'bad';
+    html = '✗ 출렁출렁 — 턱을 지난 뒤 <b>' + Nn + '회</b> 출렁임 (ζ = ' + z2 + '). 쇼크업소버가 약합니다 → <b>c를 키워</b> ζ를 0.3~0.5로 (c ≈ ' +
+      cB + ' N·s/m).' + fnTail;
+  } else if (D.N === 2){
+    cls = 'mid';
+    html = '△ 거의 됐어요 — 2번째 되튐이 <b>' + Math.abs(D.ext[1].x * 100).toFixed(1) + ' cm</b>로 아직 세어집니다 (ζ = ' + z2 +
+      '). <b>c를 조금 더 키워</b> 보세요 (c ≈ ' + cB + ').' + fnTail;
+  } else if (z > 0.6){
+    cls = 'mid';
+    html = '△ 단단한 세팅 — 출렁임 ' + Nn + '회, ζ = ' + z2 + '. 댐퍼가 세서 턱의 충격이 그대로 전달됩니다 (a_max = <b>' +
+      am + ' m/s² (' + gs + ' g)</b>). <b>c를 조금 줄여</b> 부드럽게 만드세요.';
+  } else if (D.N === 0){
+    cls = 'mid';
+    html = '△ 되튐 없음 — 첫 골이 ' + Math.abs(D.dip1 * 100).toFixed(1) + ' cm로 1.5 cm 문턱 아래입니다. 천천히 넘으면 입력이 부드러워 되튐이 작습니다 (지금 v = ' +
+      D.v + ' km/h). <b>25 km/h에서 확인</b>하거나 c를 살짝 줄여 보세요.';
+  } else if (!D.fnOK){
+    cls = 'mid';
+    html = '△ 출렁임은 1회로 세어졌지만 리듬이 승차감 대역 밖 — fₙ = <b>' + fns + ' Hz</b> (목표 1.0~1.5 Hz). <b>k를 ' + (D.fn < 1 ? '키워' : '줄여') +
+      '</b> 보세요 (지금 m이면 k ≈ ' + kb + ' kN/m; ζ는 c로 다시 맞추기).' +
+      (z < 0.25 ? ' 참고로 ζ = <b>' + z2 + '</b>로 감쇠도 부족합니다 — 지금은 입력이 약해 되튐이 문턱 아래로 보일 뿐입니다.' : '');
+  } else if (z < 0.25){
+    cls = 'mid';
+    html = '△ 1회로 <i>보이지만</i> 감쇠가 부족 — ζ = <b>' + z2 + '</b>라 잔진동이 오래 남습니다 (정지까지 ' +
+      (isFinite(D.Ts) ? '<b>' + fmt(D.Ts, 2) + ' s</b>' : '<b>6 s 안에 못 멈춤</b>') + '). 지금은 입력이 약해(v = ' + D.v +
+      ' km/h) 되튐이 1.5 cm 문턱 아래로 내려간 것뿐입니다 — <b>25 km/h에서 확인</b>하거나 c를 키워 ζ를 0.3~0.5로 (c ≈ ' + cB + ').';
+  } else {
+    cls = 'good';
+    html = '✓ 한 번 출렁이고 정지 — ζ = <b>' + z2 + '</b>, fₙ = <b>' + fns + ' Hz</b>. 충격 a_max = ' + am + ' m/s² (' + gs +
+      ' g), 정지까지 ' + fmt(D.Ts, 2) + ' s. <b>미션 완료!</b>' + (seenOver ? '' : ' (★ 탐험: c를 ' + fmtInt(D.ccr) + ' 이상으로 올려 보세요)');
+  }
+  vd.className = 'verdict ' + cls; vd.innerHTML = html;
+  D.good = cls === 'good';
+  stateVar = cls === 'good' ? 'ok' : (cls === 'mid' ? 'float' : 'bad');
+  stateCol = PAL[stateVar];
+  $('lgCurve').style.background = 'var(--' + stateVar + ')';
+  $('lgMark').style.background = 'var(--' + stateVar + ')';
+  markPreset();
+}
+
+/* ---- 레이아웃 상수 ---- */
+var TEXT_X = 32, ROAD_X0 = 340, ROAD_X1 = 880, CAR_X = 420;
+var ROAD_Y = 264, WR = 20, REST_Y = 140, PX_PER_M_H = 60, PX_PER_CM = 3.5, RB_X = 580;
+var PL = 64, PR = 876, PT = 322, PB = 470, MIDY = 396;
+function ty(cm){ return MIDY - cm * (PB - PT) / 36; }
+function tx(t){ return PL + t / T_SIM * (PR - PL); }
+
+/* ---- 그리기 도우미 ---- */
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function headV(x, y, dir, color){
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x - 4.5, y - dir * 8); ctx.lineTo(x + 4.5, y - dir * 8);
+  ctx.closePath(); ctx.fill();
+}
+function vArrow(x, y1, y2, color, lw){
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
+  if (Math.abs(y2 - y1) > 10){ headV(x, y1, -1, color); headV(x, y2, 1, color); }
+}
+function chip(x, y, text, col, bg){
+  ctx.font = 'bold 13px ' + FONT;
+  var w = ctx.measureText(text).width + 34;
+  ctx.fillStyle = bg; roundRect(x, y, w, 24, 8); ctx.fill();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + 12, y + 12, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + 22, y + 12); ctx.textBaseline = 'alphabetic';
+}
+function dashLine(x1, y1, x2, y2, color, lw, dash, alpha){
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash);
+  if (alpha !== undefined) ctx.globalAlpha = alpha;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+
+function draw(){
+  if (!D.tau) return;
+  var tA = Math.min(tAnim, T_SIM);
+  var i = Math.min(NS, Math.round(tA / DT));
+  var xcm = XS[i] * 100, ycm = YS[i] * 100, rcm = xcm - ycm;
+  var tau = D.tau, tExit = T0 + tau;
+  var s = D.vms * tA;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* ============ 상단: 주행 장면 ============ */
+  ctx.fillStyle = PAL.surface; ctx.fillRect(18, 14, 864, 272);
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1; ctx.strokeRect(18.5, 14.5, 864, 272);
+
+  /* 좌측 텍스트 컬럼 */
+  ctx.textAlign = 'left';
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT;
+  ctx.fillText('1/4 차량 모델 · v = ' + D.v + ' km/h', TEXT_X, 38);
+  ctx.font = 'bold 14px ' + MONO;
+  ctx.fillText('m ẍ + c(ẋ − ẏ) + k(x − y) = 0', TEXT_X, 60);
+  ctx.font = '13px ' + FONT; ctx.fillStyle = PAL.muted;
+  ctx.fillText('m = ' + p.m + ' kg · k = ' + p.k.toFixed(1) + ' kN/m · c = ' + fmtInt(p.c) + ' N·s/m', TEXT_X, 84);
+  ctx.fillText('ωₙ = √(k/m) = ' + D.wn.toFixed(2) + ' rad/s', TEXT_X, 106);
+  var pre = 'fₙ = ωₙ/2π = ';
+  ctx.fillText(pre, TEXT_X, 126);
+  ctx.fillStyle = D.fnOK ? PAL.accent : PAL.high;
+  ctx.fillText(D.fn.toFixed(2) + ' Hz', TEXT_X + ctx.measureText(pre).width, 126);
+  ctx.fillStyle = PAL.muted; pre = 'ζ = c / 2√(km) = ';
+  ctx.fillText(pre, TEXT_X, 146);
+  ctx.fillStyle = (D.zeta >= 0.25 && D.zeta <= 0.6) ? PAL.accent : PAL.high;
+  ctx.fillText(fmtZ(D.zeta), TEXT_X + ctx.measureText(pre).width, 146);
+
+  var ntxt = '출렁임 ' + D.N + (D.truncated ? '+' : '') + '회';
+  ctx.font = 'bold 18px ' + FONT;
+  var nw = ctx.measureText(ntxt).width + 28;
+  ctx.fillStyle = stateCol; roundRect(TEXT_X, 164, nw, 34, 9); ctx.fill();
+  ctx.fillStyle = PAL.surface; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(ntxt, TEXT_X + nw / 2, 181); ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left'; ctx.fillStyle = PAL.faint; ctx.font = '11.5px ' + FONT;
+  ctx.fillText('턱 이탈 후 정지선에서 1.5 cm 이상 벗어난', TEXT_X, 218);
+  ctx.fillText('봉우리·골의 수 (직전의 45 % 미만은 잔진동으로 제외)', TEXT_X, 234);
+  ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.text;
+  var tt = 't = ' + tA.toFixed(2) + ' s';
+  ctx.fillText(tt, TEXT_X, 272);
+  if (tA >= T0 && tA <= tExit){
+    ctx.fillStyle = PAL.low; ctx.fillText(' · 턱 통과 중', TEXT_X + ctx.measureText(tt).width, 272);
+  }
+
+  /* 노면 (클립) */
+  var bx0 = CAR_X + (T0 - tA) * D.vms * PX_PER_M_H, bw = L_BUMP * PX_PER_M_H;
+  function roadPx(px){
+    return (px >= bx0 && px <= bx0 + bw) ? ROAD_Y - H_BUMP * 100 * PX_PER_CM * Math.sin(Math.PI * (px - bx0) / bw) : ROAD_Y;
+  }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(ROAD_X0, 14, ROAD_X1 - ROAD_X0, 272); ctx.clip();
+  var px;
+  ctx.beginPath(); ctx.moveTo(ROAD_X0, ROAD_Y);
+  for (px = ROAD_X0; px <= ROAD_X1; px += 2) ctx.lineTo(px, roadPx(px));
+  ctx.lineTo(ROAD_X1, 284); ctx.lineTo(ROAD_X0, 284); ctx.closePath();
+  ctx.globalAlpha = .13; ctx.fillStyle = PAL.low; ctx.fill(); ctx.globalAlpha = 1;
+  /* 턱 로브 */
+  ctx.beginPath(); ctx.moveTo(bx0, ROAD_Y);
+  for (px = bx0; px <= bx0 + bw; px += 2) ctx.lineTo(px, roadPx(px));
+  ctx.lineTo(bx0 + bw, ROAD_Y); ctx.closePath();
+  ctx.globalAlpha = .22; ctx.fillStyle = PAL.low; ctx.fill(); ctx.globalAlpha = 1;
+  /* 노면선 */
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(ROAD_X0, ROAD_Y);
+  for (px = ROAD_X0; px <= ROAD_X1; px += 2) ctx.lineTo(px, roadPx(px));
+  ctx.stroke();
+  /* 1 m 눈금 (평지에서도 스크롤이 보이게) */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.globalAlpha = .5;
+  for (var gi = 0; gi < 10; gi++){
+    var gx = ROAD_X0 + (((gi * 60 - s * 60) % 540) + 540) % 540;
+    ctx.beginPath(); ctx.moveTo(gx, ROAD_Y + 2); ctx.lineTo(gx, ROAD_Y + 8); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.low; ctx.font = 'bold 12px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('방지턱 3.6 m × 10 cm', bx0 + bw / 2, ROAD_Y - 10);
+  ctx.restore();
+
+  /* 바퀴 */
+  var wy = ROAD_Y - WR - YS[i] * 100 * PX_PER_CM;
+  ctx.fillStyle = PAL.mass; ctx.beginPath(); ctx.arc(CAR_X, wy, WR, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 4; ctx.stroke();
+  ctx.save(); ctx.translate(CAR_X, wy); ctx.rotate(s / 0.3);
+  ctx.strokeStyle = PAL.surface2; ctx.lineWidth = 1.5; ctx.globalAlpha = .7;
+  for (var sp = 0; sp < 3; sp++){
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(sp * 2.094) * (WR - 5), Math.sin(sp * 2.094) * (WR - 5)); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = PAL.surface2; ctx.beginPath(); ctx.arc(CAR_X, wy, 5, 0, Math.PI * 2); ctx.fill();
+
+  /* 차체 위치 */
+  var bodyY = REST_Y - XS[i] * 100 * PX_PER_CM, bodyBot = bodyY + 20, wheelTop = wy - WR;
+
+  /* 현가장치 — 스프링 (지그재그 8코일) */
+  var sx = CAR_X - 22, ncoil = 16, dy = (bodyBot - wheelTop) / ncoil;
+  ctx.strokeStyle = PAL.spring; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(sx, wheelTop);
+  for (var ci = 0; ci < ncoil; ci++) ctx.lineTo(sx + (ci % 2 === 0 ? -9 : 9), wheelTop + dy * (ci + 0.5));
+  ctx.lineTo(sx, bodyBot); ctx.stroke();
+  /* 현가장치 — 댐퍼 (실린더 + 로드/피스톤, 도식 비율) */
+  /* 캔버스 y는 아래로 증가 — 차체 밑면(bodyBot)이 바퀴 위(wheelTop)보다 위에 있으므로
+     간격 Lg = wheelTop − bodyBot 이 양수. (부호를 뒤집으면 실린더·로드가 그려지지 않는다) */
+  var dx = CAR_X + 22, Lg = wheelTop - bodyBot, cylH = 0.55 * Lg, rodL = 0.65 * Lg;
+  ctx.fillStyle = PAL.surface2; ctx.fillRect(dx - 7, wheelTop - cylH, 14, cylH);
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(dx - 7, wheelTop - cylH); ctx.lineTo(dx - 7, wheelTop);
+  ctx.lineTo(dx + 7, wheelTop); ctx.lineTo(dx + 7, wheelTop - cylH); ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(dx, bodyBot); ctx.lineTo(dx, bodyBot + rodL); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(dx - 5, bodyBot + rodL); ctx.lineTo(dx + 5, bodyBot + rodL); ctx.stroke();
+  var midS = (wheelTop + bodyBot) / 2;
+  ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = PAL.text; ctx.fillText('k', CAR_X - 48, midS);
+  ctx.fillStyle = PAL.float; ctx.fillText('c', CAR_X + 48, midS);
+  ctx.textBaseline = 'alphabetic';
+
+  /* 차체 그리기 */
+  ctx.fillStyle = PAL['accent-soft']; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.5;
+  roundRect(CAR_X - 80, bodyY - 20, 160, 40, 12); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.surface; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2;
+  roundRect(CAR_X - 44, bodyY - 48, 88, 30, 9); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('m = ' + p.m + ' kg', CAR_X, bodyY); ctx.textBaseline = 'alphabetic';
+
+  /* 정지선 */
+  dashLine(CAR_X - 100, REST_Y, CAR_X + 112, REST_Y, PAL.border2, 1, [4, 4]);
+  ctx.fillStyle = PAL.faint; ctx.font = '11.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('정지 높이 (x = 0)', CAR_X - 86, REST_Y + 15);
+
+  /* x 화살표 */
+  if (Math.abs(xcm) >= 0.3){
+    vArrow(CAR_X + 124, REST_Y, bodyY, stateCol, 2.4);
+    ctx.fillStyle = stateCol; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'center';
+    ctx.fillText('x = ' + sgn(xcm, 1) + ' cm', CAR_X + 124, bodyY < REST_Y ? Math.max(96, bodyY - 10) : bodyY + 22);
+  }
+  /* y 라벨 */
+  if (tA >= T0 && tA <= tExit){
+    ctx.fillStyle = PAL.low; ctx.font = '12px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText('y = ' + ycm.toFixed(1) + ' cm', CAR_X + 30, ROAD_Y + 18);
+  }
+
+  /* 우측 판독 블록 (모두 y ≥ 98 — 호스트 툴바 keep-out 회피) */
+  var phase;
+  if (tA < T0) phase = ['접근 중', PAL.muted, PAL.surface3];
+  else if (tA <= tExit) phase = ['방지턱 통과 중', PAL.low, PAL['low-soft']];
+  else if (tA < tExit + D.Ts) phase = ['자유진동 — 잦아드는 중', PAL.accent, PAL['accent-soft']];
+  else phase = ['정지 (±5 mm 안)', PAL.ok, PAL['ok-soft']];
+  chip(RB_X, 98, phase[0], phase[1], phase[2]);
+  ctx.textAlign = 'left';
+  ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.low;
+  ctx.fillText('노면 y = ' + ycm.toFixed(1) + ' cm', RB_X, 150);
+  ctx.fillStyle = PAL.accent;
+  ctx.fillText('차체 x = ' + sgn(xcm, 1) + ' cm', RB_X, 172);
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted;
+  ctx.fillText('x − y = ' + sgn(rcm, 1) + ' cm → 스프링 ' + (Math.abs(rcm) < 0.2 ? '중립' : (rcm > 0 ? '늘어남' : '압축')), RB_X, 194);
+
+  /* 축척 주석 */
+  ctx.fillStyle = PAL.faint; ctx.font = '11.5px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('상하 변위 3.5 px/cm (≈6배 과장) · 바퀴는 노면을 그대로 따라감', 868, 280);
+
+  /* ============ 하단: x(t) 플롯 ============ */
+  ctx.textAlign = 'left'; ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT;
+  var ttl = '차체 높이 x(t) [cm]';
+  ctx.fillText(ttl, PL, 306);
+  var tw = ctx.measureText(ttl).width;
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted;
+  ctx.fillText('  ·  파란 면 = 노면 y(t)  ·  회색 띠 = ±1.5 cm 판정 문턱', PL + tw, 306);
+  if (D.good){
+    ctx.font = 'bold 14px ' + FONT;
+    var mtxt = '✓ 미션 완료', mw = ctx.measureText(mtxt).width + 30;
+    ctx.fillStyle = PAL.ok; roundRect(PR - mw, 292, mw, 26, 8); ctx.fill();
+    ctx.fillStyle = PAL.surface; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(mtxt, PR - mw / 2, 305); ctx.textBaseline = 'alphabetic';
+  }
+
+  /* 축·격자 */
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5; ctx.strokeRect(PL, PT, PR - PL, PB - PT);
+  dashLine(PL, ty(10), PR, ty(10), PAL.grid, 1, [3, 4]);
+  dashLine(PL, ty(-10), PR, ty(-10), PAL.grid, 1, [3, 4]);
+  dashLine(PL, MIDY, PR, MIDY, PAL.border2, 1, [4, 4]);
+  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.faint; ctx.textAlign = 'right';
+  ctx.fillText('+10', PL - 8, ty(10) + 4); ctx.fillText('0', PL - 8, MIDY + 4); ctx.fillText('−10', PL - 8, ty(-10) + 4);
+  ctx.textAlign = 'center';
+  for (var gs2 = 0; gs2 <= T_SIM; gs2++){
+    if (gs2 > 0 && gs2 < T_SIM) dashLine(tx(gs2), PT, tx(gs2), PB, PAL.grid, 1, [3, 4]);
+    ctx.fillStyle = PAL.faint; ctx.fillText(gs2 + ' s', tx(gs2), PB + 17);
+  }
+  /* 판정 문턱 띠 */
+  ctx.globalAlpha = .18; ctx.fillStyle = PAL.faint;
+  ctx.fillRect(PL, ty(1.5), PR - PL, ty(-1.5) - ty(1.5)); ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(PL, PT, PR - PL, PB - PT); ctx.clip();
+  /* 노면 y(t) */
+  var j;
+  ctx.beginPath(); ctx.moveTo(PL, MIDY);
+  for (j = 0; j <= NS; j += 3) ctx.lineTo(tx(j * DT), ty(YS[j] * 100));
+  ctx.lineTo(PR, MIDY); ctx.closePath();
+  ctx.globalAlpha = .18; ctx.fillStyle = PAL.low; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 1.6; ctx.stroke();
+  /* 턱 이탈선 */
+  dashLine(tx(tExit), PT, tx(tExit), PB, PAL.float, 1.4, [5, 4]);
+  ctx.fillStyle = PAL.float; ctx.font = '11.5px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('턱 이탈', tx(tExit) + 5, PT + 14);
+  /* 겹쳐보기 (ζ 0.1 / 0.35 / 1.0) */
+  if (ghostOn){
+    var gcol = [PAL.high, PAL.ok, PAL.float];
+    for (var gg = 0; gg < 3; gg++){
+      if (!ghost[gg]) continue;
+      ctx.save(); ctx.strokeStyle = gcol[gg]; ctx.lineWidth = 1.8; ctx.globalAlpha = .55; ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      for (j = 0; j <= NS; j += 3){
+        var gy = ty(ghost[gg][j] * 100);
+        if (j) ctx.lineTo(tx(j * DT), gy); else ctx.moveTo(tx(j * DT), gy);
+      }
+      ctx.stroke(); ctx.restore();
+    }
+    /* 색만으로는 본 곡선(판정색)과 헷갈리므로 플롯 우상단에 고정 키를 둔다
+       (곡선 위에 적으면 되튐 마커 라벨과 겹친다) */
+    var kx = PR - 96, kyy = PT + 12;
+    ctx.globalAlpha = .93; ctx.fillStyle = PAL['plot-bg'];
+    ctx.fillRect(kx - 7, kyy - 11, 98, 62); ctx.globalAlpha = 1;
+    ctx.strokeStyle = PAL.border; ctx.lineWidth = 1; ctx.strokeRect(kx - 7, kyy - 11, 98, 62);
+    ctx.fillStyle = PAL.faint; ctx.font = 'bold 10.5px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText('겹쳐보기', kx, kyy);
+    for (gg = 0; gg < 3; gg++){
+      var ky = kyy + 15 + gg * 15;
+      ctx.save(); ctx.strokeStyle = gcol[gg]; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+      ctx.beginPath(); ctx.moveTo(kx, ky - 3); ctx.lineTo(kx + 20, ky - 3); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = PAL.muted; ctx.font = '11px ' + FONT; ctx.textAlign = 'left';
+      ctx.fillText('ζ = ' + ['0.1', '0.35', '1'][gg], kx + 26, ky);
+    }
+  }
+  /* 본 곡선 — 전체 옅게 */
+  ctx.strokeStyle = stateCol; ctx.lineWidth = 1.6; ctx.globalAlpha = .32; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (j = 0; j <= NS; j += 3){
+    if (j) ctx.lineTo(tx(j * DT), ty(XS[j] * 100)); else ctx.moveTo(tx(j * DT), ty(XS[j] * 100));
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+  /* 본 곡선 — 0..tAnim 진하게 */
+  ctx.lineWidth = 2.8; ctx.beginPath();
+  for (j = 0; j <= i; j += 2){
+    if (j) ctx.lineTo(tx(j * DT), ty(XS[j] * 100)); else ctx.moveTo(tx(j * DT), ty(XS[j] * 100));
+  }
+  if (i % 2) ctx.lineTo(tx(i * DT), ty(XS[i] * 100));
+  ctx.stroke();
+
+  /* 출렁임 마커 — 애니메이션이 지나간 뒤 표시 */
+  for (j = 0; j < D.ext.length; j++){
+    var ex = D.ext[j];
+    if (tA < ex.t) break;
+    var mx = tx(ex.t), my = ty(ex.x * 100);
+    dashLine(mx, my, mx, MIDY, stateCol, 1, [3, 3], .5);
+    ctx.fillStyle = stateCol; ctx.strokeStyle = PAL['plot-bg']; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(mx, my, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = PAL.surface; ctx.font = 'bold 10.5px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(j + 1), mx, my + 0.5); ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = stateCol; ctx.font = '12px ' + FONT;
+    ctx.fillText(sgn(ex.x * 100, 1) + ' cm', mx, ex.x < 0 ? my + 22 : my - 13);
+  }
+  /* 최고점 라벨 — 봉우리 왼쪽에 오른쪽정렬로 두어 '턱 이탈'(오른쪽) 라벨과 겹치지 않게,
+     y 는 PT 아래로 clamp 해서 잘리지 않게. 왼쪽 여백이 없으면 아래쪽으로 피한다. */
+  if (tA >= D.imax * DT){
+    var pxA = tx(D.imax * DT), pcm = D.xmax * 100;
+    ctx.fillStyle = PAL.accent; ctx.font = '12px ' + FONT;
+    var ptxt = '최고 ' + sgn(pcm, 1) + ' cm', pw = ctx.measureText(ptxt).width;
+    if (pxA - 8 - pw >= PL + 2){
+      ctx.textAlign = 'right'; ctx.fillText(ptxt, pxA - 8, Math.max(PT + 13, ty(pcm) - 10));
+    } else {
+      ctx.textAlign = 'left'; ctx.fillText(ptxt, pxA + 8, Math.max(PT + 32, ty(pcm) - 10));
+    }
+  }
+  ctx.restore();
+
+  /* 정지 마커 */
+  if (isFinite(D.Ts)){
+    if (tA >= tExit + D.Ts){
+      var sxp = tx(tExit + D.Ts);
+      dashLine(sxp, PT + 22, sxp, PB, PAL.float, 1.6, [5, 4]);
+      ctx.fillStyle = PAL.float; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'center';
+      ctx.fillText('정지 +' + D.Ts.toFixed(2) + ' s', Math.min(PR - 50, Math.max(PL + 50, sxp)), PB - 8);
+    }
+  } else if (tA >= T_SIM){
+    ctx.fillStyle = PAL.bad; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'right';
+    ctx.fillText('6 s 안에 정지 못 함', PR - 6, PB - 8);
+  }
+
+  /* 커서 */
+  var cx = tx(tA), cy = ty(xcm);
+  dashLine(cx, PT, cx, PB, PAL.faint, 1, [], .5);
+  ctx.fillStyle = PAL.surface; ctx.strokeStyle = stateCol; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = PAL.text; ctx.font = '13px ' + MONO;
+  var ctext = 't = ' + tA.toFixed(2) + ' s, x = ' + sgn(xcm, 1) + ' cm';
+  /* 턱을 넘는 동안에는 커서 판독값을 정지선 아래로 내려 노면(파란 면)·라벨과 겹치지 않게 */
+  var cly = (tA <= tExit + 0.15) ? Math.min(PB - 6, Math.max(cy + 26, MIDY + 26))
+                                 : Math.min(PB - 6, Math.max(PT + 30, cy - 12));
+  /* 겹쳐보기 키(플롯 우상단, PT+1 ~ PT+63)를 침범하지 않도록 아래로 민다 */
+  if (ghostOn) cly = Math.min(PB - 6, Math.max(cly, PT + 80));
+  if (cx > PR - 150){ ctx.textAlign = 'right'; ctx.fillText(ctext, cx - 12, cly); }
+  else { ctx.textAlign = 'left'; ctx.fillText(ctext, cx + 12, cly); }
+}
+
+/* ---- 컨트롤 ---- */
+function syncSpans(){
+  $('kVal').textContent = p.k.toFixed(1);
+  $('cVal').textContent = fmtInt(p.c);
+  $('mVal').textContent = p.m.toFixed(0);
+  $('vVal').textContent = p.v.toFixed(0);
+  $('k').value = p.k; $('c').value = p.c; $('m').value = p.m; $('v').value = p.v;
+}
+function bindSlider(id, key){
+  $(id).addEventListener('input', function(){ p[key] = parseFloat(this.value); syncSpans(); recompute(); draw(); });
+}
+bindSlider('k', 'k'); bindSlider('c', 'c'); bindSlider('m', 'm'); bindSlider('v', 'v');
+
+var presetBtns = document.querySelectorAll('[data-p]');
+function markPreset(){
+  Array.prototype.forEach.call(presetBtns, function(b){
+    var q = b.getAttribute('data-p').split(',');
+    var on = Math.abs(+q[0] - p.m) < 1e-9 && Math.abs(+q[1] - p.k) < 1e-9 &&
+             Math.abs(+q[2] - p.c) < 1e-9 && Math.abs(+q[3] - p.v) < 1e-9;
+    b.classList.toggle('btn-acc', on);
+  });
+}
+Array.prototype.forEach.call(presetBtns, function(b){
+  b.addEventListener('click', function(){
+    var q = this.getAttribute('data-p').split(',');
+    p.m = +q[0]; p.k = +q[1]; p.c = +q[2]; p.v = +q[3]; tAnim = 0;
+    syncSpans(); recompute(); draw();
+  });
+});
+
+$('play').addEventListener('click', function(){
+  running = !running;
+  this.textContent = running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', running);
+});
+$('reset').addEventListener('click', function(){
+  p = { m: DEF.m, k: DEF.k, c: DEF.c, v: DEF.v };
+  tAnim = 0; running = true; seenOver = false; ghostOn = false;
+  $('ghost').classList.remove('btn-acc'); $('cmpLegend').style.display = 'none';
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  syncSpans(); recompute(); draw();
+});
+$('ghost').addEventListener('click', function(){
+  ghostOn = !ghostOn;
+  this.classList.toggle('btn-acc', ghostOn);
+  $('cmpLegend').style.display = ghostOn ? '' : 'none';
+  recompute(); draw();
+});
+
+/* ---- rAF 루프 (1개) ---- */
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (running) tAnim += dt;
+  if (tAnim > T_SIM + 0.8) tAnim = 0;
+  draw();
+  requestAnimationFrame(loop);
+}
+syncSpans();
+recompute();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
