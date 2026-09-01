@@ -120,16 +120,15 @@ footer a{margin-left:10px}
 <header class="hero wrap">
   <p class="eyebrow">메카트로닉스 1강 · 인터랙티브 데모</p>
   <h1>계측·모델링·제어 파이프라인</h1>
-  <p class="lede">2관절 로봇팔이 목표점에 붙는 과정입니다. <b>목표를 클릭·드래그</b>해 옮기고, 끝점–목표 <b>거리 센서</b>와 <b>오차 화살표</b>를 보세요. 위쪽 블록을 누르면 그 단계가 강조됩니다.</p>
+  <p class="lede">2관절 로봇팔이 목표점에 붙는 과정입니다. <b>목표를 클릭·드래그</b>하고, <b>필터 켜짐/꺼짐</b> 두 팔을 같은 화면에서 비교하세요. 위쪽 블록을 누르면 그 단계가 강조됩니다.</p>
 </header>
 
 <main class="wrap">
 
 <div class="eq">
-  센서 <b>d</b> = ‖끝점 − 목표‖
+  필터 켜짐: <b>ŷ</b> ← 모델 예측 + 측정 보정
   &nbsp;→&nbsp; 오차 <b>e</b> = r − ŷ
-  &nbsp;→&nbsp; 제어기가 관절을 돌려 <b>e → 0</b>
-  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">측정 → 모델 → 제어 → 움직임</span>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">필터 꺼짐은 e = r − 측정. 측정만 늦게 평균하면 따라가는 동안 오차가 커질 수 있음</span>
 </div>
 
 <section class="card">
@@ -137,12 +136,12 @@ footer a{margin-left:10px}
     <div>
       <canvas id="cv" width="900" height="600"></canvas>
       <div class="legend">
+        <span class="lg" style="color:var(--accent)"><i></i>필터 켜짐</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>필터 꺼짐</span>
+        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>추정 ŷ</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>측정</span>
         <span class="lg" style="color:var(--c-true)"><i class="o"></i>목표 r</span>
-        <span class="lg" style="color:var(--accent)"><i></i>실제 팔</span>
-        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>거리 센서 d</span>
         <span class="lg" style="color:var(--bad)"><i></i>오차 e</span>
-        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>모델 예측</span>
-        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>필터 추정 ŷ</span>
       </div>
     </div>
 
@@ -155,6 +154,10 @@ footer a{margin-left:10px}
       <div class="btn-row">
         <button id="newTargetBtn" class="btn">◎ 새 목표</button>
         <button id="nextBtn" class="btn">⏭ 다음 단계</button>
+      </div>
+      <div class="btn-row">
+        <button id="filtOn" class="btn on">필터 켜짐</button>
+        <button id="filtOff" class="btn">필터 꺼짐</button>
       </div>
 
       <div class="btn-row" id="stageRow">
@@ -175,10 +178,10 @@ footer a{margin-left:10px}
 
       <div class="ctl-box">
         <div class="stat-grid">
-          <div class="stat"><div class="k">센서 거리 d</div><div class="v" id="statD" style="color:var(--c-meas)">—</div></div>
-          <div class="stat"><div class="k">오차 |e|</div><div class="v" id="statE" style="color:var(--bad)">—</div></div>
-          <div class="stat"><div class="k">관절 θ₁ · θ₂</div><div class="v" id="statQ" style="font-size:13px">—</div></div>
-          <div class="stat"><div class="k">관절 속도 |ω|</div><div class="v" id="statW">—</div></div>
+          <div class="stat"><div class="k">거리 d · 필터 켜짐</div><div class="v" id="statDF" style="color:var(--accent)">—</div></div>
+          <div class="stat"><div class="k">거리 d · 필터 꺼짐</div><div class="v" id="statDR" style="color:var(--c-alias)">—</div></div>
+          <div class="stat"><div class="k">|ω| · 필터 켜짐</div><div class="v" id="statWF">—</div></div>
+          <div class="stat"><div class="k">|ω| · 필터 꺼짐</div><div class="v" id="statWR">—</div></div>
         </div>
       </div>
 
@@ -189,25 +192,19 @@ footer a{margin-left:10px}
       </div>
 
       <div class="ctl-box">
-        <label>센서 노이즈 <span class="value" id="nV">0.04</span></label>
-        <input type="range" id="nS" min="0" max="0.22" step="0.01" value="0.04">
+        <label>센서 노이즈 <span class="value" id="nV">0.08</span></label>
+        <input type="range" id="nS" min="0" max="0.22" step="0.01" value="0.08">
         <div class="note">끝점 위치 측정에 흔들림을 넣습니다. <b>P1</b></div>
-      </div>
-
-      <div class="ctl-box">
-        <label>모델 길이 오차 <span class="value" id="mV">0%</span></label>
-        <input type="range" id="mS" min="0" max="28" step="1" value="0">
-        <div class="note">링크 길이를 잘못 알면 보라색 유령 팔이 어긋납니다. <b>P2</b></div>
       </div>
 
       <div class="verdict mid" id="verdict">—</div>
 
       <div class="tips"><span class="t">관찰 포인트</span>
-        • 점선 자 = <b>거리 센서</b> (끝점 ↔ 목표)<br>
-        • 빨간 화살표 = 제어기가 보는 <b>오차 e</b><br>
-        • 노이즈를 키우면 측정 점이 흩어짐<br>
-        • 모델 오차를 키우면 유령 팔이 빗나감<br>
-        • 같은 루프가 자동차·드론에도 그대로 쓰임
+        • <b>파란 실선</b> = 모델 예측 + 측정 보정 후 제어<br>
+        • <b>보라 점선</b> = 측정값을 그대로 넣어 제어<br>
+        • 측정만 늦게 평균하면 따라가는 동안 오차가 더 커질 수 있음<br>
+        • 노이즈를 키운 뒤 붙고 나서의 흔들림을 비교<br>
+        • 토글은 센서 자·오차 화살표를 어느 팔에 그릴지만 바꿈
       </div>
     </div>
   </div>
@@ -246,10 +243,10 @@ var stages = [
     role:'끝점에 달린 <b>거리 센서</b>가 목표까지 길이를 숫자로 읽습니다. 점선 자가 그 측정입니다.' },
   { key:'filter', label:'필터', tag:'P1 · 3~5주', name:'필터',
     week:'P1 · 3~5주', part:true,
-    role:'측정 = 참값 + 노이즈. 흩어진 점을 평균에 가깝게 모아 <b>추정 ŷ</b>를 만듭니다.' },
-  { key:'model', label:'모델', tag:'P2 · 6~10주', name:'모델 · 추정',
+    role:'측정만 천천히 평균하면 ŷ가 한 박자 늦어 오차가 커질 수 있습니다. 여기서는 <b>모델로 끝점을 예측</b>하고, 새 측정이 올 때만 조금 끌어옵니다.' },
+  { key:'model', label:'모델', tag:'P2 · 6~10주', name:'모델 (정기구학)',
     week:'P2 · 6~10주', part:true,
-    role:'관절각 θ₁, θ₂로 끝점 위치를 <b>수식(정기구학)</b>으로 예측합니다. 길이를 틀리면 유령 팔이 어긋납니다.' },
+    role:'관절각과 각속도로 다음 끝점을 <b>수식</b>으로 계산합니다. 필터가 이 예측을 쓰고, 센서는 그 예측을 보정합니다.' },
   { key:'error', label:'오차', tag:'오늘 개념', name:'비교 · 오차',
     week:'오늘 개념 (7.4절)', part:false,
     role:'목표 r에서 추정 ŷ를 빼 <b>오차 e = r − ŷ</b>를 만듭니다. 화살표가 그 벡터입니다.' },
@@ -264,25 +261,31 @@ var stageMap = {};
 var si;
 for (si = 0; si < stages.length; si++) stageMap[stages[si].key] = stages[si];
 
+function makeArm(){
+  return {
+    th1: 0.58, th2: 0.95, w1: 0, w2: 0,
+    yMeas:{ x:0, y:0 }, yHat:{ x:0, y:0 },
+    trail:[]
+  };
+}
 var state = {
-  th1: 0.58, th2: 0.95,
-  w1: 0, w2: 0,
+  armF: makeArm(),
+  armR: makeArm(),
   tx: 2.00, ty: 0.92,
-  yMeas:{ x:0, y:0 },
-  yHat:{ x:0, y:0 },
   measReady:false,
   measTimer:0,
-  noise:0.04,
-  mismatch:0,
+  noise:0.08,
   kp:1.60,
+  filterOn:true,
   running:!reduceMotion,
   selected:null,
   hoverChip:null,
   t:0, lastTs:0, raf:null,
   drag:false,
-  trail:[], eHist:[], histTimer:0,
+  eHistF:[], eHistR:[], histTimer:0,
   chipHits:[]
 };
+function activeArm(){ return state.filterOn ? state.armF : state.armR; }
 
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 function randn(){
@@ -309,9 +312,12 @@ function jacT(th1, th2, l1, l2, ex, ey){
   var j21 =  l1 * c1 + l2 * c12, j22 =  l2 * c12;
   return { w1: j11 * ex + j21 * ey, w2: j12 * ex + j22 * ey };
 }
-function modelLens(){
-  var m = state.mismatch;
-  return { l1: L1 * (1 + m), l2: L2 * (1 - m * 0.55) };
+function eeVel(th1, th2, w1, w2){
+  var s1 = Math.sin(th1), c1 = Math.cos(th1);
+  var s12 = Math.sin(th1 + th2), c12 = Math.cos(th1 + th2);
+  var j11 = -L1 * s1 - L2 * s12, j12 = -L2 * s12;
+  var j21 =  L1 * c1 + L2 * c12, j22 =  L2 * c12;
+  return { x: j11 * w1 + j12 * w2, y: j21 * w1 + j22 * w2 };
 }
 function clampTarget(x, y){
   y = Math.max(0.10, y);
@@ -326,10 +332,17 @@ function randomTarget(){
   var reach = 0.90 + Math.random() * (MAX_R - 0.90);
   return clampTarget(reach * Math.cos(ang), reach * Math.sin(ang));
 }
+function resetArm(arm){
+  arm.th1 = 0.58; arm.th2 = 0.95; arm.w1 = 0; arm.w2 = 0;
+  arm.trail = [];
+  var ee = fk(arm.th1, arm.th2, L1, L2).ee;
+  arm.yMeas.x = ee.x; arm.yMeas.y = ee.y;
+  arm.yHat.x = ee.x; arm.yHat.y = ee.y;
+}
 function resetPose(){
-  state.th1 = 0.58; state.th2 = 0.95; state.w1 = 0; state.w2 = 0;
+  resetArm(state.armF); resetArm(state.armR);
   state.tx = 2.00; state.ty = 0.92;
-  state.measReady = false; state.trail = []; state.eHist = [];
+  state.measReady = false; state.eHistF = []; state.eHistR = [];
   state.t = 0; state.measTimer = 0; state.histTimer = 0;
 }
 
@@ -343,52 +356,64 @@ function dimFor(key){
   return state.selected === key ? 1 : 0.22;
 }
 
+function stepArm(arm, useFilter, dt, nx, ny, newMeas){
+  var ee = fk(arm.th1, arm.th2, L1, L2).ee;
+  if (newMeas){
+    arm.yMeas.x = ee.x + nx;
+    arm.yMeas.y = ee.y + ny;
+  }
+  if (useFilter){
+    var v = eeVel(arm.th1, arm.th2, arm.w1, arm.w2);
+    arm.yHat.x += v.x * dt;
+    arm.yHat.y += v.y * dt;
+    if (newMeas){
+      arm.yHat.x += 0.22 * (arm.yMeas.x - arm.yHat.x);
+      arm.yHat.y += 0.22 * (arm.yMeas.y - arm.yHat.y);
+    }
+  } else {
+    arm.yHat.x = arm.yMeas.x;
+    arm.yHat.y = arm.yMeas.y;
+  }
+  var ex = state.tx - arm.yHat.x, ey = state.ty - arm.yHat.y;
+  var emag = Math.hypot(ex, ey);
+  var jt = jacT(arm.th1, arm.th2, L1, L2, ex, ey);
+  var wdes1 = clamp(state.kp * jt.w1, -3.2, 3.2);
+  var wdes2 = clamp(state.kp * jt.w2, -3.2, 3.2);
+  if (emag < 0.018){ wdes1 *= emag / 0.018; wdes2 *= emag / 0.018; }
+  var tau = 0.07;
+  arm.w1 += (wdes1 - arm.w1) / tau * dt;
+  arm.w2 += (wdes2 - arm.w2) / tau * dt;
+  arm.th1 = clamp(arm.th1 + arm.w1 * dt, -0.15, Math.PI + 0.05);
+  arm.th2 = clamp(arm.th2 + arm.w2 * dt, -2.55, 2.55);
+  var now = fk(arm.th1, arm.th2, L1, L2).ee;
+  arm.trail.push({ x: now.x, y: now.y });
+  if (arm.trail.length > 90) arm.trail.shift();
+}
+function trueDist(arm){
+  var ee = fk(arm.th1, arm.th2, L1, L2).ee;
+  return Math.hypot(state.tx - ee.x, state.ty - ee.y);
+}
 function step(dt){
   dt = clamp(dt, 0, 0.05);
   state.t += dt;
-  var kin = fk(state.th1, state.th2, L1, L2);
-  var ee = kin.ee;
-  var ml = modelLens();
-  var pred = fk(state.th1, state.th2, ml.l1, ml.l2).ee;
-
+  var newMeas = false, nx = 0, ny = 0;
   state.measTimer += dt;
   if (!state.measReady || state.measTimer > 0.05){
     state.measTimer = 0;
-    state.yMeas.x = ee.x + randn() * state.noise;
-    state.yMeas.y = ee.y + randn() * state.noise;
+    nx = randn() * state.noise;
+    ny = randn() * state.noise;
+    newMeas = true;
     state.measReady = true;
   }
-  var a = 1 - Math.exp(-dt / 0.12);
-  state.yHat.x += a * (state.yMeas.x - state.yHat.x);
-  state.yHat.y += a * (state.yMeas.y - state.yHat.y);
-
-  var yx = state.yHat.x, yy = state.yHat.y;
-  var ex = state.tx - yx, ey = state.ty - yy;
-  var emag = Math.hypot(ex, ey);
-  var jt = jacT(state.th1, state.th2, ml.l1, ml.l2, ex, ey);
-  var wdes1 = state.kp * jt.w1;
-  var wdes2 = state.kp * jt.w2;
-  var wlim = 3.2;
-  wdes1 = clamp(wdes1, -wlim, wlim);
-  wdes2 = clamp(wdes2, -wlim, wlim);
-  if (emag < 0.018){ wdes1 *= emag / 0.018; wdes2 *= emag / 0.018; }
-  var tau = 0.07;
-  state.w1 += (wdes1 - state.w1) / tau * dt;
-  state.w2 += (wdes2 - state.w2) / tau * dt;
-  state.th1 += state.w1 * dt;
-  state.th2 += state.w2 * dt;
-  state.th1 = clamp(state.th1, -0.15, Math.PI + 0.05);
-  state.th2 = clamp(state.th2, -2.55, 2.55);
-
-  var now = fk(state.th1, state.th2, L1, L2).ee;
-  state.trail.push({ x: now.x, y: now.y });
-  if (state.trail.length > 90) state.trail.shift();
-
+  stepArm(state.armF, true, dt, nx, ny, newMeas);
+  stepArm(state.armR, false, dt, nx, ny, newMeas);
   state.histTimer += dt;
   if (state.histTimer > 0.05){
     state.histTimer = 0;
-    state.eHist.push(Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y));
-    if (state.eHist.length > 160) state.eHist.shift();
+    state.eHistF.push(trueDist(state.armF));
+    state.eHistR.push(trueDist(state.armR));
+    if (state.eHistF.length > 160) state.eHistF.shift();
+    if (state.eHistR.length > 160) state.eHistR.shift();
   }
 }
 
@@ -566,67 +591,95 @@ function drawTarget(C){
   ctx.restore();
 }
 
-function drawGripper(ee, phi, C){
+function drawGripper(ee, phi, color){
   var s = toScreen(ee.x, ee.y);
   var ca = Math.cos(-phi), sa = Math.sin(-phi);
   function rot(ax, ay){ return { x: s.x + ax * ca - ay * sa, y: s.y + ax * sa + ay * ca }; }
   var a = rot(12, -7), b = rot(20, -7), c = rot(12, 7), d = rot(20, 7);
-  ctx.strokeStyle = C.accent; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
 }
-
+function drawTrail(arm, color, alpha){
+  var i, p, q;
+  if (arm.trail.length < 2) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  p = toScreen(arm.trail[0].x, arm.trail[0].y);
+  ctx.moveTo(p.x, p.y);
+  for (i = 1; i < arm.trail.length; i++){
+    q = toScreen(arm.trail[i].x, arm.trail[i].y);
+    ctx.lineTo(q.x, q.y);
+  }
+  ctx.stroke(); ctx.restore();
+}
+function drawArm(arm, color, dashed, alpha, label, C){
+  var kin = fk(arm.th1, arm.th2, L1, L2), se;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  drawLink(kin.j0, kin.j1, dashed ? 12 : 20, color, dashed);
+  if (!dashed) drawLink(kin.j0, kin.j1, 10, color, false);
+  drawLink(kin.j1, kin.ee, dashed ? 10 : 16, color, dashed);
+  if (!dashed) drawLink(kin.j1, kin.ee, 8, color, false);
+  drawJoint(kin.j0, 11, C.surface, color, arm.th1);
+  drawJoint(kin.j1, 9, C.surface, color, arm.th1 + arm.th2);
+  drawGripper(kin.ee, arm.th1 + arm.th2, color);
+  se = toScreen(kin.ee.x, kin.ee.y);
+  ctx.beginPath(); ctx.arc(se.x, se.y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = color; ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(label, se.x + 12, se.y - 10);
+  ctx.restore();
+  return kin;
+}
+function sparkLine(hist, x, y, w, h, vmax, color){
+  var i, n = hist.length, vx, vy;
+  if (n < 2) return;
+  ctx.beginPath();
+  for (i = 0; i < n; i++){
+    vx = x + 8 + (w - 16) * i / (n - 1);
+    vy = y + h - 8 - (h - 24) * (hist[i] / vmax);
+    if (i === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.stroke();
+}
 function drawSpark(C){
-  var x = W - 188, y = H - 78, w = 172, h = 58, i, n, vmax, vx, vy;
+  var x = W - 210, y = H - 86, w = 196, h = 70, i, vmax;
   ctx.save();
   roundRect(x, y, w, h, 8);
   ctx.fillStyle = C.surface2; ctx.fill();
   ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = C.faint; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('|e|(t)', x + 8, y + 13);
-  n = state.eHist.length;
-  if (n > 1){
-    vmax = 0.05;
-    for (i = 0; i < n; i++) if (state.eHist[i] > vmax) vmax = state.eHist[i];
-    ctx.beginPath();
-    for (i = 0; i < n; i++){
-      vx = x + 8 + (w - 16) * i / (n - 1);
-      vy = y + h - 8 - (h - 24) * (state.eHist[i] / vmax);
-      if (i === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
-    }
-    ctx.strokeStyle = C.bad; ctx.lineWidth = 1.6; ctx.stroke();
-  }
+  ctx.fillText('실제 거리 d(t)', x + 8, y + 13);
+  ctx.fillStyle = C.accent; ctx.fillText('켜짐', x + 108, y + 13);
+  ctx.fillStyle = C.alias; ctx.fillText('꺼짐', x + 146, y + 13);
+  vmax = 0.05;
+  for (i = 0; i < state.eHistF.length; i++) if (state.eHistF[i] > vmax) vmax = state.eHistF[i];
+  for (i = 0; i < state.eHistR.length; i++) if (state.eHistR[i] > vmax) vmax = state.eHistR[i];
+  sparkLine(state.eHistF, x, y, w, h, vmax, C.accent);
+  sparkLine(state.eHistR, x, y, w, h, vmax, C.alias);
   ctx.restore();
 }
 
 function draw(){
   var C = palette();
-  var kin = fk(state.th1, state.th2, L1, L2);
-  var ml = modelLens();
-  var ghost = fk(state.th1, state.th2, ml.l1, ml.l2);
-  var ee = kin.ee, pred = ghost.ee;
-  var showGhost = state.mismatch > 0.01 || state.selected === 'model' || focusOf() === 'model';
-  var showFilt = state.noise > 0.005 || state.selected === 'filter' || focusOf() === 'filter';
-  var i, p, q, se;
+  var focus = activeArm();
+  var kin = fk(focus.th1, focus.th2, L1, L2);
+  var ee = kin.ee;
+  var showFilt = state.noise > 0.005 || state.selected === 'filter' || state.selected === 'error';
+  var aF = state.filterOn ? 1 : 0.42;
+  var aR = state.filterOn ? 0.42 : 1;
+  var o, sj1, se, sm, sh;
 
   drawWorkspace(C);
   drawPipeline(C);
+  drawTrail(state.armR, C.alias, 0.28 * dimFor('actuator'));
+  drawTrail(state.armF, C.accent, 0.35 * dimFor('actuator'));
 
-  if (state.trail.length > 1){
-    ctx.save();
-    ctx.globalAlpha = 0.35 * dimFor('actuator');
-    ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    p = toScreen(state.trail[0].x, state.trail[0].y);
-    ctx.moveTo(p.x, p.y);
-    for (i = 1; i < state.trail.length; i++){
-      q = toScreen(state.trail[i].x, state.trail[i].y);
-      ctx.lineTo(q.x, q.y);
-    }
-    ctx.stroke(); ctx.restore();
-  }
-
-  var o = toScreen(0, 0);
+  o = toScreen(0, 0);
   ctx.save();
   ctx.globalAlpha = dimFor('actuator');
   roundRect(o.x - 36, o.y - 8, 72, 22, 5);
@@ -636,67 +689,60 @@ function draw(){
   ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke();
   ctx.restore();
 
-  if (showGhost){
-    ctx.save(); ctx.globalAlpha = 0.85 * dimFor('model');
-    drawLink(ghost.j0, ghost.j1, 10, C.alias, true);
-    drawLink(ghost.j1, ghost.ee, 8, C.alias, true);
-    se = toScreen(pred.x, pred.y);
-    ctx.beginPath(); ctx.arc(se.x, se.y, 6, 0, Math.PI * 2);
-    ctx.strokeStyle = C.alias; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('모델 ŷ = f(θ)', se.x + 10, se.y + 14);
-    ctx.restore();
-  }
-
   ctx.save(); ctx.globalAlpha = dimFor('actuator');
-  drawLink(kin.j0, kin.j1, 20, C.line, false);
-  drawLink(kin.j0, kin.j1, 10, C.accent, false);
-  drawLink(kin.j1, kin.ee, 16, C.line, false);
-  drawLink(kin.j1, kin.ee, 8, C.accent, false);
-  drawJoint(kin.j0, 11, C.surface, C.accent, state.th1);
-  drawJoint(kin.j1, 9, C.surface, C.accent, state.th1 + state.th2);
-  drawGripper(ee, state.th1 + state.th2, C);
-  se = toScreen(ee.x, ee.y);
-  ctx.beginPath(); ctx.arc(se.x, se.y, 7, 0, Math.PI * 2);
-  ctx.fillStyle = C.accent; ctx.fill();
-  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  if (state.filterOn){
+    drawArm(state.armR, C.alias, true, aR, '필터 꺼짐', C);
+    drawArm(state.armF, C.accent, false, aF, '필터 켜짐', C);
+  } else {
+    drawArm(state.armF, C.accent, true, aF, '필터 켜짐', C);
+    drawArm(state.armR, C.alias, false, aR, '필터 꺼짐', C);
+  }
   ctx.restore();
 
   if (state.selected === 'controller' || state.selected === 'actuator' || focusOf() === 'controller' || focusOf() === 'actuator'){
     ctx.save(); ctx.globalAlpha = dimFor('controller');
-    drawMotorArc(kin.j0, state.w1, C.ok);
-    drawMotorArc(kin.j1, state.w2, C.ok);
+    drawMotorArc(kin.j0, focus.w1, C.ok);
+    drawMotorArc(kin.j1, focus.w2, C.ok);
     ctx.restore();
   }
 
   drawTape(ee, { x: state.tx, y: state.ty }, C, dimFor('sensor'));
-  drawError(state.yHat, { x: state.tx, y: state.ty }, C, dimFor('error'));
+  drawError(focus.yHat, { x: state.tx, y: state.ty }, C, dimFor('error'));
   drawTarget(C);
 
   if (showFilt){
     ctx.save(); ctx.globalAlpha = dimFor('filter');
-    var sm = toScreen(state.yMeas.x, state.yMeas.y);
-    var sh = toScreen(state.yHat.x, state.yHat.y);
+    sm = toScreen(focus.yMeas.x, focus.yMeas.y);
+    sh = toScreen(focus.yHat.x, focus.yHat.y);
     ctx.strokeStyle = C.meas; ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(sm.x - 5, sm.y); ctx.lineTo(sm.x + 5, sm.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sm.x, sm.y - 5); ctx.lineTo(sm.x, sm.y + 5); ctx.stroke();
-    ctx.beginPath(); ctx.arc(sh.x, sh.y, 9, 0, Math.PI * 2);
-    ctx.strokeStyle = C.avg; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.stroke();
-    ctx.fillStyle = C.avg; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('필터 ŷ', sh.x + 12, sh.y - 8);
+    ctx.fillStyle = C.meas; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('측정', sm.x + 8, sm.y + 14);
+    if (state.filterOn){
+      ctx.beginPath(); ctx.arc(sh.x, sh.y, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = C.avg; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.stroke();
+      ctx.fillStyle = C.avg;
+      ctx.fillText('추정 ŷ', sh.x + 12, sh.y - 8);
+    } else {
+      ctx.fillStyle = C.alias;
+      ctx.fillText('측정 = 제어 입력', sm.x + 8, sm.y + 26);
+    }
     ctx.restore();
   }
 
   if (state.selected === 'model' || focusOf() === 'model'){
-    var sj1 = toScreen(kin.j1.x, kin.j1.y);
+    sj1 = toScreen(kin.j1.x, kin.j1.y);
+    se = toScreen(ee.x, ee.y);
     ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
     ctx.globalAlpha = 1;
-    ctx.fillText('θ₁ ' + deg(state.th1).toFixed(0) + '°', o.x + 20, o.y - 22);
-    ctx.fillText('θ₂ ' + deg(state.th2).toFixed(0) + '°', sj1.x + 14, sj1.y - 12);
+    ctx.fillText('θ₁ ' + deg(focus.th1).toFixed(0) + '°', o.x + 20, o.y - 22);
+    ctx.fillText('θ₂ ' + deg(focus.th2).toFixed(0) + '°', sj1.x + 14, sj1.y - 12);
+    ctx.fillText('모델: θ → 실제 끝점', se.x + 14, se.y + 32);
   }
 
-  var reached = Math.hypot(state.tx - ee.x, state.ty - ee.y) < 0.05;
-  if (reached){
+  se = toScreen(ee.x, ee.y);
+  if (trueDist(focus) < 0.05){
     ctx.fillStyle = C.ok; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('도달', se.x + 16, se.y + 18);
   }
@@ -722,45 +768,51 @@ function updateStageBtns(){
     btns[i].classList.toggle('on', btns[i].getAttribute('data-stage') === state.selected);
   }
 }
+function setFilter(on){
+  state.filterOn = on;
+  $('filtOn').classList.toggle('on', on);
+  $('filtOff').classList.toggle('on', !on);
+  updateVerdict();
+}
 function updateVerdict(){
-  var vd = $('verdict'), ee = fk(state.th1, state.th2, L1, L2).ee;
-  var e = Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y);
-  var d = Math.hypot(state.tx - ee.x, state.ty - ee.y);
+  var vd = $('verdict');
+  var dF = trueDist(state.armF), dR = trueDist(state.armR);
+  var wR = Math.hypot(state.armR.w1, state.armR.w2);
   var cls = 'mid', msg;
-  if (d < 0.06){
+  if (dF < 0.06 && dR < 0.06){
     cls = 'good';
-    msg = '목표에 <b>붙었습니다</b>. 캔버스를 클릭해 목표를 옮겨 보세요.';
-  } else if (state.noise > 0.12 && e > 0.10){
-    cls = 'bad';
-    msg = '측정이 <b>크게 흔들립니다</b>. 센서 노이즈를 줄여 필터가 따라가게 해 보세요.';
-  } else if (state.mismatch > 0.14){
+    msg = '두 팔 모두 목표에 붙었습니다. 목표를 옮기거나 노이즈를 키워 다시 비교해 보세요.';
+  } else if (state.noise > 0.08 && dR > dF + 0.05){
+    cls = 'good';
+    msg = '필터 켠 팔이 더 잘 붙습니다. 보라 점선은 측정 노이즈를 그대로 따라 흔들립니다.';
+  } else if (dF > dR + 0.08){
     cls = 'mid';
-    msg = '모델 길이가 어긋나 <b>유령 팔</b>이 빗나갑니다. 제어 자코비안도 그 모델을 씁니다.';
-  } else if (state.kp > 3.4 && Math.hypot(state.w1, state.w2) > 1.6){
+    msg = '지금은 파란 팔 오차가 더 큽니다. 따라가는 중이면 잠깐 벌어질 수 있고, 붙고 나서의 흔들림을 보세요.';
+  } else if (!state.filterOn && state.noise > 0.10 && wR > 1.2){
+    cls = 'bad';
+    msg = '지금 보는 팔은 <b>필터 없음</b>입니다. 측정이 흔들려 관절 속도가 커집니다.';
+  } else if (state.kp > 3.4 && Math.hypot(activeArm().w1, activeArm().w2) > 1.6){
     cls = 'mid';
     msg = 'K<sub>p</sub>가 커서 팔이 <b>출렁입니다</b>. 제어 세기를 조금 낮춰 보세요.';
   } else if (!state.running){
     msg = '정지 상태입니다. <b>시작</b>을 누르거나 목표를 옮긴 뒤 다시 돌려 보세요.';
   } else {
     cls = 'good';
-    msg = '오차를 줄이는 중입니다. 점선 자(<b>측정</b>)와 화살표(<b>오차</b>)가 함께 짧아집니다.';
+    msg = '파란 실선(필터 켜짐)과 보라 점선(필터 꺼짐)의 끝점·아래 곡선을 비교해 보세요.';
   }
   vd.className = 'verdict ' + cls;
   vd.innerHTML = msg;
 }
 function updateStats(){
-  var ee = fk(state.th1, state.th2, L1, L2).ee;
-  var d = Math.hypot(state.tx - ee.x, state.ty - ee.y);
-  var e = Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y);
-  var w = Math.hypot(state.w1, state.w2);
-  $('statD').textContent = d.toFixed(2) + ' m';
-  $('statE').textContent = e.toFixed(2) + ' m';
-  $('statE').style.color = e < 0.07 ? 'var(--ok)' : (e < 0.28 ? 'var(--warn)' : 'var(--bad)');
-  $('statQ').textContent = deg(state.th1).toFixed(0) + '° · ' + deg(state.th2).toFixed(0) + '°';
-  $('statW').textContent = w.toFixed(2) + ' rad/s';
+  var dF = trueDist(state.armF), dR = trueDist(state.armR);
+  var wF = Math.hypot(state.armF.w1, state.armF.w2);
+  var wR = Math.hypot(state.armR.w1, state.armR.w2);
+  $('statDF').textContent = dF.toFixed(2) + ' m';
+  $('statDR').textContent = dR.toFixed(2) + ' m';
+  $('statWF').textContent = wF.toFixed(2) + ' rad/s';
+  $('statWR').textContent = wR.toFixed(2) + ' rad/s';
   $('kV').textContent = state.kp.toFixed(2);
   $('nV').textContent = state.noise.toFixed(2);
-  $('mV').textContent = Math.round(state.mismatch * 100) + '%';
 }
 function sync(){ updateCard(); updateStageBtns(); updateVerdict(); updateStats(); }
 
@@ -786,7 +838,7 @@ function selectStage(key){
   state.selected = (state.selected === key) ? null : key;
   sync();
 }
-function inSpark(mx, my){ return mx > W - 188 && my > H - 78; }
+function inSpark(mx, my){ return mx > W - 210 && my > H - 86; }
 function placeTargetAt(mx, my){
   if (my < CHIP_H + 8 || inSpark(mx, my)) return;
   var w = toWorld(mx, my);
@@ -832,11 +884,13 @@ $('resetBtn').addEventListener('click', function(){
   sync();
 });
 $('newTargetBtn').addEventListener('click', function(){
-  var p, tries = 0, ee = fk(state.th1, state.th2, L1, L2).ee;
+  var p, tries = 0, ee = fk(activeArm().th1, activeArm().th2, L1, L2).ee;
   do { p = randomTarget(); tries += 1; }
   while (Math.hypot(p.x - ee.x, p.y - ee.y) < 0.45 && tries < 12);
   state.tx = p.x; state.ty = p.y;
 });
+$('filtOn').addEventListener('click', function(){ setFilter(true); });
+$('filtOff').addEventListener('click', function(){ setFilter(false); });
 $('nextBtn').addEventListener('click', function(){
   var idx = -1, i;
   if (state.selected){
@@ -852,7 +906,6 @@ $('stageRow').addEventListener('click', function(e){
 });
 $('kS').addEventListener('input', function(){ state.kp = parseFloat(this.value); $('kV').textContent = state.kp.toFixed(2); });
 $('nS').addEventListener('input', function(){ state.noise = parseFloat(this.value); $('nV').textContent = state.noise.toFixed(2); });
-$('mS').addEventListener('input', function(){ state.mismatch = parseFloat(this.value) / 100; $('mV').textContent = Math.round(state.mismatch * 100) + '%'; });
 
 function tick(ts){
   if (!state.lastTs) state.lastTs = ts;
@@ -860,9 +913,12 @@ function tick(ts){
   state.lastTs = ts;
   if (state.running) step(dt);
   else {
-    var kin = fk(state.th1, state.th2, L1, L2);
-    state.yMeas.x = kin.ee.x; state.yMeas.y = kin.ee.y;
-    state.yHat.x = kin.ee.x; state.yHat.y = kin.ee.y;
+    var freeze = function(arm){
+      var ee = fk(arm.th1, arm.th2, L1, L2).ee;
+      arm.yMeas.x = ee.x; arm.yMeas.y = ee.y;
+      arm.yHat.x = ee.x; arm.yHat.y = ee.y;
+    };
+    freeze(state.armF); freeze(state.armR);
     state.measReady = true;
   }
   draw();
@@ -871,9 +927,12 @@ function tick(ts){
   state.raf = requestAnimationFrame(tick);
 }
 function boot(){
-  var kin = fk(state.th1, state.th2, L1, L2);
-  state.yMeas.x = kin.ee.x; state.yMeas.y = kin.ee.y;
-  state.yHat.x = kin.ee.x; state.yHat.y = kin.ee.y;
+  var freeze = function(arm){
+    var ee = fk(arm.th1, arm.th2, L1, L2).ee;
+    arm.yMeas.x = ee.x; arm.yMeas.y = ee.y;
+    arm.yHat.x = ee.x; arm.yHat.y = ee.y;
+  };
+  freeze(state.armF); freeze(state.armR);
   state.measReady = true;
   if (state.running) $('startBtn').classList.add('on');
   else $('startBtn').classList.remove('on');
