@@ -65,7 +65,7 @@ a{color:var(--accent)}
 .lede{color:var(--muted);max-width:76ch;font-size:14.5px;margin:9px 0 0}
 
 .eq{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
-  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center}
+  padding:9px 14px;margin:0 0 16px;font-size:14.5px;text-align:center;font-variant-numeric:tabular-nums}
 .eq b{color:var(--accent)}
 .eq sub,.eq sup{font-size:.72em}
 
@@ -74,10 +74,13 @@ a{color:var(--accent)}
 .sim{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
 @media (max-width:980px){.sim{grid-template-columns:1fr}}
 canvas{background:var(--surface);border:1px solid var(--border);border-radius:11px;
-  width:100%;height:auto;display:block;cursor:pointer}
+  width:100%;height:auto;display:block;touch-action:none;user-select:none}
 .ctl{display:flex;flex-direction:column;gap:11px}
 .ctl-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
 .ctl-box>label{display:block;font-size:11.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.ctl-box .value{font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.ctl-box .note{font-size:11.5px;color:var(--faint);margin-top:4px}
+input[type=range]{width:100%;margin-top:5px;accent-color:var(--accent)}
 .btn-row{display:flex;gap:7px;flex-wrap:wrap}
 .btn{appearance:none;flex:1;min-width:82px;border:1px solid var(--border2);background:var(--surface);color:var(--text);
   padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -88,6 +91,10 @@ canvas{background:var(--surface);border:1px solid var(--border);border-radius:11
 .brole{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:4px}
 .tag{display:inline-block;font-size:11px;font-weight:800;color:var(--surface);
   background:var(--muted);border-radius:999px;padding:2px 10px;margin-top:8px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 9px}
+.stat .k{font-size:10.5px;color:var(--faint);font-weight:700}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
 .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
 .lg{display:flex;align-items:center;gap:6px}
 .lg i{width:15px;height:3px;border-radius:2px;display:inline-block;background:currentColor}
@@ -97,6 +104,7 @@ canvas{background:var(--surface);border:1px solid var(--border);border-radius:11
   padding:10px 13px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.55}
 .verdict.good{border-left-color:var(--ok);background:var(--ok-soft)}
 .verdict.mid{border-left-color:var(--warn);background:var(--warn-soft)}
+.verdict.bad{border-left-color:var(--bad);background:var(--bad-soft)}
 .tips{font-size:12.5px;color:var(--muted);line-height:1.75;background:var(--surface2);
   border:1px solid var(--border);border-radius:11px;padding:11px 13px}
 .tips b{color:var(--text)}
@@ -112,64 +120,94 @@ footer a{margin-left:10px}
 <header class="hero wrap">
   <p class="eyebrow">메카트로닉스 1강 · 인터랙티브 데모</p>
   <h1>계측·모델링·제어 파이프라인</h1>
-  <p class="lede">블록도의 상자를 <b>클릭</b>하면 그 블록의 역할과 배우는 주차가 오른쪽에 뜹니다. 예시를 바꾸고 신호를 돌려 보세요.</p>
+  <p class="lede">2관절 로봇팔이 목표점에 붙는 과정입니다. <b>목표를 클릭·드래그</b>해 옮기고, 끝점–목표 <b>거리 센서</b>와 <b>오차 화살표</b>를 보세요. 위쪽 블록을 누르면 그 단계가 강조됩니다.</p>
 </header>
 
 <main class="wrap">
 
 <div class="eq">
-  목표 <b>r</b> → ⊗ → 제어기 → 액추에이터 → 플랜트 → 센서 → 필터 → 모델 ↺
-  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">오차 e = r − y</span>
+  센서 <b>d</b> = ‖끝점 − 목표‖
+  &nbsp;→&nbsp; 오차 <b>e</b> = r − ŷ
+  &nbsp;→&nbsp; 제어기가 관절을 돌려 <b>e → 0</b>
+  &nbsp;&nbsp;<span style="color:var(--muted);font-size:.86em">측정 → 모델 → 제어 → 움직임</span>
 </div>
 
 <section class="card">
   <div class="sim">
     <div>
-      <canvas id="cv" width="900" height="540"></canvas>
+      <canvas id="cv" width="900" height="600"></canvas>
       <div class="legend">
-        <span class="lg" style="color:var(--c-true)"><i></i>목표값 r</span>
-        <span class="lg" style="color:var(--c-avg)"><i></i>앞으로 가는 경로</span>
-        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>되먹임 경로</span>
-        <span class="lg" style="color:var(--accent)"><i class="o"></i>신호 펄스</span>
-        <span class="lg" style="color:var(--c-alias)"><i></i>배우는 주차 태그</span>
+        <span class="lg" style="color:var(--c-true)"><i class="o"></i>목표 r</span>
+        <span class="lg" style="color:var(--accent)"><i></i>실제 팔</span>
+        <span class="lg" style="color:var(--c-meas)"><i class="d"></i>거리 센서 d</span>
+        <span class="lg" style="color:var(--bad)"><i></i>오차 e</span>
+        <span class="lg" style="color:var(--c-alias)"><i class="d"></i>모델 예측</span>
+        <span class="lg" style="color:var(--c-avg)"><i class="o"></i>필터 추정 ŷ</span>
       </div>
     </div>
 
     <div class="ctl">
       <div class="btn-row">
-        <button id="startBtn" class="btn">▶ 신호 돌리기</button>
+        <button id="startBtn" class="btn on">▶ 시작</button>
         <button id="stopBtn" class="btn">⏹ 정지</button>
         <button id="resetBtn" class="btn">↺ 초기화</button>
       </div>
       <div class="btn-row">
-        <button id="ex0" class="btn on">자율주행차</button>
-        <button id="ex1" class="btn">드론</button>
-        <button id="ex2" class="btn">크루즈</button>
+        <button id="newTargetBtn" class="btn">◎ 새 목표</button>
+        <button id="nextBtn" class="btn">⏭ 다음 단계</button>
       </div>
-      <div class="btn-row">
-        <button id="nextBtn" class="btn">⏭ 다음 블록 보기</button>
+
+      <div class="btn-row" id="stageRow">
+        <button type="button" class="btn" data-stage="sensor">측정</button>
+        <button type="button" class="btn" data-stage="filter">필터</button>
+        <button type="button" class="btn" data-stage="model">모델</button>
+        <button type="button" class="btn" data-stage="error">오차</button>
+        <button type="button" class="btn" data-stage="controller">제어</button>
+        <button type="button" class="btn" data-stage="actuator">동작</button>
       </div>
 
       <div class="ctl-box">
-        <label>선택한 블록</label>
-        <div class="bname" id="cName">블록을 클릭하세요</div>
-        <div class="brole" id="cRole">상자에 마우스를 올리거나 클릭하면 역할이 여기에 표시됩니다.</div>
-        <span class="tag" id="cWeek">루프 전체</span>
+        <label>선택한 단계</label>
+        <div class="bname" id="cName">루프 전체</div>
+        <div class="brole" id="cRole">팔이 목표를 쫓는 동안 측정 → 필터 → 모델 → 오차 → 제어 → 동작이 한 바퀴 돕니다. 블록을 눌러 한 단계만 보세요.</div>
+        <span class="tag" id="cWeek">오늘 개념</span>
       </div>
 
       <div class="ctl-box">
-        <label>이 예시에서는</label>
-        <div class="brole" id="cExample">예시 버튼(자율주행차 · 드론 · 크루즈)을 눌러 보세요.</div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">센서 거리 d</div><div class="v" id="statD" style="color:var(--c-meas)">—</div></div>
+          <div class="stat"><div class="k">오차 |e|</div><div class="v" id="statE" style="color:var(--bad)">—</div></div>
+          <div class="stat"><div class="k">관절 θ₁ · θ₂</div><div class="v" id="statQ" style="font-size:13px">—</div></div>
+          <div class="stat"><div class="k">관절 속도 |ω|</div><div class="v" id="statW">—</div></div>
+        </div>
+      </div>
+
+      <div class="ctl-box">
+        <label>제어 세기 K<sub>p</sub> <span class="value" id="kV">1.60</span></label>
+        <input type="range" id="kS" min="0.20" max="4.50" step="0.05" value="1.60">
+        <div class="note">클수록 빨리 붙지만 출렁일 수 있습니다.</div>
+      </div>
+
+      <div class="ctl-box">
+        <label>센서 노이즈 <span class="value" id="nV">0.04</span></label>
+        <input type="range" id="nS" min="0" max="0.22" step="0.01" value="0.04">
+        <div class="note">끝점 위치 측정에 흔들림을 넣습니다. <b>P1</b></div>
+      </div>
+
+      <div class="ctl-box">
+        <label>모델 길이 오차 <span class="value" id="mV">0%</span></label>
+        <input type="range" id="mS" min="0" max="28" step="1" value="0">
+        <div class="note">링크 길이를 잘못 알면 보라색 유령 팔이 어긋납니다. <b>P2</b></div>
       </div>
 
       <div class="verdict mid" id="verdict">—</div>
 
       <div class="tips"><span class="t">관찰 포인트</span>
-        • 위쪽 = 명령이 나가는 경로<br>
-        • 아래쪽 = 측정이 돌아오는 되먹임 경로<br>
-        • 센서·필터 <b>P1</b> → 모델 <b>P2</b> → 제어기 <b>P3</b><br>
-        • 예시를 바꾸면 블록별 대응이 바뀜<br>
-        • [▶]로 신호가 도는 순서를 확인
+        • 점선 자 = <b>거리 센서</b> (끝점 ↔ 목표)<br>
+        • 빨간 화살표 = 제어기가 보는 <b>오차 e</b><br>
+        • 노이즈를 키우면 측정 점이 흩어짐<br>
+        • 모델 오차를 키우면 유령 팔이 빗나감<br>
+        • 같은 루프가 자동차·드론에도 그대로 쓰임
       </div>
     </div>
   </div>
@@ -191,267 +229,666 @@ function palette(){
     grid: cvar('--border'), axis: cvar('--border2'), faint: cvar('--faint'), muted: cvar('--muted'),
     surface: cvar('--surface'), surface2: cvar('--surface2'), soft: cvar('--accent-soft'), text: cvar('--text'),
     tru: cvar('--c-true'), meas: cvar('--c-meas'), avg: cvar('--c-avg'), band: cvar('--c-band'),
-    alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), accent: cvar('--accent')
+    alias: cvar('--c-alias'), ok: cvar('--ok'), bad: cvar('--bad'), warn: cvar('--warn'),
+    accent: cvar('--accent'), ink: cvar('--accent-ink'), line: cvar('--accent-line')
   };
 }
-/* 상단 행(왼→오): 비교 → 제어기 → 액추에이터 → 플랜트
-   하단 행(오→왼): 센서 → 필터 → 모델 → (비교로 되먹임) */
-var blocks = {
-  sum: { label:'⊗ 비교', kind:'sum', x:150, y:120, w:62, h:62, part:false, tag:'', name:'⊗ 비교기 (합산점)',
-    week:'오늘 개념 (7.4절)', role:'목표 r에서 되먹임된 y를 빼서 <b>오차 e = r − y</b>를 만듭니다.' },
-  controller: { label:'제어기', kind:'box', x:300, y:108, w:130, h:86, part:true, tag:'P3 · 11~12주',
-    name:'제어기 (Controller)', week:'P3 · 11~12주 (PID)', role:'오차 e를 보고 <b>얼마나 세게 조절할지</b> 명령을 만듭니다.' },
-  actuator: { label:'액추에이터', kind:'box', x:490, y:108, w:130, h:86, part:false, tag:'구성요소',
-    name:'액추에이터 (Actuator)', week:'구성 요소 (6절)', role:'명령을 <b>실제 움직임</b>으로 바꿉니다. 모터·바퀴·프로펠러.' },
-  plant: { label:'실제 시스템\n(플랜트)', kind:'box', x:680, y:108, w:140, h:86, part:false, tag:'제어 대상',
-    name:'실제 시스템 (플랜트)', week:'제어 대상 (6·7.1절)', role:'제어의 <b>대상</b>. 입력이 들어가면 출력 y가 나옵니다.' },
-  sensor: { label:'센서·계측', kind:'box', x:680, y:350, w:140, h:86, part:true, tag:'P1 · 2주',
-    name:'센서 · 계측 (Sensor)', week:'P1 · 2주', role:'물리량을 <b>전기 신호 = 숫자</b>로 읽는 눈·귀입니다.' },
-  filter: { label:'필터', kind:'box', x:490, y:350, w:130, h:86, part:true, tag:'P1 · 3~5주',
-    name:'필터 (Filter)', week:'P1 · 3~5주', role:'<b>측정 = 참값 + 노이즈</b>에서 노이즈를 걸러냅니다.' },
-  model: { label:'모델·추정', kind:'box', x:300, y:350, w:130, h:86, part:true, tag:'P2 · 6~10주',
-    name:'모델 · 추정 (Model)', week:'P2 · 6~10주', role:'입력→출력 관계를 <b>수식</b>으로 써서 다음 상태를 예측합니다.' }
+
+var L1 = 1.30, L2 = 1.10;
+var OX = 310, OY = 498, SCALE = 155;
+var CHIP_H = 62;
+var MAX_R = L1 + L2 - 0.10, MIN_R = Math.abs(L1 - L2) + 0.12;
+var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var stages = [
+  { key:'sensor', label:'측정', tag:'P1 · 2주', name:'센서 · 계측',
+    week:'P1 · 2주', part:true,
+    role:'끝점에 달린 <b>거리 센서</b>가 목표까지 길이를 숫자로 읽습니다. 점선 자가 그 측정입니다.' },
+  { key:'filter', label:'필터', tag:'P1 · 3~5주', name:'필터',
+    week:'P1 · 3~5주', part:true,
+    role:'측정 = 참값 + 노이즈. 흩어진 점을 평균에 가깝게 모아 <b>추정 ŷ</b>를 만듭니다.' },
+  { key:'model', label:'모델', tag:'P2 · 6~10주', name:'모델 · 추정',
+    week:'P2 · 6~10주', part:true,
+    role:'관절각 θ₁, θ₂로 끝점 위치를 <b>수식(정기구학)</b>으로 예측합니다. 길이를 틀리면 유령 팔이 어긋납니다.' },
+  { key:'error', label:'오차', tag:'오늘 개념', name:'비교 · 오차',
+    week:'오늘 개념 (7.4절)', part:false,
+    role:'목표 r에서 추정 ŷ를 빼 <b>오차 e = r − ŷ</b>를 만듭니다. 화살표가 그 벡터입니다.' },
+  { key:'controller', label:'제어', tag:'P3 · 11~12주', name:'제어기',
+    week:'P3 · 11~12주 (PID)', part:true,
+    role:'오차를 줄이도록 관절 속도 ω를 만듭니다. K<sub>p</sub>가 클수록 빨리 붙습니다.' },
+  { key:'actuator', label:'동작', tag:'구성 요소', name:'액추에이터 · 플랜트',
+    week:'구성 요소 (6절)', part:false,
+    role:'모터가 관절을 돌리고, 실제 팔(플랜트)이 움직입니다. 끝점이 목표 쪽으로 갑니다.' }
+];
+var stageMap = {};
+var si;
+for (si = 0; si < stages.length; si++) stageMap[stages[si].key] = stages[si];
+
+var state = {
+  th1: 0.58, th2: 0.95,
+  w1: 0, w2: 0,
+  tx: 2.00, ty: 0.92,
+  yMeas:{ x:0, y:0 },
+  yHat:{ x:0, y:0 },
+  measReady:false,
+  measTimer:0,
+  noise:0.04,
+  mismatch:0,
+  kp:1.60,
+  running:!reduceMotion,
+  selected:null,
+  hoverChip:null,
+  t:0, lastTs:0, raf:null,
+  drag:false,
+  trail:[], eHist:[], histTimer:0,
+  chipHits:[]
 };
-var loopOrder = ['sum','controller','actuator','plant','sensor','filter','model'];
-var examples = {
-  0: { title:'자율주행차', sum:'목표 경로와 현재 위치의 차이(횡방향 오차)를 계산', controller:'조향각을 얼마나 꺾을지 결정 (판단)',
-    actuator:'조향·구동 모터가 바퀴를 움직임 (동작)', plant:'차량 본체 — 조향에 따라 실제로 이동',
-    sensor:'카메라·라이다·GPS로 위치를 측정 (인식)', filter:'노이즈 낀 GPS를 칼만 필터로 평활', model:'차량 운동을 수식으로 예측' },
-  1: { title:'드론', sum:'목표 자세(수평)와 현재 기울기의 차이를 계산', controller:'각 프로펠러 출력을 얼마나 바꿀지 결정 (판단)',
-    actuator:'4개 모터가 회전수를 바꿔 추력 생성 (동작)', plant:'기체 — 추력 차이에 따라 기울고 이동',
-    sensor:'IMU(자이로·가속도계)로 자세를 측정 (인식)', filter:'흔들리는 IMU 신호를 필터로 안정화', model:'기체 회전운동을 수식으로 예측' },
-  2: { title:'크루즈 컨트롤', sum:'설정 속도와 현재 속도의 차이를 계산', controller:'가속·감속을 얼마나 줄지 결정 (판단)',
-    actuator:'스로틀(엔진 출력)을 조절 (동작)', plant:'차량 — 출력에 따라 속도가 변함',
-    sensor:'휠 인코더로 현재 속도를 측정 (인식)', filter:'속도 측정값의 잔떨림을 평균으로 정리', model:'가속도-속도 관계를 수식으로 예측' }
-};
-var state = { selected:null, hover:null, ex:0, running:false, t:0, raf:null, lastTs:0 };
-function center(b){ return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; }
-function tagColor(key, C){ return blocks[key].part ? C.alias : C.muted; }
+
+function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+function randn(){
+  var u = 1 - Math.random(), v = 1 - Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307179586 * v);
+}
+function deg(r){ return (r * 180 / Math.PI); }
+function toScreen(x, y){ return { x: OX + x * SCALE, y: OY - y * SCALE }; }
+function toWorld(sx, sy){ return { x: (sx - OX) / SCALE, y: (OY - sy) / SCALE }; }
+
+function fk(th1, th2, l1, l2){
+  var c1 = Math.cos(th1), s1 = Math.sin(th1);
+  var c12 = Math.cos(th1 + th2), s12 = Math.sin(th1 + th2);
+  return {
+    j0:{ x:0, y:0 },
+    j1:{ x: l1 * c1, y: l1 * s1 },
+    ee:{ x: l1 * c1 + l2 * c12, y: l1 * s1 + l2 * s12 }
+  };
+}
+function jacT(th1, th2, l1, l2, ex, ey){
+  var s1 = Math.sin(th1), c1 = Math.cos(th1);
+  var s12 = Math.sin(th1 + th2), c12 = Math.cos(th1 + th2);
+  var j11 = -l1 * s1 - l2 * s12, j12 = -l2 * s12;
+  var j21 =  l1 * c1 + l2 * c12, j22 =  l2 * c12;
+  return { w1: j11 * ex + j21 * ey, w2: j12 * ex + j22 * ey };
+}
+function modelLens(){
+  var m = state.mismatch;
+  return { l1: L1 * (1 + m), l2: L2 * (1 - m * 0.55) };
+}
+function clampTarget(x, y){
+  y = Math.max(0.10, y);
+  var r = Math.hypot(x, y);
+  if (r < 1e-6) return { x: MIN_R, y: 0.10 };
+  if (r > MAX_R){ x *= MAX_R / r; y *= MAX_R / r; }
+  else if (r < MIN_R){ x *= MIN_R / r; y *= MIN_R / r; }
+  return { x:x, y:y };
+}
+function randomTarget(){
+  var ang = 0.22 + Math.random() * 1.20;
+  var reach = 0.90 + Math.random() * (MAX_R - 0.90);
+  return clampTarget(reach * Math.cos(ang), reach * Math.sin(ang));
+}
+function resetPose(){
+  state.th1 = 0.58; state.th2 = 0.95; state.w1 = 0; state.w2 = 0;
+  state.tx = 2.00; state.ty = 0.92;
+  state.measReady = false; state.trail = []; state.eHist = [];
+  state.t = 0; state.measTimer = 0; state.histTimer = 0;
+}
+
+function focusOf(){
+  if (state.selected) return state.selected;
+  if (!state.running || reduceMotion) return null;
+  return stages[Math.floor(state.t * 0.55) % stages.length].key;
+}
+function dimFor(key){
+  if (!state.selected) return 1;
+  return state.selected === key ? 1 : 0.22;
+}
+
+function step(dt){
+  dt = clamp(dt, 0, 0.05);
+  state.t += dt;
+  var kin = fk(state.th1, state.th2, L1, L2);
+  var ee = kin.ee;
+  var ml = modelLens();
+  var pred = fk(state.th1, state.th2, ml.l1, ml.l2).ee;
+
+  state.measTimer += dt;
+  if (!state.measReady || state.measTimer > 0.05){
+    state.measTimer = 0;
+    state.yMeas.x = ee.x + randn() * state.noise;
+    state.yMeas.y = ee.y + randn() * state.noise;
+    state.measReady = true;
+  }
+  var a = 1 - Math.exp(-dt / 0.12);
+  state.yHat.x += a * (state.yMeas.x - state.yHat.x);
+  state.yHat.y += a * (state.yMeas.y - state.yHat.y);
+
+  var yx = state.yHat.x, yy = state.yHat.y;
+  var ex = state.tx - yx, ey = state.ty - yy;
+  var emag = Math.hypot(ex, ey);
+  var jt = jacT(state.th1, state.th2, ml.l1, ml.l2, ex, ey);
+  var wdes1 = state.kp * jt.w1;
+  var wdes2 = state.kp * jt.w2;
+  var wlim = 3.2;
+  wdes1 = clamp(wdes1, -wlim, wlim);
+  wdes2 = clamp(wdes2, -wlim, wlim);
+  if (emag < 0.018){ wdes1 *= emag / 0.018; wdes2 *= emag / 0.018; }
+  var tau = 0.07;
+  state.w1 += (wdes1 - state.w1) / tau * dt;
+  state.w2 += (wdes2 - state.w2) / tau * dt;
+  state.th1 += state.w1 * dt;
+  state.th2 += state.w2 * dt;
+  state.th1 = clamp(state.th1, -0.15, Math.PI + 0.05);
+  state.th2 = clamp(state.th2, -2.55, 2.55);
+
+  var now = fk(state.th1, state.th2, L1, L2).ee;
+  state.trail.push({ x: now.x, y: now.y });
+  if (state.trail.length > 90) state.trail.shift();
+
+  state.histTimer += dt;
+  if (state.histTimer > 0.05){
+    state.histTimer = 0;
+    state.eHist.push(Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y));
+    if (state.eHist.length > 160) state.eHist.shift();
+  }
+}
+
 function roundRect(x, y, w, h, r){
   ctx.beginPath(); ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
-function arrow(x1, y1, x2, y2, color, dash){
-  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
-  ctx.setLineDash(dash ? dash : []);
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
-  var ang = Math.atan2(y2 - y1, x2 - x1), s = 9;
-  ctx.beginPath(); ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - s * Math.cos(ang - 0.4), y2 - s * Math.sin(ang - 0.4));
-  ctx.lineTo(x2 - s * Math.cos(ang + 0.4), y2 - s * Math.sin(ang + 0.4));
+function arrowHead(x, y, ang, s, color){
+  ctx.save(); ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - s * Math.cos(ang - 0.42), y - s * Math.sin(ang - 0.42));
+  ctx.lineTo(x - s * Math.cos(ang + 0.42), y - s * Math.sin(ang + 0.42));
   ctx.closePath(); ctx.fill(); ctx.restore();
 }
-/* 두 블록을 잇는 꺾은선 좌표 */
-function segPath(fromKey, toKey){
-  var a = blocks[fromKey], b = blocks[toKey], ca = center(a), cb = center(b), leftX = 90;
-  if (fromKey === 'plant' && toKey === 'sensor') return [{ x: cb.x, y: a.y + a.h }, { x: cb.x, y: b.y }];
-  if (fromKey === 'model' && toKey === 'sum')
-    return [{ x: a.x, y: ca.y }, { x: leftX, y: ca.y }, { x: leftX, y: ca.y - 120 },
-            { x: leftX, y: cb.y }, { x: b.x, y: cb.y }];
-  if (Math.abs(ca.y - cb.y) < 5){
-    if (cb.x > ca.x) return [{ x: a.x + a.w, y: ca.y }, { x: b.x, y: cb.y }];
-    return [{ x: a.x, y: ca.y }, { x: b.x + b.w, y: cb.y }];
-  }
-  return [{ x: ca.x, y: ca.y }, { x: cb.x, y: cb.y }];
+function drawLink(a, b, width, color, dashed){
+  var sa = toScreen(a.x, a.y), sb = toScreen(b.x, b.y);
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
+  if (dashed) ctx.setLineDash([7, 6]);
+  ctx.beginPath(); ctx.moveTo(sa.x, sa.y); ctx.lineTo(sb.x, sb.y); ctx.stroke();
+  ctx.restore();
 }
-function pointOnPath(pts, p){
-  var total = 0, segs = [], i, dx, dy, target, acc = 0, local;
-  for (i = 0; i < pts.length - 1; i++){
-    dx = pts[i + 1].x - pts[i].x; dy = pts[i + 1].y - pts[i].y;
-    segs.push(Math.sqrt(dx * dx + dy * dy)); total += segs[i];
+function drawJoint(p, r, fill, stroke, tickAng){
+  var s = toScreen(p.x, p.y);
+  ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+  if (tickAng !== undefined){
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x + (r - 3) * Math.cos(-tickAng), s.y + (r - 3) * Math.sin(-tickAng));
+    ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
   }
-  target = p * total;
-  for (i = 0; i < segs.length; i++){
-    if (acc + segs[i] >= target || i === segs.length - 1){
-      local = segs[i] === 0 ? 0 : (target - acc) / segs[i];
-      return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * local,
-               y: pts[i].y + (pts[i + 1].y - pts[i].y) * local };
+}
+function drawMotorArc(p, omega, color){
+  if (Math.abs(omega) < 0.08) return;
+  var s = toScreen(p.x, p.y);
+  var dir = omega > 0 ? 1 : -1;
+  var a0 = -state.t * 4 * dir;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(s.x, s.y, 18, a0, a0 + 1.4 * dir, dir < 0); ctx.stroke();
+  var ax = s.x + 18 * Math.cos(a0 + 1.4 * dir);
+  var ay = s.y + 18 * Math.sin(a0 + 1.4 * dir);
+  arrowHead(ax, ay, a0 + 1.4 * dir + (dir > 0 ? Math.PI / 2 : -Math.PI / 2), 7, color);
+  ctx.restore();
+}
+
+function drawWorkspace(C){
+  ctx.fillStyle = C.surface; ctx.fillRect(0, 0, W, H);
+  var i, p0, p1;
+  ctx.save();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (i = 0; i <= 8; i++){
+    p0 = toScreen(i * 0.35, 0); p1 = toScreen(i * 0.35, 2.55);
+    if (p0.y > CHIP_H){
+      ctx.beginPath(); ctx.moveTo(p0.x, Math.max(p0.y, CHIP_H + 4)); ctx.lineTo(p1.x, p1.y); ctx.stroke();
     }
-    acc += segs[i];
   }
-  return pts[pts.length - 1];
+  for (i = 0; i <= 7; i++){
+    p0 = toScreen(-0.15, i * 0.35); p1 = toScreen(2.55, i * 0.35);
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+  }
+  ctx.restore();
+  var o = toScreen(0, 0);
+  ctx.save();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1.2; ctx.setLineDash([4, 6]);
+  ctx.beginPath(); ctx.arc(o.x, o.y, MAX_R * SCALE, -Math.PI * 0.02, -Math.PI * 0.52, true); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = C.faint; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('작업 공간', o.x + 10, o.y - MAX_R * SCALE + 4);
 }
-function drawConnector(fromKey, toKey, C){
-  var pts = segPath(fromKey, toKey), i, color, dash;
-  var isFb = (toKey === 'sum') || (fromKey === 'plant' && toKey === 'sensor')
-    || fromKey === 'sensor' || fromKey === 'filter' || fromKey === 'model';
-  color = isFb ? C.meas : C.avg; dash = isFb ? [7, 5] : null;
-  for (i = 0; i < pts.length - 1; i++){
-    if (i === pts.length - 2){ arrow(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, color, dash); continue; }
-    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash ? dash : []);
-    ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
+
+function drawPipeline(C){
+  var keys = stages, n = keys.length, pad = 14, gap = 8, top = 10;
+  var usable = W - pad * 2 - (n - 1) * 22;
+  var cw = usable / n, ch = 40, i, x, st, on, pulse, hits = [];
+  var f = focusOf();
+  for (i = 0; i < n; i++){
+    x = pad + i * (cw + 22);
+    st = keys[i];
+    on = f === st.key || state.hoverChip === st.key;
+    pulse = (!state.selected && state.running && f === st.key);
+    ctx.save();
+    roundRect(x, top, cw, ch, 10);
+    ctx.fillStyle = on ? C.soft : C.surface2;
+    ctx.strokeStyle = on ? C.accent : C.axis;
+    ctx.lineWidth = on || pulse ? 2.4 : 1.2;
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = on ? C.accent : C.text;
+    ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(st.label, x + cw / 2, top + 15);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = st.part ? C.alias : C.muted;
+    ctx.fillText(st.tag, x + cw / 2, top + 29);
+    ctx.restore();
+    hits.push({ key: st.key, x:x, y:top, w:cw, h:ch });
+    if (i < n - 1){
+      var ax = x + cw + 4, ay = top + ch / 2;
+      ctx.strokeStyle = C.axis; ctx.fillStyle = C.axis; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 14, ay); ctx.stroke();
+      arrowHead(ax + 16, ay, 0, 6, C.axis);
+    }
+  }
+  state.chipHits = hits;
+}
+
+function drawTape(a, b, C, alpha){
+  var sa = toScreen(a.x, a.y), sb = toScreen(b.x, b.y);
+  var dx = sb.x - sa.x, dy = sb.y - sa.y, len = Math.hypot(dx, dy);
+  if (len < 8) return;
+  var ux = dx / len, uy = dy / len, px = -uy, py = ux;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = C.meas; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(sa.x, sa.y); ctx.lineTo(sb.x, sb.y); ctx.stroke();
+  ctx.setLineDash([]);
+  var step = 0.18 * SCALE, s, x, y, tick, k = 0;
+  ctx.lineWidth = 1.4;
+  for (s = step; s < len - 10; s += step){
+    x = sa.x + ux * s; y = sa.y + uy * s;
+    tick = (k % 5 === 4) ? 8 : 4; k += 1;
+    ctx.beginPath(); ctx.moveTo(x + px * tick, y + py * tick); ctx.lineTo(x - px * tick, y - py * tick); ctx.stroke();
+  }
+  if (state.running && !reduceMotion){
+    var n = 3, i, p, pxp, pyp;
+    for (i = 0; i < n; i++){
+      p = (state.t * 0.42 + i / n) % 1;
+      pxp = sa.x + ux * len * p; pyp = sa.y + uy * len * p;
+      ctx.beginPath(); ctx.arc(pxp, pyp, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = C.accent; ctx.fill();
+    }
+  }
+  var d = Math.hypot(b.x - a.x, b.y - a.y);
+  var mx = (sa.x + sb.x) / 2 + px * 16, my = (sa.y + sb.y) / 2 + py * 16;
+  ctx.fillStyle = C.meas; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('센서  d = ' + d.toFixed(2) + ' m', mx, my);
+  ctx.restore();
+}
+
+function drawError(from, to, C, alpha){
+  var sa = toScreen(from.x, from.y), sb = toScreen(to.x, to.y);
+  var dx = sb.x - sa.x, dy = sb.y - sa.y, len = Math.hypot(dx, dy);
+  if (len < 6) return;
+  var mag = Math.hypot(to.x - from.x, to.y - from.y);
+  var col = mag < 0.07 ? C.ok : (mag < 0.28 ? C.warn : C.bad);
+  var ang = Math.atan2(dy, dx);
+  var ox = -Math.sin(ang) * 7, oy = Math.cos(ang) * 7;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(sa.x + ox, sa.y + oy); ctx.lineTo(sb.x + ox, sb.y + oy); ctx.stroke();
+  arrowHead(sb.x + ox, sb.y + oy, ang, 11, col);
+  ctx.fillStyle = col; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('e', (sa.x + sb.x) / 2 + ox * 2.2, (sa.y + sb.y) / 2 + oy * 2.2);
+  ctx.restore();
+}
+
+function drawTarget(C){
+  var s = toScreen(state.tx, state.ty), i;
+  ctx.save();
+  for (i = 3; i >= 1; i--){
+    ctx.beginPath(); ctx.arc(s.x, s.y, 8 + i * 7, 0, Math.PI * 2);
+    ctx.strokeStyle = C.tru; ctx.globalAlpha = 0.18 + i * 0.08; ctx.lineWidth = 1.4;
+    ctx.setLineDash(i === 2 ? [4, 4] : []); ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+  ctx.fillStyle = C.tru; ctx.fill();
+  ctx.beginPath(); ctx.arc(s.x, s.y, 3.2, 0, Math.PI * 2);
+  ctx.fillStyle = C.surface; ctx.fill();
+  ctx.fillStyle = C.tru; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('목표 r', s.x + 16, s.y - 10);
+  ctx.restore();
+}
+
+function drawGripper(ee, phi, C){
+  var s = toScreen(ee.x, ee.y);
+  var ca = Math.cos(-phi), sa = Math.sin(-phi);
+  function rot(ax, ay){ return { x: s.x + ax * ca - ay * sa, y: s.y + ax * sa + ay * ca }; }
+  var a = rot(12, -7), b = rot(20, -7), c = rot(12, 7), d = rot(20, 7);
+  ctx.strokeStyle = C.accent; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+}
+
+function drawSpark(C){
+  var x = W - 188, y = H - 78, w = 172, h = 58, i, n, vmax, vx, vy;
+  ctx.save();
+  roundRect(x, y, w, h, 8);
+  ctx.fillStyle = C.surface2; ctx.fill();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = C.faint; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('|e|(t)', x + 8, y + 13);
+  n = state.eHist.length;
+  if (n > 1){
+    vmax = 0.05;
+    for (i = 0; i < n; i++) if (state.eHist[i] > vmax) vmax = state.eHist[i];
+    ctx.beginPath();
+    for (i = 0; i < n; i++){
+      vx = x + 8 + (w - 16) * i / (n - 1);
+      vy = y + h - 8 - (h - 24) * (state.eHist[i] / vmax);
+      if (i === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+    }
+    ctx.strokeStyle = C.bad; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function draw(){
+  var C = palette();
+  var kin = fk(state.th1, state.th2, L1, L2);
+  var ml = modelLens();
+  var ghost = fk(state.th1, state.th2, ml.l1, ml.l2);
+  var ee = kin.ee, pred = ghost.ee;
+  var showGhost = state.mismatch > 0.01 || state.selected === 'model' || focusOf() === 'model';
+  var showFilt = state.noise > 0.005 || state.selected === 'filter' || focusOf() === 'filter';
+  var i, p, q, se;
+
+  drawWorkspace(C);
+  drawPipeline(C);
+
+  if (state.trail.length > 1){
+    ctx.save();
+    ctx.globalAlpha = 0.35 * dimFor('actuator');
+    ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    p = toScreen(state.trail[0].x, state.trail[0].y);
+    ctx.moveTo(p.x, p.y);
+    for (i = 1; i < state.trail.length; i++){
+      q = toScreen(state.trail[i].x, state.trail[i].y);
+      ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  var o = toScreen(0, 0);
+  ctx.save();
+  ctx.globalAlpha = dimFor('actuator');
+  roundRect(o.x - 36, o.y - 8, 72, 22, 5);
+  ctx.fillStyle = C.axis; ctx.fill();
+  ctx.fillStyle = C.surface2;
+  ctx.beginPath(); ctx.arc(o.x, o.y, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+
+  if (showGhost){
+    ctx.save(); ctx.globalAlpha = 0.85 * dimFor('model');
+    drawLink(ghost.j0, ghost.j1, 10, C.alias, true);
+    drawLink(ghost.j1, ghost.ee, 8, C.alias, true);
+    se = toScreen(pred.x, pred.y);
+    ctx.beginPath(); ctx.arc(se.x, se.y, 6, 0, Math.PI * 2);
+    ctx.strokeStyle = C.alias; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('모델 ŷ = f(θ)', se.x + 10, se.y + 14);
     ctx.restore();
   }
-  return pts;
-}
-function wrapText(text, x, y, lh){
-  var lines = text.split('\n'), yy = y - (lines.length - 1) * lh / 2, i;
-  for (i = 0; i < lines.length; i++){ ctx.fillText(lines[i], x, yy); yy += lh; }
-}
-function draw(){
-  var C = palette(), i, key, b, c, active, tw;
-  ctx.clearRect(0, 0, W, H);
-  ctx.textBaseline = 'alphabetic';
-  var sum = blocks.sum, sc = center(sum);
-  ctx.fillStyle = C.tru; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('목표값 r', 40, sc.y - 14);
-  arrow(20, sc.y, sum.x, sc.y, C.tru, null);
-  var plant = blocks.plant;
-  ctx.fillStyle = C.avg; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'start';
-  ctx.fillText('출력 y', plant.x + plant.w + 10, center(plant).y - 60);
-  var connPaths = {};
-  for (i = 0; i < loopOrder.length; i++) connPaths[i] = drawConnector(loopOrder[i], loopOrder[(i + 1) % loopOrder.length], C);
-  ctx.fillStyle = C.bad; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('오차 e', (sum.x + sum.w + blocks.controller.x) / 2, sc.y - 10);
-  for (i = 0; i < loopOrder.length; i++){
-    key = loopOrder[i]; b = blocks[key]; c = center(b);
-    active = (state.selected === key) || (state.hover === key);
-    ctx.fillStyle = active ? C.soft : C.surface2;
-    ctx.strokeStyle = active ? C.accent : C.axis;
-    if (b.kind === 'sum'){
-      ctx.lineWidth = active ? 3 : 2;
-      ctx.beginPath(); ctx.arc(c.x, c.y, b.w / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = C.text; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(c.x - 8, c.y - 8); ctx.lineTo(c.x + 8, c.y - 8); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(c.x, c.y - 14); ctx.lineTo(c.x, c.y - 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(c.x - 8, c.y + 9); ctx.lineTo(c.x + 8, c.y + 9); ctx.stroke();
-      ctx.fillStyle = active ? C.accent : C.muted; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('비교', c.x, c.y + b.h / 2 + 16);
-      continue;
-    }
-    ctx.lineWidth = active ? 3 : 1.6;
-    roundRect(b.x, b.y, b.w, b.h, 10); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = active ? C.accent : C.text; ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    wrapText(b.label, c.x, c.y - 8, 18);
-    ctx.font = 'bold 11px sans-serif'; tw = ctx.measureText(b.tag).width + 14;
-    roundRect(c.x - tw / 2, b.y + b.h - 24, tw, 17, 8);
-    ctx.fillStyle = tagColor(key, C); ctx.fill();
-    ctx.fillStyle = C.surface; ctx.fillText(b.tag, c.x, b.y + b.h - 15.5);
-    ctx.textBaseline = 'alphabetic';
+
+  ctx.save(); ctx.globalAlpha = dimFor('actuator');
+  drawLink(kin.j0, kin.j1, 20, C.line, false);
+  drawLink(kin.j0, kin.j1, 10, C.accent, false);
+  drawLink(kin.j1, kin.ee, 16, C.line, false);
+  drawLink(kin.j1, kin.ee, 8, C.accent, false);
+  drawJoint(kin.j0, 11, C.surface, C.accent, state.th1);
+  drawJoint(kin.j1, 9, C.surface, C.accent, state.th1 + state.th2);
+  drawGripper(ee, state.th1 + state.th2, C);
+  se = toScreen(ee.x, ee.y);
+  ctx.beginPath(); ctx.arc(se.x, se.y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = C.accent; ctx.fill();
+  ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+
+  if (state.selected === 'controller' || state.selected === 'actuator' || focusOf() === 'controller' || focusOf() === 'actuator'){
+    ctx.save(); ctx.globalAlpha = dimFor('controller');
+    drawMotorArc(kin.j0, state.w1, C.ok);
+    drawMotorArc(kin.j1, state.w2, C.ok);
+    ctx.restore();
   }
-  ctx.font = '12px sans-serif'; ctx.textAlign = 'start';
-  ctx.fillStyle = C.avg; ctx.fillText('앞으로 가는 경로 (제어 명령)', 300, 68);
-  ctx.fillStyle = C.meas; ctx.fillText('되먹임 경로 (측정 → 필터 → 모델)', 300, 490);
-  if (state.running || state.t > 0){
-    var pts = connPaths[Math.floor(state.t) % loopOrder.length];
-    if (pts){
-      var pos = pointOnPath(pts, state.t - Math.floor(state.t));
-      ctx.beginPath(); ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = C.accent; ctx.fill();
-      ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
-    }
+
+  drawTape(ee, { x: state.tx, y: state.ty }, C, dimFor('sensor'));
+  drawError(state.yHat, { x: state.tx, y: state.ty }, C, dimFor('error'));
+  drawTarget(C);
+
+  if (showFilt){
+    ctx.save(); ctx.globalAlpha = dimFor('filter');
+    var sm = toScreen(state.yMeas.x, state.yMeas.y);
+    var sh = toScreen(state.yHat.x, state.yHat.y);
+    ctx.strokeStyle = C.meas; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(sm.x - 5, sm.y); ctx.lineTo(sm.x + 5, sm.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sm.x, sm.y - 5); ctx.lineTo(sm.x, sm.y + 5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(sh.x, sh.y, 9, 0, Math.PI * 2);
+    ctx.strokeStyle = C.avg; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.stroke();
+    ctx.fillStyle = C.avg; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('필터 ŷ', sh.x + 12, sh.y - 8);
+    ctx.restore();
   }
+
+  if (state.selected === 'model' || focusOf() === 'model'){
+    var sj1 = toScreen(kin.j1.x, kin.j1.y);
+    ctx.fillStyle = C.alias; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.globalAlpha = 1;
+    ctx.fillText('θ₁ ' + deg(state.th1).toFixed(0) + '°', o.x + 20, o.y - 22);
+    ctx.fillText('θ₂ ' + deg(state.th2).toFixed(0) + '°', sj1.x + 14, sj1.y - 12);
+  }
+
+  var reached = Math.hypot(state.tx - ee.x, state.ty - ee.y) < 0.05;
+  if (reached){
+    ctx.fillStyle = C.ok; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('도달', se.x + 16, se.y + 18);
+  }
+
+  drawSpark(C);
 }
+
 function updateCard(){
-  var C = palette(), key = state.selected || state.hover, b;
+  var C = palette(), key = state.selected, st;
   if (!key){
-    $('cName').textContent = '블록을 클릭하세요';
-    $('cRole').innerHTML = '상자에 마우스를 올리거나 클릭하면 역할이 여기에 표시됩니다.';
-    $('cWeek').textContent = '루프 전체'; $('cWeek').style.background = C.muted;
-    $('cExample').textContent = '지금 예시: ' + examples[state.ex].title;
+    $('cName').textContent = '루프 전체';
+    $('cRole').innerHTML = '팔이 목표를 쫓는 동안 측정 → 필터 → 모델 → 오차 → 제어 → 동작이 한 바퀴 돕니다. 블록을 눌러 한 단계만 보세요.';
+    $('cWeek').textContent = '오늘 개념'; $('cWeek').style.background = C.muted;
     return;
   }
-  b = blocks[key];
-  $('cName').textContent = b.name; $('cRole').innerHTML = b.role;
-  $('cWeek').textContent = b.week; $('cWeek').style.background = tagColor(key, C);
-  $('cExample').textContent = examples[state.ex][key];
+  st = stageMap[key];
+  $('cName').textContent = st.name; $('cRole').innerHTML = st.role;
+  $('cWeek').textContent = st.week; $('cWeek').style.background = st.part ? C.alias : C.muted;
+}
+function updateStageBtns(){
+  var row = $('stageRow'), btns = row.querySelectorAll('[data-stage]'), i;
+  for (i = 0; i < btns.length; i++){
+    btns[i].classList.toggle('on', btns[i].getAttribute('data-stage') === state.selected);
+  }
 }
 function updateVerdict(){
-  var vd = $('verdict'), key = state.selected, cls = 'good', msg;
-  if (!key){
-    vd.className = 'verdict mid';
-    vd.innerHTML = '지금 예시: <b>' + examples[state.ex].title + '</b> — 블록을 눌러 루프를 따라가 보세요.';
-    return;
+  var vd = $('verdict'), ee = fk(state.th1, state.th2, L1, L2).ee;
+  var e = Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y);
+  var d = Math.hypot(state.tx - ee.x, state.ty - ee.y);
+  var cls = 'mid', msg;
+  if (d < 0.06){
+    cls = 'good';
+    msg = '목표에 <b>붙었습니다</b>. 캔버스를 클릭해 목표를 옮겨 보세요.';
+  } else if (state.noise > 0.12 && e > 0.10){
+    cls = 'bad';
+    msg = '측정이 <b>크게 흔들립니다</b>. 센서 노이즈를 줄여 필터가 따라가게 해 보세요.';
+  } else if (state.mismatch > 0.14){
+    cls = 'mid';
+    msg = '모델 길이가 어긋나 <b>유령 팔</b>이 빗나갑니다. 제어 자코비안도 그 모델을 씁니다.';
+  } else if (state.kp > 3.4 && Math.hypot(state.w1, state.w2) > 1.6){
+    cls = 'mid';
+    msg = 'K<sub>p</sub>가 커서 팔이 <b>출렁입니다</b>. 제어 세기를 조금 낮춰 보세요.';
+  } else if (!state.running){
+    msg = '정지 상태입니다. <b>시작</b>을 누르거나 목표를 옮긴 뒤 다시 돌려 보세요.';
+  } else {
+    cls = 'good';
+    msg = '오차를 줄이는 중입니다. 점선 자(<b>측정</b>)와 화살표(<b>오차</b>)가 함께 짧아집니다.';
   }
-  if (key === 'sensor' || key === 'filter') msg = '인식 단계. 파트 <b>P1</b>에서 다룹니다.';
-  else if (key === 'model') msg = '예측의 기초. 파트 <b>P2</b>에서 다룹니다.';
-  else if (key === 'controller') msg = '판단 → 동작. 파트 <b>P3</b>(PID)에서 다룹니다.';
-  else { cls = 'mid'; msg = '오늘 소개하는 루프 구성 요소입니다.'; }
   vd.className = 'verdict ' + cls;
-  vd.innerHTML = '<b>' + blocks[key].name + '</b> — ' + msg;
+  vd.innerHTML = msg;
 }
-function hitTest(mx, my){
-  var i, key, b, c, dx, dy;
-  for (i = 0; i < loopOrder.length; i++){
-    key = loopOrder[i]; b = blocks[key];
-    if (b.kind === 'sum'){
-      c = center(b); dx = mx - c.x; dy = my - c.y;
-      if (Math.sqrt(dx * dx + dy * dy) <= b.w / 2 + 4) return key;
-    } else if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) return key;
-  }
-  return null;
+function updateStats(){
+  var ee = fk(state.th1, state.th2, L1, L2).ee;
+  var d = Math.hypot(state.tx - ee.x, state.ty - ee.y);
+  var e = Math.hypot(state.tx - state.yHat.x, state.ty - state.yHat.y);
+  var w = Math.hypot(state.w1, state.w2);
+  $('statD').textContent = d.toFixed(2) + ' m';
+  $('statE').textContent = e.toFixed(2) + ' m';
+  $('statE').style.color = e < 0.07 ? 'var(--ok)' : (e < 0.28 ? 'var(--warn)' : 'var(--bad)');
+  $('statQ').textContent = deg(state.th1).toFixed(0) + '° · ' + deg(state.th2).toFixed(0) + '°';
+  $('statW').textContent = w.toFixed(2) + ' rad/s';
+  $('kV').textContent = state.kp.toFixed(2);
+  $('nV').textContent = state.noise.toFixed(2);
+  $('mV').textContent = Math.round(state.mismatch * 100) + '%';
 }
+function sync(){ updateCard(); updateStageBtns(); updateVerdict(); updateStats(); }
+
 function canvasPos(evt){
   var rect = cv.getBoundingClientRect();
   var sx = cv.width / rect.width, sy = cv.height / rect.height;
-  return { x: (evt.clientX - rect.left) * sx, y: (evt.clientY - rect.top) * sy };
+  var src = evt.touches && evt.touches[0] ? evt.touches[0] : evt;
+  return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
 }
-cv.addEventListener('mousemove', function(e){
-  var p = canvasPos(e), key = hitTest(p.x, p.y);
-  if (key !== state.hover){
-    state.hover = key; cv.style.cursor = key ? 'pointer' : 'default';
-    updateCard(); draw();
+function hitChip(mx, my){
+  var i, c, hits = state.chipHits;
+  for (i = 0; i < hits.length; i++){
+    c = hits[i];
+    if (mx >= c.x && mx <= c.x + c.w && my >= c.y && my <= c.y + c.h) return c.key;
   }
-});
-cv.addEventListener('mouseleave', function(){
-  if (state.hover !== null){ state.hover = null; updateCard(); draw(); }
-});
-cv.addEventListener('click', function(e){
-  var p = canvasPos(e), key = hitTest(p.x, p.y);
+  return null;
+}
+function hitTarget(mx, my){
+  var s = toScreen(state.tx, state.ty);
+  return Math.hypot(mx - s.x, my - s.y) < 22;
+}
+function selectStage(key){
   state.selected = (state.selected === key) ? null : key;
-  updateCard(); updateVerdict(); draw();
+  sync();
+}
+function inSpark(mx, my){ return mx > W - 188 && my > H - 78; }
+function placeTargetAt(mx, my){
+  if (my < CHIP_H + 8 || inSpark(mx, my)) return;
+  var w = toWorld(mx, my);
+  var p = clampTarget(w.x, w.y);
+  state.tx = p.x; state.ty = p.y;
+}
+
+function onPointerDown(e){
+  var p = canvasPos(e), key = hitChip(p.x, p.y);
+  if (key){ selectStage(key); return; }
+  state.drag = true;
+  placeTargetAt(p.x, p.y);
+  cv.setPointerCapture && e.pointerId !== undefined && cv.setPointerCapture(e.pointerId);
+  e.preventDefault && e.preventDefault();
+}
+function onPointerMove(e){
+  var p = canvasPos(e), key = hitChip(p.x, p.y);
+  if (key !== state.hoverChip){
+    state.hoverChip = key;
+    cv.style.cursor = (key || hitTarget(p.x, p.y) || p.y > CHIP_H) ? 'pointer' : 'default';
+  } else {
+    cv.style.cursor = (key || hitTarget(p.x, p.y) || (!state.drag && p.y > CHIP_H)) ? 'pointer' : (state.drag ? 'grabbing' : 'default');
+  }
+  if (state.drag) placeTargetAt(p.x, p.y);
+}
+function onPointerUp(){ state.drag = false; }
+
+cv.addEventListener('pointerdown', onPointerDown);
+cv.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+cv.addEventListener('pointerleave', function(){ state.hoverChip = null; });
+
+$('startBtn').addEventListener('click', function(){
+  state.running = true; this.classList.add('on');
 });
+$('stopBtn').addEventListener('click', function(){
+  state.running = false; $('startBtn').classList.remove('on');
+});
+$('resetBtn').addEventListener('click', function(){
+  resetPose();
+  state.running = !reduceMotion;
+  $('startBtn').classList.toggle('on', state.running);
+  sync();
+});
+$('newTargetBtn').addEventListener('click', function(){
+  var p, tries = 0, ee = fk(state.th1, state.th2, L1, L2).ee;
+  do { p = randomTarget(); tries += 1; }
+  while (Math.hypot(p.x - ee.x, p.y - ee.y) < 0.45 && tries < 12);
+  state.tx = p.x; state.ty = p.y;
+});
+$('nextBtn').addEventListener('click', function(){
+  var idx = -1, i;
+  if (state.selected){
+    for (i = 0; i < stages.length; i++) if (stages[i].key === state.selected){ idx = i; break; }
+  }
+  state.selected = stages[(idx + 1) % stages.length].key;
+  sync();
+});
+$('stageRow').addEventListener('click', function(e){
+  var btn = e.target.closest('[data-stage]');
+  if (!btn) return;
+  selectStage(btn.getAttribute('data-stage'));
+});
+$('kS').addEventListener('input', function(){ state.kp = parseFloat(this.value); $('kV').textContent = state.kp.toFixed(2); });
+$('nS').addEventListener('input', function(){ state.noise = parseFloat(this.value); $('nV').textContent = state.noise.toFixed(2); });
+$('mS').addEventListener('input', function(){ state.mismatch = parseFloat(this.value) / 100; $('mV').textContent = Math.round(state.mismatch * 100) + '%'; });
+
 function tick(ts){
   if (!state.lastTs) state.lastTs = ts;
   var dt = Math.min(0.05, (ts - state.lastTs) / 1000);
   state.lastTs = ts;
-  if (!state.running) return;
-  state.t += dt * 0.9;                      /* 초당 약 0.9 구간 진행 */
-  if (state.t >= loopOrder.length) state.t -= loopOrder.length;
+  if (state.running) step(dt);
+  else {
+    var kin = fk(state.th1, state.th2, L1, L2);
+    state.yMeas.x = kin.ee.x; state.yMeas.y = kin.ee.y;
+    state.yHat.x = kin.ee.x; state.yHat.y = kin.ee.y;
+    state.measReady = true;
+  }
   draw();
+  updateVerdict();
+  updateStats();
   state.raf = requestAnimationFrame(tick);
 }
-$('startBtn').addEventListener('click', function(){
-  if (state.running) return;
-  state.running = true; state.lastTs = 0; this.classList.add('on');
+function boot(){
+  var kin = fk(state.th1, state.th2, L1, L2);
+  state.yMeas.x = kin.ee.x; state.yMeas.y = kin.ee.y;
+  state.yHat.x = kin.ee.x; state.yHat.y = kin.ee.y;
+  state.measReady = true;
+  if (state.running) $('startBtn').classList.add('on');
+  else $('startBtn').classList.remove('on');
+  sync();
   state.raf = requestAnimationFrame(tick);
-});
-$('stopBtn').addEventListener('click', function(){
-  state.running = false; $('startBtn').classList.remove('on');
-  if (state.raf) cancelAnimationFrame(state.raf);
-});
-$('resetBtn').addEventListener('click', function(){
-  state.running = false; state.t = 0; state.lastTs = 0;
-  $('startBtn').classList.remove('on');
-  if (state.raf) cancelAnimationFrame(state.raf);
-  draw();
-});
-$('nextBtn').addEventListener('click', function(){
-  var idx = state.selected ? loopOrder.indexOf(state.selected) : -1;
-  state.selected = loopOrder[(idx + 1) % loopOrder.length];
-  updateCard(); updateVerdict(); draw();
-});
-var exBtns = [$('ex0'), $('ex1'), $('ex2')];
-function bindEx(i){
-  exBtns[i].addEventListener('click', function(){
-    var j; state.ex = i;
-    for (j = 0; j < exBtns.length; j++) exBtns[j].classList.toggle('on', j === i);
-    updateCard(); updateVerdict(); draw();
-  });
 }
-for (var bi = 0; bi < exBtns.length; bi++) bindEx(bi);
-function repaint(){ updateCard(); draw(); }
 if (window.matchMedia){
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
-  if (mq.addEventListener) mq.addEventListener('change', repaint);
-  else if (mq.addListener) mq.addListener(repaint);
+  if (mq.addEventListener) mq.addEventListener('change', draw);
+  else if (mq.addListener) mq.addListener(draw);
 }
 if (window.MutationObserver){
-  new MutationObserver(repaint).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 }
-updateCard(); updateVerdict(); draw();
+boot();
 })();
 </script>
 </body>
