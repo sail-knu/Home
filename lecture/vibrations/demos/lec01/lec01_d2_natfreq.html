@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L1-D2 · 고유진동수 ωₙ 탐험기</title>
+<title>L1-D2 · 고유진동수</title>
 </head>
 <body>
 <style>
@@ -224,6 +224,12 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 /* ================= demo 전용 ================= */
 .demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
 @media (max-width:1000px){.demo-layout{grid-template-columns:1fr}}
+.ctrl-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-bar .cb{min-width:0}
+.ctrl-bar .ctrl-title{margin:0 0 5px}
+.ctrl-bar input[type=range]{width:100%;display:block}
+@media (max-width:620px){.ctrl-bar{grid-template-columns:1fr}}
 canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
   border:1px solid var(--border);border-radius:12px}
 .ctrl{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin:0 0 10px}
@@ -254,73 +260,30 @@ canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);
 </style>
 <header class="hero wrap wide" style="padding-top:26px">
   <p class="eyebrow">기계진동학 1강</p>
-  <h1>고유진동수 ωₙ 탐험기</h1>
-  <p class="lede"><b>k</b>와 <b>m</b>만 움직여 보세요. 진폭은 그대로인 채
-    <b>리듬만</b> 바뀝니다 — 파란 점선(기준 k=20, m=1)과 같은 3초 창에서 사이클 수를 세어 보세요.</p>
+  <h1>고유진동수</h1>
+  <p class="lede">강성 <b>k</b>, 질량 <b>m</b>.</p>
 </header>
 
 <main class="wrap wide">
 <section id="sim" style="margin-top:6px">
   <div class="card">
-    <div class="demo-layout">
-      <div>
-        <canvas id="cv" class="sim" width="900" height="500"></canvas>
-        <div class="legend">
-          <span><i style="background:var(--accent)"></i>현재 x(t) — k, m 조절</span>
-          <span><i style="background:var(--low)"></i>기준 k=20 N/m, m=1 kg (점선)</span>
-          <span><i style="background:var(--float)"></i>현재 시각 커서</span>
-          <span><i style="background:var(--border2)"></i>±A (진폭)</span>
-        </div>
-        <div class="note-box">
-          • <b>k ×4</b> → ωₙ은 √4 = <b>정확히 2배</b>. 같은 3초 창의 봉우리 수가 2.14 → 4.27로 두 배가 됩니다.<br>
-          • <b>m ×4</b> → ωₙ은 <b>절반</b>. 무거울수록 느리게 흔들립니다.<br>
-          • <b>k, m을 같은 배율</b>로 키우면(40, 2) ωₙ은 그대로 — 결정하는 것은 비 <b>k/m</b> 하나뿐.<br>
-          • 어떤 프리셋에서도 <b>±A 점선은 움직이지 않습니다</b> — 바뀌는 건 리듬뿐.
-        </div>
+    <div class="ctrl-bar">
+      <div class="cb">
+        <p class="ctrl-title">강성 k <span class="big-val" id="kv">20</span> N/m</p>
+        <input type="range" id="k" min="5" max="80" step="1" value="20">
       </div>
-      <div>
-        <div class="ctrl">
-          <p class="ctrl-title">프리셋</p>
-          <div class="btn-row" style="margin:0 0 6px">
-            <button class="btn btn-sm" data-p="20,1">기준 k=20, m=1</button>
-            <button class="btn btn-sm" data-p="80,1">k×4 → 80 N/m</button>
-          </div>
-          <div class="btn-row" style="margin:0 0 6px">
-            <button class="btn btn-sm" data-p="20,4">m×4 → 4 kg</button>
-            <button class="btn btn-sm" data-p="40,2">k,m ×2 → 40, 2</button>
-          </div>
-          <div class="btn-row" style="margin:0">
-            <button class="btn btn-sm" data-p="80,0.5">극단 빠름 80 / 0.5</button>
-            <button class="btn btn-sm" data-p="5,4">극단 느림 5 / 4</button>
-          </div>
-          <p class="mini" style="margin-top:8px">복습 미션 — <b>k×4</b>를 눌러 「강성만 4배 → 진동수 2배, 진폭은 그대로」를 확인하세요.</p>
-        </div>
-
-        <div class="ctrl">
-          <p class="ctrl-title">강성 k <span class="big-val" id="kv">20</span> N/m</p>
-          <input type="range" id="k" min="5" max="80" step="1" value="20" style="width:100%">
-          <p class="ctrl-title" style="margin-top:12px">질량 m <span class="big-val" id="mv">1.0</span> kg</p>
-          <input type="range" id="m" min="0.5" max="4" step="0.1" value="1" style="width:100%">
-          <p class="mini" style="margin-top:6px">ωₙ = √(k/m) · fₙ = ωₙ/2π · T = 2π/ωₙ</p>
-        </div>
-
-        <div class="stats" style="margin:0 0 8px">
-          <div class="stat"><div class="k">ωₙ [rad/s]</div><div class="v acc" id="sWn">—</div></div>
-          <div class="stat"><div class="k">fₙ [Hz]</div><div class="v acc" id="sFn">—</div></div>
-          <div class="stat"><div class="k">주기 T [s]</div><div class="v acc" id="sT">—</div></div>
-          <div class="stat"><div class="k">기준 대비 ωₙ</div><div class="v lo" id="sRatio">—</div></div>
-        </div>
-        <p class="mini" style="margin:0 0 4px">참고 fₙ — 고층 빌딩 0.1~0.5 Hz · 자동차 차체 1~2 Hz · 기타 A현 110 Hz</p>
-
-        <div class="verdict mid" id="verdict">—</div>
-
-        <div class="ctrl" style="margin-top:10px">
-          <div class="btn-row" style="margin:0">
-            <button class="btn btn-acc" id="play">⏸ 일시정지</button>
-            <button class="btn" id="reset">↺ 기준값으로</button>
-          </div>
-        </div>
+      <div class="cb">
+        <p class="ctrl-title">질량 m <span class="big-val" id="mv">1.0</span> kg</p>
+        <input type="range" id="m" min="0.5" max="4" step="0.1" value="1">
       </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="500"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>x(t)</span>
+    </div>
+    <div class="btn-row" style="margin:12px 0 0">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
     </div>
   </div>
 </section>
@@ -338,10 +301,9 @@ var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 
 /* ---- 기준값 · 표시 창 (원본 유지) ---- */
-var K0 = 20, M0 = 1, A = 1.0, Twin = 3.0;
+var A = 1.0, Twin = 3.0;
 var st = { k: 20, m: 1, t: 0, running: true };
 function wn(k, m){ return Math.sqrt(k / m); }
-var W0 = wn(K0, M0);
 
 /* ---- 테마 대응 팔레트 ---- */
 var PAL = {};
@@ -349,7 +311,7 @@ function readPalette(){
   var cs = getComputedStyle(document.documentElement);
   ['bg','surface','surface2','surface3','border','border2','text','muted','faint',
    'accent','accent-soft','accent-line','high','high-soft','low','low-soft','float',
-   'ok','bad','plot-bg','grid'].forEach(function(k){
+   'ok','bad','plot-bg','grid','mass','mass-ink','spring','wall'].forEach(function(k){
     PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
   });
 }
@@ -362,14 +324,12 @@ if (window.MutationObserver){
     .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 }
 var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-var MONO = 'Consolas, ui-monospace, monospace';
 
 /* ---- 레이아웃 상수 ---- */
-var PNL_X = 18, PNL_Y = 34, PNL_W = 200, PNL_H = 436;       /* 좌측 실물 패널 */
-var CEIL_Y = 48, CX1 = 78, CX2 = 158, EQY = 230, AMP = 60, MS = 44;
-var plotL = 250, plotR = 876, plotTop = 78, plotBot = 452;    /* 우측 파형 플롯 */
+var PNL_X = 18, PNL_Y = 18, PNL_W = 200, PNL_H = 464;
+var CEIL_Y = 48, CX = 118, EQY = 230, AMP = 60, MS = 44;
+var plotL = 250, plotR = 876, plotTop = 48, plotBot = 452;
 var plotW = plotR - plotL, midY = (plotTop + plotBot) / 2, half = 135;
-var GTOP = 130;                                               /* 격자·커서 상단 = +A 선 */
 
 function tx(t){ return plotL + (t / Twin) * plotW; }
 
@@ -381,167 +341,64 @@ function drawSpringV(cx, y0, y1, color){
   for (var i = 0; i < c * 2; i++) ctx.lineTo(cx + (i % 2 === 0 ? -11 : 11), y0 + seg * (i + 0.5));
   ctx.lineTo(cx, y1); ctx.stroke();
 }
-function bob(cx, xnorm, fill, stroke, ink){
-  var my = EQY + xnorm * AMP;
-  drawSpringV(cx, CEIL_Y + 9, my - MS / 2, stroke);
-  ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 2;
-  ctx.fillRect(cx - MS / 2, my - MS / 2, MS, MS);
-  ctx.strokeRect(cx - MS / 2, my - MS / 2, MS, MS);
-  ctx.fillStyle = ink; ctx.font = 'bold 16px ' + FONT;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('m', cx, my); ctx.textBaseline = 'alphabetic';
-}
-function tBracket(T, y, color, label){
-  ctx.strokeStyle = color; ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.moveTo(tx(0), y - 6); ctx.lineTo(tx(0), y + 6);
-  ctx.moveTo(tx(0), y);
-  if (T <= Twin){
-    ctx.lineTo(tx(T), y);
-    ctx.moveTo(tx(T), y - 6); ctx.lineTo(tx(T), y + 6);
-    ctx.stroke();
-    ctx.fillStyle = color; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'left';
-    ctx.fillText(label, tx(T) + 8, y + 4.5);
-  } else {
-    ctx.lineTo(plotR, y); ctx.stroke();
-    ctx.fillStyle = color; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'right';
-    ctx.fillText(label + ' — 창 3 s보다 김', plotR - 6, y - 9);
-  }
-}
 
 function draw(){
   var w = wn(st.k, st.m);
-  var tc = st.t % Twin;                       /* 창 안에서 도는 커서 시각 */
+  var tc = st.t % Twin;
   var xCur = A * Math.cos(w * tc);
-  var xRef = A * Math.cos(W0 * tc);
-  var T = 2 * Math.PI / w, T0 = 2 * Math.PI / W0;
-  var nCur = w * Twin / (2 * Math.PI), nRef = W0 * Twin / (2 * Math.PI);
-  var ratio = w / W0;
 
   ctx.clearRect(0, 0, W, H);
 
-  /* ============ 좌: 실시간 진동 (현재 vs 기준) ============ */
+  /* 좌: 스프링-질량 */
   ctx.fillStyle = PAL.surface2;
   ctx.fillRect(PNL_X, PNL_Y, PNL_W, PNL_H);
   ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
   ctx.strokeRect(PNL_X, PNL_Y, PNL_W, PNL_H);
 
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 13.5px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('실시간 — 현재 vs 기준', PNL_X, PNL_Y - 8);
-
-  /* 천장 */
-  ctx.fillStyle = PAL.border2;
+  ctx.fillStyle = PAL.wall;
   ctx.fillRect(PNL_X + 12, CEIL_Y, PNL_W - 24, 9);
 
-  /* 평형선 */
   ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(PNL_X + 10, EQY); ctx.lineTo(PNL_X + PNL_W - 10, EQY);
   ctx.stroke(); ctx.setLineDash([]);
 
-  bob(CX2, xRef, PAL.surface3, PAL.low, PAL.low);
-  bob(CX1, xCur, PAL.accent, PAL.accent, PAL.bg);
+  var my = EQY + xCur * AMP;
+  drawSpringV(CX, CEIL_Y + 9, my - MS / 2, PAL.spring);
+  ctx.fillStyle = PAL.mass; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2;
+  ctx.fillRect(CX - MS / 2, my - MS / 2, MS, MS);
+  ctx.strokeRect(CX - MS / 2, my - MS / 2, MS, MS);
+  ctx.fillStyle = PAL['mass-ink']; ctx.font = 'bold 16px ' + FONT;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('m', CX, my); ctx.textBaseline = 'alphabetic';
 
-  ctx.textAlign = 'center';
-  ctx.font = 'bold 13px ' + FONT;
-  ctx.fillStyle = PAL.accent; ctx.fillText('현재', CX1, 330);
-  ctx.fillStyle = PAL.low;    ctx.fillText('기준', CX2, 330);
-  ctx.font = '13px ' + MONO;
-  ctx.fillStyle = PAL.accent; ctx.fillText('ωₙ ' + w.toFixed(2), CX1, 353);
-  ctx.fillStyle = PAL.low;    ctx.fillText('ωₙ ' + W0.toFixed(2), CX2, 353);
-  ctx.fillStyle = PAL.accent; ctx.fillText('T ' + T.toFixed(2) + ' s', CX1, 374);
-  ctx.fillStyle = PAL.low;    ctx.fillText('T ' + T0.toFixed(2) + ' s', CX2, 374);
-  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted;
-  ctx.fillText('k ' + st.k.toFixed(0) + ' N/m', CX1, 402);
-  ctx.fillText('m ' + st.m.toFixed(1) + ' kg', CX1, 421);
-  ctx.fillStyle = PAL.faint;
-  ctx.fillText('k 20 N/m', CX2, 402);
-  ctx.fillText('m 1.0 kg', CX2, 421);
-  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
-  ctx.fillText('같은 초기조건에서 동시에 출발', PNL_X + PNL_W / 2, 452);
+  /* 우: x(t) */
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x(t)', plotL, 30);
 
-  /* ============ 우: 파형 비교 ============ */
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('변위 x(t) — 같은 3 s 창에서 사이클 수 비교', plotL, 30);
-
-  ctx.font = 'bold 13.5px ' + FONT;
-  ctx.fillStyle = PAL.accent;
-  ctx.fillText('현재 : ' + nCur.toFixed(2) + ' 사이클', plotL, 58);
-  ctx.fillStyle = PAL.low;
-  ctx.fillText('기준(k=20, m=1) : ' + nRef.toFixed(2) + ' 사이클', plotL + 220, 58);
-
-  /* 축 */
   ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(plotL, plotTop); ctx.lineTo(plotL, plotBot); ctx.lineTo(plotR, plotBot); ctx.stroke();
   ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
 
-  /* 1초 격자 + 눈금 라벨 */
   ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
   for (var s = 0; s <= Twin; s++){
     var px = tx(s);
     ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
-    ctx.beginPath(); ctx.moveTo(px, GTOP); ctx.lineTo(px, plotBot); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(px, plotTop); ctx.lineTo(px, plotBot); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = PAL.faint; ctx.fillText(s + ' s', px, plotBot + 20);
   }
 
-  /* ±A 점선 (진폭 불변) */
-  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
-  ctx.beginPath(); ctx.moveTo(plotL, midY - half); ctx.lineTo(plotR, midY - half); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(plotL, midY + half); ctx.lineTo(plotR, midY + half); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'right';
-  ctx.fillText('+A', plotR - 6, midY - half + 17);
-  ctx.fillText('−A', plotR - 6, midY + half - 7);
-
-  /* 주기 브래킷 */
-  tBracket(T0, 120, PAL.low, '기준 T = ' + T0.toFixed(2) + ' s');
-  tBracket(T, 96, PAL.accent, 'T = ' + T.toFixed(2) + ' s');
-
-  /* 기준 파형 (점선) */
-  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
-  ctx.globalAlpha = 0.85; ctx.beginPath();
-  for (var pr = 0; pr <= plotW; pr++){
-    var tr = (pr / plotW) * Twin, yr = midY - A * Math.cos(W0 * tr) * half;
-    if (pr) ctx.lineTo(plotL + pr, yr); else ctx.moveTo(plotL + pr, yr);
-  }
-  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
-
-  /* 현재 파형 */
-  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 3; ctx.beginPath();
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
   for (var pc = 0; pc <= plotW; pc++){
     var tcc = (pc / plotW) * Twin, yc = midY - A * Math.cos(w * tcc) * half;
     if (pc) ctx.lineTo(plotL + pc, yc); else ctx.moveTo(plotL + pc, yc);
   }
   ctx.stroke();
 
-  /* 커서 + 점 */
   ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(tx(tc), GTOP); ctx.lineTo(tx(tc), plotBot); ctx.stroke(); ctx.setLineDash([]);
-  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(tx(tc), midY - xRef * half, 5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(tc), plotTop); ctx.lineTo(tx(tc), plotBot); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = PAL.float;
   ctx.beginPath(); ctx.arc(tx(tc), midY - xCur * half, 6, 0, Math.PI * 2); ctx.fill();
-
-  /* ---- DOM 판독값 ---- */
-  $('sWn').textContent = w.toFixed(2);
-  $('sFn').textContent = (w / (2 * Math.PI)).toFixed(2);
-  $('sT').textContent = T.toFixed(2);
-  $('sRatio').textContent = '×' + ratio.toFixed(2);
-
-  var vd = $('verdict');
-  if (Math.abs(ratio - 1) < 0.005){
-    vd.className = 'verdict mid';
-    vd.innerHTML = '△ ωₙ = ' + w.toFixed(2) + ' rad/s — <b>기준과 동일</b>. k/m 비가 같으면 진동수도 같습니다.';
-  } else if (ratio > 1){
-    vd.className = 'verdict good';
-    vd.innerHTML = '✓ ωₙ ×<b>' + ratio.toFixed(2) + '</b> — 기준보다 빠름. 3 s에 <b>' +
-      nCur.toFixed(2) + '</b> 사이클 (기준 ' + nRef.toFixed(2) + '), 진폭은 그대로.';
-  } else {
-    vd.className = 'verdict bad';
-    vd.innerHTML = '▽ ωₙ ×<b>' + ratio.toFixed(2) + '</b> — 기준보다 <b>' + (1 / ratio).toFixed(2) +
-      '배 느림</b>. 3 s에 ' + nCur.toFixed(2) + ' 사이클 (기준 ' + nRef.toFixed(2) + ').';
-  }
-  markPreset();
 }
 
 /* ---- 컨트롤 ---- */
@@ -552,22 +409,6 @@ function syncSpans(){
 }
 $('k').addEventListener('input', function(){ st.k = parseFloat(this.value); syncSpans(); draw(); });
 $('m').addEventListener('input', function(){ st.m = parseFloat(this.value); syncSpans(); draw(); });
-
-var presetBtns = document.querySelectorAll('[data-p]');
-function markPreset(){
-  Array.prototype.forEach.call(presetBtns, function(b){
-    var p = b.getAttribute('data-p').split(',');
-    var on = Math.abs(+p[0] - st.k) < 1e-9 && Math.abs(+p[1] - st.m) < 1e-9;
-    b.classList.toggle('btn-acc', on);
-  });
-}
-Array.prototype.forEach.call(presetBtns, function(b){
-  b.addEventListener('click', function(){
-    var p = this.getAttribute('data-p').split(',');
-    st.k = +p[0]; st.m = +p[1]; st.t = 0;
-    syncSpans(); draw();
-  });
-});
 
 $('play').addEventListener('click', function(){
   st.running = !st.running;
