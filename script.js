@@ -393,7 +393,7 @@
       demos: [
         { lec: "1", title: "1자유도 3가지 예제", src: "lecture/vibrations/demos/lec01/lec01_d1_dof.html" },
         { lec: "1", title: "고유진동수 ωₙ 탐험기", src: "lecture/vibrations/demos/lec01/lec01_d2_natfreq.html" },
-        { lec: "1", title: "자동차 서스펜션 설계 미션", src: "lecture/vibrations/demos/lec01/lec01_d3_suspension.html" },
+        { lec: "1", title: "자동차 서스펜션", src: "lecture/vibrations/demos/lec01/lec01_d3_suspension.html" },
         { lec: "2", title: "초기조건 → 진폭·위상", src: "lecture/vibrations/demos/lec02/lec02_d1_initcond.html" },
         { lec: "2", title: "변위·속도·가속도 위상", src: "lecture/vibrations/demos/lec02/lec02_d2_phase.html" },
         { lec: "2", title: "평균·평균제곱·RMS", src: "lecture/vibrations/demos/lec02/lec02_d3_rms.html" },
