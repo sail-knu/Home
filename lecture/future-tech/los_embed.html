@@ -1,344 +1,154 @@
 <style>
 #los-host, #los-host * { box-sizing: border-box; }
 .demo-app.demo-los {
-  --ink: #e7eef2; --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #d3dfe7;
+  --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #dce7ee;
   --rule: #cfdde5; --rule-2: #a9c1cf;
   --text: #0b2130; --text-2: #42606f; --text-3: #6b8798;
-  --accent: #1d4e89; --accent-deep: #1d4e89; --accent-on: #ffffff;
-  --grid: #dae7ee; --grid-major: #bed4e0;
-  --track: #0369a1; --mark: #b45309; --mark-hot: #92400e;
-  --hull: #15803d; --devi: #be123c; --sight: #4d7c0f; --course: #0d2644;
-  --warn: #be123c;
-  --shadow: 0 6px 20px rgba(20, 50, 70, .12);
+  --accent: #1d4e89; --accent-on: #ffffff;
+  --track: #0369a1; --hull: #15803d; --sight: #4d7c0f; --devi: #be123c;
   margin: 0;
   background: transparent;
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.5;
-  width: 100%;
-  max-width: 100%;
 }
-#los-host .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
-#los-host .lbl { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); font-weight: 700; }
-#los-host :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-#los-host button { font-family: inherit; }
 #los-host header { display: none; }
-
 #los-host .tip {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--rule);
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--rule));
   background: color-mix(in srgb, var(--accent) 8%, var(--ink-2));
   color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 13.5px;
 }
-#los-host .tip b { color: var(--accent); font-weight: 800; }
-
-#los-host .stage {
-  position: sticky;
-  top: 72px;
-  z-index: 8;
-  background: var(--ink-2);
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-#los-host .stage-canvas { position: relative; }
-#los-host .chart { position: relative; width: 100%; height: var(--chartH, 230px); min-height: 0; background: var(--ink-4); }
-#los-host #los-cv {
-  display: block; width: 100%; height: 100%;
-  touch-action: none; user-select: none;
-}
-
-#los-host .primary {
-  padding: 10px 12px 6px;
-  background: var(--ink-2);
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  margin-bottom: 12px;
-}
-#los-host .primary:has(> .ctl.off) { display: none; }
-
-#los-host .readout {
+#los-host .tip b { color: var(--accent); }
+#los-host .ctrl-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--rule);
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
 }
-#los-host .readout.key { grid-template-columns: repeat(4, 1fr); }
-#los-host .readout .cell { background: var(--ink-2); padding: 6px 8px; min-width: 0; }
-#los-host .readout.key .cell { padding: 4px 5px 5px; }
-#los-host .readout .k {
-  display: block; font-size: 9.5px; letter-spacing: .04em; font-weight: 700; color: var(--text-3);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+@media (max-width: 620px) {
+  #los-host .ctrl-bar { grid-template-columns: 1fr; }
 }
-#los-host .readout.key .k { font-size: 9px; letter-spacing: 0; }
-#los-host .readout .v {
-  display: block; font-size: 15px; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+#los-host .ctrl-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-3);
 }
-#los-host .readout.key .v { font-size: 15px; line-height: 1.25; }
-#los-host .readout .v.warn { color: var(--devi); }
-#los-host .readout .v.ok { color: var(--accent); }
-#los-host .readout.sub {
+#los-host .big-val {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#los-host input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 36px;
+}
+#los-host .chart {
+  width: 100%;
+  height: min(52vw, 380px);
+  min-height: 240px;
+  background: var(--ink-4);
   border: 1px solid var(--rule);
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 12px;
 }
-#los-host .scorebar {
-  display: flex;
-  background: var(--ink-2);
-  border-top: 1px solid var(--rule);
-}
-#los-host .scorebar .cell {
-  flex: 1; min-width: 0; padding: 6px 6px; text-align: center;
-  border-right: 1px solid var(--rule);
-}
-#los-host .scorebar .cell:last-child { border-right: 0; }
-#los-host .scorebar .k { display: block; font-size: 9px; font-weight: 700; color: var(--text-3); }
-#los-host .scorebar .v {
-  display: block; font-family: ui-monospace, Consolas, monospace;
-  font-size: 16px; font-weight: 700; color: var(--accent);
-}
-#los-host .scorebar .v.ok { color: var(--accent); }
-#los-host .scorebar .v.bad { color: var(--devi); }
-#los-host .finish-cd {
-  position: absolute; inset: 0; z-index: 3;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none; background: #0f172a28;
-}
-#los-host .finish-cd[hidden] { display: none; }
-#los-host .finish-cd-num {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 40px; font-weight: 800; line-height: 1; color: var(--accent);
-  text-shadow: 0 1px 0 #fff, 0 8px 24px #0f172a33;
-}
-#los-host .finish-cd-msg { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--text); }
-#los-host .scorelist { padding: 4px 0; }
-#los-host .score-row {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
-  flex-wrap: wrap;
-  padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 13px;
-}
-#los-host .score-row:last-child { border-bottom: 0; }
-#los-host .score-row .sc { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
-#los-host .score-row .meta { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--text-3); }
-#los-host .score-row.ok .sc { color: var(--accent); }
-#los-host #los-btnClearScores {
-  width: 100%; min-height: 44px; margin-top: 8px;
-  border-radius: 11px; font-size: 14px; font-weight: 700; cursor: pointer;
-  background: var(--ink-3); border: 1px solid var(--rule); color: var(--text);
-}
-
-#los-host .chips {
-  display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 8px;
-  background: transparent;
-}
-#los-host .chip {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 11px;
-  border-radius: 999px; border: 1px solid var(--rule); background: var(--ink-2);
-  color: var(--text-3); font-size: 12px; cursor: pointer;
-}
-#los-host .chip i { width: 13px; height: 3px; border-radius: 2px; display: inline-block; opacity: .35; }
-#los-host .chip.on { color: var(--text); border-color: var(--rule-2); background: var(--ink-3); }
-#los-host .chip.on i { opacity: 1; }
-#los-host #los-recwrap {
-  position: relative; height: 200px; min-height: 156px; background: var(--ink-4);
-  border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-bottom: 12px;
-}
-#los-host #los-rec { display: block; width: 100%; height: 100%; }
-#los-host #los-recwrap .tag { position: absolute; right: 10px; top: 5px; pointer-events: none; opacity: .7; }
-
-#los-host .sec {
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  background: var(--ink-2);
-}
-#los-host .sec-h {
-  width: 100%; background: none; border: 0; color: var(--text-2); cursor: pointer;
-  display: flex; align-items: center; gap: 9px; padding: 0 12px; min-height: 46px; text-align: left;
-}
-#los-host .sec-h .t { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; }
-#los-host .sec-h .ln { flex: 1; height: 1px; background: var(--rule); }
-#los-host .sec-h .car { font-size: 10px; color: var(--text-3); transition: transform .16s; }
-#los-host .sec.closed .car { transform: rotate(-90deg); }
-#los-host .sec-b { padding: 0 12px 12px; }
-#los-host .sec.closed .sec-b { display: none; }
-
-#los-host .ctl { margin: 6px 0 10px; }
-#los-host .ctl.off { display: none; }
-#los-host .ctl .lab { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 0; }
-#los-host .ctl .lab .n { color: var(--text-2); font-size: 13px; line-height: 1.3; }
-#los-host .ctl .lab .v {
-  color: var(--accent); font-size: 16px; font-weight: 700; flex: none;
-  font-family: ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums;
-}
-#los-host .primary .ctl { margin: 2px 0 0; }
-#los-host .primary .ctl .lab .n { font-size: 14px; color: var(--text); }
-#los-host .primary .ctl .lab .v { font-size: 20px; }
-
-#los-host input[type=range] {
-  -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px;
-  background: transparent; margin: 0; padding: 0; border: 0; outline: none; cursor: pointer;
-  touch-action: none;
-}
-#los-host input[type=range]::-webkit-slider-runnable-track {
-  height: 6px; border-radius: 6px; background: var(--rule-2); border: 0;
-}
-#los-host input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; margin-top: -11px;
-  background: var(--accent); border: 3px solid var(--ink-2);
-  box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgba(0,0,0,.18);
-}
-#los-host input[type=range]::-moz-range-track { height: 6px; border-radius: 6px; background: var(--rule-2); border: 0; }
-#los-host input[type=range]::-moz-range-thumb {
-  width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
-  border: 3px solid var(--ink-2); box-shadow: 0 0 0 1px var(--accent);
-}
-
-#los-host .seg { display: flex; flex-wrap: wrap; gap: 6px; }
-#los-host .seg button {
-  flex: 1 1 44%; min-height: 44px; background: var(--ink-3); border: 1px solid var(--rule);
-  color: var(--text-2); padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 13px;
-}
-#los-host .seg button.on { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); font-weight: 800; }
-#los-host .note {
-  color: var(--text-3); font-size: 12px; line-height: 1.6; background: var(--ink-3);
-  border-left: 2px solid var(--rule-2); padding: 9px 10px; border-radius: 0 7px 7px 0; margin: 10px 0 0;
-}
-#los-host .note b { color: var(--text-2); font-weight: 700; }
-#los-host .note code { color: var(--accent); font-family: ui-monospace, Consolas, monospace; }
-#los-host .eqbox { background: var(--ink-3); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
-#los-host .eqbox .eq {
-  display: block; font-size: 12.5px; color: var(--sight); margin-top: 3px;
-  overflow-x: auto; white-space: nowrap;
-}
-
-#los-host .speedrow {
-  display: flex; align-items: center; gap: 10px; min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  background: var(--ink-2);
-  margin-bottom: 12px;
-}
-#los-host .speedrow .lab { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--text-3); }
-#los-host .speedrow input[type=range] { flex: 1; min-width: 0; }
-#los-host .speedrow .val {
-  flex: none; min-width: 56px; text-align: right; color: var(--accent);
-  font-size: 14px; font-weight: 700;
-  font-family: ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums;
-}
-
-#los-host .demo-toolbar {
+#los-host #los-cv { display: block; width: 100%; height: 100%; }
+#los-host .stats {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--rule);
+  margin: 10px 0;
+}
+#los-host .stat {
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+#los-host .stat .k { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+#los-host .stat .v {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#los-host .legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin: 2px 0 10px;
+}
+#los-host .legend i {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  vertical-align: 3px;
+  margin-right: 5px;
+}
+#los-host .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+#los-host button {
+  appearance: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--rule-2);
   background: var(--ink-2);
+  color: var(--text);
+  cursor: pointer;
 }
-#los-host .demo-toolbar button {
-  min-height: 46px; width: 100%; border-radius: 11px; font-size: 16px; font-weight: 800; cursor: pointer;
-  background: var(--ink-3); border: 1px solid var(--rule); color: var(--text);
+#los-host #los-btnPlay {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
 }
-#los-host .demo-toolbar #los-btn_play { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); }
-#los-host .demo-toolbar #los-btn_play.danger { background: var(--warn); border-color: var(--warn); color: #fff; }
-
-@media (prefers-reduced-motion: reduce) {
-  #los-host, #los-host * { transition: none !important; }
-}
-
-@media (min-width: 900px) {
-  #los-host .stage { position: static; }
-  #los-host .demo-toolbar {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 4;
-    display: flex;
-    width: auto;
-    grid-template-columns: none;
-    gap: 6px;
-    padding: 6px;
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    background: color-mix(in srgb, #fff 92%, transparent);
-    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
-  }
-  #los-host .demo-toolbar button {
-    min-height: 36px;
-    min-width: 88px;
-    width: auto;
-    padding: 7px 14px;
-    font-size: 14px;
-  }
-}
+#los-host #los-btnPlay.danger { background: var(--devi); border-color: var(--devi); }
 </style>
 <div class="demo-app demo-los" id="demo-los">
-<header>
-  <span class="kicker">LOS</span>
-  <h1>웨이포인트 추종 시뮬레이터</h1>
-  <span class="pill" id="los-statusPill">대기</span>
-  <button id="los-themeBtn" type="button" aria-label="주간·야간 전환" hidden>◐</button>
-</header>
-
-<p class="tip"><b>Δ</b>를 줄이면 <b>누적 |e|</b>는 작아지지만 <b>조타 반전</b>이 늘어납니다. 완주하면 둘을 함께 비교합니다. 종합 <b>J = ∫|e| dt + 0.5×반전</b> (낮을수록 좋음).</p>
-
-<div class="demo-layout">
-  <div class="demo-stage-col">
-    <div class="stage" id="los-stage">
-      <div class="stage-canvas">
-        <div class="chart">
-          <canvas id="los-cv"></canvas>
-          <div id="los-finishCd" class="finish-cd" hidden>
-            <span class="finish-cd-num" id="los-finishCdNum">완주</span>
-            <span class="finish-cd-msg" id="los-finishCdMsg">기록됨</span>
-          </div>
-        </div>
-        <div class="demo-toolbar">
-          <button type="button" id="los-btn_play">시작</button>
-          <button type="button" id="los-btn_rst">초기화</button>
-        </div>
-      </div>
-      <div class="readout key" id="los-cells"></div>
-      <div class="scorebar" id="los-scorebar">
-        <div class="cell"><span class="k">누적 |e|</span><span class="v" id="los-rIae">0.00</span></div>
-        <div class="cell"><span class="k">조타 반전</span><span class="v" id="los-rRev">0</span></div>
-        <div class="cell"><span class="k">종합 J</span><span class="v" id="los-rJ">0.00</span></div>
-        <div class="cell"><span class="k">내 최고</span><span class="v" id="los-rBest">–</span></div>
-      </div>
+  <header>
+    <h1>LOS 유도 — 전방주시거리</h1>
+  </header>
+  <p class="tip"><b>Δ</b>는 얼마나 앞을 볼지, <b>R<sub>acc</sub></b>는 다음 웨이포인트에 얼마나 가까이 가야 구간을 넘길지입니다. 큰 Δ는 모서리를 깎고, 큰 R<sub>acc</sub>는 일찍 다음 구간으로 넘어갑니다.</p>
+  <div class="ctrl-bar">
+    <div>
+      <p class="ctrl-title">전방주시거리 Δ <span class="big-val" id="los-deltaV">4.0</span> m</p>
+      <input type="range" id="los-delta" min="0.8" max="12" step="0.1" value="4">
     </div>
-    <div class="sec">
-      <button class="sec-h" type="button" onclick="this.parentElement.classList.toggle('closed')"><span class="t">내 기록 (이 기기)</span><span class="ln"></span><span class="car">▼</span></button>
-      <div class="sec-b">
-        <div id="los-scoreList" class="scorelist"></div>
-        <p class="note" id="los-scoreNote" style="margin-top:8px">점수 = ∫|e| dt + 0.5×조타 반전. 경로를 완주하면 CTE와 부드러움이 함께 저장됩니다.</p>
-        <button type="button" id="los-btnClearScores">기록 지우기</button>
-      </div>
-    </div>
-    <div class="primary" id="los-primary"></div>
-    <div class="readout sub" id="los-cells2"></div>
-    <div class="chips" id="los-chips"></div>
-    <div id="los-recwrap">
-      <span class="tag lbl">Recorder</span>
-      <canvas id="los-rec"></canvas>
+    <div>
+      <p class="ctrl-title">Acceptance radius R<sub>acc</sub> <span class="big-val" id="los-raccV">1.8</span> m</p>
+      <input type="range" id="los-racc" min="0.4" max="6" step="0.1" value="1.8">
     </div>
   </div>
-  <div class="demo-ctrl-col">
-    <div class="speedrow">
-      <span class="lab">배속</span>
-      <input type="range" id="los-spd" min="0.25" max="8" step="0.25" aria-label="시뮬레이션 배속">
-      <span class="val" id="los-spdv">—</span>
-    </div>
-    <div id="los-panel"></div>
+  <div class="chart"><canvas id="los-cv"></canvas></div>
+  <div class="stats">
+    <div class="stat"><span class="k">횡방향 오차 e</span><span class="v" id="los-e">—</span></div>
+    <div class="stat"><span class="k">전방주시 Δ</span><span class="v" id="los-dRead">4.0 m</span></div>
+    <div class="stat"><span class="k">Acceptance R<sub>acc</sub></span><span class="v" id="los-rRead">1.8 m</span></div>
   </div>
-</div>
+  <div class="legend">
+    <span><i style="background:#0369a1"></i>경로</span>
+    <span><i style="background:#15803d"></i>자취</span>
+    <span><i style="background:#4d7c0f"></i>LOS 시선</span>
+    <span><i style="background:#b45309;height:8px;width:8px;border-radius:50%;border:1.5px dashed #b45309;background:transparent"></i>R<sub>acc</sub></span>
+  </div>
+  <div class="btn-row">
+    <button type="button" id="los-btnPlay">시작</button>
+    <button type="button" id="los-btnReset">초기화</button>
+  </div>
 </div>

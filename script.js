@@ -93,8 +93,12 @@
       window.history.pushState(null, "", targetId);
     }
     syncCourseDemos(targetId);
-    if (targetId === "#lecture-future" && typeof window.refreshPidDemo === "function") {
-      requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
+    if (targetId === "#lecture-future") {
+      const active = document.querySelector("#lecture-future .sim-nav-btn.active");
+      if (active) showSim(active.getAttribute("data-sim"));
+      if (typeof window.refreshPidDemo === "function") {
+        requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
+      }
     }
     if (typeof window.setSailVehiclePage === "function") window.setSailVehiclePage(targetId);
   }
@@ -241,7 +245,7 @@
 
   const futureEmbeds = {
     "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html", js: "lecture/future-tech/path_embed.js", refresh: "refresh_path_demo" },
-    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html", js: "lecture/future-tech/los_embed.js", refresh: "refresh_los_demo" }
+    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260902c", js: "lecture/future-tech/los_embed.js?v=20260902c", refresh: "refresh_los_demo" }
   };
   const futureLoaded = {};
 

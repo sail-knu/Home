@@ -1304,12 +1304,17 @@
             <p class="small-text" data-i18n="course_intro">학부 강의 실습용 시뮬레이터입니다. 아래 버튼으로 하나를 골라 조작할 수 있습니다.</p>
 
             <nav class="sim-nav" aria-label="실습 시뮬레이터">
-                <button type="button" class="sim-nav-btn active" data-sim="sim-pid">역진자 PID 제어</button>
+                <button type="button" class="sim-nav-btn active" data-sim="sim-los">LOS 유도</button>
+                <button type="button" class="sim-nav-btn" data-sim="sim-pid">역진자 PID 제어</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-path">직선 경로 추종 제어기</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-los">LOS 유도 — 웨이포인트 추종</button>
             </nav>
 
-            <article class="sim-block" id="sim-pid">
+            <article class="sim-block" id="sim-los">
+                <h3 class="subsection-title">LOS 유도</h3>
+                <p class="small-text">전방주시거리 Δ와 acceptance radius R<sub>acc</sub></p>
+                <div id="los-host"></div>
+            </article>
+            <article class="sim-block is-hidden" id="sim-pid">
                 <h3 class="subsection-title">역진자 PID 제어</h3>
                 <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> 튜닝, 위치 제어</p>
                 <div class="demo-pid" id="demo-pid">
@@ -1415,11 +1420,6 @@
                 <h3 class="subsection-title">직선 경로 추종 제어기</h3>
                 <p class="small-text">횡방향 오차 · 방위 오차 피드백으로 배를 직선 경로에 붙이기 · CTE 누적 오차 기록</p>
                 <div id="path-host"></div>
-            </article>
-            <article class="sim-block is-hidden" id="sim-los">
-                <h3 class="subsection-title">LOS 유도 — 웨이포인트 추종</h3>
-                <p class="small-text">전방주시거리 Δ 튜닝, 웨이포인트 편집 · CTE·조타 반전 기록</p>
-                <div id="los-host"></div>
             </article>
         </div>
     </section>
@@ -1547,7 +1547,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260902" defer></script>
+    <script src="script.js?v=20260902a" defer></script>
     <script src="lecture/future-tech/inverted-pendulum-pid_embed.js" defer></script>
     <script
       color="29,78,137"
