@@ -32,7 +32,7 @@ var P = {
 var S = {
   k: 0, x: 0, y: 0, yaw: 0,
   t: 0, running: false, done: false, first: true,
-  ie: 0, eDot: 0, ePrev: 0, prevToB: 1e9,
+  ie: 0, eDot: 0, ePrev: 0, prevToB: 1e9, cteOn: false,
   trail: [], g: null
 };
 
@@ -82,15 +82,19 @@ function guidance() {
   var e = -dx * sa + dy * ca;
   var sFoot = clamp(s, 0, g.L);
   var foot = { x: g.A.x + sFoot * ca, y: g.A.y + sFoot * sa };
-  var losPt = pointAhead(S.k, s, P.delta);
-  var chid = Math.atan2(losPt.y - S.y, losPt.x - S.x);
+  var losPt = pointAhead(S.k, sFoot, P.delta);
+  var losOff = Math.atan2(-e, P.delta);
+  var chid = g.alpha + losOff;
   var onSeg = s >= 0 && s <= g.L;
-  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid, onSeg: onSeg };
+  return {
+    alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B,
+    foot: foot, losPt: losPt, chid: chid, losOff: losOff, onSeg: onSeg
+  };
 }
 
 function reset() {
   S.k = 0; S.t = 0; S.done = false; S.first = true;
-  S.ie = 0; S.eDot = 0; S.ePrev = 0; S.prevToB = 1e9;
+  S.ie = 0; S.eDot = 0; S.ePrev = 0; S.prevToB = 1e9; S.cteOn = true;
   S.trail = []; S.g = null;
   var g = seg(0);
   S.x = g.A.x - P.e0 * Math.sin(g.alpha);
@@ -114,14 +118,12 @@ function step(dt) {
     S.eDot += (dE - S.eDot) * kf;
   }
   S.ePrev = g.e;
-  var align = Math.max(0, Math.cos(wrap(S.yaw - g.alpha)));
-  align = align * align;
-  var useE = g.onSeg && align > 0.05;
-  var eCtl = useE ? g.e * align : 0;
-  if (useE) S.ie = clamp(S.ie + g.e * align * dt, -P.iLim, P.iLim);
+  if (!S.cteOn && g.onSeg && Math.abs(wrap(S.yaw - g.alpha)) < 40 * D2R) S.cteOn = true;
+  if (S.cteOn) S.ie = clamp(S.ie + g.e * dt, -P.iLim, P.iLim);
   else S.ie = 0;
-  var uc = -(P.kpe * eCtl + P.kie * S.ie + P.kde * (useE ? S.eDot * align : 0));
-  var uh = P.kph * wrap(g.chid - S.yaw);
+  var uc = S.cteOn ? -(P.kpe * g.e + P.kie * S.ie + P.kde * S.eDot) : 0;
+  var ePsi = wrap(g.alpha - S.yaw) + g.losOff;
+  var uh = P.kph * ePsi;
   var w = clamp(uc + uh, -P.wmax, P.wmax);
   S.x += P.v * Math.cos(S.yaw) * dt;
   S.y += P.v * Math.sin(S.yaw) * dt;
@@ -139,6 +141,7 @@ function step(dt) {
       S.k += 1;
       S.ie = 0;
       S.first = true;
+      S.cteOn = false;
       S.prevToB = 1e9;
     } else S.done = true;
   } else {

@@ -26,7 +26,7 @@
 #pid-host .tip b { color: var(--accent); }
 #pid-host .ctrl-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px 16px;
   background: var(--ink-3);
   border: 1px solid var(--rule);
@@ -34,7 +34,7 @@
   padding: 12px 14px;
   margin: 0 0 12px;
 }
-@media (max-width: 720px) {
+@media (max-width: 620px) {
   #pid-host .ctrl-bar { grid-template-columns: 1fr; }
 }
 #pid-host .ctrl-title {
@@ -111,15 +111,11 @@
   <header>
     <h1>역진자 PID 제어</h1>
   </header>
-  <p class="tip"><b>k<sub>P</sub></b>·<b>k<sub>I</sub></b>·<b>k<sub>D</sub></b>만으로 진자를 세우세요. 위치 제어가 없어 카트는 x = 0에 머물지 않습니다. k<sub>P</sub>는 g(m<sub>c</sub>+m<sub>b</sub>) ≈ 19.6보다 커야 합니다.</p>
+  <p class="tip"><b>k<sub>P</sub></b>·<b>k<sub>D</sub></b>만으로 진자를 세우세요. 위치 제어가 없어 카트는 x = 0에 머물지 않습니다. k<sub>P</sub>는 g(m<sub>c</sub>+m<sub>b</sub>) ≈ 19.6보다 커야 합니다.</p>
   <div class="ctrl-bar">
     <div>
       <p class="ctrl-title">k<sub>P</sub> 비례 <span class="big-val" id="pid-kPV">0</span></p>
       <input type="range" id="pid-kP" min="0" max="300" step="1" value="0">
-    </div>
-    <div>
-      <p class="ctrl-title">k<sub>I</sub> 적분 <span class="big-val" id="pid-kIV">0</span></p>
-      <input type="range" id="pid-kI" min="0" max="150" step="1" value="0">
     </div>
     <div>
       <p class="ctrl-title">k<sub>D</sub> 미분 <span class="big-val" id="pid-kDV">0.0</span></p>

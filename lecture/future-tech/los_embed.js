@@ -76,9 +76,10 @@ function guidance() {
   var e = -dx * sa + dy * ca;
   var sFoot = clamp(s, 0, g.L);
   var foot = { x: g.A.x + sFoot * ca, y: g.A.y + sFoot * sa };
-  var losPt = pointAhead(S.k, s, P.delta);
-  var chid = Math.atan2(losPt.y - S.y, losPt.x - S.x);
-  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid };
+  var losPt = pointAhead(S.k, sFoot, P.delta);
+  var losOff = Math.atan2(-e, P.delta);
+  var chid = g.alpha + losOff;
+  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid, losOff: losOff };
 }
 
 function reset() {
@@ -97,7 +98,7 @@ function step(dt) {
   if (S.done) return;
   var g = guidance();
   S.g = g;
-  var ePsi = wrap(g.chid - S.yaw);
+  var ePsi = wrap(g.alpha - S.yaw) + g.losOff;
   var w = clamp(P.kPsi * ePsi, -P.wmax, P.wmax);
   S.x += P.v * Math.cos(S.yaw) * dt;
   S.y += P.v * Math.sin(S.yaw) * dt;

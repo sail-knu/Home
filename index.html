@@ -1305,9 +1305,9 @@
 
             <nav class="sim-nav" aria-label="실습 시뮬레이터">
                 <button type="button" class="sim-nav-btn active" data-sim="sim-los">LOS 유도</button>
+                <button type="button" class="sim-nav-btn" data-sim="sim-path">직선 경로 추종 제어기</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-pid">역진자 PID 제어</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-pidpos">역진자 위치 제어</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-path">직선 경로 추종 제어기</button>
             </nav>
 
             <article class="sim-block" id="sim-los">
@@ -1315,20 +1315,20 @@
                 <p class="small-text">전방주시거리 Δ와 acceptance radius R<sub>acc</sub></p>
                 <div id="los-host"></div>
             </article>
+            <article class="sim-block is-hidden" id="sim-path">
+                <h3 class="subsection-title">직선 경로 추종 제어기</h3>
+                <p class="small-text">K<sub>p,e</sub> · K<sub>i,e</sub> · K<sub>d,e</sub> 와 Δ · R<sub>acc</sub></p>
+                <div id="path-host"></div>
+            </article>
             <article class="sim-block is-hidden" id="sim-pid">
                 <h3 class="subsection-title">역진자 PID 제어</h3>
-                <p class="small-text">k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub> — 위치 제어 없음</p>
+                <p class="small-text">k<sub>P</sub> · k<sub>D</sub> — 위치 제어 없음</p>
                 <div id="pid-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-pidpos">
                 <h3 class="subsection-title">역진자 위치 제어</h3>
                 <p class="small-text">k<sub>Px</sub> · k<sub>Dx</sub> — 각도 PID는 고정</p>
                 <div id="pidpos-host"></div>
-            </article>
-            <article class="sim-block is-hidden" id="sim-path">
-                <h3 class="subsection-title">직선 경로 추종 제어기</h3>
-                <p class="small-text">K<sub>p,e</sub> · K<sub>i,e</sub> · K<sub>d,e</sub> 와 Δ · R<sub>acc</sub></p>
-                <div id="path-host"></div>
             </article>
         </div>
     </section>
@@ -1456,7 +1456,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260902f" defer></script>
+    <script src="script.js?v=20260902g" defer></script>
     <script
       color="29,78,137"
       opacity="0.32"

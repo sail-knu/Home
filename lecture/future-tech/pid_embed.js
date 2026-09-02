@@ -41,10 +41,9 @@ function rk4(s, F, p, dt) {
   ];
 }
 
-var P = { mc: 1, mb: 1, L: 2, b: 0, kP: 0, kI: 0, kD: 0 };
+var P = { mc: 1, mb: 1, L: 2, b: 0, kP: 0, kD: 0 };
 var S = {
   x: 0, v: 0, th: TH0, om: 0, F: 0, t: 0,
-  iTh: 0, iLast: 0, iOn: false,
   running: false, fell: false, fellT: 0
 };
 
@@ -57,19 +56,11 @@ function vec() { return [S.x, S.v, S.th, S.om]; }
 function apply(s) { S.x = s[0]; S.v = s[1]; S.th = s[2]; S.om = s[3]; }
 
 function resetCtrl() {
-  S.iTh = 0; S.iLast = 0; S.iOn = false; S.F = 0;
+  S.F = 0;
 }
 
-function updateCtrl(dt) {
-  var F = -P.kP * S.th - P.kD * S.om;
-  if (P.kI !== 0) {
-    if (!S.iOn) { S.iLast = S.th; S.iOn = true; }
-    else { S.iTh += dt * 0.5 * (S.iLast + S.th); S.iLast = S.th; }
-    F += -P.kI * S.iTh;
-  } else {
-    resetCtrl();
-  }
-  S.F = F;
+function updateCtrl() {
+  S.F = -P.kP * S.th - P.kD * S.om;
 }
 
 function reset() {
@@ -93,7 +84,7 @@ function step(dt) {
   var cdt = 1 / CTRL_HZ;
   if (ctrlAcc >= cdt - 1e-12) {
     ctrlAcc -= cdt;
-    updateCtrl(cdt);
+    updateCtrl();
   }
   apply(rk4(vec(), S.F, P, dt));
   S.t += dt;
@@ -292,13 +283,11 @@ function draw() {
 
 function syncReadout() {
   var pv = document.getElementById('pid-kPV');
-  var iv = document.getElementById('pid-kIV');
   var dv = document.getElementById('pid-kDV');
   var th = document.getElementById('pid-th');
   var xv = document.getElementById('pid-x');
   var fv = document.getElementById('pid-F');
   if (pv) pv.textContent = P.kP.toFixed(0);
-  if (iv) iv.textContent = P.kI.toFixed(0);
   if (dv) dv.textContent = P.kD.toFixed(1);
   if (th) th.textContent = fx(S.th * 180 / Math.PI, 1) + '°';
   if (xv) xv.textContent = fx(S.x, 2) + ' m';
@@ -357,15 +346,10 @@ function loop(now) {
 
 (function bind() {
   var slP = document.getElementById('pid-kP');
-  var slI = document.getElementById('pid-kI');
   var slD = document.getElementById('pid-kD');
   if (slP) {
     slP.value = String(P.kP);
     slP.oninput = function () { setGain('kP', slP.value, 0, 300); };
-  }
-  if (slI) {
-    slI.value = String(P.kI);
-    slI.oninput = function () { setGain('kI', slI.value, 0, 150); };
   }
   if (slD) {
     slD.value = String(P.kD);
