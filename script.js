@@ -241,8 +241,7 @@
 
   const futureEmbeds = {
     "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html", js: "lecture/future-tech/path_embed.js", refresh: "refresh_path_demo" },
-    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html", js: "lecture/future-tech/los_embed.js", refresh: "refresh_los_demo" },
-    "sim-mppi": { host: "mppi-host", html: "lecture/future-tech/mppi_embed.html", js: "lecture/future-tech/mppi_embed.js", refresh: "refresh_mppi_demo" }
+    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html", js: "lecture/future-tech/los_embed.js", refresh: "refresh_los_demo" }
   };
   const futureLoaded = {};
 
@@ -790,7 +789,8 @@
       { id: "2", name: "2강 · 표준 문제" },
       { id: "3", name: "3강 · 안정성" },
       { id: "4", name: "4강 · 구현" },
-      { id: "5", name: "5강 · Tube MPC" }
+      { id: "5", name: "5강 · Tube MPC" },
+      { id: "6", name: "6강 · MPPI" }
     ];
     const notes = [
       { lec: "1", title: "개요", src: "lecture/mpc/01-overview.html" },
@@ -799,10 +799,18 @@
       { lec: "4", title: "소프트웨어", src: "lecture/mpc/04-software.html" },
       { lec: "4", title: "Linear (CVXGEN)", src: "lecture/mpc/04-linear.html" },
       { lec: "4", title: "Nonlinear (CasADi)", src: "lecture/mpc/04-nonlinear.html" },
-      { lec: "5", title: "Tube-based MPC", src: "lecture/mpc/05-tube.html" }
+      { lec: "5", title: "Tube-based MPC", src: "lecture/mpc/05-tube.html" },
+      { lec: "6", title: "MPPI", src: "lecture/mpc/06-mppi.html" },
+      { lec: "6", title: "선박 충돌 회피", embed: "mppi" }
     ];
-    const bust = "?v=20260826e";
+    const bust = "?v=20260902";
     const state = { lec: "1", src: "", seq: 0 };
+    const mppiEmbed = {
+      html: "lecture/mpc/mppi_embed.html",
+      js: "lecture/mpc/mppi_embed.js",
+      refresh: "refresh_mppi_demo"
+    };
+    let mppiLoaded = false;
 
     function lectureName(id) {
       return lectures.find((lec) => lec.id === id)?.name || id + "강";
@@ -828,6 +836,46 @@
       });
     }
 
+    function noteKey(note) {
+      return note.src || ("embed:" + note.embed);
+    }
+
+    function setMppiVisible(on) {
+      const sim = document.getElementById("sim-mppi");
+      if (sim) sim.classList.toggle("is-hidden", !on);
+      host.hidden = on;
+    }
+
+    function loadMppiEmbed() {
+      const dest = document.getElementById("mppi-host");
+      if (!dest) return;
+      if (mppiLoaded) {
+        if (typeof window[mppiEmbed.refresh] === "function") window[mppiEmbed.refresh]();
+        return;
+      }
+      mppiLoaded = true;
+      fetch(mppiEmbed.html + bust).then((res) => {
+        if (!res.ok) throw new Error(res.status);
+        return res.text();
+      }).then((html) => {
+        dest.innerHTML = html;
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = mppiEmbed.js + bust;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }).then(() => {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (typeof window[mppiEmbed.refresh] === "function") window[mppiEmbed.refresh]();
+        }));
+      }).catch(() => {
+        mppiLoaded = false;
+        dest.innerHTML = '<p class="course-hint">시뮬레이터를 불러오지 못했습니다. 로컬 서버에서 다시 열어 주세요.</p>';
+      });
+    }
+
     function renderNotes() {
       const list = notesFor(state.lec);
       simNav.replaceChildren();
@@ -835,7 +883,7 @@
       list.forEach((note) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "sim-pick-btn" + (note.src === state.src ? " active" : "");
+        btn.className = "sim-pick-btn" + (noteKey(note) === state.src ? " active" : "");
         btn.textContent = note.title;
         btn.addEventListener("click", () => showNote(note));
         simNav.appendChild(btn);
@@ -846,12 +894,19 @@
       if (!note) return;
       const seq = ++state.seq;
       state.lec = note.lec;
-      state.src = note.src;
+      state.src = noteKey(note);
       titleEl.textContent = note.title;
       descEl.textContent = lectureName(note.lec);
-      host.innerHTML = '<p class="course-hint">노트를 불러오는 중…</p>';
       renderLectures();
       renderNotes();
+      if (note.embed === "mppi") {
+        host.innerHTML = "";
+        setMppiVisible(true);
+        loadMppiEmbed();
+        return;
+      }
+      setMppiVisible(false);
+      host.innerHTML = '<p class="course-hint">노트를 불러오는 중…</p>';
       fetch(note.src + bust).then((res) => {
         if (!res.ok) throw new Error(res.status);
         return res.text();
@@ -876,6 +931,7 @@
       state.src = "";
       state.seq += 1;
       host.innerHTML = "";
+      setMppiVisible(false);
     }
 
     renderLectures();

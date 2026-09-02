@@ -24,7 +24,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260826f">
+    <link rel="stylesheet" href="styles.css?v=20260902">
     <style>
       html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
       html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
@@ -1227,7 +1227,7 @@
                 <div class="lecture-grid">
                     <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
-                        <h3>미래첨단기술의이해 II</h3>
+                        <h3>미래첨단기술의이해 I</h3>
                         <p class="small-text">Undergraduate</p>
                         <a href="#lecture-future" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
                     </div>
@@ -1298,7 +1298,7 @@
         <div class="section-container course-wrap course-wrap-wide">
             <a href="#lecture" class="page-back">← Lecture</a>
             <div class="section-header">
-                <h2 class="section-title">미래첨단기술의이해 II</h2>
+                <h2 class="section-title">미래첨단기술의이해 I</h2>
                 <div class="underline"></div>
             </div>
             <p class="small-text" data-i18n="course_intro">학부 강의 실습용 시뮬레이터입니다. 아래 버튼으로 하나를 골라 조작할 수 있습니다.</p>
@@ -1307,7 +1307,6 @@
                 <button type="button" class="sim-nav-btn active" data-sim="sim-pid">역진자 PID 제어</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-path">직선 경로 추종 제어기</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-los">LOS 유도 — 웨이포인트 추종</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-mppi">MPPI 선박 충돌 회피</button>
             </nav>
 
             <article class="sim-block" id="sim-pid">
@@ -1422,11 +1421,6 @@
                 <p class="small-text">전방주시거리 Δ 튜닝, 웨이포인트 편집 · CTE·조타 반전 기록</p>
                 <div id="los-host"></div>
             </article>
-            <article class="sim-block is-hidden" id="sim-mppi">
-                <h3 class="subsection-title">MPPI 선박 충돌 회피</h3>
-                <p class="small-text">샘플링 기반 모델 예측 제어로 장애물 피해 가기</p>
-                <div id="mppi-host"></div>
-            </article>
         </div>
     </section>
 
@@ -1480,6 +1474,9 @@
                 <h3 class="subsection-title" id="mpc-title"></h3>
                 <p class="small-text" id="mpc-desc"></p>
                 <div class="note-host" id="mpc-host"></div>
+                <div class="sim-block is-hidden" id="sim-mppi">
+                    <div id="mppi-host"></div>
+                </div>
             </article>
         </div>
     </section>
@@ -1550,7 +1547,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260901" defer></script>
+    <script src="script.js?v=20260902" defer></script>
     <script src="lecture/future-tech/inverted-pendulum-pid_embed.js" defer></script>
     <script
       color="29,78,137"

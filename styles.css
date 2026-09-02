@@ -1695,6 +1695,14 @@ a.member-card {
   margin-top: 4px;
 }
 
+.note-host[hidden] {
+  display: none;
+}
+
+.sim-block > #sim-mppi {
+  margin-top: 8px;
+}
+
 .note-article > p {
   color: var(--copy-color);
   margin-bottom: 14px;

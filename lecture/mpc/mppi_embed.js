@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 function demoVisible() {
-  var page = document.getElementById('lecture-future');
+  var page = document.getElementById('lecture-mpc');
   var block = document.getElementById('sim-mppi');
   return !!(page && block && !page.classList.contains('hidden-page') && !block.classList.contains('is-hidden'));
 }
@@ -1135,6 +1135,12 @@ function applyQual(){
 var acc=0, last=performance.now();
 var fpsN=0, fpsT=performance.now(), uiT=0;
 function loop(now){
+  if(!demoVisible()){
+    if(SIM.running){ SIM.running=false; syncStatus(); }
+    last=now; acc=0;
+    requestAnimationFrame(loop);
+    return;
+  }
   var fs=performance.now();
   try{
     var real=Math.min((now-last)/1000, 0.1); last=now;
