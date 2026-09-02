@@ -1,299 +1,170 @@
 <style>
 #path-host, #path-host * { box-sizing: border-box; }
 .demo-app.demo-path {
-  --ink: #e7eef2; --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #dde8ee;
+  --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #dce7ee;
   --rule: #cfdde5; --rule-2: #a9c1cf;
   --text: #0b2130; --text-2: #42606f; --text-3: #6b8798;
-  --accent: #1d4e89; --accent-deep: #1d4e89; --accent-on: #ffffff;
-  --grid: #dae7ee; --grid-major: #bed4e0;
-  --track: #0369a1; --mark: #b45309; --mark-hot: #92400e;
-  --hull: #15803d; --devi: #be123c; --sight: #4d7c0f; --course: #0d2644;
-  --warn: #be123c;
-  --shadow: 0 6px 20px rgba(20, 50, 70, .12);
+  --accent: #1d4e89; --accent-on: #ffffff;
+  --devi: #be123c;
   margin: 0;
   background: transparent;
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.5;
 }
-#path-host .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
-#path-host .lbl { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); font-weight: 600; }
-#path-host :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-#path-host .t-ok { color: var(--accent); }
-#path-host .t-warn { color: var(--mark); }
-#path-host .t-bad { color: var(--devi); }
-
 #path-host header { display: none; }
-
-#path-host .hint {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--rule);
+#path-host .tip {
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--rule));
   background: color-mix(in srgb, var(--accent) 8%, var(--ink-2));
   color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 13.5px;
 }
-#path-host .hint b { color: var(--accent); font-weight: 700; }
-
-#path-host .stage {
-  position: sticky;
-  top: 72px;
-  z-index: 8;
-  background: var(--ink-2);
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-#path-host .stage-canvas { position: relative; }
-#path-host .chart { position: relative; width: 100%; height: var(--chartH, 240px); min-height: 132px; background: var(--ink); }
-#path-host #path-cv { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
-
-#path-host .stats {
+#path-host .tip b { color: var(--accent); }
+#path-host .ctrl-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--rule);
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px 16px;
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
 }
-#path-host .stats .cell { background: var(--ink-2); padding: 6px 8px; min-width: 0; }
-#path-host .stats .k {
-  display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .03em; color: var(--text-3);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+#path-host .ctrl-bar.two { grid-template-columns: 1fr 1fr; }
+@media (max-width: 720px) {
+  #path-host .ctrl-bar,
+  #path-host .ctrl-bar.two { grid-template-columns: 1fr; }
 }
-#path-host .stats .v {
-  display: block; font-size: 16px; color: var(--text); white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+#path-host .ctrl-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-3);
 }
-#path-host .stats .v.warn { color: var(--devi); }
-#path-host .stats .v.ok, #path-host .stats .v.t-ok { color: var(--accent); }
-#path-host .stats .v.t-warn { color: var(--mark); }
-#path-host .stats .v.t-bad { color: var(--devi); }
-#path-host .stats.core { grid-template-columns: repeat(4, 1fr); }
-#path-host .stats.core .cell { padding: 4px 6px; }
-#path-host .stats.core .k { font-size: 9px; letter-spacing: 0; }
-#path-host .stats.core .v { font-size: 14px; line-height: 1.25; }
-#path-host .stats.aux {
-  grid-template-columns: repeat(2, 1fr);
+#path-host .big-val {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#path-host input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 36px;
+}
+#path-host .chart {
+  width: 100%;
+  height: min(52vw, 380px);
+  min-height: 240px;
+  background: var(--ink-4);
   border: 1px solid var(--rule);
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 12px;
 }
-#path-host .scorebar {
-  display: flex;
-  background: var(--ink-2);
-  border-top: 1px solid var(--rule);
-}
-#path-host .scorebar .cell {
-  flex: 1; min-width: 0; padding: 6px 6px; text-align: center;
-  border-right: 1px solid var(--rule);
-}
-#path-host .scorebar .cell:last-child { border-right: 0; }
-#path-host .scorebar .k { display: block; font-size: 9px; font-weight: 700; color: var(--text-3); }
-#path-host .scorebar .v {
-  display: block; font-family: ui-monospace, Consolas, monospace;
-  font-size: 16px; font-weight: 700; color: var(--accent);
-}
-#path-host .scorebar .v.ok { color: var(--accent); }
-#path-host .scorebar .v.bad { color: var(--devi); }
-#path-host .settle-cd {
-  position: absolute; inset: 0; z-index: 3;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none; background: #0f172a28;
-}
-#path-host .settle-cd[hidden] { display: none; }
-#path-host .settle-cd-num {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 84px; font-weight: 800; line-height: 1; color: var(--accent);
-  text-shadow: 0 1px 0 #fff, 0 8px 24px #0f172a33;
-}
-#path-host .settle-cd-msg { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--text); }
-#path-host .settle-cd.ok .settle-cd-num { font-size: 40px; }
-#path-host .scorelist { padding: 4px 0; }
-#path-host .score-row {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
-  padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 13px;
-}
-#path-host .score-row:last-child { border-bottom: 0; }
-#path-host .score-row .sc { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
-#path-host .score-row .meta { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--text-3); }
-#path-host .score-row.ok .sc { color: var(--accent); }
-
-#path-host .chips { display: flex; gap: 6px; padding: 0 0 8px; background: transparent; }
-#path-host .chips button {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
-  background: var(--ink-2); border: 1px solid var(--rule); color: var(--text-3);
-  border-radius: 9px; font-size: 11.5px; font-family: inherit; cursor: pointer; padding: 4px 6px;
-}
-#path-host .chips button .sw { width: 14px; height: 3px; border-radius: 3px; flex: none; opacity: .35; }
-#path-host .chips button.on { color: var(--text); border-color: var(--rule-2); background: var(--ink-3); }
-#path-host .chips button.on .sw { opacity: 1; }
-
-#path-host #path-recwrap {
-  position: relative; height: 200px; min-height: 160px; background: var(--ink-4);
-  border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-bottom: 12px;
-}
-#path-host #path-rec { width: 100%; height: 100%; display: block; }
-
-#path-host #path-panel { padding-bottom: 6px; }
-#path-host .sec {
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  background: var(--ink-2);
-}
-#path-host .sec-h {
-  width: 100%; background: var(--ink-2); border: 0; color: var(--text-2); cursor: pointer; font-family: inherit;
-  display: flex; align-items: center; gap: 9px; padding: 0 12px; min-height: 46px; text-align: left;
-}
-#path-host .sec-h .t { font-size: 11.5px; letter-spacing: .04em; font-weight: 700; }
-#path-host .sec-h .ln { flex: 1; height: 1px; background: var(--rule); }
-#path-host .sec-h .car { font-size: 10px; color: var(--text-3); transition: transform .16s; }
-#path-host .sec.closed .car { transform: rotate(-90deg); }
-#path-host .sec-b { padding: 2px 12px 14px; }
-#path-host .sec.closed .sec-b { display: none; }
-#path-host #path-btnClearScores {
-  font: inherit; font-weight: 600; min-height: 44px;
-  border: 1px solid var(--rule); border-radius: 9px; background: var(--ink-2); color: var(--text);
-}
-
-#path-host .ctl { margin: 10px 0; }
-#path-host .ctl.off { display: none; }
-#path-host .ctl .lab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 2px; }
-#path-host .ctl .lab .n { color: var(--text-2); font-size: 13px; min-width: 0; }
-#path-host .ctl .lab .n sub { font-size: .72em; }
-#path-host .ctl .lab .v { color: var(--accent); font-size: 16px; font-weight: 700; flex: none; min-width: 84px; text-align: right; }
-
-#path-host input[type=range] {
-  -webkit-appearance: none; appearance: none; width: 100%; height: 44px;
-  background: transparent; outline: none; margin: 0; cursor: pointer; display: block;
-}
-#path-host input[type=range]::-webkit-slider-runnable-track {
-  height: 6px; border-radius: 6px; background: var(--rule-2); border: 0;
-}
-#path-host input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
-  border: 3px solid var(--ink-2); box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgba(0,0,0,.18);
-  margin-top: -11px; cursor: pointer;
-}
-#path-host input[type=range]::-moz-range-track { height: 6px; border-radius: 6px; background: var(--rule-2); border: 0; }
-#path-host input[type=range]::-moz-range-thumb {
-  width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
-  border: 3px solid var(--ink-2); box-shadow: 0 0 0 1px var(--accent); cursor: pointer;
-}
-
-#path-host .pick { display: flex; gap: 7px; }
-#path-host .pick label {
-  flex: 1; display: flex; gap: 8px; align-items: flex-start; cursor: pointer; padding: 10px 10px;
-  background: var(--ink-3); border: 1px solid var(--rule); border-radius: 10px; min-height: 44px;
-}
-#path-host .pick label.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--ink-3)); }
-#path-host .pick input { accent-color: var(--accent); width: 20px; height: 20px; margin: 0; cursor: pointer; flex: none; }
-#path-host .pick .tt { font-size: 12.5px; font-weight: 700; color: var(--text); display: block; }
-#path-host .pick .ss { font-size: 10.5px; color: var(--text-3); display: block; margin-top: 2px; line-height: 1.35; }
-
-#path-host .note {
-  color: var(--text-3); font-size: 12px; line-height: 1.6; background: var(--ink-3);
-  border-left: 2px solid var(--rule-2); padding: 9px 10px; border-radius: 0 7px 7px 0; margin: 10px 0;
-}
-#path-host .note b { color: var(--text-2); font-weight: 700; }
-#path-host .note code { color: var(--accent); font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
-
-#path-host .demo-toolbar {
+#path-host #path-cv { display: block; width: 100%; height: 100%; }
+#path-host .stats {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--rule);
+  margin: 10px 0;
+}
+#path-host .stat {
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+#path-host .stat .k { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+#path-host .stat .v {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#path-host .legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin: 2px 0 10px;
+}
+#path-host .legend i {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  vertical-align: 3px;
+  margin-right: 5px;
+}
+#path-host .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+#path-host button {
+  appearance: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--rule-2);
   background: var(--ink-2);
+  color: var(--text);
+  cursor: pointer;
 }
-#path-host .demo-toolbar button {
-  min-height: 46px; width: 100%; border-radius: 11px; cursor: pointer; font-family: inherit;
-  font-size: 16px; font-weight: 700; background: var(--ink-3); border: 1px solid var(--rule); color: var(--text);
+#path-host #path-btnPlay {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
 }
-#path-host .demo-toolbar button.pri { background: var(--accent-deep); border-color: var(--accent); color: var(--accent-on); }
-#path-host .demo-toolbar button.danger { background: var(--warn); border-color: var(--warn); color: #fff; }
-
-@media (prefers-reduced-motion: reduce) {
-  #path-host, #path-host * { transition: none !important; }
-}
-
-@media (min-width: 900px) {
-  #path-host .stage { position: static; }
-  #path-host .demo-toolbar {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 4;
-    display: flex;
-    width: auto;
-    grid-template-columns: none;
-    gap: 6px;
-    padding: 6px;
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    background: color-mix(in srgb, #fff 92%, transparent);
-    box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
-  }
-  #path-host .demo-toolbar button {
-    min-height: 36px;
-    min-width: 88px;
-    width: auto;
-    padding: 7px 14px;
-    font-size: 14px;
-  }
-}
+#path-host #path-btnPlay.danger { background: var(--devi); border-color: var(--devi); }
 </style>
 <div class="demo-app demo-path" id="demo-path">
-<header>
-  <h1>직선 경로 추종 제어기</h1>
-  <span class="pill" id="path-statusPill">대기</span>
-  <button class="iconbtn" id="path-themeBtn" type="button" aria-label="주·야간 전환" hidden>◐</button>
-</header>
-
-<p class="hint"><b>실습:</b> CTE 게인(K<sub>p,e</sub> 등)을 올려 경로에 붙이세요. |e|가 초기 오차의 <b>1%</b> 안에 <b>5초</b> 머물면 성공입니다. 점수는 누적 |e| (낮을수록 좋음)입니다. 정지 중에는 배를 끌어 초기 위치를, 앞쪽 초록 점을 끌어 초기 침로를 바꿀 수 있습니다.</p>
-
-<div class="demo-layout">
-  <div class="demo-stage-col">
-    <div class="stage" id="path-stage">
-      <div class="stage-canvas">
-        <div class="chart">
-          <canvas id="path-cv"></canvas>
-          <div id="path-settleCd" class="settle-cd" hidden>
-            <span class="settle-cd-num" id="path-settleCdNum">5</span>
-            <span class="settle-cd-msg" id="path-settleCdMsg">1% 오차 유지</span>
-          </div>
-        </div>
-        <div class="demo-toolbar">
-          <button type="button" id="path-playBtn" class="pri">시작</button>
-          <button type="button" id="path-resetBtn">초기화</button>
-        </div>
-      </div>
-      <div class="stats core" id="path-cells"></div>
-      <div class="scorebar">
-        <div class="cell"><span class="k">누적 |e| (낮을수록 좋음)</span><span class="v" id="path-rIae">0.00</span></div>
-        <div class="cell"><span class="k">남은 시간</span><span class="v" id="path-rSettle">5.0</span></div>
-        <div class="cell"><span class="k">내 최고</span><span class="v" id="path-rBest">–</span></div>
-      </div>
+  <header>
+    <h1>직선 경로 추종 제어기</h1>
+  </header>
+  <p class="tip"><b>K<sub>p,e</sub></b>를 키우면 경로를 넘나들며 흔들릴 수 있습니다. <b>K<sub>d,e</sub></b>로 감쇠하세요. Δ와 R<sub>acc</sub>도 직접 바꿀 수 있습니다.</p>
+  <div class="ctrl-bar two">
+    <div>
+      <p class="ctrl-title">전방주시거리 Δ <span class="big-val" id="path-deltaV">4.0</span> m</p>
+      <input type="range" id="path-delta" min="0.8" max="12" step="0.1" value="4">
     </div>
-    <div class="stats aux" id="path-cellsAux"></div>
-    <div class="sec">
-      <button class="sec-h" type="button" onclick="this.parentElement.classList.toggle('closed')"><span class="t">내 기록 (이 기기)</span><span class="ln"></span><span class="car">▼</span></button>
-      <div class="sec-b">
-        <div id="path-scoreList" class="scorelist"></div>
-        <p class="hint" style="margin:8px 0">점수 = ∫|e| dt. |e| ≤ 0.01·|e₀| 를 5초 유지하면 성공.</p>
-        <button type="button" id="path-btnClearScores" style="width:100%;min-height:44px">기록 지우기</button>
-      </div>
+    <div>
+      <p class="ctrl-title">Acceptance radius R<sub>acc</sub> <span class="big-val" id="path-raccV">1.8</span> m</p>
+      <input type="range" id="path-racc" min="0.4" max="6" step="0.1" value="1.8">
     </div>
-    <div class="chips" id="path-chips"></div>
-    <div id="path-recwrap"><canvas id="path-rec"></canvas></div>
   </div>
-  <div class="demo-ctrl-col">
-    <div id="path-panel"></div>
+  <div class="ctrl-bar">
+    <div>
+      <p class="ctrl-title">K<sub>p,e</sub> 비례 <span class="big-val" id="path-kpeV">0.00</span></p>
+      <input type="range" id="path-kpe" min="0" max="4" step="0.05" value="0">
+    </div>
+    <div>
+      <p class="ctrl-title">K<sub>i,e</sub> 적분 <span class="big-val" id="path-kieV">0.00</span></p>
+      <input type="range" id="path-kie" min="0" max="1" step="0.01" value="0">
+    </div>
+    <div>
+      <p class="ctrl-title">K<sub>d,e</sub> 미분 <span class="big-val" id="path-kdeV">0.00</span></p>
+      <input type="range" id="path-kde" min="0" max="4" step="0.05" value="0">
+    </div>
   </div>
-</div>
+  <div class="chart"><canvas id="path-cv"></canvas></div>
+  <div class="stats">
+    <div class="stat"><span class="k">횡방향 오차 e</span><span class="v" id="path-e">—</span></div>
+    <div class="stat"><span class="k">전방주시 Δ</span><span class="v" id="path-dRead">4.0 m</span></div>
+    <div class="stat"><span class="k">Acceptance R<sub>acc</sub></span><span class="v" id="path-rRead">1.8 m</span></div>
+  </div>
+  <div class="legend">
+    <span><i style="background:#0369a1"></i>경로</span>
+    <span><i style="background:#dc2626"></i>자취</span>
+    <span><i style="background:#4d7c0f"></i>LOS 시선</span>
+    <span><i style="background:#b45309;height:8px;width:8px;border-radius:50%;border:1.5px dashed #b45309;background:transparent"></i>R<sub>acc</sub></span>
+  </div>
+  <div class="btn-row">
+    <button type="button" id="path-btnPlay">시작</button>
+    <button type="button" id="path-btnReset">초기화</button>
+  </div>
 </div>

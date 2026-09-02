@@ -96,9 +96,6 @@
     if (targetId === "#lecture-future") {
       const active = document.querySelector("#lecture-future .sim-nav-btn.active");
       if (active) showSim(active.getAttribute("data-sim"));
-      if (typeof window.refreshPidDemo === "function") {
-        requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
-      }
     }
     if (typeof window.setSailVehiclePage === "function") window.setSailVehiclePage(targetId);
   }
@@ -244,8 +241,10 @@
   });
 
   const futureEmbeds = {
-    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html", js: "lecture/future-tech/path_embed.js", refresh: "refresh_path_demo" },
-    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260902c", js: "lecture/future-tech/los_embed.js?v=20260902c", refresh: "refresh_los_demo" }
+    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html?v=20260902e", js: "lecture/future-tech/path_embed.js?v=20260902e", refresh: "refresh_path_demo" },
+    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260902c", js: "lecture/future-tech/los_embed.js?v=20260902c", refresh: "refresh_los_demo" },
+    "sim-pid": { host: "pid-host", html: "lecture/future-tech/pid_embed.html?v=20260902e", js: "lecture/future-tech/pid_embed.js?v=20260902e", refresh: "refresh_pid_demo" },
+    "sim-pidpos": { host: "pidpos-host", html: "lecture/future-tech/pidpos_embed.html?v=20260902e", js: "lecture/future-tech/pidpos_embed.js?v=20260902e", refresh: "refresh_pidpos_demo" }
   };
   const futureLoaded = {};
 
@@ -290,9 +289,6 @@
     const frame = panel.querySelector("iframe");
     if (frame && frame.dataset.src && !frame.getAttribute("src")) {
       frame.src = frame.dataset.src;
-    }
-    if (id === "sim-pid" && typeof window.refreshPidDemo === "function") {
-      requestAnimationFrame(() => requestAnimationFrame(() => window.refreshPidDemo()));
     }
     if (futureEmbeds[id]) loadFutureEmbed(id);
   }

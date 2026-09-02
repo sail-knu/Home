@@ -1,0 +1,139 @@
+<style>
+#pid-host, #pid-host * { box-sizing: border-box; }
+.demo-app.demo-pid {
+  --ink-2: #ffffff; --ink-3: #f0f5f8; --ink-4: #dce7ee;
+  --rule: #cfdde5; --rule-2: #a9c1cf;
+  --text: #0b2130; --text-2: #42606f; --text-3: #6b8798;
+  --accent: #1d4e89; --accent-on: #ffffff;
+  --devi: #be123c;
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+#pid-host header { display: none; }
+#pid-host .tip {
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--rule));
+  background: color-mix(in srgb, var(--accent) 8%, var(--ink-2));
+  color: var(--text-2);
+  font-size: 13.5px;
+}
+#pid-host .tip b { color: var(--accent); }
+#pid-host .ctrl-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px 16px;
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+}
+@media (max-width: 720px) {
+  #pid-host .ctrl-bar { grid-template-columns: 1fr; }
+}
+#pid-host .ctrl-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+#pid-host .big-val {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#pid-host input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 36px;
+}
+#pid-host .chart {
+  width: 100%;
+  height: min(56vw, 420px);
+  min-height: 280px;
+  background: var(--ink-4);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+}
+@media (max-width: 720px) {
+  #pid-host .chart { height: min(68vw, 420px); }
+}
+#pid-host #pid-cv { display: block; width: 100%; height: 100%; }
+#pid-host .stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+#pid-host .stat {
+  background: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+#pid-host .stat .k { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+#pid-host .stat .v {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+#pid-host .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+#pid-host button {
+  appearance: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--rule-2);
+  background: var(--ink-2);
+  color: var(--text);
+  cursor: pointer;
+}
+#pid-host #pid-btnPlay {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+}
+#pid-host #pid-btnPlay.danger { background: var(--devi); border-color: var(--devi); }
+</style>
+<div class="demo-app demo-pid" id="demo-pid">
+  <header>
+    <h1>역진자 PID 제어</h1>
+  </header>
+  <p class="tip"><b>k<sub>P</sub></b>·<b>k<sub>I</sub></b>·<b>k<sub>D</sub></b>만으로 진자를 세우세요. 위치 제어가 없어 카트는 x = 0에 머물지 않습니다. k<sub>P</sub>는 g(m<sub>c</sub>+m<sub>b</sub>) ≈ 19.6보다 커야 합니다.</p>
+  <div class="ctrl-bar">
+    <div>
+      <p class="ctrl-title">k<sub>P</sub> 비례 <span class="big-val" id="pid-kPV">0</span></p>
+      <input type="range" id="pid-kP" min="0" max="300" step="1" value="0">
+    </div>
+    <div>
+      <p class="ctrl-title">k<sub>I</sub> 적분 <span class="big-val" id="pid-kIV">0</span></p>
+      <input type="range" id="pid-kI" min="0" max="150" step="1" value="0">
+    </div>
+    <div>
+      <p class="ctrl-title">k<sub>D</sub> 미분 <span class="big-val" id="pid-kDV">0.0</span></p>
+      <input type="range" id="pid-kD" min="0" max="100" step="0.5" value="0">
+    </div>
+  </div>
+  <div class="chart"><canvas id="pid-cv"></canvas></div>
+  <div class="stats">
+    <div class="stat"><span class="k">각도 θ</span><span class="v" id="pid-th">—</span></div>
+    <div class="stat"><span class="k">위치 x</span><span class="v" id="pid-x">—</span></div>
+    <div class="stat"><span class="k">제어력 F</span><span class="v" id="pid-F">—</span></div>
+  </div>
+  <div class="btn-row">
+    <button type="button" id="pid-btnPlay">시작</button>
+    <button type="button" id="pid-btnReset">초기화</button>
+  </div>
+</div>

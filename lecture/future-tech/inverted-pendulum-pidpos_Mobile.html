@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>역진자 PID — kP · kI · kD</title>
+<title>역진자 위치 제어 — kPx · kDx</title>
 <style>
 body{
   margin:0;background:#e7eef2;color:#0b2130;
@@ -20,16 +20,16 @@ body{
 <div class="wrap">
   <a class="back" href="index.html">← 실습 목록</a>
   <span class="kicker">Inverted pendulum</span>
-  <h1>각도 PID — k<sub>P</sub> · k<sub>I</sub> · k<sub>D</sub></h1>
-  <div id="pid-host"></div>
+  <h1>위치 제어 — k<sub>Px</sub> · k<sub>Dx</sub></h1>
+  <div id="pidpos-host"></div>
 </div>
 <script>
 (function () {
-  var host = document.getElementById('pid-host');
-  fetch('pid_embed.html').then(function (r) { return r.text(); }).then(function (html) {
+  var host = document.getElementById('pidpos-host');
+  fetch('pidpos_embed.html').then(function (r) { return r.text(); }).then(function (html) {
     host.innerHTML = html;
     var s = document.createElement('script');
-    s.src = 'pid_embed.js';
+    s.src = 'pidpos_embed.js';
     document.body.appendChild(s);
   });
 })();
