@@ -32,7 +32,7 @@ var P = {
 var S = {
   k: 0, x: 0, y: 0, yaw: 0,
   t: 0, running: false, done: false, first: true,
-  ie: 0, eDot: 0, ePrev: 0,
+  ie: 0, eDot: 0, ePrev: 0, prevToB: 1e9,
   trail: [], g: null
 };
 
@@ -51,21 +51,46 @@ function seg(k) {
   return { A: A, B: B, alpha: Math.atan2(dy, dx), L: hypot(dx, dy) };
 }
 
+function pointAhead(k, s0, dist) {
+  var rem = Math.max(s0, 0) + dist;
+  var i = k;
+  var n;
+  for (n = 0; n < 8; n++) {
+    if (i >= nSeg()) {
+      var last = WPS[WPS.length - 1];
+      return { x: last.x, y: last.y };
+    }
+    var sg = seg(i);
+    if (rem <= sg.L) {
+      return {
+        x: sg.A.x + rem * Math.cos(sg.alpha),
+        y: sg.A.y + rem * Math.sin(sg.alpha)
+      };
+    }
+    rem -= sg.L;
+    i += 1;
+  }
+  var end = WPS[WPS.length - 1];
+  return { x: end.x, y: end.y };
+}
+
 function guidance() {
   var g = seg(S.k);
   var ca = Math.cos(g.alpha), sa = Math.sin(g.alpha);
   var dx = S.x - g.A.x, dy = S.y - g.A.y;
   var s = dx * ca + dy * sa;
   var e = -dx * sa + dy * ca;
-  var foot = { x: g.A.x + s * ca, y: g.A.y + s * sa };
-  var losPt = { x: foot.x + P.delta * ca, y: foot.y + P.delta * sa };
-  var chid = g.alpha + Math.atan2(-e, P.delta);
-  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid };
+  var sFoot = clamp(s, 0, g.L);
+  var foot = { x: g.A.x + sFoot * ca, y: g.A.y + sFoot * sa };
+  var losPt = pointAhead(S.k, s, P.delta);
+  var chid = Math.atan2(losPt.y - S.y, losPt.x - S.x);
+  var onSeg = s >= 0 && s <= g.L;
+  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid, onSeg: onSeg };
 }
 
 function reset() {
   S.k = 0; S.t = 0; S.done = false; S.first = true;
-  S.ie = 0; S.eDot = 0; S.ePrev = 0;
+  S.ie = 0; S.eDot = 0; S.ePrev = 0; S.prevToB = 1e9;
   S.trail = []; S.g = null;
   var g = seg(0);
   S.x = g.A.x - P.e0 * Math.sin(g.alpha);
@@ -89,8 +114,13 @@ function step(dt) {
     S.eDot += (dE - S.eDot) * kf;
   }
   S.ePrev = g.e;
-  S.ie = clamp(S.ie + g.e * dt, -P.iLim, P.iLim);
-  var uc = -(P.kpe * g.e + P.kie * S.ie + P.kde * S.eDot);
+  var align = Math.max(0, Math.cos(wrap(S.yaw - g.alpha)));
+  align = align * align;
+  var useE = g.onSeg && align > 0.05;
+  var eCtl = useE ? g.e * align : 0;
+  if (useE) S.ie = clamp(S.ie + g.e * align * dt, -P.iLim, P.iLim);
+  else S.ie = 0;
+  var uc = -(P.kpe * eCtl + P.kie * S.ie + P.kde * (useE ? S.eDot * align : 0));
   var uh = P.kph * wrap(g.chid - S.yaw);
   var w = clamp(uc + uh, -P.wmax, P.wmax);
   S.x += P.v * Math.cos(S.yaw) * dt;
@@ -102,12 +132,17 @@ function step(dt) {
   if (S.trail.length > 1400) S.trail.shift();
 
   var toB = hypot(g.B.x - S.x, g.B.y - S.y);
-  if (toB < P.Racc || g.s > g.L) {
+  var hit = toB < P.Racc;
+  var missed = g.s > g.L && toB > S.prevToB && toB > P.Racc;
+  if (hit || missed) {
     if (S.k < nSeg() - 1) {
       S.k += 1;
       S.ie = 0;
       S.first = true;
+      S.prevToB = 1e9;
     } else S.done = true;
+  } else {
+    S.prevToB = toB;
   }
 }
 

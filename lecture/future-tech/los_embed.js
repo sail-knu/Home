@@ -26,7 +26,7 @@ var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 95 * D2R, dt: 0.02, e0: 
 
 var S = {
   k: 0, x: 0, y: 0, yaw: 0,
-  t: 0, running: false, done: false,
+  t: 0, running: false, done: false, prevToB: 1e9,
   trail: [], g: null
 };
 
@@ -45,20 +45,44 @@ function seg(k) {
   return { A: A, B: B, alpha: Math.atan2(dy, dx), L: hypot(dx, dy) };
 }
 
+function pointAhead(k, s0, dist) {
+  var rem = Math.max(s0, 0) + dist;
+  var i = k;
+  var n;
+  for (n = 0; n < 8; n++) {
+    if (i >= nSeg()) {
+      var last = WPS[WPS.length - 1];
+      return { x: last.x, y: last.y };
+    }
+    var sg = seg(i);
+    if (rem <= sg.L) {
+      return {
+        x: sg.A.x + rem * Math.cos(sg.alpha),
+        y: sg.A.y + rem * Math.sin(sg.alpha)
+      };
+    }
+    rem -= sg.L;
+    i += 1;
+  }
+  var end = WPS[WPS.length - 1];
+  return { x: end.x, y: end.y };
+}
+
 function guidance() {
   var g = seg(S.k);
   var ca = Math.cos(g.alpha), sa = Math.sin(g.alpha);
   var dx = S.x - g.A.x, dy = S.y - g.A.y;
   var s = dx * ca + dy * sa;
   var e = -dx * sa + dy * ca;
-  var foot = { x: g.A.x + s * ca, y: g.A.y + s * sa };
-  var losPt = { x: foot.x + P.delta * ca, y: foot.y + P.delta * sa };
-  var chid = g.alpha + Math.atan2(-e, P.delta);
+  var sFoot = clamp(s, 0, g.L);
+  var foot = { x: g.A.x + sFoot * ca, y: g.A.y + sFoot * sa };
+  var losPt = pointAhead(S.k, s, P.delta);
+  var chid = Math.atan2(losPt.y - S.y, losPt.x - S.x);
   return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid };
 }
 
 function reset() {
-  S.k = 0; S.t = 0; S.done = false; S.trail = []; S.g = null;
+  S.k = 0; S.t = 0; S.done = false; S.prevToB = 1e9; S.trail = []; S.g = null;
   var g = seg(0);
   S.x = g.A.x - P.e0 * Math.sin(g.alpha);
   S.y = g.A.y + P.e0 * Math.cos(g.alpha);
@@ -84,9 +108,15 @@ function step(dt) {
   if (S.trail.length > 1400) S.trail.shift();
 
   var toB = hypot(g.B.x - S.x, g.B.y - S.y);
-  if (toB < P.Racc || g.s > g.L) {
-    if (S.k < nSeg() - 1) S.k += 1;
-    else S.done = true;
+  var hit = toB < P.Racc;
+  var missed = g.s > g.L && toB > S.prevToB && toB > P.Racc;
+  if (hit || missed) {
+    if (S.k < nSeg() - 1) {
+      S.k += 1;
+      S.prevToB = 1e9;
+    } else S.done = true;
+  } else {
+    S.prevToB = toB;
   }
 }
 
