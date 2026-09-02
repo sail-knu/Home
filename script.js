@@ -62,6 +62,7 @@
       "#professor": "#members",
       "#member-im": "#members",
       "#member-yu": "#members",
+      "#member-woo": "#members",
       "#lecture-future": "#lecture",
       "#lecture-mechatronics": "#lecture",
       "#lecture-vibrations": "#lecture",
