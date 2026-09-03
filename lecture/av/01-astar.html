@@ -1,0 +1,39 @@
+<div class="note-article">
+  <p>격자 맵에서 <strong>시작점 → 목표</strong>의 최단 경로를 찾습니다. open list를 처음부터 짜지 않고, 탐색이 펼쳐지는 화면과 heuristic이 어디 있는지만 보면 됩니다.</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/01_astar.gif" alt="A* search expanding then the shortest path">
+    <figcaption>색은 펼친 순서(이른 칸 → 늦은 칸), 빨간 선이 최종 경로입니다.</figcaption>
+  </figure>
+
+  <h3>알고리즘</h3>
+  <p>A*는 그래프 위 최선 우선 탐색입니다. 이 코드에서 그래프는 격자입니다. 장애물 칸은 막고, 나머지는 8방향으로 이동합니다. 각 칸 \(n\)에 세 값을 둡니다.</p>
+  <ul class="custom-bullet-list">
+    <li>\(g(n)\): 시작점에서 지금까지 온 실제 비용</li>
+    <li>\(h(n)\): 목표까지 남은 비용의 추정(heuristic)</li>
+    <li>\(f(n)=g(n)+h(n)\): 이 칸을 거쳐 가면 전체가 이 정도일 것이라는 점수</li>
+  </ul>
+  <p>매 스텝에서 \(f\)가 가장 작은 칸을 꺼냅니다. 목표가 나오면 parent를 거슬러 경로를 복원합니다. \(h(n)\)은 <code>calc_heuristic</code>입니다.</p>
+
+  <h3>Heuristic</h3>
+  <p>\(h\)가 실제 남은 비용보다 작거나 같으면(admissible) A*는 최단 경로를 보장합니다. <code>--weight</code> \(w&gt;1\)이면 \(f=g+w\,h\)인 weighted A*입니다.</p>
+  <table class="note-table">
+    <thead>
+      <tr><th><code>--heuristic</code></th><th>\(h\)</th><th>느낌</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>euclidean</td><td>\(\sqrt{\Delta x^2+\Delta y^2}\)</td><td>기본. 8방향과 잘 맞음</td></tr>
+      <tr><td>manhattan</td><td>\(|\Delta x|+|\Delta y|\)</td><td>펼치는 모양이 달라짐</td></tr>
+      <tr><td>zero</td><td>\(0\)</td><td>Dijkstra. 더 많이 펼침</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note-callout">원은 로봇 반지름만큼 팽창한 뒤 격자 칸을 막습니다. 맵은 <code>shared/world.py</code>의 <code>default_world()</code>입니다.</div>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 01_astar/run.py
+python 01_astar/run.py --heuristic manhattan
+python 01_astar/run.py --heuristic zero
+python 01_astar/run.py --weight 2.0</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/01_astar/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · 코드에서 볼 곳: <code>astar.py</code> → <code>calc_heuristic</code></p>
+</div>

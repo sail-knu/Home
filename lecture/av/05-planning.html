@@ -1,0 +1,29 @@
+<div class="note-article">
+  <p>이 가이드에서 가장 중요한 한 장면입니다. 새 알고리즘을 추가하지 않고, 1–2강 planner가 만든 경로를 4강 PID에 넣습니다.</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/05_planning_tracking.gif" alt="A* path downsampled then tracked by PID">
+    <figcaption>A* 경로를 downsample한 뒤 PID가 따라갑니다. planner와 tracker가 처음 붙는 장면입니다.</figcaption>
+  </figure>
+
+  <pre class="note-code"><code>rx, ry = planner(...)
+waypoints = np.column_stack((rx, ry))</code></pre>
+
+  <ul class="custom-bullet-list">
+    <li><strong>Planning (01/02)</strong>: 맵과 장애물을 보고 충돌 없는 \((x, y)\) 점열을 만든다. \(\theta, v, \omega\)는 모른다.</li>
+    <li><strong>Tracking (04)</strong>: 그 점열만 보고 heading 오차로 \(\omega\)를 만든다. 왜 그 점이 생겼는지는 모른다.</li>
+  </ul>
+  <p>연결은 배열 모양을 맞추는 일입니다. planner는 <code>rx, ry</code> 두 리스트, PID는 <code>(N, 2)</code> waypoint입니다.</p>
+  <pre class="note-code"><code>planned = np.column_stack((rx, ry))
+waypoints = downsample_waypoints(planned, min_spacing=spacing)</code></pre>
+  <p>A* 격자는 보통 1 m마다 점이 있어서, 그대로 조준하면 heading 목표가 매 스텝 바뀌고 PID가 떨릴 수 있습니다. <code>--spacing</code>이 그 최소 간격입니다. 너무 성기면 코너를 크게 자르고, 너무 촘촘하면 \(\omega\)가 자주 바뀝니다.</p>
+
+  <div class="note-callout">같은 PID라도 A* 경로는 비교적 깔끔하고, RRT는 구불구불하며 seed마다 다릅니다. 창은 planning 장면 다음에 tracking 장면으로 이어집니다.</div>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 05_planning_tracking/run.py
+python 05_planning_tracking/run.py --planner rrt --spacing 3.0
+python 05_planning_tracking/run.py --spacing 0.5
+python 05_planning_tracking/run.py --spacing 4.0</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/05_planning_tracking/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>run.py</code> → <code>plan_waypoints</code></p>
+</div>

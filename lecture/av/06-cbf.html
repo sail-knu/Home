@@ -1,0 +1,35 @@
+<div class="note-article">
+  <p>4강 PID는 경로만 따라가므로 앞에 장애물이 있으면 그대로 들어갑니다. 이번 주는 그 입력을 <strong>안전 제약</strong>으로 고칩니다. 상대차수 2 CBF(HOCBF)입니다.</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/06_cbf.gif" alt="PID only colliding versus PID plus CBF avoiding">
+    <figcaption>빨간 궤적은 LOS PID only(충돌), 초록은 PID + HOCBF(회피)입니다.</figcaption>
+  </figure>
+
+  <p>상태는 \([x,\, y,\, \theta,\, v]\), 입력은 \([\mathrm{acc},\, \mathrm{rot}]\)입니다. 3–4강의 \((v, \omega)\)와 달리 속도를 상태로 두고, 가속과 조향을 입력으로 씁니다.</p>
+
+  <div class="note-math glass-panel">
+    \[
+      B(x)=(x-x_o)^2+(y-y_o)^2-R^2
+    \]
+    <p>\(B&gt;0\)이면 바깥, \(B=0\)이면 경계입니다. \(B\)는 위치만 보고 입력은 두 번 미분해야 보이므로 상대차수 2입니다.</p>
+    \[
+      \ddot B + (\gamma_1+\gamma_2)\dot B + \gamma_1\gamma_2 B \ge 0
+    \]
+    \[
+      \min_u \tfrac12 (u-u_{\mathrm{nom}})^\top W (u-u_{\mathrm{nom}})
+      \quad\text{s.t.}\quad
+      Au\le b,\ \ |\mathrm{acc}|\le a_{\max},\ \ |\mathrm{rot}|\le\omega_{\max}
+    \]
+    <p>“원래 PID가 원한 입력을 최대한 유지하되, barrier와 입력 한계를 지켜라”입니다. \(W\)에서 가속 변화를 비싸게 두어, 필터는 멈추기보다 돌아갑니다.</p>
+  </div>
+
+  <div class="note-callout">\(\gamma_1, \gamma_2\)가 작으면 제약을 일찍·멀리서 느끼고, 크면 경계에 더 붙습니다. CBF는 무엇을 하고 싶은지를 정하지 않습니다. LOS PID가 \(u_{\mathrm{nom}}\)을 만들고 CBF가 그걸 고칩니다.</div>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 06_cbf/run.py
+python 06_cbf/run.py --gamma1 0.1 --gamma2 0.1
+python 06_cbf/run.py --obs-x 15 --obs-r 4
+python 06_cbf/run.py --mode pid</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/06_cbf/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>cbf_qp.py</code> → <code>barrier</code>, <code>cbf_filter</code></p>
+</div>

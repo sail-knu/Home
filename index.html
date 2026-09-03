@@ -24,7 +24,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260902e">
+    <link rel="stylesheet" href="styles.css?v=20260904">
     <style>
       html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
       html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
@@ -1342,6 +1342,12 @@
                         <p class="small-text">Model Predictive Control</p>
                         <a href="#lecture-mpc" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_mpc_open">설명 보기</a>
                     </div>
+                    <div class="lecture-card">
+                        <div class="lecture-term">Notes</div>
+                        <h3>Autonomous Vehicle</h3>
+                        <p class="small-text">학부연구생 온보딩</p>
+                        <a href="#lecture-av" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_av_open">설명 보기</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1443,6 +1449,24 @@
         </div>
     </section>
 
+    <section id="lecture-av" class="section page-section hidden-page">
+        <div class="section-container course-wrap course-wrap-wide">
+            <a href="#lecture" class="page-back">← Lecture</a>
+            <div class="section-header">
+                <h2 class="section-title">Autonomous Vehicle</h2>
+                <div class="underline"></div>
+            </div>
+            <p class="small-text" data-i18n="av_kicker">학부연구생 온보딩 튜토리얼 · 강의를 고른 뒤 본문을 읽고, 코드는 GitHub에서 실행합니다.</p>
+            <nav class="sim-lec-nav" id="av-lec-nav" aria-label="Autonomous Vehicle 강의"></nav>
+            <nav class="sim-nav sim-nav-dense" id="av-sim-nav" aria-label="Autonomous Vehicle 세부 노트"></nav>
+            <article class="sim-block">
+                <h3 class="subsection-title" id="av-title"></h3>
+                <p class="small-text" id="av-desc"></p>
+                <div class="note-host" id="av-host"></div>
+            </article>
+        </div>
+    </section>
+
     <section id="gallery" class="section page-section hidden-page">
         <div class="section-container">
             <div class="section-header">
@@ -1509,7 +1533,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260902h" defer></script>
+    <script src="script.js?v=20260904" defer></script>
     <script
       color="29,78,137"
       opacity="0.32"
@@ -1564,7 +1588,9 @@
         "course_intro_vib": `Interactive demos for each lecture. Pick a lecture, then a simulator.`,
         "lecture_notes": `Notes`,
         "lecture_mpc_open": `Read notes`,
-        "mpc_kicker": `Model Predictive Control · a year-independent note. Pick a lecture, then read.`
+        "lecture_av_open": `Read notes`,
+        "mpc_kicker": `Model Predictive Control · a year-independent note. Pick a lecture, then read.`,
+        "av_kicker": `Undergrad onboarding tutorial. Pick a lecture, then read. Run the code on GitHub.`
       };
       var origKO = {};
       function cacheKO() {

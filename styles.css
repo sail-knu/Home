@@ -1807,6 +1807,51 @@ a.member-card {
   margin-bottom: 16px;
 }
 
+.note-figure {
+  margin: 16px 0 20px;
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+}
+
+.note-figure img {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+}
+
+.note-figure figcaption {
+  padding: 10px 14px 12px;
+  color: var(--muted-text);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.note-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 18px;
+  font-size: 0.92rem;
+}
+
+.note-table th,
+.note-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--surface-border);
+  color: var(--copy-color);
+  vertical-align: top;
+}
+
+.note-table th {
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 @media (max-width: 800px) {
   .note-steps,
   .note-split {

@@ -1,0 +1,35 @@
+<div class="note-article">
+  <p>랜덤 제어 \((v, \omega)\)를 넣고 <strong>unicycle</strong>이 어떻게 가는지 봅니다. 이후 주 PID / CBF / MPPI가 모두 이 모델을 씁니다. (6강 CBF만 상태에 속도 \(v\)를 하나 더 둡니다.)</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/03_vehicle_model.gif" alt="Unicycle trajectory and piecewise-constant inputs">
+    <figcaption>왼쪽은 궤적, 오른쪽은 같은 시간의 입력입니다.</figcaption>
+  </figure>
+
+  <div class="note-math glass-panel">
+    \[
+      x=\begin{bmatrix}x\\y\\\theta\end{bmatrix},\quad u=(v,\,\omega)
+    \]
+    \[
+      \dot x = v\cos\theta,\quad \dot y = v\sin\theta,\quad \dot\theta = \omega
+    \]
+    <p>코드는 한 스텝 Euler입니다. <code>shared/vehicle.py</code>의 <code>update(state, v, omega, dt)</code>.</p>
+    \[
+      \begin{aligned}
+        x &\leftarrow x + v\cos\theta\,\Delta t \\
+        y &\leftarrow y + v\sin\theta\,\Delta t \\
+        \theta &\leftarrow \theta + \omega\,\Delta t
+      \end{aligned}
+    \]
+  </div>
+
+  <p>\(\omega\)가 거의 일정하면 궤적은 대략 원이고, 반지름은 \(v/|\omega|\)입니다. \(v\)만 있고 \(\omega=0\)이면 직진, \(v=0\)이면 제자리 회전입니다.</p>
+  <p><code>run.py</code>는 시간을 <code>--n-seg</code> 구간으로 나누고, 각 구간에서 \((v, \omega)\)를 한 번만 뽑습니다. 같은 입력이라도 \(\Delta t\)가 크면 Euler가 거칠어지고 원이 일그러질 수 있습니다.</p>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 03_vehicle_model/run.py
+python 03_vehicle_model/run.py --seed 3 --n-seg 3
+python 03_vehicle_model/run.py --dt 0.5
+python 03_vehicle_model/test_vehicle.py</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/03_vehicle_model/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>shared/vehicle.py</code> → <code>update</code></p>
+</div>

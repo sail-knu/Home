@@ -18,7 +18,8 @@
   const coursePageKeys = {
     "#lecture-mechatronics": "mech",
     "#lecture-vibrations": "vib",
-    "#lecture-mpc": "mpc"
+    "#lecture-mpc": "mpc",
+    "#lecture-av": "av"
   };
 
   function syncCourseDemos(targetId) {
@@ -66,7 +67,8 @@
       "#lecture-future": "#lecture",
       "#lecture-mechatronics": "#lecture",
       "#lecture-vibrations": "#lecture",
-      "#lecture-mpc": "#lecture"
+      "#lecture-mpc": "#lecture",
+      "#lecture-av": "#lecture"
     };
     navItems.forEach((nav) => {
       const href = nav.getAttribute("href");
@@ -938,6 +940,114 @@
     renderLectures();
     renderNotes();
     courseControllers.mpc = { openFirst, unload };
+  })();
+
+  (function initAvNotes() {
+    const lecNav = document.getElementById("av-lec-nav");
+    const simNav = document.getElementById("av-sim-nav");
+    const titleEl = document.getElementById("av-title");
+    const descEl = document.getElementById("av-desc");
+    const host = document.getElementById("av-host");
+    if (!lecNav || !simNav || !titleEl || !descEl || !host) return;
+
+    const lectures = [
+      { id: "0", name: "개요" },
+      { id: "1", name: "1강 · A*" },
+      { id: "2", name: "2강 · RRT" },
+      { id: "3", name: "3강 · Vehicle" },
+      { id: "4", name: "4강 · PID" },
+      { id: "5", name: "5강 · Planning" },
+      { id: "6", name: "6강 · CBF" },
+      { id: "7", name: "7강 · MPPI" }
+    ];
+    const notes = [
+      { lec: "0", title: "온보딩 개요", src: "lecture/av/00-overview.html" },
+      { lec: "1", title: "A*", src: "lecture/av/01-astar.html" },
+      { lec: "2", title: "RRT", src: "lecture/av/02-rrt.html" },
+      { lec: "3", title: "Unicycle 모델", src: "lecture/av/03-vehicle.html" },
+      { lec: "4", title: "Heading PID", src: "lecture/av/04-pid.html" },
+      { lec: "5", title: "Planning → tracking", src: "lecture/av/05-planning.html" },
+      { lec: "6", title: "HOCBF", src: "lecture/av/06-cbf.html" },
+      { lec: "7", title: "MPPI", src: "lecture/av/07-mppi.html" }
+    ];
+    const bust = "?v=20260904";
+    const state = { lec: "0", src: "", seq: 0 };
+
+    function lectureName(id) {
+      return lectures.find((lec) => lec.id === id)?.name || id + "강";
+    }
+    function notesFor(lec) {
+      return notes.filter((note) => note.lec === lec);
+    }
+
+    function renderLectures() {
+      lecNav.replaceChildren();
+      lectures.forEach((lec) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
+        btn.textContent = lec.name;
+        btn.addEventListener("click", () => {
+          state.lec = lec.id;
+          showNote(notesFor(lec.id)[0]);
+        });
+        lecNav.appendChild(btn);
+      });
+    }
+
+    function renderNotes() {
+      const list = notesFor(state.lec);
+      simNav.replaceChildren();
+      simNav.classList.toggle("is-empty", list.length <= 1);
+      list.forEach((note) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sim-pick-btn" + (note.src === state.src ? " active" : "");
+        btn.textContent = note.title;
+        btn.addEventListener("click", () => showNote(note));
+        simNav.appendChild(btn);
+      });
+    }
+
+    function showNote(note) {
+      if (!note) return;
+      const seq = ++state.seq;
+      state.lec = note.lec;
+      state.src = note.src;
+      titleEl.textContent = note.title;
+      descEl.textContent = lectureName(note.lec);
+      host.innerHTML = '<p class="course-hint">노트를 불러오는 중…</p>';
+      renderLectures();
+      renderNotes();
+      fetch(note.src + bust).then((res) => {
+        if (!res.ok) throw new Error(res.status);
+        return res.text();
+      }).then((html) => {
+        if (state.seq !== seq) return;
+        host.innerHTML = html;
+        return ensureKatex().then(() => {
+          if (state.seq !== seq) return;
+          renderNoteMath(host);
+        });
+      }).catch(() => {
+        if (state.seq !== seq) return;
+        host.innerHTML = '<p class="course-hint">노트를 불러오지 못했습니다. 로컬 서버에서 다시 열어 주세요.</p>';
+      });
+    }
+
+    function openFirst() {
+      if (!state.src) showNote(notesFor(state.lec)[0]);
+    }
+
+    function unload() {
+      state.src = "";
+      state.seq += 1;
+      host.innerHTML = "";
+    }
+
+    renderLectures();
+    renderNotes();
+    courseControllers.av = { openFirst, unload };
   })();
 
   function youtubeIdFromSrc(src) {

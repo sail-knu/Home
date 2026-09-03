@@ -1,0 +1,41 @@
+<div class="note-article">
+  <p>이미 채워 둔 <strong>heading PID</strong>에 게인을 넣어 waypoint를 따라갑니다. 차는 3강 unicycle이고, 선속도 \(v\)는 거의 상수입니다. PID가 만드는 것은 각속도 \(\omega\)입니다.</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/04_pid_tracking.gif" alt="PID tracking a polyline of waypoints">
+    <figcaption>청록 선이 기준 경로, 파란 선이 실제 궤적입니다.</figcaption>
+  </figure>
+
+  <pre class="note-code"><code>waypoint → desired heading → heading error → PID → ω → vehicle</code></pre>
+
+  <div class="note-math glass-panel">
+    \[
+      \theta_{\mathrm{ref}}=\operatorname{atan2}(y_w-y,\; x_w-x),\qquad
+      e=\operatorname{wrap}(\theta_{\mathrm{ref}}-\theta)
+    \]
+    \[
+      \omega = K_p e + K_i \int e\,dt + K_d \dot e
+    \]
+    <p><code>wrap</code>은 <code>arctan2(sin e, cos e)</code>로 \([-\pi,\pi]\)에 접습니다. 기본값은 P+D입니다 (\(K_p=2.5\), \(K_i=0\), \(K_d=0.15\)).</p>
+  </div>
+
+  <table class="note-table">
+    <thead>
+      <tr><th>항</th><th>하는 일</th><th>너무 크면</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>P</td><td>지금 틀린 만큼 조향</td><td>코너에서 흔들림, overshoot</td></tr>
+      <tr><td>I</td><td>남는 치우침을 누적</td><td>적분 와인드업. 이 데모는 0이어도 충분</td></tr>
+      <tr><td>D</td><td>오차 변화 속도를 감쇠</td><td>이산 미분 잡음에 민감</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note-callout"><code>--look-ahead</code>가 1 이상이면 더 앞의 점을 조준합니다. 코너는 부드럽게 자르지만, 장애물이 있으면 안쪽으로 파고들 수 있습니다. 선택 로직은 <code>shared/tracking.py</code>의 <code>select_target_index</code>입니다.</div>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 04_pid_tracking/run.py
+python 04_pid_tracking/run.py --kp 3.0 --kd 0.0
+python 04_pid_tracking/run.py --look-ahead 2
+python 04_pid_tracking/test_pid.py</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/04_pid_tracking/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>shared/pid.py</code>, <code>shared/tracking.py</code></p>
+</div>

@@ -1,0 +1,45 @@
+<div class="note-article">
+  <p>연구실 학부연구생 온보딩용 가이드입니다. 알고리즘을 바닥부터 짜는 과제가 아니라, <strong>매주 한 모듈을 실행하고 파라미터를 바꿔 보는</strong> 흐름입니다. 코드와 미션은 <a href="https://github.com/sail-knu/autonomous-vehicle-tutorial" target="_blank" rel="noopener">sail-knu/autonomous-vehicle-tutorial</a>에 있습니다.</p>
+
+  <pre class="note-code"><code>A* / RRT          waypoints         PID / CBF / MPPI         vehicle
+경로 점     →     (N, 2) 배열  →    (v, ω)             →    x, y, θ</code></pre>
+
+  <h3>매주 어떻게 하나</h3>
+  <ol class="note-ol">
+    <li>그 주 폴더의 <code>README.md</code>에서 알고리즘을 읽고 <code>run.py</code>를 실행한다.</li>
+    <li>“이 코드에서”에 적힌 함수를 코드에서 찾는다.</li>
+    <li><code>MISSION.md</code>를 번호 순서대로 실행하고, 왜 변했는지 한 줄로 남긴다.</li>
+    <li>미팅에는 <strong>돌아가는 화면</strong>, <strong>숫자 몇 개</strong>, <strong>한두 줄 관찰</strong>을 가져온다.</li>
+  </ol>
+
+  <table class="note-table">
+    <thead>
+      <tr><th>주</th><th>폴더</th><th>하는 일</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>01_astar</td><td>A*, heuristic</td></tr>
+      <tr><td>2</td><td>02_rrt</td><td>RRT, A*와 비교</td></tr>
+      <tr><td>3</td><td>03_vehicle_model</td><td>unicycle \((v, \omega)\)</td></tr>
+      <tr><td>4</td><td>04_pid_tracking</td><td>P / PD, look-ahead</td></tr>
+      <tr><td>5</td><td>05_planning_tracking</td><td>planner → PID</td></tr>
+      <tr><td>6</td><td>06_cbf</td><td>PID vs PID+CBF</td></tr>
+      <tr><td>7</td><td>07_mppi</td><td>샘플 / horizon / 비용</td></tr>
+    </tbody>
+  </table>
+
+  <h3>공통 계약</h3>
+  <p>01–07은 <code>shared/world.py</code>의 같은 맵을 씁니다.</p>
+  <ul class="custom-bullet-list">
+    <li>상태: \([x,\, y,\, \theta]\) (CBF는 \([x,\, y,\, \theta,\, v]\))</li>
+    <li>입력: \((v,\, \omega)\) 또는 CBF의 \((\mathrm{acc},\, \mathrm{rot})\)</li>
+    <li>planner 출력: <code>rx, ry</code> → <code>waypoints = np.column_stack((rx, ry))</code></li>
+  </ul>
+
+  <h3>설치</h3>
+  <p>Python 3.10+ 권장. ROS, GPU, ffmpeg는 필요 없습니다. 그림 없이 숫자만 보려면 <code>--no-anim</code>을 붙입니다.</p>
+  <pre class="note-code"><code>python -m pip install -r requirements.txt
+python 03_vehicle_model/test_vehicle.py
+python 04_pid_tracking/test_pid.py</code></pre>
+
+  <p class="small-text">MIT. A* / RRT는 PythonRobotics, MPPI는 python_simple_mppi를 교육용으로 짧게 다시 쓴 부분이 있습니다.</p>
+</div>
