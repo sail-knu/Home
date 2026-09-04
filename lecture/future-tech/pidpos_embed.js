@@ -126,14 +126,35 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
+function themePal() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) {
+    return {
+      sky0: '#0d1622', sky1: '#152433', tick: '#3a4d62', tickText: '#9bb0c0',
+      goal: '#5cc793', rail: '#2a3848', rail2: '#3a4d62', shadow: '#00000055',
+      cart: '#9bb0c0', cartHi: '#e6edf4', wheel: '#d5dee8', hub: '#7d90a0',
+      guide: '#7d90a0', accent: '#6ea3d8', rod: '#9bb0c0', bad: '#f09289',
+      bob: '#0d1622', ok: '#5cc793', muted: '#9bb0c0'
+    };
+  }
+  return {
+    sky0: '#f7f8fa', sky1: '#eef4f3', tick: '#c8d2e0', tickText: '#95a2b4',
+    goal: '#177a4c', rail: '#cbd5e1', rail2: '#e2e8f0', shadow: '#0f172a22',
+    cart: '#334155', cartHi: '#fff', wheel: '#1e293b', hub: '#94a3b8',
+    guide: '#b6c2d2', accent: '#1d4e89', rod: '#475569', bad: '#c8433a',
+    bob: '#fff', ok: '#177a4c', muted: '#94a3b8'
+  };
+}
+
 function draw() {
   var w = view.W, h = view.H;
   if (!w || !h) return;
+  var C = themePal();
   ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#f7f8fa');
-  sky.addColorStop(1, '#eef4f3');
+  sky.addColorStop(0, C.sky0);
+  sky.addColorStop(1, C.sky1);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
@@ -158,46 +179,46 @@ function draw() {
   ctx.textAlign = 'center';
   for (var m = Math.ceil(left / tick) * tick; m <= right; m += tick) {
     var px = sx(m);
-    ctx.strokeStyle = '#c8d2e0';
+    ctx.strokeStyle = C.tick;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(px, railY + 12);
     ctx.lineTo(px, railY + 18);
     ctx.stroke();
-    ctx.fillStyle = '#95a2b4';
+    ctx.fillStyle = C.tickText;
     ctx.fillText(m + ' m', px, railY + 31);
   }
 
   var zx = sx(0);
   ctx.save();
   ctx.setLineDash([5, 5]);
-  ctx.strokeStyle = '#177a4c';
+  ctx.strokeStyle = C.goal;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
   ctx.moveTo(zx, 22);
   ctx.lineTo(zx, railY + 10);
   ctx.stroke();
   ctx.restore();
-  ctx.fillStyle = '#177a4c';
+  ctx.fillStyle = C.goal;
   ctx.font = '600 11px sans-serif';
   ctx.fillText('목표 x = 0', zx, 16);
 
-  ctx.fillStyle = '#cbd5e1';
+  ctx.fillStyle = C.rail;
   ctx.fillRect(0, railY + 8, w, 4);
-  ctx.fillStyle = '#e2e8f0';
+  ctx.fillStyle = C.rail2;
   ctx.fillRect(0, railY + 12, w, 3);
 
   var cx = sx(S.x);
   var cw = Math.max(44, ppm * 0.62), ch = Math.max(22, ppm * 0.30);
   var cyTop = railY - ch + 6;
-  ctx.fillStyle = '#0f172a22';
+  ctx.fillStyle = C.shadow;
   ctx.beginPath();
   ctx.ellipse(cx, railY + 10, cw * 0.6, 4, 0, 0, Math.PI * 2);
   ctx.fill();
   roundRect(ctx, cx - cw / 2, cyTop, cw, ch, 5);
-  ctx.fillStyle = '#334155';
+  ctx.fillStyle = C.cart;
   ctx.fill();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = C.cartHi;
   ctx.font = '600 11px sans-serif';
   ctx.fillText(P.mc + ' kg', cx, cyTop + ch / 2 + 4);
   var wr = Math.max(6, ch * 0.30);
@@ -205,11 +226,11 @@ function draw() {
     var off = i ? cw * 0.28 : -cw * 0.28;
     ctx.beginPath();
     ctx.arc(cx + off, railY + 8 - wr * 0.2, wr, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = C.wheel;
     ctx.fill();
     ctx.beginPath();
     ctx.arc(cx + off, railY + 8 - wr * 0.2, wr * 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = C.hub;
     ctx.fill();
   }
 
@@ -218,7 +239,7 @@ function draw() {
   var tipY = py - Math.cos(th) * P.L * ppm;
   ctx.save();
   ctx.setLineDash([3, 4]);
-  ctx.strokeStyle = '#b6c2d2';
+  ctx.strokeStyle = C.guide;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(cx, py);
@@ -228,16 +249,16 @@ function draw() {
   var thW = Math.atan2(Math.sin(th), Math.cos(th));
   if (Math.abs(thW) > 0.02 && Math.abs(thW) < 2.4) {
     var r = Math.min(40, P.L * ppm * 0.42);
-    ctx.strokeStyle = '#1d4e89';
+    ctx.strokeStyle = C.accent;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(cx, py, r, -Math.PI / 2, -Math.PI / 2 - thW, thW > 0);
     ctx.stroke();
-    ctx.fillStyle = '#1d4e89';
+    ctx.fillStyle = C.accent;
     ctx.font = '600 12px sans-serif';
     ctx.fillText('θ', cx - Math.sin(thW / 2) * (r + 13), py - Math.cos(thW / 2) * (r + 13) + 4);
   }
-  ctx.strokeStyle = S.fell ? '#c8433a' : '#475569';
+  ctx.strokeStyle = S.fell ? C.bad : C.rod;
   ctx.lineWidth = Math.max(4, ppm * 0.045);
   ctx.lineCap = 'round';
   ctx.beginPath();
@@ -246,14 +267,14 @@ function draw() {
   ctx.stroke();
   ctx.beginPath();
   ctx.arc(cx, py, Math.max(4, ppm * 0.04), 0, Math.PI * 2);
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = C.muted;
   ctx.fill();
   var br = Math.max(11, ppm * 0.115);
   ctx.beginPath();
   ctx.arc(tipX, tipY, br, 0, Math.PI * 2);
-  ctx.fillStyle = S.fell ? '#c8433a' : '#1d4e89';
+  ctx.fillStyle = S.fell ? C.bad : C.accent;
   ctx.fill();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = C.bob;
   ctx.font = '600 10px sans-serif';
   ctx.fillText(P.mb + 'kg', tipX, tipY + 3.5);
 
@@ -261,8 +282,8 @@ function draw() {
     var len = Math.min(90, Math.abs(S.F) * 1.8) * Math.sign(S.F);
     var ay = cyTop + ch / 2;
     var from = cx + Math.sign(S.F) * (cw / 2 + 3);
-    ctx.strokeStyle = '#c8433a';
-    ctx.fillStyle = '#c8433a';
+    ctx.strokeStyle = C.bad;
+    ctx.fillStyle = C.bad;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(from, ay);
@@ -281,13 +302,13 @@ function draw() {
   ctx.textAlign = 'left';
   ctx.font = '600 12px sans-serif';
   if (S.fell) {
-    ctx.fillStyle = '#c8433a';
+    ctx.fillStyle = C.bad;
     ctx.fillText('넘어짐 (|θ| > 90°)', 12, 22);
   } else if (S.running) {
-    ctx.fillStyle = '#177a4c';
+    ctx.fillStyle = C.ok;
     ctx.fillText('● 실행 중', 12, 22);
   } else {
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = C.muted;
     ctx.fillText('■ 정지', 12, 22);
   }
 }
@@ -319,6 +340,8 @@ function togglePlay() {
   S.running = !S.running;
   syncReadout();
 }
+
+window.addEventListener('sail-themechange', function () { draw(); });
 
 window.refresh_pidpos_demo = function () {
   if (!demoVisible()) return;

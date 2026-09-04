@@ -5,6 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAIL | Kongju National University</title>
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f7f8fa" id="theme-color-meta">
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("sail-theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+          var meta = document.getElementById("theme-color-meta");
+          if (meta) meta.setAttribute("content", t === "dark" ? "#0d1622" : "#f7f8fa");
+        } catch (e) {}
+      })();
+    </script>
     <meta name="description"
         content="Safe Autonomy &amp; Intelligence Lab at Kongju National University. Safe trajectory planning and control for autonomous ships, marine vehicles, and mobile robots.">
     <meta name="keywords"
@@ -24,7 +39,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260904">
+    <link rel="stylesheet" href="styles.css?v=20260904c">
     <style>
       html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
       html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
@@ -37,7 +52,7 @@
         width: 24px;
         height: 24px;
         overflow: visible;
-        filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
+        filter: drop-shadow(0 1px 1px var(--cursor-shadow, rgba(13, 38, 68, 0.35)));
       }
       @media (pointer: coarse) {
         #sail-cursor-pointer { display: none !important; }
@@ -98,6 +113,13 @@
             <path d="M16 10.2v16"/>
             <path d="M12.2 10.4c0-2.1 1.7-3.6 3.8-3.6s3.8 1.5 3.8 3.6"/>
         </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 3.2v1.8M12 19v1.8M3.2 12h1.8M19 12h1.8M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3"/>
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16.4 13.6A6.4 6.4 0 0 1 10.2 4.8 6.8 6.8 0 1 0 19 14.8a6.3 6.3 0 0 1-2.6-1.2z"/>
+        </symbol>
         <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 12h13"/>
             <path d="M12 6l7 6-7 6"/>
@@ -151,6 +173,14 @@
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <div class="nav-tools">
+                    <div class="chip-switch" role="group" aria-label="Theme">
+                        <button type="button" class="chip-btn theme-btn active" data-theme="light" aria-label="Light mode" aria-pressed="true">
+                            <svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg>
+                        </button>
+                        <button type="button" class="chip-btn theme-btn" data-theme="dark" aria-label="Dark mode" aria-pressed="false">
+                            <svg class="icon" aria-hidden="true"><use href="#i-moon"></use></svg>
+                        </button>
+                    </div>
                     <div class="chip-switch" role="group" aria-label="Language">
                         <button type="button" class="chip-btn lang-btn active" data-lang="ko">KO</button>
                         <button type="button" class="chip-btn lang-btn" data-lang="en">EN</button>
@@ -1401,7 +1431,7 @@
             <article class="sim-block">
                 <h3 class="subsection-title" id="mech-title"></h3>
                 <p class="small-text" id="mech-desc"></p>
-                <div class="course-embed demo-app" id="mech-host" data-theme="light"></div>
+                <div class="course-embed demo-app" id="mech-host"></div>
             </article>
         </div>
     </section>
@@ -1419,7 +1449,7 @@
             <article class="sim-block">
                 <h3 class="subsection-title" id="vib-title"></h3>
                 <p class="small-text" id="vib-desc"></p>
-                <div class="course-embed demo-app" id="vib-host" data-theme="light"></div>
+                <div class="course-embed demo-app" id="vib-host"></div>
             </article>
         </div>
     </section>
@@ -1529,7 +1559,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260904b" defer></script>
+    <script src="script.js?v=20260904c" defer></script>
     <script
       color="29,78,137"
       opacity="0.32"

@@ -1361,6 +1361,10 @@ try{
   loadScen(SCENKEYS[0]);
   resize(); fitView();
 
+  window.addEventListener('sail-themechange', function(){
+    readTheme();
+    if (demoVisible()) draw();
+  });
   window.addEventListener('resize', function(){ readTheme(); fitView(); });
   window.addEventListener('orientationchange', function(){
     setTimeout(function(){ resize(); fitView(); }, 250);

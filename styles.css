@@ -32,7 +32,70 @@
   --theme-secondary-r: 13;
   --theme-secondary-g: 38;
   --theme-secondary-b: 68;
+  --icon-mix: #ffffff;
+  --code-bg: #f3f5f8;
+  --code-fg: #1a2330;
+  --project-link-bg: rgba(214, 122, 40, 0.16);
+  --project-link: #b65f12;
+  --project-link-hover-bg: rgba(214, 122, 40, 0.28);
+  --project-link-hover: #8f480c;
+  --toolbar-bg: color-mix(in srgb, #fff 92%, transparent);
+  --cursor-fill: #1d4e89;
+  --cursor-stroke: #ffffff;
+  --cursor-shadow: rgba(13, 38, 68, 0.35);
+  --still-bg: #ffffff;
+  --glow-a: 0.09;
+  --glow-b: 0.08;
   --transition: 0.25s ease;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-color: #0d1622;
+  --bg-elevated: #121a24;
+  --surface: #121a24;
+  --surface-border: rgba(158, 184, 208, 0.16);
+  --primary-color: #6ea3d8;
+  --primary-glow: rgba(110, 163, 216, 0.3);
+  --secondary-color: #9bb8d4;
+  --text-color: #e6edf4;
+  --muted-text: #9bb0c0;
+  --accent-soft: #8eb4dc;
+  --heading-color: #f2f6fa;
+  --copy-color: #d5dee8;
+  --on-primary: #0d1622;
+  --nav-scrolled: rgba(13, 22, 34, 0.94);
+  --nav-mobile: #121a24;
+  --banner-bg: #121a24;
+  --footer-bg: #0a121b;
+  --bento-from: #15202e;
+  --bento-to: #121a24;
+  --photo-from: #1a2d44;
+  --photo-to: #182332;
+  --chip-bg: rgba(110, 163, 216, 0.16);
+  --switch-border: rgba(230, 237, 244, 0.14);
+  --switch-bg: #182332;
+  --switch-fg: rgba(230, 237, 244, 0.55);
+  --theme-primary-r: 110;
+  --theme-primary-g: 163;
+  --theme-primary-b: 216;
+  --theme-secondary-r: 155;
+  --theme-secondary-g: 184;
+  --theme-secondary-b: 212;
+  --icon-mix: #182332;
+  --code-bg: #0a121b;
+  --code-fg: #e6edf4;
+  --project-link-bg: rgba(224, 164, 88, 0.18);
+  --project-link: #e0a458;
+  --project-link-hover-bg: rgba(224, 164, 88, 0.3);
+  --project-link-hover: #f0c27a;
+  --toolbar-bg: color-mix(in srgb, #121a24 92%, transparent);
+  --cursor-fill: #6ea3d8;
+  --cursor-stroke: #0d1622;
+  --cursor-shadow: rgba(0, 0, 0, 0.45);
+  --still-bg: #121a24;
+  --glow-a: 0.16;
+  --glow-b: 0.14;
 }
 
 * {
@@ -44,9 +107,14 @@
 html {
   scroll-behavior: smooth;
   background:
-    radial-gradient(ellipse 70% 46% at 88% 6%, rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), 0.09), transparent 58%),
-    radial-gradient(ellipse 58% 42% at 6% 94%, rgba(var(--theme-secondary-r), var(--theme-secondary-g), var(--theme-secondary-b), 0.08), transparent 52%),
+    radial-gradient(ellipse 70% 46% at 88% 6%, rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), var(--glow-a)), transparent 58%),
+    radial-gradient(ellipse 58% 42% at 6% 94%, rgba(var(--theme-secondary-r), var(--theme-secondary-g), var(--theme-secondary-b), var(--glow-b)), transparent 52%),
     var(--bg-color);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary-color) 32%, transparent);
+  color: var(--heading-color);
 }
 
 body {
@@ -196,6 +264,18 @@ button,
 .chip-btn.active {
   background: var(--primary-color);
   color: var(--on-primary);
+}
+
+.theme-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+}
+
+.theme-btn .icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: top;
 }
 
 .logo-header,
@@ -602,7 +682,7 @@ html[data-lang="ko"] .univ-lockup {
   color: var(--primary-color);
   transition: transform var(--transition), background var(--transition);
   background:
-    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 22%, #fff), transparent 58%),
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 22%, var(--icon-mix)), transparent 58%),
     var(--chip-bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
 }
@@ -610,7 +690,7 @@ html[data-lang="ko"] .univ-lockup {
 .research-icon-predict {
   color: var(--secondary-color);
   background:
-    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 20%, #fff), transparent 58%),
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 20%, var(--icon-mix)), transparent 58%),
     var(--chip-bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--secondary-color) 16%, transparent);
 }
@@ -665,8 +745,8 @@ html[data-lang="ko"] .univ-lockup {
 .research-card:hover .research-icon {
   transform: translateY(-1px);
   background:
-    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 30%, #fff), transparent 60%),
-    color-mix(in srgb, var(--primary-color) 12%, #fff);
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--primary-color) 30%, var(--icon-mix)), transparent 60%),
+    color-mix(in srgb, var(--primary-color) 12%, var(--icon-mix));
 }
 
 .overview-videos {
@@ -683,8 +763,8 @@ html[data-lang="ko"] .univ-lockup {
 
 .research-card:hover .research-icon-predict {
   background:
-    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 28%, #fff), transparent 60%),
-    color-mix(in srgb, var(--secondary-color) 10%, #fff);
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--secondary-color) 28%, var(--icon-mix)), transparent 60%),
+    color-mix(in srgb, var(--secondary-color) 10%, var(--icon-mix));
 }
 
 .research-card ul,
@@ -1007,13 +1087,13 @@ a.project-page {
   white-space: nowrap;
   text-decoration: none;
   vertical-align: 0.08em;
-  background: rgba(214, 122, 40, 0.16);
-  color: #b65f12;
+  background: var(--project-link-bg);
+  color: var(--project-link);
 }
 
 a.project-page:hover {
-  background: rgba(214, 122, 40, 0.28);
-  color: #8f480c;
+  background: var(--project-link-hover-bg);
+  color: var(--project-link-hover);
 }
 
 #research .bento-content h3,
@@ -1139,7 +1219,7 @@ a.project-page:hover {
 
 .video-embed img.media-still {
   object-fit: contain;
-  background: #fff;
+  background: var(--still-bg);
 }
 
 .yt-lite {
@@ -1792,8 +1872,8 @@ a.member-card {
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--surface-border);
-  background: #f3f5f8;
-  color: #1a2330;
+  background: var(--code-bg);
+  color: var(--code-fg);
   font: 0.82rem/1.55 ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
@@ -2035,7 +2115,7 @@ a.member-card {
     padding: 6px;
     border: 1px solid var(--surface-border);
     border-radius: 12px;
-    background: color-mix(in srgb, #fff 92%, transparent);
+    background: var(--toolbar-bg);
     box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
   }
   .course-embed .demo-toolbar button,
@@ -2051,6 +2131,31 @@ a.member-card {
 
 .demo-app {
   margin-top: 8px;
+}
+
+html[data-theme="dark"] .demo-app {
+  --ink: #0d1622;
+  --ink-2: #121a24;
+  --ink-3: #182332;
+  --ink-4: #1a2d44;
+  --rule: #2a3848;
+  --rule-2: #3a4d62;
+  --text: #e6edf4;
+  --text-2: #9bb0c0;
+  --text-3: #7d90a0;
+  --accent: #6ea3d8;
+  --accent-deep: #6ea3d8;
+  --accent-on: #0d1622;
+  --grid: #1a2533;
+  --grid-major: #243344;
+  --track: #5eb1ff;
+  --mark: #e0a458;
+  --hull: #5cc793;
+  --sight: #8bc34a;
+  --devi: #f09289;
+  --course: #9bb8d4;
+  --rock: #c4b07a;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
 .demo-app .demo-layout {
@@ -2092,7 +2197,7 @@ a.member-card {
     padding: 6px;
     border: 1px solid var(--rule, var(--surface-border));
     border-radius: 12px;
-    background: color-mix(in srgb, #fff 92%, transparent);
+    background: var(--toolbar-bg);
     box-shadow: 0 4px 16px rgba(18, 26, 36, 0.12);
   }
   .demo-app .demo-toolbar button {
@@ -2165,6 +2270,14 @@ a.member-card {
   aspect-ratio: 338 / 632;
   object-fit: contain;
   flex: none;
+}
+
+html[data-theme="dark"] .univ-seal {
+  filter: brightness(1.18) contrast(1.04);
+}
+
+html[data-theme="dark"] .footer-sail-mark {
+  filter: brightness(1.4);
 }
 
 .footer-credit .univ-seal {
@@ -2309,13 +2422,14 @@ html.has-sail-cursor textarea {
   width: 22px;
   height: 22px;
   overflow: visible;
-  filter: drop-shadow(0 1px 1px rgba(13, 38, 68, 0.35));
+  filter: drop-shadow(0 1px 1px var(--cursor-shadow));
   will-change: transform;
 }
 
-.sail-cursor-pointer path {
-  fill: #1d4e89;
-  stroke: #fff;
+.sail-cursor-pointer path,
+#sail-cursor-pointer path {
+  fill: var(--cursor-fill);
+  stroke: var(--cursor-stroke);
   stroke-width: 1.6;
   stroke-linejoin: round;
   paint-order: stroke fill;

@@ -244,10 +244,10 @@
   });
 
   const futureEmbeds = {
-    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html?v=20260902g", js: "lecture/future-tech/path_embed.js?v=20260902g", refresh: "refresh_path_demo" },
-    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260902g", js: "lecture/future-tech/los_embed.js?v=20260902g", refresh: "refresh_los_demo" },
-    "sim-pid": { host: "pid-host", html: "lecture/future-tech/pid_embed.html?v=20260902f", js: "lecture/future-tech/pid_embed.js?v=20260902f", refresh: "refresh_pid_demo" },
-    "sim-pidpos": { host: "pidpos-host", html: "lecture/future-tech/pidpos_embed.html?v=20260902f", js: "lecture/future-tech/pidpos_embed.js?v=20260902f", refresh: "refresh_pidpos_demo" }
+    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html?v=20260904c", js: "lecture/future-tech/path_embed.js?v=20260904c", refresh: "refresh_path_demo" },
+    "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260904c", js: "lecture/future-tech/los_embed.js?v=20260904c", refresh: "refresh_los_demo" },
+    "sim-pid": { host: "pid-host", html: "lecture/future-tech/pid_embed.html?v=20260904c", js: "lecture/future-tech/pid_embed.js?v=20260904c", refresh: "refresh_pid_demo" },
+    "sim-pidpos": { host: "pidpos-host", html: "lecture/future-tech/pidpos_embed.html?v=20260904c", js: "lecture/future-tech/pidpos_embed.js?v=20260904c", refresh: "refresh_pidpos_demo" }
   };
   const futureLoaded = {};
 
@@ -638,6 +638,7 @@
     const hostId = host.id;
     const gen = nextCourseGen(hostId);
     const seq = (courseLoads[hostId] = (courseLoads[hostId] || 0) + 1);
+    host.setAttribute("data-theme", document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
     host.innerHTML = '<p class="course-hint">데모를 불러오는 중…</p>';
     fetch(courseDemoUrl(src)).then((res) => {
       if (!res.ok) throw new Error("demo fetch failed");
@@ -806,7 +807,7 @@
       { lec: "6", title: "MPPI", src: "lecture/mpc/06-mppi.html" },
       { lec: "6", title: "선박 충돌 회피", embed: "mppi" }
     ];
-    const bust = "?v=20260902";
+    const bust = "?v=20260904c";
     const state = { lec: "1", src: "", seq: 0 };
     const mppiEmbed = {
       html: "lecture/mpc/mppi_embed.html",
@@ -972,7 +973,7 @@
       { lec: "7", title: "HOCBF", src: "lecture/av/07-cbf.html" },
       { lec: "8", title: "MPPI", src: "lecture/av/08-mppi.html" }
     ];
-    const bust = "?v=20260904b";
+    const bust = "?v=20260904c";
     const state = { lec: "0", src: "", seq: 0 };
 
     function lectureName(id) {
@@ -1139,5 +1140,39 @@
     window.CanvasNestSetColor(rgb);
   };
 
-  window.refreshParticles();
+  function applySailTheme(theme, persist) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.querySelectorAll(".course-embed").forEach((el) => {
+      el.setAttribute("data-theme", next);
+    });
+    document.querySelectorAll(".theme-btn").forEach((btn) => {
+      const on = btn.getAttribute("data-theme") === next;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const themeColor = document.getElementById("theme-color-meta");
+    if (themeColor) themeColor.setAttribute("content", next === "dark" ? "#0d1622" : "#f7f8fa");
+    if (persist) {
+      try { localStorage.setItem("sail-theme", next); } catch (e) {}
+    }
+    window.refreshParticles();
+    window.dispatchEvent(new Event("sail-themechange"));
+  }
+
+  applySailTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light", false);
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.addEventListener("click", () => applySailTheme(btn.getAttribute("data-theme"), true));
+  });
+  const themeMq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onSystemTheme = (e) => {
+    let saved = null;
+    try { saved = localStorage.getItem("sail-theme"); } catch (err) {}
+    if (saved === "light" || saved === "dark") return;
+    applySailTheme(e.matches ? "dark" : "light", false);
+  };
+  if (themeMq.addEventListener) themeMq.addEventListener("change", onSystemTheme);
+  else if (themeMq.addListener) themeMq.addListener(onSystemTheme);
+
+  window.applySailTheme = applySailTheme;
 })();
