@@ -956,9 +956,10 @@
       { id: "2", name: "2강 · RRT" },
       { id: "3", name: "3강 · Vehicle" },
       { id: "4", name: "4강 · PID" },
-      { id: "5", name: "5강 · Planning" },
-      { id: "6", name: "6강 · CBF" },
-      { id: "7", name: "7강 · MPPI" }
+      { id: "5", name: "5강 · LOS" },
+      { id: "6", name: "6강 · Planning" },
+      { id: "7", name: "7강 · CBF" },
+      { id: "8", name: "8강 · MPPI" }
     ];
     const notes = [
       { lec: "0", title: "온보딩 개요", src: "lecture/av/00-overview.html" },
@@ -966,11 +967,12 @@
       { lec: "2", title: "RRT", src: "lecture/av/02-rrt.html" },
       { lec: "3", title: "Unicycle 모델", src: "lecture/av/03-vehicle.html" },
       { lec: "4", title: "Heading PID", src: "lecture/av/04-pid.html" },
-      { lec: "5", title: "Planning → tracking", src: "lecture/av/05-planning.html" },
-      { lec: "6", title: "HOCBF", src: "lecture/av/06-cbf.html" },
-      { lec: "7", title: "MPPI", src: "lecture/av/07-mppi.html" }
+      { lec: "5", title: "LOS guidance", src: "lecture/av/05-los.html" },
+      { lec: "6", title: "Planning → tracking", src: "lecture/av/06-planning.html" },
+      { lec: "7", title: "HOCBF", src: "lecture/av/07-cbf.html" },
+      { lec: "8", title: "MPPI", src: "lecture/av/08-mppi.html" }
     ];
-    const bust = "?v=20260904";
+    const bust = "?v=20260904b";
     const state = { lec: "0", src: "", seq: 0 };
 
     function lectureName(id) {

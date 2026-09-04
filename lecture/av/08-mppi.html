@@ -1,8 +1,8 @@
 <div class="note-article">
-  <p>CBF(6강)는 “이 부등식은 지켜라”는 제약입니다. MPPI는 여러 미래 궤적을 뽑아 싼 쪽을 평균하는 <strong>샘플링 MPC</strong>입니다. 장애물은 비용(패널티)이라서, 가중치가 작으면 스칠 수 있습니다. 이번 주 데모는 waypoint 없이 목표와 원 장애물만 보고 갑니다.</p>
+  <p>CBF(7강)는 “이 부등식은 지켜라”는 제약입니다. MPPI는 여러 미래 궤적을 뽑아 싼 쪽을 평균하는 <strong>샘플링 MPC</strong>입니다. 장애물은 비용(패널티)이라서, 가중치가 작으면 스칠 수 있습니다. 이번 주 데모는 waypoint 없이 목표와 원 장애물만 보고 갑니다.</p>
 
   <figure class="note-figure">
-    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/07_mppi.gif" alt="MPPI samples, weighted-mean forecast, and executed path">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/08_mppi.gif" alt="MPPI samples, weighted-mean forecast, and executed path">
     <figcaption>연한 주황이 샘플, 진한 선이 가중 평균 예측, 파란 선이 실제 궤적입니다.</figcaption>
   </figure>
 
@@ -26,9 +26,9 @@
   <div class="note-callout"><code>--surprise</code>는 숨은 장애물을 켭니다. <code>w_obs</code>가 커지면 더 일찍 돕니다. 코드의 <code># 미션 1/2/3</code> 주석을 따라가면 됩니다.</div>
 
   <h3>실행</h3>
-  <pre class="note-code"><code>python 07_mppi/run.py
-python 07_mppi/run.py --K 30
-python 07_mppi/run.py --K 120 --N 80
-python 07_mppi/run.py --surprise --w-obs 20</code></pre>
-  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/07_mppi/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>mppi.py</code> → <code>_rollout</code>, <code>_stage_cost</code>, <code>step</code></p>
+  <pre class="note-code"><code>python 08_mppi/run.py
+python 08_mppi/run.py --K 30
+python 08_mppi/run.py --K 120 --N 80
+python 08_mppi/run.py --surprise --w-obs 20</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/08_mppi/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>mppi.py</code> → <code>_rollout</code>, <code>_stage_cost</code>, <code>step</code></p>
 </div>

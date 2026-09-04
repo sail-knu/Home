@@ -20,15 +20,16 @@
       <tr><td>1</td><td>01_astar</td><td>A*, heuristic</td></tr>
       <tr><td>2</td><td>02_rrt</td><td>RRT, A*와 비교</td></tr>
       <tr><td>3</td><td>03_vehicle_model</td><td>unicycle \((v, \omega)\)</td></tr>
-      <tr><td>4</td><td>04_pid_tracking</td><td>P / PD, look-ahead</td></tr>
-      <tr><td>5</td><td>05_planning_tracking</td><td>planner → PID</td></tr>
-      <tr><td>6</td><td>06_cbf</td><td>PID vs PID+CBF</td></tr>
-      <tr><td>7</td><td>07_mppi</td><td>샘플 / horizon / 비용</td></tr>
+      <tr><td>4</td><td>04_pid_tracking</td><td>P / PD</td></tr>
+      <tr><td>5</td><td>05_los_guidance</td><td>heading vs LOS</td></tr>
+      <tr><td>6</td><td>06_planning_tracking</td><td>planner → PID</td></tr>
+      <tr><td>7</td><td>07_cbf</td><td>PID vs PID+CBF</td></tr>
+      <tr><td>8</td><td>08_mppi</td><td>샘플 / horizon / 비용</td></tr>
     </tbody>
   </table>
 
   <h3>공통 계약</h3>
-  <p>01–07은 <code>shared/world.py</code>의 같은 맵을 씁니다.</p>
+  <p>01–08은 <code>shared/world.py</code>의 같은 맵을 씁니다.</p>
   <ul class="custom-bullet-list">
     <li>상태: \([x,\, y,\, \theta]\) (CBF는 \([x,\, y,\, \theta,\, v]\))</li>
     <li>입력: \((v,\, \omega)\) 또는 CBF의 \((\mathrm{acc},\, \mathrm{rot})\)</li>
@@ -39,7 +40,8 @@
   <p>Python 3.10+ 권장. ROS, GPU, ffmpeg는 필요 없습니다. 그림 없이 숫자만 보려면 <code>--no-anim</code>을 붙입니다.</p>
   <pre class="note-code"><code>python -m pip install -r requirements.txt
 python 03_vehicle_model/test_vehicle.py
-python 04_pid_tracking/test_pid.py</code></pre>
+python 04_pid_tracking/test_pid.py
+python 05_los_guidance/test_los.py</code></pre>
 
   <p class="small-text">MIT. A* / RRT는 PythonRobotics, MPPI는 python_simple_mppi를 교육용으로 짧게 다시 쓴 부분이 있습니다.</p>
 </div>

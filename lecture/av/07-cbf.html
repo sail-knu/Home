@@ -2,7 +2,7 @@
   <p>4강 PID는 경로만 따라가므로 앞에 장애물이 있으면 그대로 들어갑니다. 이번 주는 그 입력을 <strong>안전 제약</strong>으로 고칩니다. 상대차수 2 CBF(HOCBF)입니다.</p>
 
   <figure class="note-figure">
-    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/06_cbf.gif" alt="PID only colliding versus PID plus CBF avoiding">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/07_cbf.gif" alt="PID only colliding versus PID plus CBF avoiding">
     <figcaption>빨간 궤적은 LOS PID only(충돌), 초록은 PID + HOCBF(회피)입니다.</figcaption>
   </figure>
 
@@ -27,9 +27,9 @@
   <div class="note-callout">\(\gamma_1, \gamma_2\)가 작으면 제약을 일찍·멀리서 느끼고, 크면 경계에 더 붙습니다. CBF는 무엇을 하고 싶은지를 정하지 않습니다. LOS PID가 \(u_{\mathrm{nom}}\)을 만들고 CBF가 그걸 고칩니다.</div>
 
   <h3>실행</h3>
-  <pre class="note-code"><code>python 06_cbf/run.py
-python 06_cbf/run.py --gamma1 0.1 --gamma2 0.1
-python 06_cbf/run.py --obs-x 15 --obs-r 4
-python 06_cbf/run.py --mode pid</code></pre>
-  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/06_cbf/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>cbf_qp.py</code> → <code>barrier</code>, <code>cbf_filter</code></p>
+  <pre class="note-code"><code>python 07_cbf/run.py
+python 07_cbf/run.py --gamma1 0.1 --gamma2 0.1
+python 07_cbf/run.py --obs-x 15 --obs-r 4
+python 07_cbf/run.py --mode pid</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/07_cbf/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>cbf_qp.py</code> → <code>barrier</code>, <code>cbf_filter</code></p>
 </div>

@@ -1,0 +1,37 @@
+<div class="note-article">
+  <p>4강은 <strong>다음 waypoint를 직접 조준</strong>하는 heading PID입니다. 이번 주는 같은 PID에 넣는 heading 오차만 바꿉니다. 게인을 바꿔 비교하지 말고, <strong>오차가 어떻게 만들어지는지</strong>만 보면 됩니다.</p>
+
+  <figure class="note-figure">
+    <img src="https://raw.githubusercontent.com/sail-knu/autonomous-vehicle-tutorial/main/results/05_los_guidance.gif" alt="Heading aim versus fixed-delta LOS on the same path">
+    <figcaption>빨간 쪽은 다음 waypoint를 직접 조준하고, 파란 쪽은 고정 \(\Delta\) LOS입니다.</figcaption>
+  </figure>
+
+  <pre class="note-code"><code>heading:  θ_ref = atan2(y_w - y, x_w - x)     ← 점까지 거리로 스케일이 변함
+LOS:      θ_ref = ψ_path + atan2(-y_e, Δ)     ← Δ가 고정이라 스케일이 일정
+              ↓
+           wrap(θ_ref - θ)
+              ↓
+              PID → ω</code></pre>
+
+  <div class="note-math glass-panel">
+    \[
+      \theta_{\mathrm{ref}}^{\mathrm{wp}}=\operatorname{atan2}(y_w-y,\; x_w-x)
+    \]
+    \[
+      \theta_{\mathrm{ref}}^{\mathrm{LOS}}=\psi_{\mathrm{path}}+\operatorname{atan2}(-y_e,\;\Delta)
+    \]
+    <p>활성 선분은 “방금 점 → 다음 점”이고, 횡오차 \(y_e\)는 그 선분의 왼쪽이 +입니다. 둘 다 같은 <code>HeadingPID</code>로 \(\omega\)를 만듭니다.</p>
+  </div>
+
+  <p>점이 성기면 heading 조준은 멀리 있는 점을 봐서, 같은 횡편차라도 오차가 작습니다. 점이 촘촘하면 점 근처에서 오차가 커져 덜컥거립니다. LOS는 look-ahead 거리 \(\Delta\)만 고르면 점 간격과 거의 무관합니다. 4강에서 빼 둔 인덱스 look-ahead와 다르고, 여기는 <strong>미터</strong>입니다.</p>
+  <div class="note-callout">점선은 조준선입니다. heading은 다음 waypoint, LOS는 경로 위 \(\Delta\) 앞입니다. 점 간격은 <code>--spacing wide</code> / <code>narrow</code>, LOS 거리는 <code>--los-dist</code>입니다.</div>
+
+  <h3>실행</h3>
+  <pre class="note-code"><code>python 05_los_guidance/run.py
+python 05_los_guidance/run.py --spacing wide --mode heading
+python 05_los_guidance/run.py --spacing narrow --mode both
+python 05_los_guidance/run.py --los-dist 1.5
+python 05_los_guidance/run.py --los-dist 6.0
+python 05_los_guidance/test_los.py</code></pre>
+  <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/05_los_guidance/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>los.py</code> → <code>waypoint_heading_ref</code>, <code>los_heading_ref</code>, <code>cross_track</code></p>
+</div>

@@ -30,12 +30,11 @@
     </tbody>
   </table>
 
-  <div class="note-callout"><code>--look-ahead</code>가 1 이상이면 더 앞의 점을 조준합니다. 코너는 부드럽게 자르지만, 장애물이 있으면 안쪽으로 파고들 수 있습니다. 선택 로직은 <code>shared/tracking.py</code>의 <code>select_target_index</code>입니다.</div>
+  <div class="note-callout">도착 반경 안에 들어오면 다음 waypoint로 넘깁니다. 지금 점은 도착할 점만 조준합니다. 점 간격이 오차 스케일을 바꾸는 이야기는 5강 LOS에서 비교합니다. 선택 로직은 <code>shared/tracking.py</code>의 <code>advance_waypoint_index</code>입니다.</div>
 
   <h3>실행</h3>
   <pre class="note-code"><code>python 04_pid_tracking/run.py
 python 04_pid_tracking/run.py --kp 3.0 --kd 0.0
-python 04_pid_tracking/run.py --look-ahead 2
 python 04_pid_tracking/test_pid.py</code></pre>
   <p class="small-text"><a href="https://github.com/sail-knu/autonomous-vehicle-tutorial/blob/main/04_pid_tracking/MISSION.md" target="_blank" rel="noopener">MISSION.md</a> · <code>shared/pid.py</code>, <code>shared/tracking.py</code></p>
 </div>
