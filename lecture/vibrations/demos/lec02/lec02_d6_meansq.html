@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L2-D3 · 평균 vs RMS</title>
+<title>L2-D6 · 평균제곱 A²/2</title>
 </head>
 <body>
 <style>
@@ -15,7 +15,6 @@
   --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
   --ok:#177a4c; --bad:#bb4038;
   --plot-bg:#eef4f4; --grid:#cddcdc;
-  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
   --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
   --radius:14px;
 }
@@ -28,7 +27,6 @@
     --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
     --ok:#5cc793; --bad:#f09289;
     --plot-bg:#0e2429; --grid:#1e3d44;
-    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
     --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
   }
 }
@@ -78,8 +76,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 
 <header class="hero wrap">
   <p class="eyebrow">기계진동학 2강</p>
-  <h1>평균 vs RMS</h1>
-  <p class="lede">평균은 <b>0</b>으로 상쇄되고, RMS는 <b>0.707A</b>로 남습니다.</p>
+  <h1>평균제곱 A²/2</h1>
+  <p class="lede">제곱하면 음수가 접혀 올라가고, 시간평균은 <b>A²/2</b>입니다.</p>
 </header>
 
 <main class="wrap">
@@ -93,9 +91,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
     </div>
     <canvas id="cv" class="sim" width="900" height="420"></canvas>
     <div class="legend">
-      <span><i style="background:var(--accent)"></i>x(t) = A sin ωₙt</span>
-      <span><i style="background:var(--high)"></i>RMS = 0.707A</span>
-      <span><i style="background:var(--border2)"></i>평균 = 0</span>
+      <span><i style="background:var(--low)"></i>x²(t)</span>
+      <span><i style="background:var(--ok)"></i>평균제곱 A²/2</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -114,11 +111,12 @@ var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var WN = 20, TW = 1.2, AMAX = 10;
 var st = { A: 5, t: 0, running: true };
+var MSMAX = AMAX * AMAX * 1.05;
 
 var PAL = {};
 function readPalette(){
   var cs = getComputedStyle(document.documentElement);
-  ['surface2','border','border2','text','muted','faint','accent','high','float','grid'].forEach(function(k){
+  ['surface2','border','border2','text','muted','faint','accent','low','ok','float'].forEach(function(k){
     PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
   });
 }
@@ -131,12 +129,11 @@ if (window.MutationObserver){
 var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
 var L = 70, R = W - 24, T = 48, B = 380;
-var midY = (T + B) / 2;
 function xPix(t){ return L + t / TW * (R - L); }
-function yPix(x){ return midY - x / (AMAX * 1.08) * (B - T) / 2; }
+function yPix(v){ return B - Math.min(v, MSMAX) / MSMAX * (B - T); }
 
 function draw(){
-  var A = st.A, rms = A / Math.SQRT2, tc = st.t % TW;
+  var A = st.A, ms = A * A / 2, tc = st.t % TW;
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = PAL.surface2;
   ctx.fillRect(L, T, R - L, B - T);
@@ -144,37 +141,37 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
 
   ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('x(t) = A sin ωₙt', L, 28);
-  ctx.fillStyle = PAL.high; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText('평균 = 0,   RMS = ' + rms.toFixed(2) + ' mm', R, 28);
+  ctx.fillText('x²(t)  [mm²]', L, 28);
+  ctx.fillStyle = PAL.ok; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('A²/2 = ' + ms.toFixed(1) + ' mm²', R, 28);
 
-  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.moveTo(L, midY); ctx.lineTo(R, midY); ctx.stroke();
-  ctx.strokeStyle = PAL.high; ctx.lineWidth = 2.4;
-  [rms, -rms].forEach(function(v){
-    ctx.beginPath(); ctx.moveTo(L, yPix(v)); ctx.lineTo(R, yPix(v)); ctx.stroke();
-  });
+  ctx.fillStyle = PAL.low; ctx.globalAlpha = 0.18;
+  ctx.beginPath(); ctx.moveTo(L, B);
+  var i, t, s;
+  for (i = 0; i <= 400; i++){
+    t = TW * i / 400; s = A * Math.sin(WN * t);
+    ctx.lineTo(xPix(t), yPix(s * s));
+  }
+  ctx.lineTo(R, B); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
 
-  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.5; ctx.beginPath();
-  for (var i = 0; i <= 400; i++){
-    var t = TW * i / 400, X = xPix(t), Y = yPix(A * Math.sin(WN * t));
-    if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  ctx.strokeStyle = PAL.ok; ctx.lineWidth = 2.6;
+  ctx.beginPath(); ctx.moveTo(L, yPix(ms)); ctx.lineTo(R, yPix(ms)); ctx.stroke();
+
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (i = 0; i <= 400; i++){
+    t = TW * i / 400; s = A * Math.sin(WN * t);
+    if (i) ctx.lineTo(xPix(t), yPix(s * s)); else ctx.moveTo(xPix(t), yPix(s * s));
   }
   ctx.stroke();
 
   ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(xPix(tc), T); ctx.lineTo(xPix(tc), B); ctx.stroke(); ctx.setLineDash([]);
+  s = A * Math.sin(WN * tc);
   ctx.fillStyle = PAL.float;
-  ctx.beginPath(); ctx.arc(xPix(tc), yPix(A * Math.sin(WN * tc)), 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(xPix(tc), yPix(s * s), 6, 0, Math.PI * 2); ctx.fill();
 
   ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
-  for (var s = 0; s <= TW + 1e-9; s += 0.2){
-    ctx.fillText(s.toFixed(1), xPix(s), B + 20);
-  }
-  ctx.textAlign = 'left'; ctx.fillStyle = PAL.muted;
-  ctx.fillText('평균 = 0', L + 8, midY - 8);
-  ctx.fillStyle = PAL.high;
-  ctx.fillText('+RMS', L + 8, yPix(rms) - 8);
+  for (var u = 0; u <= TW + 1e-9; u += 0.2) ctx.fillText(u.toFixed(1), xPix(u), B + 20);
 }
 
 $('a').addEventListener('input', function(){
