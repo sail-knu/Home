@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L6-D3 · 전달함수 H(s)</title>
+<title>L6-D5 · |H(jω)| = Λ/k</title>
 </head>
 <body>
 <style>
@@ -78,8 +78,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 
 <header class="hero wrap">
   <p class="eyebrow">기계진동학 6강</p>
-  <h1>전달함수 H(s)</h1>
-  <p class="lede">F(s)에 H(s)=1/(ms²+cs+k)를 곱하면 X(s)입니다.</p>
+  <h1>|H(jω)| = Λ/k</h1>
+  <p class="lede">s=jω이면 |H| 곡선은 1강 무차원 진폭을 k로 나눈 것과 겹칩니다.</p>
 </header>
 
 <main class="wrap">
@@ -103,14 +103,15 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
         <input type="range" id="w" min="0.5" max="30" step="0.5" value="10">
       </div>
     </div>
-    <canvas id="cv" class="sim" width="900" height="380"></canvas>
+    <canvas id="cv" class="sim" width="900" height="460"></canvas>
     <div class="legend">
-      <span><i style="background:var(--low)"></i>입력 F(t) = F₀ sin ωt</span>
-      <span><i style="background:var(--accent)"></i>H(s) = 1/(ms²+cs+k)</span>
-      <span><i style="background:var(--high)"></i>출력 x(t) = X sin(ωt − θ)</span>
+      <span><i style="background:var(--accent)"></i>|H(jω)|</span>
+      <span><i style="background:var(--float)"></i>Λ(r)/k</span>
+      <span><i style="background:var(--ok)"></i>ωₙ (r=1)</span>
+      <span><i style="background:var(--high)"></i>현재 ω</span>
     </div>
     <div class="btn-row">
-      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="play">▶ 재생</button>
       <button class="btn" id="reset">↺ 리셋</button>
     </div>
   </div>
@@ -125,14 +126,14 @@ var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var DEF = { m:1, c:2, k:100, w:10 };
-var F0 = 10;
 var p = { m:1, c:2, k:100, w:10 };
-var phi = 0, running = true;
+var running = false, sweepDir = 1;
+var W_LO = 0.5, W_HI = 30;
 
 var PAL = {};
 function readPalette(){
   var cs = getComputedStyle(document.documentElement);
-  ['surface2','surface3','border','border2','text','muted','faint','accent','accent-soft','high','low','float','ok','bad','grid'].forEach(function(k){
+  ['surface2','border','border2','text','muted','faint','accent','high','low','float','ok','grid','plot-bg'].forEach(function(k){
     PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
   });
 }
@@ -156,98 +157,108 @@ function compute(){
   var magH = 1 / den;
   var theta = Math.atan2(im, re);
   if (im === 0 && Math.abs(re) < 1e-9) theta = Math.PI / 2;
-  return { wn:wn, zeta:zeta, r:r, magH:magH, theta:theta,
-           X:F0 * magH, lam:p.k * magH, diverge:diverge };
+  return { wn:wn, zeta:zeta, r:r, magH:magH, theta:theta, lam:p.k * magH, diverge:diverge };
+}
+function magAt(w){
+  var re = p.k - p.m * w * w, im = p.c * w;
+  var v = 1 / Math.max(Math.sqrt(re * re + im * im), 1e-6);
+  return Math.min(Math.max(v, 1e-6), 20);
+}
+function lamAt(w, wn, ze){
+  var r = w / Math.max(wn, 1e-9);
+  var a = 1 - r * r, b = 2 * ze * r;
+  var v = 1 / (p.k * Math.max(Math.sqrt(a * a + b * b), 1e-9));
+  return Math.min(Math.max(v, 1e-6), 20);
 }
 function fmtH(v){ return v >= 0.01 ? v.toFixed(4) : v.toExponential(2); }
 
-var inL = 35, inR = 270, outL = 630, outR = 865, cy = 190, HH = 88;
-var bx1 = 340, bx2 = 565, by1 = 140, by2 = 240;
+var SUP = { '-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹' };
+function sup(n){ return String(n).split('').map(function(ch){ return SUP[ch] || ch; }).join(''); }
 
-function drawWave(x1, x2, cyy, amp, phase0, q, color){
-  ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.beginPath();
-  for (var px = x1; px <= x2; px += 2){
-    var y = cyy - amp * Math.sin(phi + phase0 + q * (x2 - px));
-    if (px === x1) ctx.moveTo(px, y); else ctx.lineTo(px, y);
-  }
-  ctx.stroke();
-}
-function arrow(x1, x2, y){
-  ctx.strokeStyle = PAL.border2; ctx.fillStyle = PAL.border2; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2 - 8, y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - 9, y - 5); ctx.lineTo(x2 - 9, y + 5); ctx.closePath(); ctx.fill();
-  for (var i = 0; i < 3; i++){
-    var u = ((phi * 0.18 + i / 3) % 1 + 1) % 1;
-    ctx.fillStyle = PAL.accent;
-    ctx.beginPath(); ctx.arc(x1 + u * (x2 - x1 - 10), y, 3, 0, Math.PI * 2); ctx.fill();
-  }
-}
-function roundBox(x, y, w, h, r){
-  if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
-}
+var plotL = 70, plotR = 836, plotT = 52, plotB = 410;
 
 function draw(){
   ctx.clearRect(0, 0, W, H);
   var q = compute();
-  var qq = Math.max(0.014, p.w * 0.0035);
-  var mag = Math.min(q.lam, 2000);
-  var s = 26;
-  var outPx = Math.min(72, Math.max(s * mag, 1.2));
+  var wLo = 0.3, wHi = 31, N = 300;
+  var vals = [], lams = [];
+  var lgMin = Infinity, lgMax = -Infinity, i, w;
+  for (i = 0; i <= N; i++){
+    w = wLo + (wHi - wLo) * i / N;
+    var lg = Math.log10(magAt(w));
+    vals.push([w, lg]);
+    lams.push([w, Math.log10(lamAt(w, q.wn, q.zeta))]);
+    if (lg < lgMin) lgMin = lg;
+    if (lg > lgMax) lgMax = lg;
+  }
+  lgMin = Math.floor(lgMin); lgMax = Math.ceil(lgMax);
+  if (lgMax <= lgMin) lgMax = lgMin + 1;
+  var xw  = function(v){ return plotL + (v - wLo) / (wHi - wLo) * (plotR - plotL); };
+  var ylg = function(v){ return plotB - (Math.min(Math.max(v, lgMin), lgMax) - lgMin) / (lgMax - lgMin) * (plotB - plotT); };
 
-  ctx.fillStyle = PAL.surface2;
-  ctx.fillRect(18, 16, W - 36, H - 32);
+  ctx.font = 'bold 16px ' + FONT; ctx.fillStyle = PAL.text; ctx.textAlign = 'left';
+  ctx.fillText('|H(jω)| [m/N]  (log)', plotL, 28);
+  ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('|H| = ' + (q.diverge ? '∞' : fmtH(q.magH)) + '   Λ/k = ' + (q.diverge ? '∞' : fmtH(q.lam / p.k)) + '   ω = ' + p.w.toFixed(1) + '   ωₙ = ' + q.wn.toFixed(2), plotR, 28);
 
-  [[inL, inR], [outL, outR]].forEach(function(pr){
-    ctx.fillStyle = PAL.surface3;
-    ctx.fillRect(pr[0], cy - HH, pr[1] - pr[0], HH * 2);
-    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(pr[0], cy); ctx.lineTo(pr[1], cy); ctx.stroke(); ctx.setLineDash([]);
-  });
-  drawWave(inL, inR, cy, s, 0, qq, PAL.low);
-  drawWave(outL, outR, cy, outPx, -q.theta, qq, PAL.high);
-
-  ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'center';
-  ctx.fillStyle = PAL.low;  ctx.fillText('입력 F(t) = F₀ sin ωt', (inL + inR) / 2, 52);
-  ctx.fillStyle = PAL.high; ctx.fillText('출력 x(t) = X sin(ωt − θ)', (outL + outR) / 2, 52);
-
-  ctx.font = '13px ' + FONT; ctx.fillStyle = PAL.muted;
-  ctx.fillText('F₀ = ' + F0 + ' N', (inL + inR) / 2, 318);
-  ctx.fillStyle = q.diverge ? PAL.bad : PAL.text;
-  ctx.fillText(q.diverge ? 'X → ∞ (비감쇠 공진)' :
-    'X = ' + fmtH(q.X) + ' m',
-    (outL + outR) / 2, 318);
-
-  arrow(inR, bx1, cy);
-  arrow(bx2, outL, cy);
-  ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
-  ctx.fillText('F(s)', (inR + bx1) / 2, cy - 16);
-  ctx.font = 'bold 12.5px ' + FONT; ctx.fillStyle = PAL.accent;
-  ctx.fillText('× H(jω)', (bx2 + outL) / 2, cy - 34);
   ctx.font = '12.5px ' + FONT;
-  ctx.fillText('위상 −θ', (bx2 + outL) / 2, cy - 16);
+  for (var d = lgMin; d <= lgMax; d++){
+    var y = ylg(d);
+    ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+    ctx.fillStyle = PAL.muted; ctx.textAlign = 'right';
+    ctx.fillText('10' + sup(d), plotL - 8, y + 4);
+  }
+  for (w = 0; w <= 30; w += 5){
+    if (w < wLo) continue;
+    var x = xw(w);
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 5); ctx.stroke();
+    ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
+    ctx.fillText(String(w), x, plotB + 20);
+  }
+  ctx.font = '13.5px ' + FONT; ctx.fillStyle = PAL.muted; ctx.textAlign = 'center';
+  ctx.fillText('ω [rad/s]', (plotL + plotR) / 2, plotB + 38);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
-  ctx.fillStyle = PAL['accent-soft']; ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2;
-  roundBox(bx1, by1, bx2 - bx1, by2 - by1, 10); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 20px ' + FONT; ctx.textAlign = 'right';
-  ctx.fillText('H(s) =', 430, 192);
-  ctx.textAlign = 'center'; ctx.font = 'bold 17px ' + FONT;
-  ctx.fillText('1', 492, 172);
-  ctx.strokeStyle = PAL.text; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(440, 184); ctx.lineTo(546, 184); ctx.stroke();
-  ctx.font = '16px ' + FONT;
-  ctx.fillText('ms² + cs + k', 493, 209);
+  var yk = ylg(Math.log10(1 / p.k));
+  ctx.strokeStyle = PAL.muted; ctx.globalAlpha = 0.55; ctx.setLineDash([3, 5]); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(plotL, yk); ctx.lineTo(plotR, yk); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.muted; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('|H| = 1/k', plotL + 8, yk - 6);
 
-  ctx.font = '13px ' + FONT; ctx.fillStyle = PAL.muted;
-  ctx.fillText('= 1/(' + p.m.toFixed(1) + 's² + ' + p.c.toFixed(1) + 's + ' + p.k.toFixed(0) + ')', (bx1 + bx2) / 2, 268);
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 6; ctx.globalAlpha = 0.85;
+  ctx.setLineDash([9, 7]); ctx.beginPath();
+  lams.forEach(function(pt, j){
+    var X = xw(pt[0]), Y = ylg(pt[1]);
+    if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  });
+  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
 
-  ctx.fillStyle = PAL.text; ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
-  var thDeg = q.theta * 180 / Math.PI;
-  ctx.fillText('|H| = ' + (q.diverge ? '∞' : fmtH(q.magH)) + ' m/N   θ = ' + thDeg.toFixed(1) + '°   r = ' + q.r.toFixed(2) + '   ζ = ' + q.zeta.toFixed(3), 28, 356);
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  vals.forEach(function(pt, j){
+    var X = xw(pt[0]), Y = ylg(pt[1]);
+    if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+  });
+  ctx.stroke();
+
+  var xNow = xw(Math.min(Math.max(p.w, wLo), wHi));
+  var yNow = Math.min(Math.max(ylg(Math.log10(magAt(p.w))), plotT + 8), plotB - 3);
+
+  if (q.wn >= wLo && q.wn <= wHi){
+    var xn = xw(q.wn);
+    ctx.strokeStyle = PAL.ok; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(xn, plotT); ctx.lineTo(xn, plotB); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = PAL.ok; ctx.font = 'bold 12.5px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText('ωₙ', xn + 8, plotT + 16);
+  }
+  ctx.strokeStyle = PAL.high; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(xNow, plotT); ctx.lineTo(xNow, plotB); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.high;
+  ctx.beginPath(); ctx.arc(xNow, yNow, 6, 0, Math.PI * 2); ctx.fill();
 }
 
 function syncSpans(){
@@ -264,22 +275,29 @@ function bind(id, key){
 }
 bind('m', 'm'); bind('c', 'c'); bind('k', 'k'); bind('w', 'w');
 
+function setPlayUi(){
+  $('play').textContent = running ? '⏸ 일시정지' : '▶ 재생';
+  $('play').classList.toggle('btn-acc', running);
+}
 $('play').addEventListener('click', function(){
   running = !running;
-  this.textContent = running ? '⏸ 일시정지' : '▶ 재생';
-  this.classList.toggle('btn-acc', running);
+  setPlayUi();
 });
 $('reset').addEventListener('click', function(){
-  p = { m:DEF.m, c:DEF.c, k:DEF.k, w:DEF.w }; phi = 0; running = true;
-  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
-  syncSpans(); draw();
+  p = { m:DEF.m, c:DEF.c, k:DEF.k, w:DEF.w }; running = false; sweepDir = 1;
+  setPlayUi(); syncSpans(); draw();
 });
 
 var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (running) phi += 2.2 * dt;
+  if (running){
+    p.w += sweepDir * 4.0 * dt;
+    if (p.w >= W_HI){ p.w = W_HI; sweepDir = -1; }
+    if (p.w <= W_LO){ p.w = W_LO; sweepDir = 1; }
+    syncSpans();
+  }
   draw();
   requestAnimationFrame(loop);
 }

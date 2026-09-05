@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L9-D3 · 계단 응답</title>
+<title>L9-D4 · 펄스 응답</title>
 </head>
 <body>
 <style>
@@ -78,8 +78,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 
 <header class="hero wrap">
   <p class="eyebrow">기계진동학 9강</p>
-  <h1>계단 응답</h1>
-  <p class="lede">계단입력의 오버슈트는 ζ만으로 정해집니다.</p>
+  <h1>펄스 응답</h1>
+  <p class="lede">폭 T인 펄스는 계단 두 개의 차이고, T≈Tₙ/2이면 잔류진동이 작습니다.</p>
 </header>
 
 <main class="wrap">
@@ -94,13 +94,17 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
         <p class="ctrl-title">고유진동수 ωₙ <span class="big-val" id="wv">10.0</span> rad/s</p>
         <input type="range" id="w" min="2" max="20" step="0.1" value="10">
       </div>
+      <div>
+        <p class="ctrl-title">펄스 폭 T <span class="big-val" id="Tv">0.31</span> s</p>
+        <input type="range" id="T" min="0.02" max="1.6" step="0.01" value="0.31">
+      </div>
     </div>
     <canvas id="cv" class="sim" width="900" height="460"></canvas>
     <div class="legend">
-      <span><i style="background:var(--accent)"></i>응답 x(t)</span>
-      <span><i style="background:var(--low)"></i>정상상태 x_ss = F₀/k</span>
-      <span><i style="background:var(--float)"></i>최대점 (오버슈트)</span>
-      <span><i style="background:var(--high)"></i>2F₀/k 상한 (비감쇠)</span>
+      <span><i style="background:var(--accent)"></i>응답 x(t) = step(t) − step(t−T)</span>
+      <span><i style="background:var(--high)"></i>켜지는 계단 +F₀Φ(t)</span>
+      <span><i style="background:var(--low)"></i>꺼지는 계단 −F₀Φ(t−T)</span>
+      <span><i style="background:var(--float)"></i>최대점</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -119,7 +123,7 @@ var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var EPS = 1e-6;
 var K = 100;
-var st = { zeta:0.10, wn:10, F0:50, pulse:false, T:0.31, t:0, running:true };
+var st = { zeta:0.10, wn:10, F0:50, pulse:true, T:0.31, t:0, running:true };
 
 var PAL = {};
 function readPalette(){
@@ -150,8 +154,7 @@ function pulseResp(t, z, wn, F0, T){
   return stepResp(t, z, wn, F0) - stepResp(t - T, z, wn, F0);
 }
 function respAt(t){
-  return st.pulse ? pulseResp(t, st.zeta, st.wn, st.F0, st.T)
-                  : stepResp(t, st.zeta, st.wn, st.F0);
+  return pulseResp(t, st.zeta, st.wn, st.F0, st.T);
 }
 function metrics(){
   var z = st.zeta, wn = st.wn, F0 = st.F0;
@@ -164,20 +167,27 @@ function metrics(){
   var peakVal = z < EPS ? 2 * xss : xss * (1 + osFrac);
   return { xss:xss, wd:wd, tp:tp, ts:ts, osPct:osFrac*100, peakVal:peakVal, peakMult:peakVal/xss };
 }
-function viewSpan(){
-  var wn = st.wn, z = st.zeta;
+function residualAmp(){
+  var T = st.T, wn = st.wn, z = st.zeta, F0 = st.F0;
   var Tn = 2 * Math.PI / wn;
-  if (st.pulse) return Math.max(st.T + 4 * Tn, 2.0);
-  if (z < EPS) return Math.min(10 * Tn, 8);
-  return Math.min(Math.max(5 / (z * wn), 4 * Tn), 12);
+  var amax = 0, tEnd = T + 4 * Tn, N = 1200;
+  for (var i = 0; i <= N; i++){
+    var t = T + (i / N) * (tEnd - T);
+    var a = Math.abs(pulseResp(t, z, wn, F0, T));
+    if (a > amax) amax = a;
+  }
+  return amax;
+}
+function viewSpan(){
+  var Tn = 2 * Math.PI / st.wn;
+  return Math.max(st.T + 4 * Tn, 2.0);
 }
 
 var plotL = 76, plotR = W - 34, plotTop = 56, plotBot = H - 62;
 var plotW = plotR - plotL, plotH = plotBot - plotTop;
 
 function yRange(m){
-  var ymax = Math.max(m.peakVal, m.xss) * 1.15, ymin = 0;
-  if (st.pulse){ ymax = m.peakVal * 1.15; ymin = -m.peakVal * 1.15; }
+  var ymax = m.peakVal * 1.15, ymin = -m.peakVal * 1.15;
   if (ymax - ymin < 1e-6) ymax = ymin + 1e-6;
   return { ymin:ymin, ymax:ymax };
 }
@@ -213,7 +223,7 @@ function draw(){
   var yx = function(y){ return plotBot - ((y - ymin) / (ymax - ymin)) * plotH; };
 
   ctx.clearRect(0, 0, W, H);
-  var lblXss = null, lbl2F = null;
+  var lblForce = null;
   var i;
 
   ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
@@ -236,24 +246,39 @@ function draw(){
   ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
   ctx.strokeRect(plotL, plotTop, plotW, plotH);
 
-  ctx.fillStyle = PAL.low; ctx.globalAlpha = 0.12;
-  var yb1 = yx(m.xss * 1.03), yb2 = yx(m.xss * 0.97);
-  ctx.fillRect(plotL, Math.min(yb1, yb2), plotW, Math.abs(yb2 - yb1));
-  ctx.globalAlpha = 1;
-
-  ctx.strokeStyle = PAL.low; ctx.lineWidth = 1.8; ctx.setLineDash([7, 5]);
-  ctx.beginPath(); ctx.moveTo(plotL, yx(m.xss)); ctx.lineTo(plotR, yx(m.xss)); ctx.stroke();
-  ctx.setLineDash([]);
-  lblXss = { t:'x_ss = F₀/k = ' + m.xss.toFixed(3) + ' m', y: yx(m.xss) + 18 };
-
-  var y2 = yx(2 * m.xss);
-  if (y2 > plotTop && y2 < plotBot){
-    ctx.strokeStyle = PAL.high; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
-    ctx.globalAlpha = 0.75;
-    ctx.beginPath(); ctx.moveTo(plotL, y2); ctx.lineTo(plotR, y2); ctx.stroke();
-    ctx.globalAlpha = 1; ctx.setLineDash([]);
-    lbl2F = { t:'2F₀/k = ' + (2 * m.xss).toFixed(3) + ' m', y: y2 - 13 };
+  if (ymin < 0){
+    ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, yx(0)); ctx.lineTo(plotR, yx(0)); ctx.stroke();
+    ctx.setLineDash([]);
   }
+
+  var drawComp = function(sign, shift, color){
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+    ctx.globalAlpha = 0.6; ctx.beginPath();
+    var started = false;
+    for (var px = 0; px <= plotW; px += 2){
+      var t = (px / plotW) * Tview;
+      var v = sign * stepResp(t - shift, st.zeta, st.wn, st.F0);
+      var X = plotL + px, Y = yx(v);
+      if (!started){ ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  };
+  drawComp(+1, 0, PAL.high);
+  drawComp(-1, st.T, PAL.low);
+
+  var xT = tx(Math.min(st.T, Tview));
+  ctx.fillStyle = PAL.accent; ctx.globalAlpha = 0.09;
+  ctx.fillRect(plotL, plotTop, xT - plotL, plotH); ctx.globalAlpha = 1;
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.moveTo(xT, plotTop); ctx.lineTo(xT, plotBot); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
+  ctx.font = 'bold 13.5px ' + FONT;
+  if (xT - plotL > ctx.measureText('힘 F₀ 작용').width + 16){
+    lblForce = { t:'힘 F₀ 작용', x:(plotL + xT) / 2, y: plotTop + 16 };
+  }
+  chipAt('T = ' + st.T.toFixed(2) + ' s', xT, plotBot - 15, PAL.accent);
 
   ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.beginPath();
   var started2 = false;
@@ -265,23 +290,7 @@ function draw(){
   }
   ctx.stroke();
 
-  if (lblXss) boxLabel(lblXss.t, plotL + 8, lblXss.y, PAL.low, 'left');
-  if (lbl2F)  boxLabel(lbl2F.t, plotR - 8, lbl2F.y, PAL.high, 'right');
-
-  if (m.tp <= Tview){
-    var pxp = tx(m.tp);
-    ctx.strokeStyle = PAL.accent; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.55;
-    ctx.beginPath(); ctx.moveTo(pxp, plotTop); ctx.lineTo(pxp, plotBot); ctx.stroke();
-    ctx.globalAlpha = 1; ctx.setLineDash([]);
-    chipAt('tₚ = ' + m.tp.toFixed(3) + ' s', pxp, plotBot - 15, PAL.accent);
-  }
-  if (isFinite(m.ts) && m.ts <= Tview){
-    var pxs = tx(m.ts);
-    ctx.strokeStyle = PAL.low; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.55;
-    ctx.beginPath(); ctx.moveTo(pxs, plotTop); ctx.lineTo(pxs, plotBot); ctx.stroke();
-    ctx.globalAlpha = 1; ctx.setLineDash([]);
-    chipAt('tₛ = ' + m.ts.toFixed(2) + ' s', pxs, plotBot - 41, PAL.low);
-  }
+  if (lblForce) boxLabel(lblForce.t, lblForce.x, lblForce.y, PAL.accent, 'center');
 
   var tCur = Math.min(st.t, Tview);
   var cx = tx(tCur), cy = yx(respAt(tCur));
@@ -291,16 +300,20 @@ function draw(){
   ctx.fillStyle = PAL.text;
   ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill();
 
-  var markT = m.tp, markV = m.peakVal;
-  if (markT >= 0 && markT <= Tview){
-    var mx = tx(markT), my = yx(markV);
+  var best = 0, bestT = 0;
+  for (var px3 = 0; px3 <= plotW; px3 += 1){
+    var t3 = (px3 / plotW) * Tview, v3 = respAt(t3);
+    if (Math.abs(v3) > Math.abs(best)){ best = v3; bestT = t3; }
+  }
+  if (bestT >= 0 && bestT <= Tview){
+    var mx = tx(bestT), my = yx(best);
     ctx.fillStyle = PAL.float;
     ctx.beginPath(); ctx.arc(mx, my, 6.5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = PAL.surface2; ctx.lineWidth = 1.8; ctx.stroke();
     ctx.fillStyle = PAL.float; ctx.font = 'bold 13.5px ' + FONT;
-    var right = markT / Tview > 0.72;
+    var right = bestT / Tview > 0.72;
     ctx.textAlign = right ? 'right' : 'left';
-    ctx.fillText('최대 ' + markV.toFixed(3) + ' m  ·  OS ' + m.osPct.toFixed(1) + '%', right ? mx - 11 : mx + 11, my - 11);
+    ctx.fillText('최대 ' + best.toFixed(3) + ' m', right ? mx - 11 : mx + 11, my - 11);
   }
 
   ctx.textAlign = 'center'; ctx.font = '12.5px ' + FONT; ctx.fillStyle = PAL.faint;
@@ -310,31 +323,35 @@ function draw(){
   ctx.textAlign = 'right'; ctx.font = '13.5px ' + FONT; ctx.fillStyle = PAL.muted;
   ctx.fillText('시간 t [s] →', plotR, plotBot + 44);
 
+  var Tn = 2 * Math.PI / st.wn;
+  var resid = residualAmp();
   ctx.textAlign = 'left'; ctx.font = 'bold 16px ' + FONT; ctx.fillStyle = PAL.text;
-  ctx.fillText('x(t) [m] · 계단하중 F₀Φ(t)', 22, plotTop - 18);
+  ctx.fillText('x(t) [m] · 사각펄스 F₀[Φ(t) − Φ(t−T)]', 22, plotTop - 18);
   ctx.textAlign = 'right'; ctx.font = '14px ' + MONO; ctx.fillStyle = PAL.muted;
-  ctx.fillText('ζ=' + st.zeta.toFixed(2) + '  ωₙ=' + st.wn.toFixed(1) +
-               '  F₀=50 N  k=100 N/m  OS=' + m.osPct.toFixed(1) + '%', plotR, plotTop - 18);
+  ctx.fillText('Tₙ=' + Tn.toFixed(2) + ' s  Tₙ/2=' + (Tn/2).toFixed(2) +
+               ' s  잔류=' + resid.toFixed(3) + ' m  F₀=50 N  k=100 N/m', plotR, plotTop - 18);
 }
 
 function syncSpans(){
   $('zv').textContent = st.zeta.toFixed(2);
   $('wv').textContent = st.wn.toFixed(1);
-  $('z').value = st.zeta; $('w').value = st.wn;
+  $('Tv').textContent = st.T.toFixed(2);
+  $('z').value = st.zeta; $('w').value = st.wn; $('T').value = st.T;
 }
-$('z').addEventListener('input', function(){
-  st.zeta = parseFloat(this.value); st.t = 0; $('zv').textContent = st.zeta.toFixed(2); draw();
-});
-$('w').addEventListener('input', function(){
-  st.wn = parseFloat(this.value); st.t = 0; $('wv').textContent = st.wn.toFixed(1); draw();
-});
+function bind(id, key){
+  $(id).addEventListener('input', function(){
+    st[key] = parseFloat(this.value); st.t = 0; syncSpans(); draw();
+  });
+}
+bind('z', 'zeta'); bind('w', 'wn'); bind('T', 'T');
+
 $('play').addEventListener('click', function(){
   st.running = !st.running;
   this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
   this.classList.toggle('btn-acc', st.running);
 });
 $('reset').addEventListener('click', function(){
-  st.zeta = 0.10; st.wn = 10; st.F0 = 50; st.T = 0.31; st.pulse = false; st.t = 0; st.running = true;
+  st.zeta = 0.10; st.wn = 10; st.F0 = 50; st.T = 0.31; st.pulse = true; st.t = 0; st.running = true;
   $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
   syncSpans(); draw();
 });

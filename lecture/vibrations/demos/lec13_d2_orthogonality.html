@@ -3,205 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L13-D2 · 직교성과 정규화 — SᵀMS=I 검증기</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
-    color: #e8eef5; min-height: 100vh; padding: 20px;
-  }
-  .container { max-width: 1180px; margin: 0 auto; }
-  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #8eb4d8, #6ea3d8);
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
-    border-radius:20px; padding:2px 10px; margin-top:4px; }
-  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
-  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
-  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px; padding: 18px; }
-  .controls { display: flex; flex-direction: column; gap: 14px; }
-  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
-    text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
-    font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
-  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
-    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
-    transition: transform 0.1s; }
-  button:hover { transform: translateY(-1px); }
-  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
-  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    font-family: "SF Mono", Consolas, monospace; }
-  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #9bb0c0; font-size: 11px; }
-  .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #d5e2ee; line-height: 1.65;
-    background: rgba(110, 163, 216, 0.08); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #6ea3d8; }
-  .verdict { font-size: 13px; font-weight: 700; padding: 9px 11px; border-radius: 6px; text-align: center;
-    font-family: "SF Mono", Consolas, monospace; }
-  .verdict.good { background: rgba(0,184,148,0.16); color:#55efc4; border:1px solid rgba(85,239,196,0.4); }
-  .verdict.mid  { background: rgba(255,216,107,0.16); color:#ffd86b; border:1px solid rgba(255,216,107,0.4); }
-  .verdict.bad  { background: rgba(255,107,157,0.16); color:#ff6b9d; border:1px solid rgba(255,107,157,0.4); }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; }
-  .dot { width: 12px; height: 12px; border-radius: 3px; }
-  .modeBtns { display:flex; gap:8px; }
-  .modeBtns button.active { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
-</style>
+<title>L13-D2 · 직교성과 정규화</title>
 </head>
 <body>
-<div class="container">
-  <h1>🔬 직교성과 정규화 — SᵀMS=I 검증기</h1>
-  <div class="subtitle">고유벡터를 열로 모아 만든 S가 M·K를 동시에 대각화한다. 직교성이 모드 분리의 근거</div>
-  <div style="text-align:center;"><span class="tag">기계진동학 13강</span></div>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
 
-  <div class="layout" style="margin-top:16px;">
-    <div>
-      <canvas id="cv" width="900" height="540"></canvas>
-      <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>대각 = 1 (정규화)</div>
-        <div class="legend-item"><span class="dot" style="background:#6ea3d8"></span>대각 = ω² = λ (Λ)</div>
-        <div class="legend-item"><span class="dot" style="background:#55efc4"></span>비대각 ≈ 0 (직교)</div>
-        <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>0에서 벗어남 (비직교)</div>
-      </div>
-    </div>
-    <div class="panel controls">
-      <div class="control-group">
-        <label>모드 표시 (S의 열)</label>
-        <div class="modeBtns">
-          <button id="modeBoth" class="active">둘 다</button>
-          <button id="mode1">u₁</button>
-          <button id="mode2">u₂</button>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>질량 m₁ <span class="value" id="m1v">1.0</span> kg</label>
+<header class="hero wrap">
+  <p class="eyebrow">기계진동학 13강</p>
+  <h1>직교성과 정규화</h1>
+  <p class="lede">고유벡터를 질량정규화하면 SᵀMS=I, SᵀKS=Λ입니다.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">질량 m₁ <span class="big-val" id="m1v">1.0</span> kg</p>
         <input type="range" id="m1" min="0.5" max="6" step="0.1" value="1">
       </div>
-      <div class="control-group">
-        <label>질량 m₂ <span class="value" id="m2v">4.0</span> kg</label>
+      <div>
+        <p class="ctrl-title">질량 m₂ <span class="big-val" id="m2v">4.0</span> kg</p>
         <input type="range" id="m2" min="0.5" max="6" step="0.1" value="4">
       </div>
-      <div class="control-group">
-        <label>강성 k₁ = k₃ <span class="value" id="k13v">10</span> N/m</label>
+      <div>
+        <p class="ctrl-title">강성 k₁ = k₃ <span class="big-val" id="k13v">10</span> N/m</p>
         <input type="range" id="k13" min="1" max="30" step="1" value="10">
       </div>
-      <div class="control-group">
-        <label>연결 강성 k₂ <span class="value" id="k2v">2</span> N/m</label>
+      <div>
+        <p class="ctrl-title">연결 강성 k₂ <span class="big-val" id="k2v">2</span> N/m</p>
         <input type="range" id="k2" min="0" max="20" step="1" value="2">
       </div>
-      <div class="control-group">
-        <div class="stats">
-          <div class="stat-item"><div class="k">λ₁ = ω₁²</div><div class="v" id="lam1" style="color:#b6f0c0">—</div></div>
-          <div class="stat-item"><div class="k">λ₂ = ω₂²</div><div class="v" id="lam2" style="color:#b6f0c0">—</div></div>
-          <div class="stat-item"><div class="k">ω₁</div><div class="v" id="w1" style="color:#8eb4d8">—</div></div>
-          <div class="stat-item"><div class="k">ω₂</div><div class="v" id="w2" style="color:#8eb4d8">—</div></div>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>임의 벡터로 시험 — v = R(θ)·u₁</label>
-        <div style="font-size:11px; color:#9bb0c0; margin-bottom:4px;">θ=0이면 v=u₁ (고유벡터). θ를 돌리면 vᵀMu₂ ≠ 0.</div>
-        <label>시험각 θ <span class="value" id="thv">0°</span></label>
-        <input type="range" id="th" min="-90" max="90" step="1" value="0">
-        <div class="stats" style="margin-top:8px;">
-          <div class="stat-item"><div class="k">vᵀM u₁</div><div class="v" id="vmu1">—</div></div>
-          <div class="stat-item"><div class="k">vᵀM u₂</div><div class="v" id="vmu2">—</div></div>
-        </div>
-      </div>
-      <div class="control-group">
-        <div id="verdict" class="verdict good">—</div>
-      </div>
-      <div class="control-group">
-        <div class="button-row">
-          <button id="reset" class="secondary">↺ 초기값으로</button>
-        </div>
-      </div>
-      <div class="info">
-        <b>관찰 포인트</b><br>
-        • S의 열(고유벡터)로 감싸면 <b>SᵀMS=I</b>, <b>SᵀKS=Λ=diag(ω²)</b> — M·K가 동시에 대각화됨<br>
-        • m,k 슬라이더를 아무리 움직여도 이 두 성질은 <b>항상</b> 유지됨 (수치 고유벡터에도 성립)<br>
-        • <b>M-직교</b>이지 보통 직교가 아님: M이 단위행렬이 아니면 uᵢᵀuⱼ≠0일 수 있음<br>
-        • θ를 돌려 v를 고유벡터에서 벗어나게 하면 vᵀMu₂가 0을 벗어남 → <b>0은 고유벡터만의 특권</b>
-      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>대각 = 1 (정규화)</span>
+      <span><i style="background:var(--float)"></i>대각 = ω² = λ</span>
+      <span><i style="background:var(--ok)"></i>비대각 ≈ 0</span>
+      <span><i style="background:var(--high)"></i>0에서 벗어남</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="reset">↺ 리셋</button>
     </div>
   </div>
-</div>
+</section>
+</main>
+<footer>기계진동학 13강</footer>
 
 <script>
-const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height;
-const EPS = 1e-6;
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var EPS = 1e-6;
 
-let state = { m1: 1, m2: 4, k13: 10, k2: 2, th: 0, showMode: 0 }; // showMode: 0=both,1,2
+var state = { m1: 1, m2: 4, k13: 10, k2: 2 };
 
-// ---- generalized symmetric 2x2 eigen-solver: K u = λ M u, mass-normalized ----
-function solve() {
-  const m1 = Math.max(state.m1, EPS), m2 = Math.max(state.m2, EPS);
-  const k13 = state.k13, k2 = state.k2;
-  const M = [[m1, 0], [0, m2]];
-  // K = [[k1+k2, -k2],[-k2, k2+k3]] with k1=k3=k13
-  const K = [[k13 + k2, -k2], [-k2, k2 + k13]];
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','surface3','border','border2','text','muted','faint','accent','accent-soft','high','low','ok','float','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
-  // Reduce to standard symmetric problem A y = λ y with A = Mihalf K Mihalf (M diagonal)
-  const s1 = 1 / Math.sqrt(m1), s2 = 1 / Math.sqrt(m2);
-  const a = K[0][0] * s1 * s1;          // A11
-  const d = K[1][1] * s2 * s2;          // A22
-  const b = K[0][1] * s1 * s2;          // A12 = A21 (symmetric)
-
-  // eigenvalues of symmetric [[a,b],[b,d]]
-  const tr = a + d, det = a * d - b * b;
-  const disc = Math.max((a - d) * (a - d) + 4 * b * b, 0); // >=0 always for symmetric
-  const rt = Math.sqrt(disc);
-  let l1 = (tr - rt) / 2, l2 = (tr + rt) / 2;   // l1 <= l2
-  l1 = Math.max(l1, 0); l2 = Math.max(l2, 0);   // guard tiny negatives
-
-  // eigenvectors of A (orthonormal), then transform back u = Mihalf y
-  function eigvecA(lam) {
-    // (a-lam) yx + b yy = 0
-    let yx, yy;
-    const r1a = a - lam, r1b = b;
-    const r2a = b, r2b = d - lam;
-    // pick the row with larger norm for stability
-    if (Math.abs(r1a) + Math.abs(r1b) >= Math.abs(r2a) + Math.abs(r2b)) {
-      if (Math.abs(r1b) > EPS) { yx = 1; yy = -r1a / r1b; }
-      else if (Math.abs(r1a) > EPS) { yx = 0; yy = 1; }
-      else { yx = 1; yy = 0; }
-    } else {
-      if (Math.abs(r2b) > EPS) { yx = 1; yy = -r2a / r2b; }
-      else if (Math.abs(r2a) > EPS) { yx = 0; yy = 1; }
-      else { yx = 1; yy = 0; }
-    }
-    const n = Math.hypot(yx, yy) || 1;
-    return [yx / n, yy / n];
-  }
-  let y1 = eigvecA(l1);
-  // For a symmetric 2x2, the second eigenvector is exactly the 90° rotation of the
-  // first. Building y2 this way guarantees y1⊥y2 even when eigenvalues coincide
-  // (degenerate case: e.g. m1=m2, k2=0), so SᵀMS = I always holds — no orphan
-  // off-diagonal from independently solving each eigenrow.
-  let y2 = [-y1[1], y1[0]];
-  // u = M^{-1/2} y  -> already mass-normalized because y is unit-norm
-  let u1 = [s1 * y1[0], s2 * y1[1]];
-  let u2 = [s1 * y2[0], s2 * y2[1]];
-
-  // sign convention: make first significant component follow the note (u1 positive top, u2 negative top)
-  if (u1[0] < 0) { u1 = [-u1[0], -u1[1]]; }
-  if (u2[0] > 0) { u2 = [-u2[0], -u2[1]]; }
-
-  const S = [[u1[0], u2[0]], [u1[1], u2[1]]];
-  return { M, K, S, u1, u2, l1, l2 };
+function rgbParts(c){
+  var m = String(c).match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (m) return [+m[1], +m[2], +m[3]];
+  if (c.charAt(0) === '#' && c.length === 7)
+    return [parseInt(c.slice(1,3),16), parseInt(c.slice(3,5),16), parseInt(c.slice(5,7),16)];
+  return [136,136,136];
+}
+function alpha(key, a){
+  var p = rgbParts(PAL[key]);
+  return 'rgba('+p[0]+','+p[1]+','+p[2]+','+a+')';
 }
 
-// matrix helpers
+function solve(){
+  var m1 = Math.max(state.m1, EPS), m2 = Math.max(state.m2, EPS);
+  var k13 = state.k13, k2 = state.k2;
+  var M = [[m1, 0], [0, m2]];
+  var K = [[k13 + k2, -k2], [-k2, k2 + k13]];
+
+  var s1 = 1 / Math.sqrt(m1), s2 = 1 / Math.sqrt(m2);
+  var a = K[0][0] * s1 * s1;
+  var d = K[1][1] * s2 * s2;
+  var b = K[0][1] * s1 * s2;
+
+  var tr = a + d, det = a * d - b * b;
+  var disc = Math.max((a - d) * (a - d) + 4 * b * b, 0);
+  var rt = Math.sqrt(disc);
+  var l1 = Math.max((tr - rt) / 2, 0), l2 = Math.max((tr + rt) / 2, 0);
+
+  function eigvecA(lam){
+    var yx, yy;
+    var r1a = a - lam, r1b = b;
+    var r2a = b, r2b = d - lam;
+    if (Math.abs(r1a) + Math.abs(r1b) >= Math.abs(r2a) + Math.abs(r2b)){
+      if (Math.abs(r1b) > EPS){ yx = 1; yy = -r1a / r1b; }
+      else if (Math.abs(r1a) > EPS){ yx = 0; yy = 1; }
+      else { yx = 1; yy = 0; }
+    } else {
+      if (Math.abs(r2b) > EPS){ yx = 1; yy = -r2a / r2b; }
+      else if (Math.abs(r2a) > EPS){ yx = 0; yy = 1; }
+      else { yx = 1; yy = 0; }
+    }
+    var n = Math.hypot(yx, yy) || 1;
+    return [yx / n, yy / n];
+  }
+  var y1 = eigvecA(l1);
+  var y2 = [-y1[1], y1[0]];
+  var u1 = [s1 * y1[0], s2 * y1[1]];
+  var u2 = [s1 * y2[0], s2 * y2[1]];
+
+  if (u1[0] < 0){ u1 = [-u1[0], -u1[1]]; }
+  if (u2[0] > 0){ u2 = [-u2[0], -u2[1]]; }
+
+  var Smat = [[u1[0], u2[0]], [u1[1], u2[1]]];
+  return { M: M, K: K, S: Smat, u1: u1, u2: u2, l1: l1, l2: l2 };
+}
+
 function matT(A){ return [[A[0][0],A[1][0]],[A[0][1],A[1][1]]]; }
 function matMul(A,B){
   return [
@@ -211,51 +211,47 @@ function matMul(A,B){
 }
 function clean(x){ return (Math.abs(x) < 1e-9) ? 0 : x; }
 
-// ---- rendering a 2x2 matrix as colored grid ----
-// mode: 'plain' | 'identity' (diag=1) | 'lambda' (diag=λ)
-function drawMatrix(x, y, title, A, mode) {
-  const cell = 58, pad = 2;
-  ctx.fillStyle = '#d5e2ee'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline='alphabetic';
+function drawMatrix(x, y, title, A, mode){
+  var cell = 58, pad = 2;
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline='alphabetic';
   ctx.fillText(title, x, y - 10);
-  for (let i = 0; i < 2; i++) {
-    for (let j = 0; j < 2; j++) {
-      const cx = x + j * (cell + pad), cy = y + i * (cell + pad);
-      const val = A[i][j];
-      let bg = 'rgba(255,255,255,0.06)', fg = '#e8eef5';
-      const isDiag = (i === j);
-      if (mode === 'identity') {
-        if (isDiag) {
-          const err = Math.abs(val - 1);
-          bg = err < 0.02 ? 'rgba(109,213,237,0.30)' : 'rgba(255,216,107,0.30)';
-          fg = '#dff6ff';
+  for (var i = 0; i < 2; i++){
+    for (var j = 0; j < 2; j++){
+      var cx = x + j * (cell + pad), cy = y + i * (cell + pad);
+      var val = A[i][j];
+      var bg = PAL.surface2, fg = PAL.text;
+      var isDiag = (i === j);
+      if (mode === 'identity'){
+        if (isDiag){
+          var err = Math.abs(val - 1);
+          bg = err < 0.02 ? alpha('accent', 0.28) : alpha('float', 0.28);
+          fg = PAL.text;
         } else {
-          const off = Math.abs(val);
-          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb0c0'; }
-          else { bg = 'rgba(255,107,157,0.28)'; fg = '#ffd0e0'; }
+          var off = Math.abs(val);
+          if (off < 0.02){ bg = alpha('ok', 0.20); fg = PAL.muted; }
+          else { bg = alpha('high', 0.28); fg = PAL.high; }
         }
-      } else if (mode === 'lambda') {
-        if (isDiag) { bg = 'rgba(255,216,107,0.30)'; fg = '#fff3d0'; }
+      } else if (mode === 'lambda'){
+        if (isDiag){ bg = alpha('float', 0.28); fg = PAL.text; }
         else {
-          const off = Math.abs(val);
-          if (off < 0.02) { bg = 'rgba(85,239,196,0.18)'; fg = '#9bb0c0'; }
-          else { bg = 'rgba(255,107,157,0.28)'; fg = '#ffd0e0'; }
+          var off2 = Math.abs(val);
+          if (off2 < 0.02){ bg = alpha('ok', 0.20); fg = PAL.muted; }
+          else { bg = alpha('high', 0.28); fg = PAL.high; }
         }
-      } else { // plain M / K / S
-        if (isDiag) bg = 'rgba(109,213,237,0.16)';
-        else if (Math.abs(val) > 1e-9) bg = 'rgba(182,240,192,0.12)';
+      } else {
+        if (isDiag) bg = alpha('accent', 0.16);
+        else if (Math.abs(val) > 1e-9) bg = alpha('ok', 0.12);
       }
       ctx.fillStyle = bg;
       roundRect(cx, cy, cell, cell, 7); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
       roundRect(cx, cy, cell, cell, 7); ctx.stroke();
-      ctx.fillStyle = fg; ctx.font = '15px "SF Mono", Consolas, monospace';
+      ctx.fillStyle = fg; ctx.font = '15px Consolas, monospace';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      let txt = fmtNum(clean(val));
-      ctx.fillText(txt, cx + cell/2, cy + cell/2);
+      ctx.fillText(fmtNum(clean(val)), cx + cell/2, cy + cell/2);
     }
   }
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  return { w: 2*cell + pad, h: 2*cell + pad };
 }
 function fmtNum(v){
   if (v === 0) return '0';
@@ -269,192 +265,60 @@ function roundRect(x,y,w,h,r){
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
 
-// draw eigenvector arrows on a small plane
-function drawVectorPlane(cx, cy, R, sol) {
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(cx-R, cy); ctx.lineTo(cx+R, cy); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx, cy-R); ctx.lineTo(cx, cy+R); ctx.stroke();
-  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('고유벡터 (물리 좌표축 x₁,x₂)', cx, cy - R - 10);
-  ctx.textAlign='left'; ctx.fillText('x₁', cx+R-14, cy+14); ctx.fillText('x₂', cx+6, cy-R+12);
-
-  // scale: use max component magnitude across shown vectors
-  const vecs = [];
-  if (state.showMode === 0 || state.showMode === 1) vecs.push({v: sol.u1, c:'#8eb4d8', name:'u₁'});
-  if (state.showMode === 0 || state.showMode === 2) vecs.push({v: sol.u2, c:'#6ea3d8', name:'u₂'});
-  let mx = 0; [sol.u1, sol.u2].forEach(v => { mx = Math.max(mx, Math.abs(v[0]), Math.abs(v[1])); });
-  const sc = (R*0.82) / (mx || 1);
-
-  function arrow(v, color, name){
-    const ex = cx + v[0]*sc, ey = cy - v[1]*sc;
-    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
-    const ang = Math.atan2(ey - cy, ex - cx);
-    ctx.beginPath();
-    ctx.moveTo(ex, ey);
-    ctx.lineTo(ex - 10*Math.cos(ang - 0.4), ey - 10*Math.sin(ang - 0.4));
-    ctx.lineTo(ex - 10*Math.cos(ang + 0.4), ey - 10*Math.sin(ang + 0.4));
-    ctx.closePath(); ctx.fill();
-    ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(name, ex + 8*Math.cos(ang), ey + 8*Math.sin(ang) - 4);
-  }
-  vecs.forEach(o => arrow(o.v, o.c, o.name));
-
-  // test vector v = R(theta) applied to u1 (rotate u1 by theta) -> departs eigen-direction
-  const th = state.th * Math.PI / 180;
-  const c = Math.cos(th), s = Math.sin(th);
-  const tv = [ c*sol.u1[0] - s*sol.u1[1], s*sol.u1[0] + c*sol.u1[1] ];
-  const ex = cx + tv[0]*sc, ey = cy - tv[1]*sc;
-  ctx.setLineDash([6,4]);
-  ctx.strokeStyle = '#ff6b9d'; ctx.fillStyle = '#ff6b9d'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
-  ctx.setLineDash([]);
-  const ang = Math.atan2(ey - cy, ex - cx);
-  ctx.beginPath();
-  ctx.moveTo(ex, ey);
-  ctx.lineTo(ex - 10*Math.cos(ang - 0.4), ey - 10*Math.sin(ang - 0.4));
-  ctx.lineTo(ex - 10*Math.cos(ang + 0.4), ey - 10*Math.sin(ang + 0.4));
-  ctx.closePath(); ctx.fill();
-  ctx.font = 'bold 12px sans-serif'; ctx.fillText('v (시험)', ex + 8, ey - 4);
-  return tv;
-}
-
-function draw() {
+function draw(){
   ctx.clearRect(0, 0, W, H);
-  const sol = solve();
-  const { M, K, S } = sol;
-  const St = matT(S);
-  const StMS = matMul(matMul(St, M), S);
-  const StKS = matMul(matMul(St, K), S);
+  var sol = solve();
+  var M = sol.M, K = sol.K, Smat = sol.S;
+  var St = matT(Smat);
+  var StMS = matMul(matMul(St, M), Smat);
+  var StKS = matMul(matMul(St, K), Smat);
 
-  // Title band
-  ctx.fillStyle = '#9bb0c0'; ctx.font = '13px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-
-  // Row 1: input matrices M, K, S
-  const topY = 44, colGap = 40, base = 40;
-  let x = base;
+  var topY = 44, colGap = 40, base = 40;
+  var x = base;
   drawMatrix(x, topY, 'M (질량)', M, 'plain'); x += 118 + colGap;
   drawMatrix(x, topY, 'K (강성)', K, 'plain'); x += 118 + colGap;
-  drawMatrix(x, topY, 'S = [u₁ u₂]', S, 'plain');
+  drawMatrix(x, topY, 'S = [u₁ u₂]', Smat, 'plain');
 
-  // arrow / equation labels row2
-  const midY = 232;
-  ctx.fillStyle = '#6ea3d8'; ctx.font = 'bold 15px sans-serif';
-  ctx.fillText('검산  ⇒', base, midY - 14);
+  var midY = 232;
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('검산', base, midY - 14);
 
-  // Row 2: SᵀMS = I , SᵀKS = Λ
-  let x2 = base + 90;
-  const r2 = drawMatrix(x2, midY, 'SᵀM S  ( = I ? )', StMS, 'identity'); x2 += 118 + 70;
-  drawMatrix(x2, midY, 'SᵀK S  ( = Λ ? )', StKS, 'lambda');
+  var x2 = base + 90;
+  drawMatrix(x2, midY, 'SᵀM S  ( = I )', StMS, 'identity'); x2 += 118 + 70;
+  drawMatrix(x2, midY, 'SᵀK S  ( = Λ )', StKS, 'lambda');
 
-  // verdict strings for on-canvas note
-  const offMax = Math.max(Math.abs(StMS[0][1]), Math.abs(StMS[1][0]));
-  const diagErr = Math.max(Math.abs(StMS[0][0]-1), Math.abs(StMS[1][1]-1));
-  ctx.fillStyle = '#9bb0c0'; ctx.font = '12px sans-serif';
+  ctx.fillStyle = PAL.muted; ctx.font = '12px ' + FONT;
   ctx.fillText('대각 → 1 (질량 정규화),  비대각 → 0 (M-직교)', base + 90, midY + 145);
-  ctx.fillText('대각 → λ = ω² (스펙트럼 Λ),  비대각 → 0', base + 90 + 300 + 8, midY + 145);
+  ctx.fillText('대각 → λ = ω²,  비대각 → 0', base + 90 + 308, midY + 145);
 
-  // Right block: eigenvector plane
-  const planeCx = W - 150, planeCy = 150, planeR = 110;
-  const tv = drawVectorPlane(planeCx, planeCy, planeR, sol);
-
-  // "임의 벡터로 시험" numeric block on canvas (bottom-right)
-  const vmu1 = tv[0]*M[0][0]*sol.u1[0] + tv[1]*M[1][1]*sol.u1[1];
-  const vmu2 = tv[0]*M[0][0]*sol.u2[0] + tv[1]*M[1][1]*sol.u2[1];
-  ctx.fillStyle = '#d5e2ee'; ctx.font = '13px "SF Mono", Consolas, monospace'; ctx.textAlign='left';
-  const bx = W - 300, by = 400;
-  ctx.fillText('시험 벡터 v = R(θ)·u₁', bx, by);
-  ctx.fillStyle = (Math.abs(vmu1-1) < 0.02) ? '#55efc4' : '#ffd86b';
-  ctx.fillText('vᵀM u₁ = ' + vmu1.toFixed(4), bx, by + 24);
-  ctx.fillStyle = (Math.abs(vmu2) < 0.02) ? '#55efc4' : '#ff6b9d';
-  ctx.fillText('vᵀM u₂ = ' + vmu2.toFixed(4), bx, by + 46);
-  ctx.fillStyle = '#9bb0c0'; ctx.font = '11px sans-serif';
-  ctx.fillText('θ=0 → v=u₁ 이면 vᵀMu₂=0 (직교).', bx, by + 68);
-  ctx.fillText('θ≠0 → v가 고유벡터를 벗어나 vᵀMu₂≠0.', bx, by + 84);
-
-  // ---- panel readouts ----
-  setTxt('lam1', sol.l1.toFixed(4) + ' (rad/s)²');
-  setTxt('lam2', sol.l2.toFixed(4) + ' (rad/s)²');
-  setTxt('w1', Math.sqrt(sol.l1).toFixed(3) + ' rad/s');
-  setTxt('w2', Math.sqrt(sol.l2).toFixed(3) + ' rad/s');
-
-  const vmu1El = document.getElementById('vmu1');
-  const vmu2El = document.getElementById('vmu2');
-  vmu1El.textContent = vmu1.toFixed(4);
-  vmu1El.style.color = (Math.abs(vmu1-1) < 0.02) ? '#55efc4' : '#ffd86b';
-  vmu2El.textContent = vmu2.toFixed(4);
-  vmu2El.style.color = (Math.abs(vmu2) < 0.02) ? '#55efc4' : '#ff6b9d';
-
-  // verdict
-  const vEl = document.getElementById('verdict');
-  if (state.th === 0) {
-    if (diagErr < 0.01 && offMax < 0.01) {
-      vEl.className = 'verdict good';
-      vEl.textContent = '✓ SᵀMS = I,  SᵀKS = Λ 성립';
-    } else {
-      vEl.className = 'verdict mid';
-      vEl.textContent = '수치오차 확인 중…';
-    }
-  } else {
-    if (Math.abs(vmu2) < 0.02) {
-      vEl.className = 'verdict good';
-      vEl.textContent = 'v가 아직 u₁ 방향 → vᵀMu₂ = 0';
-    } else {
-      vEl.className = 'verdict mid';
-      vEl.textContent = 'v가 고유벡터를 벗어남 → vᵀMu₂ ≠ 0 (예상된 결과)';
-    }
-  }
+  ctx.fillStyle = PAL.text; ctx.font = '13px ' + FONT; ctx.textAlign = 'right';
+  ctx.fillText('λ₁=' + sol.l1.toFixed(3) + '   λ₂=' + sol.l2.toFixed(3) +
+    '   ω₁=' + Math.sqrt(sol.l1).toFixed(3) + '   ω₂=' + Math.sqrt(sol.l2).toFixed(3), W - 24, 22);
 }
 
-function setTxt(id, t){ document.getElementById(id).textContent = t; }
-
-// ---- rAF loop (single) ----
-function loop() {
-  draw();
-  requestAnimationFrame(loop);
-}
-
-// ---- controls ----
-function bindNum(id, key, span, fmt) {
-  document.getElementById(id).addEventListener('input', e => {
-    state[key] = parseFloat(e.target.value);
-    document.getElementById(span).textContent = fmt(state[key]);
+function bindNum(id, key, span, fmt){
+  $(id).addEventListener('input', function(){
+    state[key] = parseFloat(this.value);
+    $(span).textContent = fmt(state[key]);
+    draw();
   });
 }
-bindNum('m1', 'm1', 'm1v', v => v.toFixed(1));
-bindNum('m2', 'm2', 'm2v', v => v.toFixed(1));
-bindNum('k13', 'k13', 'k13v', v => v.toFixed(0));
-bindNum('k2', 'k2', 'k2v', v => v.toFixed(0));
-document.getElementById('th').addEventListener('input', e => {
-  state.th = parseFloat(e.target.value);
-  document.getElementById('thv').textContent = state.th.toFixed(0) + '°';
-});
+bindNum('m1', 'm1', 'm1v', function(v){ return v.toFixed(1); });
+bindNum('m2', 'm2', 'm2v', function(v){ return v.toFixed(1); });
+bindNum('k13', 'k13', 'k13v', function(v){ return v.toFixed(0); });
+bindNum('k2', 'k2', 'k2v', function(v){ return v.toFixed(0); });
 
-const mb0 = document.getElementById('modeBoth');
-const mb1 = document.getElementById('mode1');
-const mb2 = document.getElementById('mode2');
-function setMode(m, el){
-  state.showMode = m;
-  [mb0, mb1, mb2].forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+function reset(){
+  state.m1 = 1; state.m2 = 4; state.k13 = 10; state.k2 = 2;
+  $('m1').value = 1;  $('m1v').textContent = '1.0';
+  $('m2').value = 4;  $('m2v').textContent = '4.0';
+  $('k13').value = 10; $('k13v').textContent = '10';
+  $('k2').value = 2;  $('k2v').textContent = '2';
+  draw();
 }
-mb0.addEventListener('click', () => setMode(0, mb0));
-mb1.addEventListener('click', () => setMode(1, mb1));
-mb2.addEventListener('click', () => setMode(2, mb2));
-
-function reset() {
-  state.m1 = 1; state.m2 = 4; state.k13 = 10; state.k2 = 2; state.th = 0;
-  document.getElementById('m1').value = 1;  document.getElementById('m1v').textContent = '1.0';
-  document.getElementById('m2').value = 4;  document.getElementById('m2v').textContent = '4.0';
-  document.getElementById('k13').value = 10; document.getElementById('k13v').textContent = '10';
-  document.getElementById('k2').value = 2;  document.getElementById('k2v').textContent = '2';
-  document.getElementById('th').value = 0;  document.getElementById('thv').textContent = '0°';
-  setMode(0, mb0);
-}
-document.getElementById('reset').addEventListener('click', reset);
-
-reset();
-requestAnimationFrame(loop);
+$('reset').addEventListener('click', reset);
+draw();
+})();
 </script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L4-D2 · 직렬 vs 병렬 등가강성</title>
+<title>L4-D4 · 등가스프링</title>
 </head>
 <body>
 <style>
@@ -79,8 +79,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 
 <header class="hero wrap">
   <p class="eyebrow">기계진동학 4강</p>
-  <h1>직렬 vs 병렬 등가강성</h1>
-  <p class="lede">같은 두 스프링도 연결에 따라 k_eq가 달라집니다.</p>
+  <h1>등가스프링</h1>
+  <p class="lede">개별 스프링 배열과 k_eq 한 개는 같은 x(t)를 그립니다.</p>
 </header>
 
 <main class="wrap">
@@ -103,13 +103,14 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
         </div>
       </div>
     </div>
-    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <canvas id="cv" class="sim" width="900" height="460"></canvas>
     <div class="legend">
-      <span><i style="background:var(--low)"></i>스프링 k₁</span>
-      <span><i style="background:var(--high)"></i>스프링 k₂</span>
-      <span><i style="background:var(--accent)"></i>등가강성 kₑq</span>
+      <span><i style="background:var(--low)"></i>개별 배열 k₁·k₂</span>
+      <span><i style="background:var(--accent)"></i>등가 스프링 kₑq</span>
+      <span><i style="background:var(--float)"></i>x(t) 겹침 (동일)</span>
     </div>
     <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
       <button class="btn" id="reset">↺ 리셋</button>
     </div>
   </div>
@@ -123,7 +124,9 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
-var st = { k1: 1000, k2: 3000, mode: 'parallel' };
+var M = 10, A0 = 1.0, HIST_T = 6;
+var st = { k1: 1000, k2: 3000, mode: 'parallel', theta: 0, t: 0, running: true };
+var hist = [];
 
 var PAL = {};
 function readPalette(){
@@ -146,7 +149,17 @@ function keq(){
   var den = Math.max(st.k1 + st.k2, 1e-6);
   return st.k1 * st.k2 / den;
 }
+function omega(){ return Math.sqrt(Math.max(keq(), 1e-9) / M); }
 function fmtK(v){ return v >= 1000 ? v.toFixed(0) : v.toFixed(v % 1 ? 1 : 0); }
+
+function reseedHist(){
+  var w = omega(), th = st.theta, t1 = st.t;
+  hist.length = 0;
+  for (var s = 0; s <= HIST_T + 1e-9; s += 0.02){
+    var tau = t1 - HIST_T + s;
+    hist.push({ t: tau, x: A0 * Math.cos(th - w * (t1 - tau)) });
+  }
+}
 
 function drawSpring(x1, y, x2, coils, amp, color, lw){
   ctx.strokeStyle = color; ctx.lineWidth = lw || 2.4;
@@ -168,82 +181,85 @@ function drawWall(x, yc, h){
 function drawMass(xLeft, yc, s, label){
   ctx.fillStyle = PAL.surface3; ctx.strokeStyle = PAL.border2; ctx.lineWidth = 2;
   ctx.fillRect(xLeft, yc - s / 2, s, s); ctx.strokeRect(xLeft, yc - s / 2, s, s);
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT;
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 14px ' + FONT;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, xLeft + s / 2, yc); ctx.textBaseline = 'alphabetic';
 }
 
 function draw(){
   ctx.clearRect(0, 0, W, H);
-  var k1 = st.k1, k2 = st.k2, den = Math.max(k1 + k2, 1e-6), ke = keq();
+  var x = A0 * Math.cos(st.theta);
+  var k1 = st.k1, k2 = st.k2, den = Math.max(k1 + k2, 1e-6), ke = keq(), w = omega();
+  var wallX = 36, eqMX = 300, sc = 52, massS = 44;
+  var yA = 118, yB = 268;
+  var massX = eqMX + x * sc;
 
   ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText(st.mode === 'series' ? '직렬 — 힘 공유' : '병렬 — 변위 공유', 24, 32);
-  ctx.fillStyle = PAL.accent; ctx.font = '14px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText('kₑq = ' + fmtK(ke) + ' N/m', W - 24, 32);
+  ctx.fillText('개별 배열  vs  등가 kₑq   (m = 10 kg)', 24, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('kₑq = ' + fmtK(ke) + ' N/m    ωₙ = ' + w.toFixed(2) + ' rad/s', W - 24, 28);
 
-  var wallX = 90, yc = 150, massL = 620, massS = 64;
-  var bx = 90, bw = 720, bh = 28, BY = 300;
-  drawWall(wallX, yc, 120);
-
+  ctx.fillStyle = PAL.float; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText(st.mode === 'series' ? '실제 — 직렬 k₁·k₂' : '실제 — 병렬 k₁+k₂', wallX, 52);
+  drawWall(wallX, yA, 78);
   if (st.mode === 'series'){
-    var nodeX = wallX + (massL - wallX) * 0.5;
-    drawSpring(wallX, yc, nodeX - 6, 8, 14, PAL.low, 2.8);
-    drawSpring(nodeX + 6, yc, massL, 8, 14, PAL.high, 2.8);
-    ctx.fillStyle = PAL.text; ctx.beginPath(); ctx.arc(nodeX, yc, 5.5, 0, 6.2832); ctx.fill();
-    ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'center';
-    ctx.fillStyle = PAL.low;  ctx.fillText('k₁', (wallX + nodeX) / 2, yc - 28);
-    ctx.fillStyle = PAL.high; ctx.fillText('k₂', (nodeX + massL) / 2, yc - 28);
-    drawMass(massL, yc, massS, 'm');
-    ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
-    ctx.fillText('같은 힘 F가 두 스프링을 통과 (힘 공유)', bx, yc + 86);
-
-    var f1 = k2 / den;
-    ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
-    ctx.fillText('변형 나눠 갖기 — 무른 쪽이 더 많이 늘어남', bx, BY - 10);
-    ctx.fillStyle = PAL.low;  ctx.fillRect(bx, BY, bw * f1, bh);
-    ctx.fillStyle = PAL.high; ctx.fillRect(bx + bw * f1, BY, bw * (1 - f1), bh);
-    ctx.strokeStyle = PAL.border; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, BY + 0.5, bw - 1, bh - 1);
-    ctx.font = '13px ' + FONT;
-    ctx.fillStyle = PAL.low;  ctx.textAlign = 'left';
-    ctx.fillText('x₁ = F/k₁ · ' + (f1 * 100).toFixed(0) + '%', bx, BY + 48);
-    ctx.fillStyle = PAL.high; ctx.textAlign = 'right';
-    ctx.fillText('x₂ = F/k₂ · ' + ((1 - f1) * 100).toFixed(0) + '%', bx + bw, BY + 48);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = PAL.accent; ctx.font = 'bold 16px ' + FONT;
-    ctx.fillText('kₑq = k₁k₂/(k₁+k₂) = ' + fmtK(ke) + ' N/m', bx, BY + 80);
-    ctx.fillStyle = PAL.high; ctx.font = '13px ' + FONT;
-    ctx.fillText('약한 쪽 ' + fmtK(Math.min(k1, k2)) + ' N/m 보다도 더 무르다', bx, BY + 104);
+    var node0 = wallX + (eqMX - wallX) * 0.5;
+    var nodeX = node0 + x * sc * (k2 / den);
+    drawSpring(wallX, yA, nodeX - 4, 6, 8, PAL.low, 2.6);
+    drawSpring(nodeX + 4, yA, massX, 6, 8, PAL.high, 2.6);
+    ctx.fillStyle = PAL.text; ctx.beginPath(); ctx.arc(nodeX, yA, 4, 0, 6.2832); ctx.fill();
   } else {
-    var plateX = massL - 6;
     ctx.strokeStyle = PAL.border2; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(plateX, yc - 56); ctx.lineTo(plateX, yc + 56); ctx.stroke();
-    drawSpring(wallX, yc - 32, plateX, 10, 12, PAL.low, 2.8);
-    drawSpring(wallX, yc + 32, plateX, 10, 12, PAL.high, 2.8);
-    ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'center';
-    ctx.fillStyle = PAL.low;  ctx.fillText('k₁', (wallX + plateX) / 2, yc - 52);
-    ctx.fillStyle = PAL.high; ctx.fillText('k₂', (wallX + plateX) / 2, yc + 62);
-    drawMass(massL, yc, massS, 'm');
-    ctx.fillStyle = PAL.muted; ctx.font = '13px ' + FONT; ctx.textAlign = 'left';
-    ctx.fillText('두 스프링이 같은 변위 x를 공유 (변위 공유)', bx, yc + 90);
-
-    var g1 = k1 / den;
-    ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
-    ctx.fillText('힘 나눠 갖기 — 단단한 쪽이 더 많은 힘 부담', bx, BY - 10);
-    ctx.fillStyle = PAL.low;  ctx.fillRect(bx, BY, bw * g1, bh);
-    ctx.fillStyle = PAL.high; ctx.fillRect(bx + bw * g1, BY, bw * (1 - g1), bh);
-    ctx.strokeStyle = PAL.border; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, BY + 0.5, bw - 1, bh - 1);
-    ctx.font = '13px ' + FONT;
-    ctx.fillStyle = PAL.low;  ctx.textAlign = 'left';
-    ctx.fillText('F₁ = k₁x · ' + (g1 * 100).toFixed(0) + '%', bx, BY + 48);
-    ctx.fillStyle = PAL.high; ctx.textAlign = 'right';
-    ctx.fillText('F₂ = k₂x · ' + ((1 - g1) * 100).toFixed(0) + '%', bx + bw, BY + 48);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = PAL.accent; ctx.font = 'bold 16px ' + FONT;
-    ctx.fillText('kₑq = k₁ + k₂ = ' + fmtK(ke) + ' N/m', bx, BY + 80);
-    ctx.fillStyle = PAL.ok; ctx.font = '13px ' + FONT;
-    ctx.fillText('단순 합 — 항상 더 단단해진다', bx, BY + 104);
+    ctx.beginPath(); ctx.moveTo(massX - 2, yA - 32); ctx.lineTo(massX - 2, yA + 32); ctx.stroke();
+    drawSpring(wallX, yA - 20, massX - 2, 7, 8, PAL.low, 2.6);
+    drawSpring(wallX, yA + 20, massX - 2, 7, 8, PAL.high, 2.6);
   }
+  drawMass(massX, yA, massS, 'm');
+
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('등가 — kₑq 한 개', wallX, 206);
+  drawWall(wallX, yB, 78);
+  drawSpring(wallX, yB, massX, 10, 8, PAL.accent, 2.6);
+  drawMass(massX, yB, massS, 'm');
+
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(eqMX + massS / 2, 44); ctx.lineTo(eqMX + massS / 2, 320); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('x = 0', eqMX + massS / 2, 334);
+
+  var pL = 24, pR = W - 24, pT = 354, pB = H - 22;
+  var t1 = st.t, t0 = t1 - HIST_T;
+  var tx = function(t){ return pL + (t - t0) / HIST_T * (pR - pL); };
+  var mid = (pT + pB) / 2;
+  var xy = function(v){ return mid - v / A0 * (pB - pT) / 2 * 0.82; };
+
+  ctx.globalAlpha = 0.38;
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pL, pT); ctx.lineTo(pL, pB); ctx.lineTo(pR, pB); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pL, mid); ctx.lineTo(pR, mid); ctx.stroke();
+  if (hist.length > 1){
+    ctx.strokeStyle = PAL.float; ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    hist.forEach(function(p, i){ i ? ctx.lineTo(tx(p.t), xy(p.x)) : ctx.moveTo(tx(p.t), xy(p.x)); });
+    ctx.stroke();
+    ctx.strokeStyle = PAL.accent; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    hist.forEach(function(p, i){ i ? ctx.lineTo(tx(p.t), xy(p.x)) : ctx.moveTo(tx(p.t), xy(p.x)); });
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('x(t) 개별 = 등가', pL + 6, pT - 6);
+  ctx.textAlign = 'right';
+  ctx.fillText('T = 2π/ωₙ = ' + (2 * Math.PI / w).toFixed(2) + ' s', pR, pT - 6);
+}
+
+function step(dt){
+  st.theta += omega() * dt;
+  st.t += dt;
+  hist.push({ t: st.t, x: A0 * Math.cos(st.theta) });
+  while (hist.length && hist[0].t < st.t - HIST_T) hist.shift();
 }
 
 function syncSpans(){
@@ -253,16 +269,33 @@ function syncSpans(){
   $('modeSeries').classList.toggle('btn-acc', st.mode === 'series');
   $('modeParallel').classList.toggle('btn-acc', st.mode === 'parallel');
 }
-$('k1').addEventListener('input', function(){ st.k1 = parseFloat(this.value); syncSpans(); draw(); });
-$('k2').addEventListener('input', function(){ st.k2 = parseFloat(this.value); syncSpans(); draw(); });
-$('modeSeries').addEventListener('click', function(){ st.mode = 'series'; syncSpans(); draw(); });
-$('modeParallel').addEventListener('click', function(){ st.mode = 'parallel'; syncSpans(); draw(); });
-$('reset').addEventListener('click', function(){
-  st.k1 = 1000; st.k2 = 3000; st.mode = 'parallel';
-  syncSpans(); draw();
+$('k1').addEventListener('input', function(){ st.k1 = parseFloat(this.value); reseedHist(); syncSpans(); draw(); });
+$('k2').addEventListener('input', function(){ st.k2 = parseFloat(this.value); reseedHist(); syncSpans(); draw(); });
+$('modeSeries').addEventListener('click', function(){ st.mode = 'series'; reseedHist(); syncSpans(); draw(); });
+$('modeParallel').addEventListener('click', function(){ st.mode = 'parallel'; reseedHist(); syncSpans(); draw(); });
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
 });
+$('reset').addEventListener('click', function(){
+  st.k1 = 1000; st.k2 = 3000; st.mode = 'parallel'; st.theta = 0; st.t = HIST_T; st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  reseedHist(); syncSpans(); draw();
+});
+
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+st.t = HIST_T;
+reseedHist();
 syncSpans();
-draw();
+requestAnimationFrame(loop);
 })();
 </script>
 </body>

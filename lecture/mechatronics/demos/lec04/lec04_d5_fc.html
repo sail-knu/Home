@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L4-D5 · 차단 주파수 fᶜ</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 4강</p>
+  <h1>차단 주파수 f<sub>c</sub></h1>
+  <p class="lede">이득 0.707인 지점이 <b>f<sub>c</sub></b>입니다. α를 키우면 왼쪽으로 갑니다.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">α <span class="big-val" id="av">0.85</span></p>
+        <input type="range" id="a" min="0.50" max="0.96" step="0.01" value="0.85">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>이득 |H(f)|</span>
+      <span><i style="background:var(--high)"></i>f<sub>c</sub></span>
+      <span><i style="background:var(--float)"></i>0.707 (−3 dB)</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="reset">↺ 리셋</button>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 4강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var DT = 0.01, FMIN = 0.2, FMAX = 40;
+var st = { a: 0.85 };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+function gainOf(f, a){
+  var w = 2 * Math.PI * f * DT;
+  return (1 - a) / Math.sqrt(1 - 2 * a * Math.cos(w) + a * a);
+}
+function fcOf(a){ return (1 - a) / (2 * Math.PI * a * DT); }
+
+var L = 70, R = W - 24, T = 52, B = 372;
+function draw(){
+  var A = st.a, fc = fcOf(A), i;
+  function X(f){ return L + (f - FMIN) / (FMAX - FMIN) * (R - L); }
+  function Y(g){ return T + (1.05 - g) / 1.05 * (B - T); }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(L, T, R - L, B - T);
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  for (i = 0; i <= 4; i++){
+    ctx.beginPath(); ctx.moveTo(L, Y(i / 4)); ctx.lineTo(R, Y(i / 4)); ctx.stroke();
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(L, Y(Math.SQRT1_2)); ctx.lineTo(R, Y(Math.SQRT1_2)); ctx.stroke();
+  if (fc >= FMIN && fc <= FMAX){
+    ctx.strokeStyle = PAL.high;
+    ctx.beginPath(); ctx.moveTo(X(fc), T); ctx.lineTo(X(fc), B); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (i = 0; i <= 240; i++){
+    var f = FMIN + (FMAX - FMIN) * i / 240, g = gainOf(f, A);
+    if (i) ctx.lineTo(X(f), Y(g)); else ctx.moveTo(X(f), Y(g));
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('이득 vs 주파수', L, 28);
+  ctx.fillStyle = PAL.high; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('f_c ≈ ' + fc.toFixed(2) + ' Hz', R, 28);
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (i = 0; i <= 40; i += 10) ctx.fillText(i + ' Hz', X(Math.max(FMIN, i)), B + 22);
+  ctx.fillStyle = PAL.float; ctx.textAlign = 'left';
+  ctx.fillText('0.707', L + 8, Y(Math.SQRT1_2) - 8);
+}
+
+$('a').addEventListener('input', function(){ st.a = parseFloat(this.value); $('av').textContent = st.a.toFixed(2); draw(); });
+$('reset').addEventListener('click', function(){
+  st.a = 0.85; $('a').value = 0.85; $('av').textContent = '0.85'; draw();
+});
+draw();
+})();
+</script>
+</body>
+</html>

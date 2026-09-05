@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L3-D1 · 감쇠 세 구간</title>
+<title>L3-D4 · 감쇠와 에너지 소산</title>
 </head>
 <body>
 <style>
@@ -78,8 +78,8 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 
 <header class="hero wrap">
   <p class="eyebrow">기계진동학 3강</p>
-  <h1>감쇠 세 구간</h1>
-  <p class="lede">ζ가 <b>1보다 작은지·같은지·큰지</b>에 따라 x(t) 모양이 갈립니다.</p>
+  <h1>감쇠와 에너지 소산</h1>
+  <p class="lede">c&gt;0이면 총에너지가 새어 나가 Tmax = Umax가 깨집니다.</p>
 </header>
 
 <main class="wrap">
@@ -87,20 +87,24 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
   <div class="card">
     <div class="ctrl-bar">
       <div>
-        <p class="ctrl-title">감쇠비 ζ <span class="big-val" id="zv">0.10</span></p>
-        <input type="range" id="z" min="0" max="5" step="0.005" value="0.1">
+        <p class="ctrl-title">강성 k <span class="big-val" id="kv">100</span> N/m</p>
+        <input type="range" id="k" min="10" max="200" step="5" value="100">
       </div>
       <div>
-        <p class="ctrl-title">고유진동수 ωₙ <span class="big-val" id="wnv">10.0</span> rad/s</p>
-        <input type="range" id="wn" min="2" max="20" step="0.5" value="10">
+        <p class="ctrl-title">질량 m <span class="big-val" id="mv">1.0</span> kg</p>
+        <input type="range" id="m" min="0.5" max="4" step="0.1" value="1">
+      </div>
+      <div>
+        <p class="ctrl-title">감쇠 c <span class="big-val" id="cv2">2.0</span> N·s/m</p>
+        <input type="range" id="c" min="0" max="20" step="0.1" value="2">
       </div>
     </div>
     <canvas id="cv" class="sim" width="900" height="420"></canvas>
     <div class="legend">
-      <span><i style="background:var(--low)"></i>부족 ζ&lt;1</span>
-      <span><i style="background:var(--ok)"></i>임계 ζ=1</span>
-      <span><i style="background:var(--high)"></i>과도 ζ&gt;1</span>
-      <span><i style="background:var(--faint)"></i>포락선 ±Ae<sup>−ζωₙt</sup></span>
+      <span><i style="background:var(--low)"></i>T</span>
+      <span><i style="background:var(--high)"></i>U</span>
+      <span><i style="background:var(--faint)"></i>소산 E₀−E(t)</span>
+      <span><i style="background:var(--accent)"></i>E(t)</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -117,13 +121,13 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
-var X0 = 1, V0 = 0, N = 720;
-var st = { z: 0.1, wn: 10, t: 0, running: true };
+var A0 = 0.2, HIST = 5, EPS = 1e-6;
+var st = { k: 100, m: 1, c: 2, t: 0, running: true };
 
 var PAL = {};
 function readPalette(){
   var cs = getComputedStyle(document.documentElement);
-  ['surface2','border','border2','text','muted','faint','accent','high','low','ok','float','grid'].forEach(function(k){
+  ['surface2','border','border2','text','muted','faint','accent','high','low','ok'].forEach(function(k){
     PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
   });
 }
@@ -135,105 +139,110 @@ if (window.MutationObserver){
 }
 var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
-function response(z, wn, t){
-  if (Math.abs(1 - z) < 1e-4) return (X0 + (V0 + wn * X0) * t) * Math.exp(-wn * t);
-  if (z < 1){
-    var wd = wn * Math.sqrt(Math.max(1 - z * z, 1e-12));
-    return Math.exp(-z * wn * t) * (((z * wn * X0 + V0) / wd) * Math.sin(wd * t) + X0 * Math.cos(wd * t));
+function params(){
+  var wn = Math.sqrt(st.k / st.m);
+  var zeta = st.c / (2 * Math.sqrt(st.k * st.m));
+  var p = { wn: wn, zeta: zeta, E0: 0.5 * st.k * A0 * A0 };
+  if (zeta < 1 - EPS){ p.b = 'under'; p.wd = wn * Math.sqrt(Math.max(EPS * EPS, 1 - zeta * zeta)); }
+  else if (zeta > 1 + EPS){
+    p.b = 'over';
+    var s = wn * Math.sqrt(Math.max(EPS * EPS, zeta * zeta - 1));
+    p.l1 = -zeta * wn + s; p.l2 = -zeta * wn - s;
+  } else p.b = 'crit';
+  return p;
+}
+function sol(t, p){
+  if (p.b === 'under'){
+    var e = Math.exp(-p.zeta * p.wn * t);
+    return { x: A0 * e * (Math.cos(p.wd * t) + (p.zeta * p.wn / p.wd) * Math.sin(p.wd * t)),
+             v: -A0 * e * (p.wn * p.wn / p.wd) * Math.sin(p.wd * t) };
   }
-  var q = Math.sqrt(Math.max(z * z - 1, 1e-12));
-  var a1 = (-V0 + (-z + q) * wn * X0) / (2 * wn * q);
-  var a2 = ( V0 + ( z + q) * wn * X0) / (2 * wn * q);
-  return a1 * Math.exp((-z - q) * wn * t) + a2 * Math.exp((-z + q) * wn * t);
+  if (p.b === 'crit'){
+    var ec = Math.exp(-p.wn * t);
+    return { x: A0 * (1 + p.wn * t) * ec, v: -A0 * p.wn * p.wn * t * ec };
+  }
+  var e1 = Math.exp(p.l1 * t), e2 = Math.exp(p.l2 * t), den = p.l2 - p.l1;
+  return { x: A0 * (p.l2 * e1 - p.l1 * e2) / den, v: A0 * p.l1 * p.l2 * (e1 - e2) / den };
 }
-function regime(){
-  if (Math.abs(1 - st.z) < 1e-4) return { name: '임계감쇠  ζ = 1', col: 'ok' };
-  if (st.z < 1) return { name: '부족감쇠  ζ < 1', col: 'low' };
-  return { name: '과도감쇠  ζ > 1', col: 'high' };
+function energies(t, p){
+  var s = sol(t, p);
+  var U = 0.5 * st.k * s.x * s.x, T = 0.5 * st.m * s.v * s.v;
+  return { U: U, T: T, E: U + T, dis: Math.max(0, p.E0 - U - T) };
 }
-
-var L = 64, R = W - 24, T = 52, B = 384;
-function xPix(t, Tmax){ return L + t / Tmax * (R - L); }
-function yPix(x, peak){ return (T + B) / 2 - x / peak * (B - T) * 0.42; }
 
 function draw(){
-  var z = st.z, wn = st.wn, Tmax = 16 * Math.PI / wn;
-  var tc = st.t % Tmax, i, peak = 1e-6;
-  var xs = new Float64Array(N + 1);
-  for (i = 0; i <= N; i++){
-    xs[i] = response(z, wn, i / N * Tmax);
-    if (Math.abs(xs[i]) > peak) peak = Math.abs(xs[i]);
-  }
-  var under = z < 1 - 1e-4, A = 0, wd = 0;
-  if (under){
-    wd = wn * Math.sqrt(1 - z * z);
-    A = Math.sqrt(wd * wd * X0 * X0 + (V0 + z * wn * X0) * (V0 + z * wn * X0)) / wd;
-    peak = Math.max(peak, A);
-  }
-  var rg = regime(), col = PAL[rg.col];
+  var p = params(), L = 56, R = W - 24, Top = 48, B = 384, i;
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = PAL.surface2;
-  ctx.fillRect(L, T, R - L, B - T);
+  ctx.fillRect(L, Top, R - L, B - Top);
   ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
-  ctx.strokeStyle = PAL.border2;
-  ctx.beginPath(); ctx.moveTo(L, (T + B) / 2); ctx.lineTo(R, (T + B) / 2); ctx.stroke();
-
+  ctx.beginPath(); ctx.moveTo(L, Top); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
   ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('ẍ + 2ζωₙẋ + ωₙ²x = 0', L, 28);
-  ctx.fillStyle = col; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText(rg.name, R, 28);
+  ctx.fillText('에너지 이력', L, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('ζ = ' + p.zeta.toFixed(2) + '   E₀ = ' + p.E0.toFixed(2) + ' J', R, 28);
 
-  if (under){
-    ctx.strokeStyle = PAL.faint; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    for (i = 0; i <= N; i++){
-      var te = i / N * Tmax, ye = A * Math.exp(-z * wn * te);
-      var X = xPix(te, Tmax);
-      if (i) ctx.lineTo(X, yPix(ye, peak)); else ctx.moveTo(X, yPix(ye, peak));
-    }
-    ctx.stroke();
-    ctx.beginPath();
-    for (i = 0; i <= N; i++){
-      te = i / N * Tmax; ye = -A * Math.exp(-z * wn * te); X = xPix(te, Tmax);
-      if (i) ctx.lineTo(X, yPix(ye, peak)); else ctx.moveTo(X, yPix(ye, peak));
-    }
-    ctx.stroke(); ctx.setLineDash([]);
-  }
+  function yE(v){ return B - v / Math.max(p.E0, 1e-9) * (B - Top - 10); }
+  function xT(t){ return L + t / HIST * (R - L); }
+  var samples = [];
+  for (i = 0; i <= 280; i++) samples.push(energies(i / 280 * HIST, p));
 
-  ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath();
-  for (i = 0; i <= N; i++){
-    var Xc = xPix(i / N * Tmax, Tmax), Yc = yPix(xs[i], peak);
-    if (i) ctx.lineTo(Xc, Yc); else ctx.moveTo(Xc, Yc);
+  ctx.fillStyle = PAL.faint; ctx.globalAlpha = 0.28; ctx.beginPath();
+  ctx.moveTo(L, B);
+  for (i = 0; i <= 280; i++) ctx.lineTo(xT(i / 280 * HIST), yE(samples[i].dis));
+  ctx.lineTo(R, B); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+
+  ctx.fillStyle = PAL.high; ctx.globalAlpha = 0.22; ctx.beginPath();
+  ctx.moveTo(L, B);
+  for (i = 0; i <= 280; i++) ctx.lineTo(xT(i / 280 * HIST), yE(samples[i].U + samples[i].T));
+  ctx.lineTo(R, B); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = PAL.low; ctx.lineWidth = 2; ctx.beginPath();
+  for (i = 0; i <= 280; i++){
+    var X = xT(i / 280 * HIST);
+    if (i) ctx.lineTo(X, yE(samples[i].T)); else ctx.moveTo(X, yE(samples[i].T));
   }
   ctx.stroke();
-
-  ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(xPix(tc, Tmax), T); ctx.lineTo(xPix(tc, Tmax), B); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = PAL.float;
-  ctx.beginPath(); ctx.arc(xPix(tc, Tmax), yPix(response(z, wn, tc), peak), 6, 0, Math.PI * 2); ctx.fill();
-
-  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
-  for (i = 0; i <= 4; i++){
-    var tt = i / 4 * Tmax;
-    ctx.fillText(tt.toFixed(1) + ' s', xPix(tt, Tmax), B + 20);
+  ctx.strokeStyle = PAL.high; ctx.beginPath();
+  for (i = 0; i <= 280; i++){
+    X = xT(i / 280 * HIST);
+    if (i) ctx.lineTo(X, yE(samples[i].U)); else ctx.moveTo(X, yE(samples[i].U));
   }
+  ctx.stroke();
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (i = 0; i <= 280; i++){
+    X = xT(i / 280 * HIST);
+    if (i) ctx.lineTo(X, yE(samples[i].E)); else ctx.moveTo(X, yE(samples[i].E));
+  }
+  ctx.stroke();
+  ctx.strokeStyle = PAL.ok; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(L, yE(p.E0)); ctx.lineTo(R, yE(p.E0)); ctx.stroke(); ctx.setLineDash([]);
+
+  var tc = ((st.t % HIST) + HIST) % HIST, now = energies(tc, p);
+  ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(xT(tc), Top); ctx.lineTo(xT(tc), B); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = PAL.float;
+  ctx.beginPath(); ctx.arc(xT(tc), yE(now.E), 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
+  for (i = 0; i <= 5; i++) ctx.fillText(i + ' s', xT(i), B + 20);
 }
 
 function sync(){
-  $('zv').textContent = st.z < 0.1 ? st.z.toFixed(3) : st.z.toFixed(2);
-  $('wnv').textContent = st.wn.toFixed(1);
-  $('z').value = st.z; $('wn').value = st.wn;
+  $('kv').textContent = String(Math.round(st.k));
+  $('mv').textContent = st.m.toFixed(1);
+  $('cv2').textContent = st.c.toFixed(1);
+  $('k').value = st.k; $('m').value = st.m; $('c').value = st.c;
 }
-$('z').addEventListener('input', function(){ st.z = parseFloat(this.value); st.t = 0; sync(); draw(); });
-$('wn').addEventListener('input', function(){ st.wn = parseFloat(this.value); st.t = 0; sync(); draw(); });
+$('k').addEventListener('input', function(){ st.k = parseFloat(this.value); st.t = 0; sync(); draw(); });
+$('m').addEventListener('input', function(){ st.m = parseFloat(this.value); st.t = 0; sync(); draw(); });
+$('c').addEventListener('input', function(){ st.c = parseFloat(this.value); st.t = 0; sync(); draw(); });
 $('play').addEventListener('click', function(){
   st.running = !st.running;
   this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
   this.classList.toggle('btn-acc', st.running);
 });
 $('reset').addEventListener('click', function(){
-  st.z = 0.1; st.wn = 10; st.t = 0; st.running = true;
+  st.k = 100; st.m = 1; st.c = 2; st.t = 0; st.running = true;
   $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
   sync(); draw();
 });
@@ -241,7 +250,7 @@ var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (st.running) st.t += dt * (16 * Math.PI / st.wn) / 7;
+  if (st.running) st.t += dt * 0.4;
   draw();
   requestAnimationFrame(loop);
 }

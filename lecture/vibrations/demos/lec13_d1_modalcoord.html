@@ -4,380 +4,288 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>L13-D1 · 모드좌표 vs 물리좌표</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: linear-gradient(135deg, #1d4e89 0%, #0d1622 100%);
-    color: #e8eef5; min-height: 100vh; padding: 20px;
-  }
-  .container { max-width: 1180px; margin: 0 auto; }
-  h1 { text-align: center; font-size: 26px; margin-bottom: 6px;
-    background: linear-gradient(90deg, #6ea3d8, #8eb4d8);
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9bb0c0; margin-bottom: 20px; font-size: 14px; }
-  .tag { display:inline-block; font-size:11px; color:#9bb0c0; border:1px solid rgba(255,255,255,.15);
-    border-radius:20px; padding:2px 10px; margin-top:4px; }
-  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
-  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  canvas { background: #0b1420; border-radius: 10px; width: 100%; height: auto; display: block; }
-  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px; padding: 18px; }
-  .controls { display: flex; flex-direction: column; gap: 14px; }
-  .control-group { background: rgba(255,255,255,0.04); padding: 13px; border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06); }
-  .control-group label { display: block; font-size: 12px; color: #9bb0c0; margin-bottom: 6px;
-    text-transform: uppercase; letter-spacing: 0.4px; }
-  .control-group .value { font-size: 17px; font-weight: 600; color: #6ea3d8;
-    font-family: "SF Mono", Consolas, monospace; }
-  input[type="range"] { width: 100%; margin-top: 8px; accent-color: #6ea3d8; }
-  .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { flex: 1; min-width: 70px; padding: 10px; background: linear-gradient(135deg, #1d4e89, #6ea3d8);
-    color: #0d1622; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
-    transition: transform 0.1s; }
-  button:hover { transform: translateY(-1px); }
-  button.secondary { background: rgba(255,255,255,0.08); color: #c5d4e6; }
-  button.toggle-on { background: linear-gradient(135deg, #00b894, #55efc4); color:#053b2c; }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    font-family: "SF Mono", Consolas, monospace; }
-  .stat-item { background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
-  .stat-item .k { color: #9bb0c0; font-size: 11px; }
-  .stat-item .v { font-size: 15px; font-weight: 600; }
-  .info { font-size: 12px; color: #e0d5f0; line-height: 1.65;
-    background: rgba(29, 78, 137, 0.08); padding: 11px; border-radius: 6px;
-    border-left: 3px solid #6ea3d8; }
-  .verdict { font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 6px; line-height: 1.5; }
-  .verdict.good { background: rgba(0,184,148,0.14); border-left: 3px solid #00b894; color: #b6f0d8; }
-  .verdict.mid  { background: rgba(255,183,77,0.14); border-left: 3px solid #ffb74d; color: #ffe0b2; }
-  .verdict.bad  { background: rgba(255,107,157,0.14); border-left: 3px solid #ff6b9d; color: #ffc9dd; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #c5d4e6; margin-top: 8px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; }
-  .dot { width: 12px; height: 12px; border-radius: 3px; }
-</style>
 </head>
 <body>
-<div class="container">
-  <h1>🔀 모드좌표 vs 물리좌표 — 얽힘이 풀리는 순간</h1>
-  <div class="subtitle">같은 운동의 두 관점 — 물리 좌표 x=Sr ↔ 모드 좌표 r</div>
-  <div style="text-align:center;"><span class="tag">기계진동학 13강</span></div>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+  --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
 
-  <div class="layout" style="margin-top:16px;">
-    <div>
-      <canvas id="cv" width="900" height="540"></canvas>
-      <div class="legend">
-        <div class="legend-item"><span class="dot" style="background:#8eb4d8"></span>x₁ / r₁ (모드1, ω₁=√2)</div>
-        <div class="legend-item"><span class="dot" style="background:#ff6b9d"></span>x₂ / r₂ (모드2, ω₂=2)</div>
-        <div class="legend-item"><span class="dot" style="background:#ffeb3b"></span>동기 커서 (지금 시각)</div>
-      </div>
-      <div style="font-size:11px;color:#9bb0c0;margin-top:4px;">물리좌표·모드좌표 두 패널은 각각 최대진폭에 맞춰 세로 크기를 조정 (보기용 정규화)</div>
-    </div>
-    <div class="panel controls">
-      <div class="control-group">
-        <label>초기 변위 x₁(0) <span class="value" id="x10v">1.00</span></label>
+<header class="hero wrap">
+  <p class="eyebrow">기계진동학 13강</p>
+  <h1>모드좌표 vs 물리좌표</h1>
+  <p class="lede">같은 운동을 x로 보면 섞이고, r로 보면 순수 사인입니다.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">초기 변위 x₁(0) <span class="big-val" id="x10v">1.00</span></p>
         <input type="range" id="x10" min="-2" max="2" step="0.05" value="1">
       </div>
-      <div class="control-group">
-        <label>초기 변위 x₂(0) <span class="value" id="x20v">0.00</span></label>
+      <div>
+        <p class="ctrl-title">초기 변위 x₂(0) <span class="big-val" id="x20v">0.00</span></p>
         <input type="range" id="x20" min="-2" max="2" step="0.05" value="0">
       </div>
-      <div class="control-group">
-        <label>모드 초기조건 r(0) = S⁻¹x(0)</label>
-        <div class="stats">
-          <div class="stat-item"><div class="k">r₁(0)</div><div class="v" id="r10" style="color:#8eb4d8">—</div></div>
-          <div class="stat-item"><div class="k">r₂(0)</div><div class="v" id="r20" style="color:#ff6b9d">—</div></div>
-        </div>
-      </div>
-      <div class="control-group">
-        <div class="button-row">
-          <button id="preset" class="secondary">↺ 기본 프리셋 x(0)=[1, 0]</button>
-        </div>
-        <div class="button-row" style="margin-top:8px;">
-          <button id="mode1" class="secondary">모드1만</button>
-          <button id="mode2" class="secondary">모드2만</button>
-        </div>
-      </div>
-      <div class="control-group">
-        <div class="button-row">
-          <button id="play" class="toggle-on">⏸ 일시정지</button>
-          <button id="reset" class="secondary">↺ 초기화</button>
-        </div>
-      </div>
-      <div class="verdict" id="verdict">—</div>
-      <div class="info">
-        <b>관찰 포인트</b><br>
-        • 좌측 <b>물리좌표</b>는 √2·2 두 진동수가 섞여 단순 사인이 아님 — 리사주 궤적도 닫히지 않음<br>
-        • 우측 <b>모드좌표</b>는 각각 <b>순수 사인 1개</b> — 궤적이 <b>축(r₁,r₂)에 정렬</b>된 상자 안을 채움(단일 모드만 켜면 직선)<br>
-        • 같은 시각의 <b>노란 커서가 동기</b>로 움직임 → x=Sr, 하나의 운동을 두 좌표로 본 것<br>
-        • <b>모드1만/모드2만</b>: x(0)이 모드형상에 비례하면 물리좌표도 단일 진동수로 규칙적 진동
-      </div>
-      <div class="info" style="border-left-color:#8eb4d8;background:rgba(109,213,237,.08)">
-        모드해석 = 연립을 <b>독립적인 1자유도 2개</b>로 바꾸는 좌표 변환.
-      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>x₁ / r₁ (모드1, ω₁=√2)</span>
+      <span><i style="background:var(--high)"></i>x₂ / r₂ (모드2, ω₂=2)</span>
+      <span><i style="background:var(--float)"></i>현재 시각</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
     </div>
   </div>
-</div>
+</section>
+</main>
+<footer>기계진동학 13강</footer>
 
 <script>
-const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height;
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
 
-// ---- 시스템 상수 ----
-const W1 = Math.sqrt(2), W2 = 2;              // ω₁=√2, ω₂=2 rad/s
-// 모드행렬 S = (1/(3√2))·[[1,-1],[3,3]]
-const s = 1/(3*Math.sqrt(2));
-const S = [[ s*1, s*(-1)], [ s*3, s*3]];
-// S⁻¹ = SᵀM = (1/√2)·[[3,1],[-3,1]]
-const si = 1/Math.sqrt(2);
-const Sinv = [[ si*3, si*1], [ si*(-3), si*1]];
+var W1 = Math.sqrt(2), W2 = 2;
+var s = 1/(3*Math.sqrt(2));
+var S = [[ s*1, s*(-1)], [ s*3, s*3]];
+var si = 1/Math.sqrt(2);
+var Sinv = [[ si*3, si*1], [ si*(-3), si*1]];
 
-// r0 = S⁻¹ x0 (ṙ0 = 0 → 코사인 응답)
-function modeIC(x1, x2) {
+function modeIC(x1, x2){
   return [ Sinv[0][0]*x1 + Sinv[0][1]*x2,
            Sinv[1][0]*x1 + Sinv[1][1]*x2 ];
 }
-// r(t): 초기속도 0 → r_i(t)=r_i0·cos(ω_i t)
-function rAt(r0, t) {
+function rAt(r0, t){
   return [ r0[0]*Math.cos(W1*t), r0[1]*Math.cos(W2*t) ];
 }
-// x = S r
-function physFrom(r) {
+function physFrom(r){
   return [ S[0][0]*r[0] + S[0][1]*r[1],
            S[1][0]*r[0] + S[1][1]*r[1] ];
 }
 
-let state = { x10: 1.0, x20: 0.0, t: 0, running: true };
-let r0 = modeIC(state.x10, state.x20);
+var state = { x10: 1.0, x20: 0.0, t: 0, running: true };
+var r0 = modeIC(state.x10, state.x20);
+var T_SPAN = 10;
 
-const T_SPAN = 10;   // 곡선에 표시할 시간(초)
-const CURSOR_SPAN = 2*Math.PI/W1 * 3; // 커서 주기 대략
+function recompute(){ r0 = modeIC(state.x10, state.x20); }
 
-function recompute() { r0 = modeIC(state.x10, state.x20); }
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','low','ok','float','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
-// ---- 진폭 스케일: 슬라이더 극값에서도 궤적이 화면 안에 들어오도록 동적 계산 ----
-function ampScale() {
-  // r 최대 진폭
-  const rmax = Math.max(1e-6, Math.abs(r0[0]), Math.abs(r0[1]));
-  // x 최대 진폭(두 코사인 동시 최대의 상한)
-  const xmaxA = Math.abs(S[0][0]*r0[0]) + Math.abs(S[0][1]*r0[1]);
-  const xmaxB = Math.abs(S[1][0]*r0[0]) + Math.abs(S[1][1]*r0[1]);
-  const xmax = Math.max(1e-6, xmaxA, xmaxB);
-  return { rmax, xmax };
+function ampScale(){
+  var rmax = Math.max(1e-6, Math.abs(r0[0]), Math.abs(r0[1]));
+  var xmaxA = Math.abs(S[0][0]*r0[0]) + Math.abs(S[0][1]*r0[1]);
+  var xmaxB = Math.abs(S[1][0]*r0[0]) + Math.abs(S[1][1]*r0[1]);
+  var xmax = Math.max(1e-6, xmaxA, xmaxB);
+  return { rmax: rmax, xmax: xmax };
 }
 
-// ---- 레이아웃 영역 ----
-// 좌 절반(물리) / 우 절반(모드). 각 절반: 위=곡선, 아래=평면궤적
-const midX = W/2;
-const gap = 26;
-const halfL = { x0: 16, x1: midX - gap/2 };
-const halfR = { x0: midX + gap/2, x1: W - 16 };
-const curveTop = 44, curveBot = 250;   // 곡선 영역
-const traceTop = 300, traceBot = H - 20; // 평면 궤적 영역
+var midX = W/2;
+var gap = 26;
+var halfL = { x0: 16, x1: midX - gap/2 };
+var halfR = { x0: midX + gap/2, x1: W - 16 };
+var curveTop = 48, curveBot = H - 28;
 
-function drawAxes(reg, top, bot, xlabel) {
-  ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1.2;
-  const midY = (top+bot)/2;
+function drawAxes(reg, top, bot, xlabel){
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.2;
+  var midY = (top+bot)/2;
   ctx.beginPath();
-  ctx.moveTo(reg.x0+34, top+6); ctx.lineTo(reg.x0+34, bot); // y축
-  ctx.moveTo(reg.x0+34, midY); ctx.lineTo(reg.x1-6, midY);  // 0선(x축)
+  ctx.moveTo(reg.x0+34, top+6); ctx.lineTo(reg.x0+34, bot);
+  ctx.moveTo(reg.x0+34, midY); ctx.lineTo(reg.x1-6, midY);
   ctx.stroke();
-  ctx.fillStyle = '#9bb0c0'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+  ctx.fillStyle = PAL.faint; ctx.font='11px '+FONT; ctx.textAlign='left';
   ctx.fillText(xlabel, reg.x1-58, bot+14);
 }
 
-// 곡선(시간응답) 하나 그리기: valueFn(t)->값, sc: 값->px
-function drawCurve(reg, top, bot, valueFn, sc, color, lw) {
-  const midY=(top+bot)/2, plotW=(reg.x1-6)-(reg.x0+34), plotL=reg.x0+34;
+function drawCurve(reg, top, bot, valueFn, sc, color, lw){
+  var midY=(top+bot)/2, plotW=(reg.x1-6)-(reg.x0+34), plotL=reg.x0+34;
   ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.beginPath();
-  const N=260;
-  for (let i=0;i<=N;i++){
-    const t=i/N*T_SPAN;
-    const X=plotL + i/N*plotW;
-    let Y=midY - valueFn(t)*sc;
-    Y=Math.max(top+4, Math.min(bot-4, Y)); // 클램프
+  var N=260, i, t, X, Y;
+  for (i=0;i<=N;i++){
+    t=i/N*T_SPAN;
+    X=plotL + i/N*plotW;
+    Y=midY - valueFn(t)*sc;
+    Y=Math.max(top+4, Math.min(bot-4, Y));
     i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
   }
   ctx.stroke();
 }
 
-// 곡선 위 커서 점(현재 t)
 function curveCursor(reg, top, bot, valueFn, sc, tcur){
-  const midY=(top+bot)/2, plotW=(reg.x1-6)-(reg.x0+34), plotL=reg.x0+34;
-  const frac=(tcur % T_SPAN)/T_SPAN;
-  const X=plotL+frac*plotW;
-  let Y=midY - valueFn(tcur % T_SPAN)*sc;
+  var midY=(top+bot)/2, plotW=(reg.x1-6)-(reg.x0+34), plotL=reg.x0+34;
+  var frac=(tcur % T_SPAN)/T_SPAN;
+  var X=plotL+frac*plotW;
+  var Y=midY - valueFn(tcur % T_SPAN)*sc;
   Y=Math.max(top+4, Math.min(bot-4, Y));
-  ctx.fillStyle='#ffeb3b'; ctx.beginPath(); ctx.arc(X,Y,4,0,7); ctx.fill();
+  ctx.fillStyle=PAL.float; ctx.beginPath(); ctx.arc(X,Y,4,0,7); ctx.fill();
 }
 
-// 평면 궤적: (aFn(t), bFn(t)) 파라메트릭
-function drawTrace(reg, top, bot, aFn, bFn, half, color, tcur, labelA, labelB){
-  const cx=(reg.x0+reg.x1)/2, cy=(top+bot)/2;
-  const box=Math.min((reg.x1-reg.x0)*0.42, (bot-top)*0.42);
-  const sc=box/half;
-  // 축
-  ctx.strokeStyle='rgba(255,255,255,0.22)'; ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(cx-box-8, cy); ctx.lineTo(cx+box+8, cy);
-  ctx.moveTo(cx, cy-box-8); ctx.lineTo(cx, cy+box+8);
-  ctx.stroke();
-  ctx.fillStyle='#9bb0c0'; ctx.font='11px sans-serif'; ctx.textAlign='left';
-  ctx.fillText(labelA, cx+box-4, cy-6);
-  ctx.fillText(labelB, cx+6, cy-box-2);
-  // 궤적(전체 주기 표시)
-  ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.beginPath();
-  const N=520, TT=20;
-  for(let i=0;i<=N;i++){
-    const t=i/N*TT;
-    let X=cx + clampV(aFn(t)*sc, box+10);
-    let Y=cy - clampV(bFn(t)*sc, box+10);
-    i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
-  }
-  ctx.stroke();
-  // 현재 커서
-  const ax=cx + clampV(aFn(tcur)*sc, box+10);
-  const ay=cy - clampV(bFn(tcur)*sc, box+10);
-  ctx.fillStyle='#ffeb3b'; ctx.beginPath(); ctx.arc(ax,ay,5,0,7); ctx.fill();
-  ctx.strokeStyle='rgba(255,235,59,0.5)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ax,ay); ctx.stroke();
-}
-function clampV(v, lim){ return Math.max(-lim, Math.min(lim, v)); }
-
-function draw() {
+function draw(){
   ctx.clearRect(0,0,W,H);
-  const {rmax, xmax} = ampScale();
+  var sca = ampScale();
+  var rmax = sca.rmax, xmax = sca.xmax;
 
-  // 배경 구분
-  ctx.fillStyle='rgba(109,213,237,0.03)'; ctx.fillRect(halfL.x0, 34, halfL.x1-halfL.x0, H-50);
-  ctx.fillStyle='rgba(179,136,255,0.04)'; ctx.fillRect(halfR.x0, 34, halfR.x1-halfR.x0, H-50);
+  ctx.fillStyle=PAL.surface2;
+  ctx.fillRect(halfL.x0, 34, halfL.x1-halfL.x0, H-50);
+  ctx.fillRect(halfR.x0, 34, halfR.x1-halfR.x0, H-50);
 
-  // 제목 라벨
-  ctx.textAlign='center'; ctx.font='bold 14px sans-serif';
-  ctx.fillStyle='#8eb4d8'; ctx.fillText('물리 좌표  x₁(t), x₂(t)  —  섞인 파형', (halfL.x0+halfL.x1)/2, 26);
-  ctx.fillStyle='#6ea3d8'; ctx.fillText('모드 좌표  r₁(t), r₂(t)  —  순수 사인', (halfR.x0+halfR.x1)/2, 26);
+  ctx.textAlign='center'; ctx.font='bold 14px '+FONT;
+  ctx.fillStyle=PAL.accent; ctx.fillText('물리 좌표  x₁(t), x₂(t)', (halfL.x0+halfL.x1)/2, 26);
+  ctx.fillStyle=PAL.low; ctx.fillText('모드 좌표  r₁(t), r₂(t)', (halfR.x0+halfR.x1)/2, 26);
 
-  const tcur = state.t;
-  // 곡선 커서는 tcur%T_SPAN 위치를 쓰므로, 궤적 커서도 동일 순간을 써야 동기됨
-  const tcurW = tcur % T_SPAN;
-  // px 스케일 (곡선 영역 높이의 40%를 최대 진폭에 할당)
-  const curveH = (curveBot-curveTop);
-  const xSc = (curveH*0.42)/xmax;
-  const rSc = (curveH*0.42)/rmax;
+  var tcur = state.t;
+  var curveH = (curveBot-curveTop);
+  var xSc = (curveH*0.42)/xmax;
+  var rSc = (curveH*0.42)/rmax;
 
-  // ---- 좌: 물리 곡선 ----
   drawAxes(halfL, curveTop, curveBot, '시간 →');
-  const x1Fn = t => physFrom(rAt(r0,t))[0];
-  const x2Fn = t => physFrom(rAt(r0,t))[1];
-  drawCurve(halfL, curveTop, curveBot, x1Fn, xSc, '#8eb4d8', 2);
-  drawCurve(halfL, curveTop, curveBot, x2Fn, xSc, '#ff6b9d', 2);
+  var x1Fn = function(t){ return physFrom(rAt(r0,t))[0]; };
+  var x2Fn = function(t){ return physFrom(rAt(r0,t))[1]; };
+  drawCurve(halfL, curveTop, curveBot, x1Fn, xSc, PAL.accent, 2);
+  drawCurve(halfL, curveTop, curveBot, x2Fn, xSc, PAL.high, 2);
   curveCursor(halfL, curveTop, curveBot, x1Fn, xSc, tcur);
   curveCursor(halfL, curveTop, curveBot, x2Fn, xSc, tcur);
 
-  // ---- 우: 모드 곡선 ----
   drawAxes(halfR, curveTop, curveBot, '시간 →');
-  const r1Fn = t => rAt(r0,t)[0];
-  const r2Fn = t => rAt(r0,t)[1];
-  drawCurve(halfR, curveTop, curveBot, r1Fn, rSc, '#8eb4d8', 2);
-  drawCurve(halfR, curveTop, curveBot, r2Fn, rSc, '#ff6b9d', 2);
+  var r1Fn = function(t){ return rAt(r0,t)[0]; };
+  var r2Fn = function(t){ return rAt(r0,t)[1]; };
+  drawCurve(halfR, curveTop, curveBot, r1Fn, rSc, PAL.accent, 2);
+  drawCurve(halfR, curveTop, curveBot, r2Fn, rSc, PAL.high, 2);
   curveCursor(halfR, curveTop, curveBot, r1Fn, rSc, tcur);
   curveCursor(halfR, curveTop, curveBot, r2Fn, rSc, tcur);
 
-  // ---- 좌 아래: 물리 평면 궤적 (리사주) ----
-  ctx.fillStyle='#9bb0c0'; ctx.font='11px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('x₁–x₂ 평면 (리사주, 닫히지 않음)', (halfL.x0+halfL.x1)/2, traceTop-4);
-  drawTrace(halfL, traceTop, traceBot, x1Fn, x2Fn, xmax, '#8fd6ff', tcurW, 'x₁', 'x₂');
-
-  // ---- 우 아래: 모드 평면 궤적 ----
-  ctx.fillStyle='#9bb0c0'; ctx.textAlign='center';
-  ctx.fillText('r₁–r₂ 평면 (축 정렬 단순 궤적)', (halfR.x0+halfR.x1)/2, traceTop-4);
-  drawTrace(halfR, traceTop, traceBot, r1Fn, r2Fn, rmax, '#c9aaff', tcurW, 'r₁', 'r₂');
-
-  // ---- 가운데 변환 라벨 x = S r ----
-  ctx.save();
-  ctx.fillStyle='rgba(255,255,255,0.06)';
-  ctx.fillRect(midX-26, H/2-40, 52, 80);
-  ctx.strokeStyle='rgba(255,235,59,0.35)'; ctx.lineWidth=1; ctx.strokeRect(midX-26, H/2-40, 52, 80);
-  ctx.fillStyle='#ffeb3b'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('x = S r', midX, H/2-16);
-  ctx.font='11px sans-serif'; ctx.fillStyle='#e0d5f0';
-  ctx.fillText('◀', midX, H/2+2);
-  ctx.fillText('S⁻¹', midX, H/2+16);
-  ctx.fillText('S ▶', midX, H/2+34);
-  ctx.restore();
-
-  // 읽기값
-  document.getElementById('r10').textContent = r0[0].toFixed(3);
-  document.getElementById('r20').textContent = r0[1].toFixed(3);
-  ctx.textAlign='left';
+  ctx.fillStyle=PAL.muted; ctx.font='12px '+FONT; ctx.textAlign='center';
+  ctx.fillText('r₁(0)='+r0[0].toFixed(3)+'   r₂(0)='+r0[1].toFixed(3), midX, H-8);
 }
 
-// ---- 판정: 어떤 모드가 켜졌는가 ----
-function updateVerdict() {
-  const a1=Math.abs(r0[0]), a2=Math.abs(r0[1]);
-  const v=document.getElementById('verdict');
-  const tol=0.02*Math.max(a1,a2,1e-6);
-  if (a2<=tol && a1>tol) {
-    v.className='verdict good';
-    v.innerHTML='✅ <b>모드1만</b> 가진 (r₂≈0) → 물리좌표도 단일 진동수 ω₁=√2로 규칙적 진동. x는 모드형상 [1,3]ᵀ 방향으로만 움직임.';
-  } else if (a1<=tol && a2>tol) {
-    v.className='verdict good';
-    v.innerHTML='✅ <b>모드2만</b> 가진 (r₁≈0) → 물리좌표도 단일 진동수 ω₂=2로 규칙적 진동. x는 모드형상 [-1,3]ᵀ 방향으로만 움직임.';
-  } else if (a1<=tol && a2<=tol) {
-    v.className='verdict mid';
-    v.innerHTML='⚪ 두 모드 모두 정지 (r₀≈0) — 초기변위가 없어 응답이 없습니다.';
-  } else {
-    v.className='verdict mid';
-    v.innerHTML='🔀 <b>두 모드 혼합</b> → 물리좌표는 √2·2가 섞인 비주기 파형, 리사주는 닫히지 않음. 모드좌표는 여전히 순수 사인 2개.';
-  }
+function setSliders(x1, x2){
+  state.x10=x1; state.x20=x2;
+  $('x10').value=x1;
+  $('x20').value=x2;
+  $('x10v').textContent=x1.toFixed(2);
+  $('x20v').textContent=x2.toFixed(2);
+  recompute(); state.t=0;
 }
+$('x10').addEventListener('input', function(){
+  state.x10=parseFloat(this.value);
+  $('x10v').textContent=state.x10.toFixed(2);
+  recompute();
+});
+$('x20').addEventListener('input', function(){
+  state.x20=parseFloat(this.value);
+  $('x20v').textContent=state.x20.toFixed(2);
+  recompute();
+});
+$('play').addEventListener('click', function(){
+  state.running=!state.running;
+  this.textContent = state.running?'⏸ 일시정지':'▶ 재생';
+  this.classList.toggle('btn-acc', state.running);
+});
+$('reset').addEventListener('click', function(){
+  setSliders(1.0, 0.0);
+  state.running=true;
+  $('play').textContent='⏸ 일시정지';
+  $('play').classList.add('btn-acc');
+});
 
-let last = performance.now();
-function loop(now) {
-  const dt = Math.min(0.033, (now-last)/1000); last=now;
+setSliders(1.0, 0.0);
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033,(now-last)/1000) : 0;
+  last=now;
   if (state.running) state.t += dt;
   draw();
   requestAnimationFrame(loop);
 }
-
-// ---- 컨트롤 ----
-function setSliders(x1, x2) {
-  state.x10=x1; state.x20=x2;
-  document.getElementById('x10').value=x1;
-  document.getElementById('x20').value=x2;
-  document.getElementById('x10v').textContent=x1.toFixed(2);
-  document.getElementById('x20v').textContent=x2.toFixed(2);
-  recompute(); updateVerdict(); state.t=0;
-}
-document.getElementById('x10').addEventListener('input', e=>{
-  state.x10=parseFloat(e.target.value);
-  document.getElementById('x10v').textContent=state.x10.toFixed(2);
-  recompute(); updateVerdict();
-});
-document.getElementById('x20').addEventListener('input', e=>{
-  state.x20=parseFloat(e.target.value);
-  document.getElementById('x20v').textContent=state.x20.toFixed(2);
-  recompute(); updateVerdict();
-});
-// 기본 프리셋: x(0)=[1,0]
-document.getElementById('preset').addEventListener('click', ()=> setSliders(1.0, 0.0));
-// 모드1만: x(0) ∝ S 1열 [1,3]ᵀ (스케일 1/3로 슬라이더 범위 내: [0.5,1.5])
-document.getElementById('mode1').addEventListener('click', ()=> setSliders(0.5, 1.5));
-// 모드2만: x(0) ∝ S 2열 [-1,3]ᵀ → [-0.5,1.5]
-document.getElementById('mode2').addEventListener('click', ()=> setSliders(-0.5, 1.5));
-document.getElementById('play').addEventListener('click', e=>{
-  state.running=!state.running;
-  e.target.textContent = state.running?'⏸ 일시정지':'▶ 재생';
-  e.target.classList.toggle('toggle-on', state.running);
-});
-document.getElementById('reset').addEventListener('click', ()=>{
-  setSliders(1.0, 0.0);
-  state.running=true;
-  const pb=document.getElementById('play');
-  pb.textContent='⏸ 일시정지';
-  pb.classList.add('toggle-on');
-});
-
-setSliders(1.0, 0.0);
 requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>

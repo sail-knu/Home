@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L3-D1 · 감쇠 세 구간</title>
+<title>L4-D4 · 저역 통과</title>
 </head>
 <body>
 <style>
@@ -15,7 +15,6 @@
   --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
   --ok:#177a4c; --bad:#bb4038;
   --plot-bg:#eef4f4; --grid:#cddcdc;
-  --mass:#3c5a60; --mass-ink:#eaf3f3; --spring:#7e9296; --wall:#b9cccc;
   --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
   --radius:14px;
 }
@@ -28,7 +27,6 @@
     --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
     --ok:#5cc793; --bad:#f09289;
     --plot-bg:#0e2429; --grid:#1e3d44;
-    --mass:#4d7d86; --mass-ink:#e6f4f4; --spring:#8fa8ac; --wall:#33525a;
     --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
   }
 }
@@ -77,9 +75,9 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 </style>
 
 <header class="hero wrap">
-  <p class="eyebrow">기계진동학 3강</p>
-  <h1>감쇠 세 구간</h1>
-  <p class="lede">ζ가 <b>1보다 작은지·같은지·큰지</b>에 따라 x(t) 모양이 갈립니다.</p>
+  <p class="eyebrow">메카트로닉스 4강</p>
+  <h1>저역 통과</h1>
+  <p class="lede">느린 파는 통과하고, <b>빠른 파는 작아집니다</b>.</p>
 </header>
 
 <main class="wrap">
@@ -87,20 +85,18 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
   <div class="card">
     <div class="ctrl-bar">
       <div>
-        <p class="ctrl-title">감쇠비 ζ <span class="big-val" id="zv">0.10</span></p>
-        <input type="range" id="z" min="0" max="5" step="0.005" value="0.1">
+        <p class="ctrl-title">입력 주파수 f <span class="big-val" id="fv">2.0</span> Hz</p>
+        <input type="range" id="f" min="0.5" max="30" step="0.5" value="2">
       </div>
       <div>
-        <p class="ctrl-title">고유진동수 ωₙ <span class="big-val" id="wnv">10.0</span> rad/s</p>
-        <input type="range" id="wn" min="2" max="20" step="0.5" value="10">
+        <p class="ctrl-title">α <span class="big-val" id="av">0.85</span></p>
+        <input type="range" id="a" min="0.50" max="0.96" step="0.01" value="0.85">
       </div>
     </div>
     <canvas id="cv" class="sim" width="900" height="420"></canvas>
     <div class="legend">
-      <span><i style="background:var(--low)"></i>부족 ζ&lt;1</span>
-      <span><i style="background:var(--ok)"></i>임계 ζ=1</span>
-      <span><i style="background:var(--high)"></i>과도 ζ&gt;1</span>
-      <span><i style="background:var(--faint)"></i>포락선 ±Ae<sup>−ζωₙt</sup></span>
+      <span><i style="background:var(--muted)"></i>입력 sin(2πft)</span>
+      <span><i style="background:var(--accent)"></i>LPF 출력</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -109,7 +105,7 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
   </div>
 </section>
 </main>
-<footer>기계진동학 3강</footer>
+<footer>메카트로닉스 4강</footer>
 
 <script>
 (function(){
@@ -117,13 +113,13 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
-var X0 = 1, V0 = 0, N = 720;
-var st = { z: 0.1, wn: 10, t: 0, running: true };
+var DT = 0.01;
+var st = { f: 2, a: 0.85, t: 0, running: true };
 
 var PAL = {};
 function readPalette(){
   var cs = getComputedStyle(document.documentElement);
-  ['surface2','border','border2','text','muted','faint','accent','high','low','ok','float','grid'].forEach(function(k){
+  ['surface2','border','border2','text','muted','faint','accent','high','float','grid'].forEach(function(k){
     PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
   });
 }
@@ -135,117 +131,72 @@ if (window.MutationObserver){
 }
 var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
-function response(z, wn, t){
-  if (Math.abs(1 - z) < 1e-4) return (X0 + (V0 + wn * X0) * t) * Math.exp(-wn * t);
-  if (z < 1){
-    var wd = wn * Math.sqrt(Math.max(1 - z * z, 1e-12));
-    return Math.exp(-z * wn * t) * (((z * wn * X0 + V0) / wd) * Math.sin(wd * t) + X0 * Math.cos(wd * t));
-  }
-  var q = Math.sqrt(Math.max(z * z - 1, 1e-12));
-  var a1 = (-V0 + (-z + q) * wn * X0) / (2 * wn * q);
-  var a2 = ( V0 + ( z + q) * wn * X0) / (2 * wn * q);
-  return a1 * Math.exp((-z - q) * wn * t) + a2 * Math.exp((-z + q) * wn * t);
+function gainOf(f, a){
+  var w = 2 * Math.PI * f * DT;
+  return (1 - a) / Math.sqrt(1 - 2 * a * Math.cos(w) + a * a);
 }
-function regime(){
-  if (Math.abs(1 - st.z) < 1e-4) return { name: '임계감쇠  ζ = 1', col: 'ok' };
-  if (st.z < 1) return { name: '부족감쇠  ζ < 1', col: 'low' };
-  return { name: '과도감쇠  ζ > 1', col: 'high' };
+function phaseOf(f, a){
+  var w = 2 * Math.PI * f * DT;
+  return Math.atan2(a * Math.sin(w), 1 - a * Math.cos(w));
 }
 
-var L = 64, R = W - 24, T = 52, B = 384;
-function xPix(t, Tmax){ return L + t / Tmax * (R - L); }
-function yPix(x, peak){ return (T + B) / 2 - x / peak * (B - T) * 0.42; }
-
+var L = 64, R = W - 22, T = 52, B = 372;
 function draw(){
-  var z = st.z, wn = st.wn, Tmax = 16 * Math.PI / wn;
-  var tc = st.t % Tmax, i, peak = 1e-6;
-  var xs = new Float64Array(N + 1);
-  for (i = 0; i <= N; i++){
-    xs[i] = response(z, wn, i / N * Tmax);
-    if (Math.abs(xs[i]) > peak) peak = Math.abs(xs[i]);
-  }
-  var under = z < 1 - 1e-4, A = 0, wd = 0;
-  if (under){
-    wd = wn * Math.sqrt(1 - z * z);
-    A = Math.sqrt(wd * wd * X0 * X0 + (V0 + z * wn * X0) * (V0 + z * wn * X0)) / wd;
-    peak = Math.max(peak, A);
-  }
-  var rg = regime(), col = PAL[rg.col];
+  var f = st.f, A = st.a, G = gainOf(f, A), phi = phaseOf(f, A);
+  var Twin = Math.max(0.25, 3 / f);
+  var t0 = st.t;
+  function xPix(tt){ return L + (tt - t0) / Twin * (R - L); }
+  function yPix(v){ return (T + B) / 2 - v * 140; }
+
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = PAL.surface2;
   ctx.fillRect(L, T, R - L, B - T);
   ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
-  ctx.strokeStyle = PAL.border2;
   ctx.beginPath(); ctx.moveTo(L, (T + B) / 2); ctx.lineTo(R, (T + B) / 2); ctx.stroke();
 
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('ẍ + 2ζωₙẋ + ωₙ²x = 0', L, 28);
-  ctx.fillStyle = col; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText(rg.name, R, 28);
-
-  if (under){
-    ctx.strokeStyle = PAL.faint; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    for (i = 0; i <= N; i++){
-      var te = i / N * Tmax, ye = A * Math.exp(-z * wn * te);
-      var X = xPix(te, Tmax);
-      if (i) ctx.lineTo(X, yPix(ye, peak)); else ctx.moveTo(X, yPix(ye, peak));
-    }
-    ctx.stroke();
-    ctx.beginPath();
-    for (i = 0; i <= N; i++){
-      te = i / N * Tmax; ye = -A * Math.exp(-z * wn * te); X = xPix(te, Tmax);
-      if (i) ctx.lineTo(X, yPix(ye, peak)); else ctx.moveTo(X, yPix(ye, peak));
-    }
-    ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = PAL.muted; ctx.lineWidth = 2.2; ctx.beginPath();
+  var i;
+  for (i = 0; i <= 400; i++){
+    var tt = t0 + Twin * i / 400, v = Math.sin(2 * Math.PI * f * tt);
+    if (i) ctx.lineTo(xPix(tt), yPix(v)); else ctx.moveTo(xPix(tt), yPix(v));
   }
-
-  ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath();
-  for (i = 0; i <= N; i++){
-    var Xc = xPix(i / N * Tmax, Tmax), Yc = yPix(xs[i], peak);
-    if (i) ctx.lineTo(Xc, Yc); else ctx.moveTo(Xc, Yc);
+  ctx.stroke();
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (i = 0; i <= 400; i++){
+    var tt2 = t0 + Twin * i / 400, v2 = G * Math.sin(2 * Math.PI * f * tt2 - phi);
+    if (i) ctx.lineTo(xPix(tt2), yPix(v2)); else ctx.moveTo(xPix(tt2), yPix(v2));
   }
   ctx.stroke();
 
-  ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(xPix(tc, Tmax), T); ctx.lineTo(xPix(tc, Tmax), B); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = PAL.float;
-  ctx.beginPath(); ctx.arc(xPix(tc, Tmax), yPix(response(z, wn, tc), peak), 6, 0, Math.PI * 2); ctx.fill();
-
-  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
-  for (i = 0; i <= 4; i++){
-    var tt = i / 4 * Tmax;
-    ctx.fillText(tt.toFixed(1) + ' s', xPix(tt, Tmax), B + 20);
-  }
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('입력 vs LPF 출력', L, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('이득 = ' + G.toFixed(3), R, 28);
 }
 
-function sync(){
-  $('zv').textContent = st.z < 0.1 ? st.z.toFixed(3) : st.z.toFixed(2);
-  $('wnv').textContent = st.wn.toFixed(1);
-  $('z').value = st.z; $('wn').value = st.wn;
-}
-$('z').addEventListener('input', function(){ st.z = parseFloat(this.value); st.t = 0; sync(); draw(); });
-$('wn').addEventListener('input', function(){ st.wn = parseFloat(this.value); st.t = 0; sync(); draw(); });
+$('f').addEventListener('input', function(){ st.f = parseFloat(this.value); $('fv').textContent = st.f.toFixed(1); draw(); });
+$('a').addEventListener('input', function(){ st.a = parseFloat(this.value); $('av').textContent = st.a.toFixed(2); draw(); });
 $('play').addEventListener('click', function(){
   st.running = !st.running;
   this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
   this.classList.toggle('btn-acc', st.running);
 });
 $('reset').addEventListener('click', function(){
-  st.z = 0.1; st.wn = 10; st.t = 0; st.running = true;
+  st.f = 2; st.a = 0.85; st.t = 0; st.running = true;
+  $('f').value = 2; $('fv').textContent = '2.0';
+  $('a').value = 0.85; $('av').textContent = '0.85';
   $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
-  sync(); draw();
+  draw();
 });
 var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (st.running) st.t += dt * (16 * Math.PI / st.wn) / 7;
+  if (st.running) st.t += dt;
   draw();
   requestAnimationFrame(loop);
 }
-sync();
 requestAnimationFrame(loop);
 })();
 </script>
