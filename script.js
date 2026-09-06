@@ -492,7 +492,9 @@
   }
 
   function courseDemoUrl(src) {
-    return new URL(encodeURI(src), document.baseURI).href;
+    const url = new URL(encodeURI(src), document.baseURI);
+    url.searchParams.set("v", "20260907c");
+    return url.href;
   }
 
   function matchBrace(css, openIdx) {
