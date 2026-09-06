@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L5-D2 · σₚ·σ_z → K</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강</p>
+  <h1>σₚ·σ_z → K</h1>
+  <p class="lede">더 뾰족한 쪽을 <b>더 믿습니다</b>.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">예측 폭 σₚ <span class="big-val" id="spv">2.0</span></p>
+        <input type="range" id="sp" min="0.5" max="6" step="0.1" value="2">
+      </div>
+      <div>
+        <p class="ctrl-title">측정 폭 σ_z <span class="big-val" id="szv">2.0</span></p>
+        <input type="range" id="sz" min="0.5" max="6" step="0.1" value="2">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="440"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--float)"></i>예측 폭 σₚ</span>
+      <span><i style="background:var(--muted)"></i>측정 폭 σ_z</span>
+      <span><i style="background:var(--accent)"></i>K = σₚ² / (σₚ² + σ_z²)</span>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 5강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var st = { sp: 2, sz: 2 };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','ok','bad','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+var L = 70, R = W - 36, T = 58, B = 400;
+function barX(v){ return L + 40 + v * (R - L - 80); }
+
+function widthMark(cx, y, sig, col, lab){
+  var half = sig / 6 * 120;
+  ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - half, y); ctx.lineTo(cx + half, y); ctx.stroke();
+  ctx.lineCap = 'butt';
+  ctx.beginPath(); ctx.moveTo(cx - half, y - 8); ctx.lineTo(cx - half, y + 8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + half, y - 8); ctx.lineTo(cx + half, y + 8); ctx.stroke();
+  ctx.fillStyle = col; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText(lab + ' = ' + sig.toFixed(1), cx + half + 14, y + 5);
+}
+
+function draw(){
+  var sp = st.sp, sz = st.sz;
+  var pp = sp * sp, zz = sz * sz;
+  var K = pp / (pp + zz);
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(L, T, R - L, B - T);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.strokeRect(L, T, R - L, B - T);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('K = σₚ² / (σₚ² + σ_z²)', L, 36);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText(pp.toFixed(2) + ' / (' + pp.toFixed(2) + ' + ' + zz.toFixed(2) + ')  =  ' + K.toFixed(3), R, 36);
+
+  var mid = (L + R) / 2;
+  widthMark(mid - 40, 130, sp, PAL.float, 'σₚ');
+  widthMark(mid - 40, 178, sz, PAL.muted, 'σ_z');
+
+  var y0 = 286, y1 = 328, x0 = barX(0), x1 = barX(1), xk = barX(K);
+  ctx.fillStyle = PAL.grid;
+  ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  ctx.fillStyle = PAL.accent;
+  ctx.fillRect(x0, y0, xk - x0, y1 - y0);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(xk, (y0 + y1) / 2, 8, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 18px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('K = ' + K.toFixed(3), xk, y0 - 16);
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT;
+  ctx.fillText('0', x0, y1 + 22);
+  ctx.fillText('1', x1, y1 + 22);
+  ctx.fillText('0.5', barX(0.5), y1 + 22);
+}
+
+$('sp').addEventListener('input', function(){ st.sp = parseFloat(this.value); $('spv').textContent = st.sp.toFixed(1); draw(); });
+$('sz').addEventListener('input', function(){ st.sz = parseFloat(this.value); $('szv').textContent = st.sz.toFixed(1); draw(); });
+draw();
+})();
+</script>
+</body>
+</html>

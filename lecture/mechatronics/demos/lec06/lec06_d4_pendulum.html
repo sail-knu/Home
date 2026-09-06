@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L6-D4 · sinθ ≈ θ</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 6강</p>
+  <h1>sinθ ≈ θ</h1>
+  <p class="lede">각이 작을 때만 <b>겹칩니다</b>.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">초기각 θ₀ <span class="big-val" id="thv">15°</span></p>
+        <input type="range" id="th" min="5" max="80" step="1" value="15">
+      </div>
+      <div>
+        <p class="ctrl-title">길이 L <span class="big-val" id="lv">1.00</span> m</p>
+        <input type="range" id="len" min="0.5" max="2" step="0.05" value="1">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="500"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>비선형 θ̈ + (g/L)sinθ = 0</span>
+      <span><i style="background:var(--float)"></i>선형 θ̈ + (g/L)θ = 0</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 6강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var G = 9.81, NS = 480;
+var st = { th0: 15, L: 1, t: 0, running: true, nl: [] };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','ok','bad','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+function tmax(){ return 8 * Math.PI * Math.sqrt(st.L / G); }
+function rk4(th, om, dt, L){
+  function acc(a){ return -(G / L) * Math.sin(a); }
+  var k1t = om, k1o = acc(th);
+  var k2t = om + 0.5 * dt * k1o, k2o = acc(th + 0.5 * dt * k1t);
+  var k3t = om + 0.5 * dt * k2o, k3o = acc(th + 0.5 * dt * k2t);
+  var k4t = om + dt * k3o, k4o = acc(th + dt * k3t);
+  return [th + dt / 6 * (k1t + 2 * k2t + 2 * k3t + k4t),
+          om + dt / 6 * (k1o + 2 * k2o + 2 * k3o + k4o)];
+}
+function rebuild(){
+  var Tm = tmax(), dt = Tm / NS, th = st.th0 * Math.PI / 180, om = 0, i, s;
+  st.nl = [th];
+  for (i = 0; i < NS; i++){
+    s = rk4(th, om, dt, st.L);
+    th = s[0]; om = s[1];
+    st.nl.push(th);
+  }
+}
+rebuild();
+
+function sampleNL(t){
+  var Tm = tmax(), u = t / Tm * NS;
+  var i = Math.max(0, Math.min(NS - 1, Math.floor(u)));
+  var f = u - i;
+  return st.nl[i] * (1 - f) + st.nl[i + 1] * f;
+}
+
+function bob(px, py, th, col, lab){
+  var len = 88;
+  var x = px + len * Math.sin(th), y = py + len * Math.cos(th);
+  ctx.strokeStyle = col; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = PAL.text; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText(lab, px, py - 12);
+}
+
+var Lft = 64, Rgt = W - 22, PT = 188, PB = 458;
+function Xp(t, Tm){ return Lft + t / Tm * (Rgt - Lft); }
+function Yp(th, amp){ return PT + (amp - th) / (2 * amp) * (PB - PT); }
+
+function draw(){
+  var Tm = tmax(), w = Math.sqrt(G / st.L);
+  var tc = ((st.t % Tm) + Tm) % Tm;
+  var th0 = st.th0 * Math.PI / 180;
+  var thN = sampleNL(tc);
+  var thL = th0 * Math.cos(w * tc);
+  var amp = Math.max(th0, 5 * Math.PI / 180) * 1.15;
+  var i;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('4주기  ·  ω = √(g/L)', 24, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('θ₀=' + st.th0.toFixed(0) + '°   L=' + st.L.toFixed(2) + '   T=' + (2 * Math.PI / w).toFixed(2) + ' s', W - 22, 28);
+
+  bob(220, 48, thN, PAL.accent, '비선형');
+  bob(680, 48, thL, PAL.float, '선형');
+
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(Lft, PT, Rgt - Lft, PB - PT);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(Lft, PT); ctx.lineTo(Lft, PB); ctx.lineTo(Rgt, PB); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(Lft, Yp(0, amp)); ctx.lineTo(Rgt, Yp(0, amp)); ctx.stroke();
+
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath();
+  for (i = 0; i <= NS; i++){
+    var ti = i / NS * Tm, li = th0 * Math.cos(w * ti);
+    if (i) ctx.lineTo(Xp(ti, Tm), Yp(li, amp)); else ctx.moveTo(Xp(0, Tm), Yp(li, amp));
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+  for (i = 0; i <= NS; i++){
+    var tn = i / NS * Tm;
+    if (i) ctx.lineTo(Xp(tn, Tm), Yp(st.nl[i], amp)); else ctx.moveTo(Xp(0, Tm), Yp(st.nl[0], amp));
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = PAL.faint; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(Xp(tc, Tm), PT); ctx.lineTo(Xp(tc, Tm), PB); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(Xp(tc, Tm), Yp(thN, amp), 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = PAL.float;
+  ctx.beginPath(); ctx.arc(Xp(tc, Tm), Yp(thL, amp), 5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (i = 0; i <= 4; i++) ctx.fillText((i / 4 * Tm).toFixed(1) + ' s', Xp(i / 4 * Tm, Tm), PB + 20);
+  ctx.textAlign = 'right';
+  ctx.fillText((st.th0).toFixed(0) + '°', Lft - 8, Yp(th0, amp) + 4);
+  ctx.fillText('0', Lft - 8, Yp(0, amp) + 4);
+}
+
+function sync(){
+  $('thv').textContent = st.th0.toFixed(0) + '°';
+  $('lv').textContent = st.L.toFixed(2);
+  $('th').value = st.th0; $('len').value = st.L;
+}
+$('th').addEventListener('input', function(){ st.th0 = parseFloat(this.value); st.t = 0; rebuild(); sync(); draw(); });
+$('len').addEventListener('input', function(){ st.L = parseFloat(this.value); st.t = 0; rebuild(); sync(); draw(); });
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.th0 = 15; st.L = 1; st.t = 0; st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  rebuild(); sync(); draw();
+});
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) st.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+sync();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

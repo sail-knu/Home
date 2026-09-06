@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L9-D2 · 미분 ↔ s</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 9강</p>
+  <h1>미분 ↔ s</h1>
+  <p class="lede">ℒ{f′} = <b>sF(s) − f(0)</b>.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">감쇠 a <span class="big-val" id="av">2.0</span></p>
+        <input type="range" id="a" min="0.5" max="4" step="0.1" value="2">
+      </div>
+      <div>
+        <p class="ctrl-title">s 값 <span class="big-val" id="sv">3.0</span></p>
+        <input type="range" id="s" min="1" max="8" step="0.1" value="3">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="440"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>f(t) = e<sup>−at</sup></span>
+      <span><i style="background:var(--float)"></i>f′(t) = −a e<sup>−at</sup></span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 9강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var st = { a: 2, s: 3, t: 0, running: true };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','ok','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+var L = 64, R = W - 22, T = 56, B = 392;
+function draw(){
+  var a = st.a, s = st.s;
+  var tHi = Math.max(3.5, 5 / a);
+  var yLo = -a * 1.15, yHi = 1.2;
+  var rhs = -a / (s + a);
+  var tNow = st.t % tHi;
+  function X(t){ return L + t / tHi * (R - L); }
+  function Y(v){ return T + (yHi - v) / (yHi - yLo) * (B - T); }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(L, T, R - L, B - T);
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  var y, t, k;
+  for (y = Math.ceil(yLo); y <= yHi; y++){
+    ctx.beginPath(); ctx.moveTo(L, Y(y)); ctx.lineTo(R, Y(y)); ctx.stroke();
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(L, Y(0)); ctx.lineTo(R, Y(0)); ctx.stroke();
+
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (k = 0; k <= 220; k++){
+    t = tHi * k / 220;
+    if (k) ctx.lineTo(X(t), Y(Math.exp(-a * t))); else ctx.moveTo(X(0), Y(1));
+  }
+  ctx.stroke();
+  ctx.strokeStyle = PAL.float; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (k = 0; k <= 220; k++){
+    t = tHi * k / 220;
+    if (k) ctx.lineTo(X(t), Y(-a * Math.exp(-a * t))); else ctx.moveTo(X(0), Y(-a));
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = PAL.text;
+  ctx.beginPath(); ctx.arc(X(tNow), Y(Math.exp(-a * tNow)), 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = PAL.float;
+  ctx.beginPath(); ctx.arc(X(tNow), Y(-a * Math.exp(-a * tNow)), 5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (t = 0; t <= tHi + 1e-9; t += 1) ctx.fillText(t.toFixed(0), X(t), B + 20);
+  ctx.textAlign = 'right';
+  ctx.fillText(yHi.toFixed(1), L - 8, Y(yHi) + 4);
+  ctx.fillText('0', L - 8, Y(0) + 4);
+  ctx.fillText(yLo.toFixed(1), L - 8, Y(yLo) + 4);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('f = e^{−at}   F = 1/(s+a)   f(0) = 1', L, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px ' + MONO; ctx.textAlign = 'right';
+  ctx.fillText('sF − 1 = −a/(s+a) = ' + rhs.toFixed(3), R, 28);
+}
+
+$('a').addEventListener('input', function(){ st.a = parseFloat(this.value); $('av').textContent = st.a.toFixed(1); draw(); });
+$('s').addEventListener('input', function(){ st.s = parseFloat(this.value); $('sv').textContent = st.s.toFixed(1); draw(); });
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.a = 2; st.s = 3; st.t = 0; st.running = true;
+  $('a').value = 2; $('av').textContent = '2.0';
+  $('s').value = 3; $('sv').textContent = '3.0';
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  draw();
+});
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running) st.t += dt;
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

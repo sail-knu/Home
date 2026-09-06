@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L5-D3 · Q가 있으면 K가 안 죽는다</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 5강</p>
+  <h1>Q가 있으면 K가 안 죽는다</h1>
+  <p class="lede">Q=0이면 K가 0으로 가고, <b>Q&gt;0이면 바닥에 멈춥니다</b>.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">과정 잡음 Q <span class="big-val" id="qv">0.0</span></p>
+        <input type="range" id="q" min="0" max="8" step="0.1" value="0">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="440"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--muted)"></i>Q = 0</span>
+      <span><i style="background:var(--accent)"></i>현재 Q</span>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 5강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var P0 = 225, R = 25, N = 10;
+var st = { q: 0 };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','ok','bad','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+function gains(Q){
+  var P = P0, Ks = [], k;
+  for (k = 0; k < N; k++){
+    var Pm = P + Q;
+    var K = Pm / (Pm + R);
+    P = (1 - K) * Pm;
+    Ks.push(K);
+  }
+  return Ks;
+}
+
+var L = 70, Rgt = W - 28, T = 52, B = 392;
+function Xp(k){ return L + (k - 0.6) / 9.8 * (Rgt - L); }
+function Yp(v){ return T + (1.05 - v) / 1.05 * (B - T); }
+
+function draw(){
+  var g0 = gains(0), gq = gains(st.q), i;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(L, T, Rgt - L, B - T);
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  for (i = 0; i <= 4; i++){
+    var gv = i / 4;
+    ctx.beginPath(); ctx.moveTo(L, Yp(gv)); ctx.lineTo(Rgt, Yp(gv)); ctx.stroke();
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(Rgt, B); ctx.stroke();
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('정적 50 m · x₀=60 · P₀=225 · R=25', L, 32);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('K₁₀ = ' + gq[N - 1].toFixed(3), Rgt, 32);
+
+  ctx.strokeStyle = PAL.muted; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath();
+  for (i = 0; i < N; i++){
+    if (i) ctx.lineTo(Xp(i + 1), Yp(g0[i])); else ctx.moveTo(Xp(1), Yp(g0[0]));
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.8; ctx.beginPath();
+  for (i = 0; i < N; i++){
+    if (i) ctx.lineTo(Xp(i + 1), Yp(gq[i])); else ctx.moveTo(Xp(1), Yp(gq[0]));
+  }
+  ctx.stroke();
+  ctx.fillStyle = PAL.accent;
+  for (i = 0; i < N; i++){
+    ctx.beginPath(); ctx.arc(Xp(i + 1), Yp(gq[i]), 4.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.fillStyle = PAL.accent; ctx.font = 'bold 14px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('마지막 K = ' + gq[N - 1].toFixed(3), Xp(N) - 8, Yp(gq[N - 1]) - 14);
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  for (i = 1; i <= N; i++) ctx.fillText(String(i), Xp(i), B + 22);
+  ctx.textAlign = 'right';
+  ctx.fillText('0', L - 8, Yp(0) + 4);
+  ctx.fillText('1', L - 8, Yp(1) + 4);
+}
+
+$('q').addEventListener('input', function(){ st.q = parseFloat(this.value); $('qv').textContent = st.q.toFixed(1); draw(); });
+draw();
+})();
+</script>
+</body>
+</html>

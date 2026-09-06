@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L7-D3 · 극점과 응답</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 7강</p>
+  <h1>극점과 응답</h1>
+  <p class="lede">극이 왼쪽으로 가면 <b>빨리 죽고</b>, jω에 가까우면 오래 흔들립니다.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">감쇠비 ζ <span class="big-val" id="zv">0.60</span></p>
+        <input type="range" id="z" min="0.1" max="1.4" step="0.01" value="0.60">
+      </div>
+      <div>
+        <p class="ctrl-title">고유진동수 ωₙ <span class="big-val" id="wnv">5.0</span></p>
+        <input type="range" id="wn" min="1" max="8" step="0.1" value="5">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="460"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>극점 s</span>
+      <span><i style="background:var(--ok)"></i>단위 계단</span>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 7강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var NS = 360;
+var st = { z: 0.60, wn: 5 };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','float','ok','bad','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+function step2nd(t, z, wn){
+  if (t <= 0) return 0;
+  if (Math.abs(z - 1) < 1e-4) return 1 - (1 + wn * t) * Math.exp(-wn * t);
+  if (z < 1){
+    var wd = wn * Math.sqrt(Math.max(1e-12, 1 - z * z));
+    return 1 - Math.exp(-z * wn * t) * (Math.cos(wd * t) + (z * wn / wd) * Math.sin(wd * t));
+  }
+  var a = z * wn, b = wn * Math.sqrt(z * z - 1);
+  return 1 - Math.exp(-a * t) * (Math.cosh(b * t) + (a / b) * Math.sinh(b * t));
+}
+function poles(z, wn){
+  if (z < 1){
+    var wd = wn * Math.sqrt(1 - z * z);
+    return [[-z * wn, wd], [-z * wn, -wd]];
+  }
+  var q = Math.sqrt(Math.max(0, z * z - 1));
+  return [[wn * (-z + q), 0], [wn * (-z - q), 0]];
+}
+function xMark(x, y, col){
+  ctx.strokeStyle = col; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y - 8); ctx.lineTo(x + 8, y + 8);
+  ctx.moveTo(x + 8, y - 8); ctx.lineTo(x - 8, y + 8);
+  ctx.stroke();
+}
+
+var pL = 28, pR = 430, pT = 46, pB = 430;
+var rL = 458, rR = 878, rT = 46, rB = 430;
+
+function draw(){
+  var z = st.z, wn = st.wn, i;
+  var ps = poles(z, wn);
+  var maxRe = 2, maxIm = 4;
+  for (i = 0; i < ps.length; i++){
+    maxRe = Math.max(maxRe, 2 - ps[i][0]);
+    maxIm = Math.max(maxIm, Math.abs(ps[i][1]) + 1.5);
+  }
+  maxRe = Math.max(maxRe, wn * (z + Math.sqrt(Math.max(0, z * z - 1))) + 2);
+  var ox = pL + (pR - pL) * 0.82;
+  var oy = (pT + pB) / 2;
+  var sc = Math.min((ox - pL - 20) / maxRe, (oy - pT - 16) / maxIm);
+  function sX(re){ return ox + re * sc; }
+  function sY(im){ return oy - im * sc; }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('s-평면', pL, 30);
+  ctx.fillText('계단 응답', rL, 30);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('σ=−ζωₙ=' + (-z * wn).toFixed(2), W - 22, 30);
+
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(pL, pT, pR - pL, pB - pT);
+  ctx.fillRect(rL, rT, rR - rL, rB - rT);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.strokeRect(pL, pT, pR - pL, pB - pT);
+  ctx.strokeRect(rL, rT, rR - rL, rB - rT);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pL, pT, pR - pL, pB - pT); ctx.clip();
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  for (i = -20; i <= 4; i++){
+    ctx.beginPath(); ctx.moveTo(sX(i), pT); ctx.lineTo(sX(i), pB); ctx.stroke();
+  }
+  for (i = -12; i <= 12; i++){
+    ctx.beginPath(); ctx.moveTo(pL, sY(i)); ctx.lineTo(pR, sY(i)); ctx.stroke();
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(pL, oy); ctx.lineTo(pR, oy); ctx.stroke();
+  ctx.strokeStyle = PAL.bad; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(ox, pT); ctx.lineTo(ox, pB); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = PAL.accent; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.arc(ox, oy, wn * sc, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 1;
+  for (i = 0; i < ps.length; i++) xMark(sX(ps[i][0]), sY(ps[i][1]), PAL.accent);
+  ctx.restore();
+
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
+  ctx.fillText('Re', pR - 16, oy - 8);
+  ctx.textAlign = 'left';
+  ctx.fillText('jω', ox + 6, pT + 16);
+  ctx.fillStyle = PAL.accent; ctx.font = '12.5px Consolas, monospace'; ctx.textAlign = 'left';
+  var slab = Math.abs(ps[0][1]) > 1e-6
+    ? 's = ' + ps[0][0].toFixed(2) + ' ± j' + Math.abs(ps[0][1]).toFixed(2)
+    : 's₁=' + ps[0][0].toFixed(2) + '   s₂=' + ps[1][0].toFixed(2);
+  ctx.fillText(slab, pL + 8, pB - 10);
+
+  var Tm = Math.min(10, Math.max(3.5, 8 / Math.max(z * wn, 0.4)));
+  function rX(t){ return rL + 36 + t / Tm * (rR - rL - 48); }
+  function rY(v){ return rT + 16 + (1.45 - v) / 1.55 * (rB - rT - 40); }
+  ctx.strokeStyle = PAL.muted; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(rL + 36, rY(1)); ctx.lineTo(rR - 12, rY(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(rL + 36, rT + 12); ctx.lineTo(rL + 36, rB - 22); ctx.lineTo(rR - 10, rB - 22); ctx.stroke();
+  ctx.strokeStyle = PAL.ok; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (i = 0; i <= NS; i++){
+    var t = i / NS * Tm, y = step2nd(t, z, wn);
+    if (i) ctx.lineTo(rX(t), rY(y)); else ctx.moveTo(rX(0), rY(0));
+  }
+  ctx.stroke();
+  ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
+  for (i = 0; i <= 4; i++) ctx.fillText((i / 4 * Tm).toFixed(1), rX(i / 4 * Tm), rB - 6);
+}
+
+$('z').addEventListener('input', function(){ st.z = parseFloat(this.value); $('zv').textContent = st.z.toFixed(2); draw(); });
+$('wn').addEventListener('input', function(){ st.wn = parseFloat(this.value); $('wnv').textContent = st.wn.toFixed(1); draw(); });
+draw();
+})();
+</script>
+</body>
+</html>

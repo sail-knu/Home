@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L12-D2 · 속도 PID</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 12강</p>
+  <h1>속도 PID</h1>
+  <p class="lede">P로 오차를 줄이고, I로 없애고, D로 <b>출렁임을 죽입니다</b>.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">K<sub>p</sub> <span class="big-val" id="kpv">800</span></p>
+        <input type="range" id="kp" min="200" max="2000" step="10" value="800">
+      </div>
+      <div>
+        <p class="ctrl-title">K<sub>i</sub> <span class="big-val" id="kiv">0</span></p>
+        <input type="range" id="ki" min="0" max="120" step="1" value="0">
+      </div>
+      <div>
+        <p class="ctrl-title">K<sub>d</sub> <span class="big-val" id="kdv">0</span></p>
+        <input type="range" id="kd" min="0" max="80" step="1" value="0">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--high);height:0;border-top:2px dashed var(--high)"></i>v<sub>ref</sub> = 10 m/s</span>
+      <span><i style="background:var(--accent)"></i>v(t)</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
+      <button class="btn" id="preP">P</button>
+      <button class="btn" id="prePI">PI</button>
+      <button class="btn" id="prePID">PID</button>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 12강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var M = 1000, B = 50, VREF = 10, TEND = 12, DT = 0.002;
+var st = { Kp: 800, Ki: 0, Kd: 0, t: 0, running: true };
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','border','border2','text','muted','faint','accent','high','ok','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+
+function simulate(){
+  var v = 0, I = 0, ePrev = VREF, vs = [0];
+  var n = Math.round(TEND / DT), k, every = 8, e, de, u;
+  for (k = 1; k <= n; k++){
+    e = VREF - v;
+    de = (e - ePrev) / DT;
+    ePrev = e;
+    u = st.Kp * e + st.Ki * I + st.Kd * de;
+    v += DT * (u - B * v) / M;
+    I += e * DT;
+    if (k % every === 0) vs.push(v);
+  }
+  return vs;
+}
+
+var L = 58, R = W - 18, T = 48, Btm = 380;
+function draw(){
+  var vs = simulate(), n = vs.length, hi = 14, lo = -0.4, j, vmax = 0;
+  for (j = 0; j < n; j++) if (vs[j] > vmax) vmax = vs[j];
+  hi = Math.max(14, vmax * 1.12);
+  var upto = Math.max(2, Math.min(n, Math.floor(st.t / TEND * (n - 1)) + 1));
+  function X(k){ return L + k / (n - 1) * (R - L); }
+  function Y(v){ return T + (hi - v) / (hi - lo) * (Btm - T); }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.surface2;
+  ctx.fillRect(L, T, R - L, Btm - T);
+  ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
+  var gv;
+  for (gv = 0; gv <= hi; gv += 2){
+    ctx.beginPath(); ctx.moveTo(L, Y(gv)); ctx.lineTo(R, Y(gv)); ctx.stroke();
+  }
+  ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, Btm); ctx.lineTo(R, Btm); ctx.stroke();
+
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 1.7; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(L, Y(VREF)); ctx.lineTo(R, Y(VREF)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
+  for (j = 0; j < upto; j++){
+    if (j) ctx.lineTo(X(j), Y(vs[j]));
+    else ctx.moveTo(X(0), Y(vs[0]));
+  }
+  ctx.stroke();
+  ctx.fillStyle = PAL.accent;
+  ctx.beginPath(); ctx.arc(X(upto - 1), Y(vs[upto - 1]), 4.5, 0, Math.PI * 2); ctx.fill();
+
+  var vnow = vs[upto - 1], ess = VREF - vs[n - 1];
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('v̇ = (u − b v)/m    m=1000, b=50', L, 28);
+  ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('v = ' + vnow.toFixed(2) + '   e_ss ≈ ' + ess.toFixed(3), R, 28);
+  ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  var ts;
+  for (ts = 0; ts <= TEND; ts += 2) ctx.fillText(String(ts), X(ts / TEND * (n - 1)), Btm + 22);
+}
+
+function applyGains(kp, ki, kd){
+  st.Kp = kp; st.Ki = ki; st.Kd = kd; st.t = 0;
+  $('kp').value = kp; $('ki').value = ki; $('kd').value = kd;
+  $('kpv').textContent = String(kp);
+  $('kiv').textContent = String(ki);
+  $('kdv').textContent = String(kd);
+  draw();
+}
+$('kp').addEventListener('input', function(){ st.Kp = parseFloat(this.value); st.t = 0; $('kpv').textContent = String(st.Kp); draw(); });
+$('ki').addEventListener('input', function(){ st.Ki = parseFloat(this.value); st.t = 0; $('kiv').textContent = String(st.Ki); draw(); });
+$('kd').addEventListener('input', function(){ st.Kd = parseFloat(this.value); st.t = 0; $('kdv').textContent = String(st.Kd); draw(); });
+$('preP').addEventListener('click', function(){ applyGains(800, 0, 0); });
+$('prePI').addEventListener('click', function(){ applyGains(800, 40, 0); });
+$('prePID').addEventListener('click', function(){ applyGains(800, 40, 35); });
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.running = true;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  applyGains(800, 0, 0);
+});
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running){
+    st.t += dt * 2.4;
+    if (st.t > TEND) st.t = TEND;
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

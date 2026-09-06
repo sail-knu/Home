@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L9-D1 · 변환쌍 6개</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+  --shadow:0 1px 2px rgba(20,32,48,.05),0 8px 24px -14px rgba(20,32,48,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+    --border:#2a3848; --border2:#3a4d62;
+    --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+    --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+    --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+    --ok:#5cc793; --bad:#f09289;
+    --plot-bg:#0e2429; --grid:#1e3d44;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 26px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1622; --surface:#121a24; --surface2:#182332; --surface3:#1e2c3c;
+  --border:#2a3848; --border2:#3a4d62;
+  --text:#e6edf4; --muted:#9bb0c0; --faint:#7d90a0;
+  --accent:#6ea3d8; --accent-ink:#0d1622; --accent-soft:#1a2d44; --accent-line:#2d4f70;
+  --high:#ff8577; --low:#82b4f0; --float:#b58ae6;
+  --ok:#5cc793; --bad:#f09289;
+  --plot-bg:#0e2429; --grid:#1e3d44;
+}
+:root[data-theme="light"]{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#eef1f6; --surface3:#e6ebf2;
+  --border:#d5dde6; --border2:#b8c4d1;
+  --text:#1a2330; --muted:#5a6776; --faint:#7a8794;
+  --accent:#1d4e89; --accent-ink:#ffffff; --accent-soft:#dce7ef; --accent-line:#8aa8c4;
+  --high:#c8433a; --low:#2f66ad; --float:#8a56c8;
+  --ok:#177a4c; --bad:#bb4038;
+  --plot-bg:#eef4f4; --grid:#cddcdc;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.66;font-size:15.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+.hero{padding-top:26px;padding-bottom:10px}
+.eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:13px}
+.hero h1{margin:0;font-size:clamp(26px,4.2vw,38px);font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:64ch;font-size:16px;margin:14px 0 20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:22px 24px}
+.ctrl-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 0 18px}
+.ctrl-title{font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;margin:0 0 5px}
+.big-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);display:block}
+.btn{appearance:none;border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  padding:8px 16px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+canvas.sim{width:100%;height:auto;display:block;background:var(--plot-bg);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44px}
+</style>
+
+<header class="hero wrap">
+  <p class="eyebrow">메카트로닉스 9강</p>
+  <h1>변환쌍 6개</h1>
+  <p class="lede">자주 쓰는 쌍만 <b>외우면</b> 됩니다.</p>
+</header>
+
+<main class="wrap">
+<section id="sim" style="margin-top:6px">
+  <div class="card">
+    <div class="ctrl-bar">
+      <div>
+        <p class="ctrl-title">강조할 쌍 <span class="big-val" id="pv">1</span></p>
+        <input type="range" id="p" min="1" max="6" step="1" value="1">
+      </div>
+    </div>
+    <canvas id="cv" class="sim" width="900" height="480"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>f(t) → F(s)</span>
+      <span><i style="background:var(--high)"></i>선택한 쌍</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-acc" id="play">⏸ 일시정지</button>
+      <button class="btn" id="reset">↺ 리셋</button>
+    </div>
+  </div>
+</section>
+</main>
+<footer>메카트로닉스 9강</footer>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var cv = $('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var st = { p: 1, running: true, acc: 0 };
+
+var PAIRS = [
+  { ft: '1',           fs: '1/s',           name: '단위계단' },
+  { ft: 'e^{−at}',     fs: '1/(s+a)',       name: '지수감쇠' },
+  { ft: 't',           fs: '1/s²',          name: '램프' },
+  { ft: 'sin ωt',      fs: 'ω/(s²+ω²)',     name: '사인' },
+  { ft: 'cos ωt',      fs: 's/(s²+ω²)',     name: '코사인' },
+  { ft: 'δ(t)',        fs: '1',             name: '임펄스' }
+];
+
+var PAL = {};
+function readPalette(){
+  var cs = getComputedStyle(document.documentElement);
+  ['surface2','surface3','border','border2','text','muted','faint','accent','accent-soft','high','low','float','ok','grid'].forEach(function(k){
+    PAL[k] = cs.getPropertyValue('--' + k).trim() || '#888';
+  });
+}
+readPalette();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ readPalette(); draw(); });
+if (window.MutationObserver){
+  new MutationObserver(function(){ readPalette(); draw(); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+}
+var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+var MONO = 'Consolas, ui-monospace, monospace';
+
+var L = 28, R = W - 28, T = 48, B = 456;
+var N = 6, rowH = (B - T) / N;
+var mid = (L + R) / 2;
+
+function fAt(i, t){
+  if (i === 0) return t >= 0 ? 1 : 0;
+  if (i === 1) return Math.exp(-1.6 * t);
+  if (i === 2) return t;
+  if (i === 3) return Math.sin(2.4 * t);
+  if (i === 4) return Math.cos(2.4 * t);
+  return 0;
+}
+
+function spark(x, y, w, h, idx, on){
+  var tHi = idx === 2 ? 2.2 : 4.0;
+  var yLo = -1.15, yHi = 1.35;
+  if (idx === 2){ yLo = -0.15; yHi = 2.3; }
+  ctx.fillStyle = on ? PAL['accent-soft'] : PAL.surface2;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  var n = 48, k, t, v, px, py;
+  function X(tt){ return x + 4 + tt / tHi * (w - 8); }
+  function Y(vv){ return y + 4 + (yHi - vv) / (yHi - yLo) * (h - 8); }
+  ctx.strokeStyle = on ? PAL.high : PAL.low; ctx.lineWidth = 1.8; ctx.beginPath();
+  for (k = 0; k <= n; k++){
+    t = tHi * k / n; v = fAt(idx, t);
+    px = X(t); py = Y(v);
+    if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  if (idx === 5){
+    ctx.strokeStyle = on ? PAL.high : PAL.low; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), Y(1.2)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(0) - 4, Y(1.05)); ctx.lineTo(X(0), Y(1.25)); ctx.lineTo(X(0) + 4, Y(1.05)); ctx.stroke();
+  }
+}
+
+function draw(){
+  var sel = st.p - 1, i, y0, on;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('시간  f(t)', L + 78, 30);
+  ctx.textAlign = 'right';
+  ctx.fillText('라플라스  F(s)', R, 30);
+
+  for (i = 0; i < N; i++){
+    y0 = T + i * rowH;
+    on = i === sel;
+    if (on){
+      ctx.fillStyle = PAL['accent-soft'];
+      ctx.fillRect(L, y0 + 3, R - L, rowH - 6);
+      ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.2;
+      ctx.strokeRect(L + 1, y0 + 4, R - L - 2, rowH - 8);
+    } else {
+      ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
+      ctx.strokeRect(L + 0.5, y0 + 6.5, R - L - 1, rowH - 13);
+    }
+    spark(L + 10, y0 + 10, 86, rowH - 20, i, on);
+
+    ctx.fillStyle = on ? PAL.high : PAL.faint;
+    ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText(String(i + 1) + '  ' + PAIRS[i].name, L + 108, y0 + 22);
+
+    ctx.fillStyle = on ? PAL.text : PAL.muted;
+    ctx.font = 'bold 20px ' + MONO; ctx.textAlign = 'left';
+    ctx.fillText(PAIRS[i].ft, L + 108, y0 + rowH - 16);
+
+    ctx.fillStyle = on ? PAL.accent : PAL.faint;
+    ctx.font = 'bold 22px ' + FONT; ctx.textAlign = 'center';
+    ctx.fillText('↔', mid + 20, y0 + rowH / 2 + 7);
+
+    ctx.fillStyle = on ? PAL.text : PAL.muted;
+    ctx.font = 'bold 20px ' + MONO; ctx.textAlign = 'right';
+    ctx.fillText(PAIRS[i].fs, R - 16, y0 + rowH / 2 + 7);
+  }
+}
+
+function setPair(n){
+  st.p = n;
+  $('p').value = String(n);
+  $('pv').textContent = String(n);
+  draw();
+}
+$('p').addEventListener('input', function(){ setPair(parseInt(this.value, 10)); });
+$('play').addEventListener('click', function(){
+  st.running = !st.running;
+  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  this.classList.toggle('btn-acc', st.running);
+});
+$('reset').addEventListener('click', function(){
+  st.running = true; st.acc = 0;
+  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  setPair(1);
+});
+cv.addEventListener('click', function(e){
+  var rect = cv.getBoundingClientRect();
+  var y = (e.clientY - rect.top) * cv.height / rect.height;
+  var i = Math.floor((y - T) / rowH);
+  if (i >= 0 && i < N) setPair(i + 1);
+});
+
+var last = 0;
+function loop(now){
+  var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+  last = now;
+  if (st.running){
+    st.acc += dt;
+    if (st.acc >= 1.4){
+      st.acc = 0;
+      setPair(st.p === 6 ? 1 : st.p + 1);
+    }
+  }
+  requestAnimationFrame(loop);
+}
+draw();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
