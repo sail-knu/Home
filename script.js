@@ -22,12 +22,30 @@
     "#lecture-av": "av"
   };
 
-  function syncCourseDemos(targetId) {
+  function parseCourseHash(hash) {
+    const raw = String(hash || "").split("?")[0];
+    if (!raw || raw === "#") return { page: "#home", lec: null };
+    const pages = Object.keys(coursePageKeys).sort((a, b) => b.length - a.length);
+    for (const page of pages) {
+      if (raw === page) return { page, lec: null };
+      if (raw.startsWith(page + "-")) {
+        const lec = decodeURIComponent(raw.slice(page.length + 1));
+        if (lec) return { page, lec };
+      }
+    }
+    return { page: raw, lec: null };
+  }
+
+  function syncCourseDemos(pageHash, lecId) {
     Object.entries(coursePageKeys).forEach(([hash, key]) => {
       const ctl = courseControllers[key];
       if (!ctl) return;
-      if (targetId === hash) ctl.openFirst();
-      else ctl.unload();
+      if (pageHash === hash) {
+        if (typeof ctl.openLecture === "function") ctl.openLecture(lecId);
+        else ctl.openFirst();
+      } else {
+        ctl.unload();
+      }
     });
   }
 
@@ -56,7 +74,8 @@
   }
 
   function navigateToSection(targetId, fromHistory) {
-    const targetSection = document.querySelector(targetId);
+    const parsed = parseCourseHash(targetId);
+    const targetSection = document.querySelector(parsed.page);
     if (!targetSection || !targetSection.classList.contains("page-section")) return;
 
     const navAlias = {
@@ -72,21 +91,24 @@
     };
     navItems.forEach((nav) => {
       const href = nav.getAttribute("href");
-      nav.classList.toggle("active", href === targetId || href === navAlias[targetId]);
+      nav.classList.toggle("active", href === parsed.page || href === navAlias[parsed.page]);
     });
 
+    const wasHidden = targetSection.classList.contains("hidden-page");
     pageSections.forEach((section) => section.classList.add("hidden-page"));
     targetSection.classList.remove("hidden-page");
 
-    if (targetId === "#home") {
-      window.scrollTo({ top: 0, behavior: "instant" });
-    } else {
-      const container = targetSection.querySelector(".section-container");
-      if (container) {
-        const y = container.getBoundingClientRect().top + window.scrollY - 100;
-        window.scrollTo({ top: y, behavior: "instant" });
-      } else {
+    if (wasHidden || parsed.page === "#home") {
+      if (parsed.page === "#home") {
         window.scrollTo({ top: 0, behavior: "instant" });
+      } else {
+        const container = targetSection.querySelector(".section-container");
+        if (container) {
+          const y = container.getBoundingClientRect().top + window.scrollY - 100;
+          window.scrollTo({ top: y, behavior: "instant" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }
       }
     }
 
@@ -95,26 +117,34 @@
     if (!fromHistory && window.location.hash !== targetId) {
       window.history.pushState(null, "", targetId);
     }
-    syncCourseDemos(targetId);
-    if (targetId === "#lecture-future") {
+    syncCourseDemos(parsed.page, parsed.lec);
+    if (parsed.page === "#lecture-future") {
       const active = document.querySelector("#lecture-future .sim-nav-btn.active");
       if (active) showSim(active.getAttribute("data-sim"));
     }
-    if (typeof window.setSailVehiclePage === "function") window.setSailVehiclePage(targetId);
+    if (typeof window.setSailVehiclePage === "function") window.setSailVehiclePage(parsed.page);
   }
 
-  window.addEventListener("popstate", () => {
+  function syncHashRoute() {
     navigateToSection(window.location.hash || "#home", true);
-  });
+  }
+  window.addEventListener("popstate", syncHashRoute);
+  window.addEventListener("hashchange", syncHashRoute);
 
-  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener("click", function (e) {
-      const targetId = this.getAttribute("href");
-      if (document.querySelector(targetId)?.classList.contains("page-section")) {
-        e.preventDefault();
-        navigateToSection(targetId);
-      }
-    });
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const anchor = e.target.closest('a[href^="#"]');
+    if (!anchor || !document.contains(anchor)) return;
+    if (anchor.hasAttribute("download")) return;
+    const targetAttr = anchor.getAttribute("target");
+    if (targetAttr && targetAttr !== "_self") return;
+    const targetId = anchor.getAttribute("href");
+    if (!targetId || targetId === "#") return;
+    const parsed = parseCourseHash(targetId);
+    if (document.querySelector(parsed.page)?.classList.contains("page-section")) {
+      e.preventDefault();
+      navigateToSection(targetId);
+    }
   });
 
   function setResearchCardOpen(wrapper, open) {
@@ -692,6 +722,7 @@
     if (!lecNav || !simNav || !titleEl || !descEl || !host) return;
 
     const state = { lec: data.lectures[0].id, src: "" };
+    const pageHash = Object.keys(coursePageKeys).find((hash) => coursePageKeys[hash] === key);
 
     function lectureName(id) {
       return data.lectures.find((lec) => lec.id === id)?.name || id + "강";
@@ -704,16 +735,11 @@
     function renderLectures() {
       lecNav.innerHTML = "";
       data.lectures.forEach((lec) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
+        const btn = document.createElement("a");
+        btn.href = pageHash + "-" + lec.id;
         btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
         btn.textContent = lec.name;
-        btn.addEventListener("click", () => {
-          state.lec = lec.id;
-          renderLectures();
-          renderDemos();
-          showDemo(demosFor(lec.id)[0]);
-        });
+        if (lec.id === state.lec) btn.setAttribute("aria-current", "page");
         lecNav.appendChild(btn);
       });
     }
@@ -741,8 +767,16 @@
       renderDemos();
     }
 
+    function openLecture(lecId) {
+      const lec = data.lectures.some((item) => item.id === lecId) ? lecId : data.lectures[0].id;
+      const first = demosFor(lec)[0];
+      if (!first) return;
+      if (state.lec === lec && state.src) return;
+      showDemo(first);
+    }
+
     function openFirst() {
-      if (!state.src) showDemo(demosFor(state.lec)[0]);
+      openLecture(data.lectures[0].id);
     }
 
     function unload() {
@@ -753,7 +787,7 @@
 
     renderLectures();
     renderDemos();
-    courseControllers[key] = { openFirst, unload };
+    courseControllers[key] = { openFirst, openLecture, unload };
   }
 
   Object.entries(COURSE_DEMOS).forEach(([key, data]) => initCourseDemos(key, data));
@@ -842,16 +876,11 @@
     function renderLectures() {
       lecNav.replaceChildren();
       lectures.forEach((lec) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
+        const btn = document.createElement("a");
+        btn.href = "#lecture-mpc-" + lec.id;
         btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
         btn.textContent = lec.name;
-        btn.addEventListener("click", () => {
-          state.lec = lec.id;
-          renderLectures();
-          renderNotes();
-          showNote(notesFor(lec.id)[0]);
-        });
+        if (lec.id === state.lec) btn.setAttribute("aria-current", "page");
         lecNav.appendChild(btn);
       });
     }
@@ -943,8 +972,14 @@
       });
     }
 
+    function openLecture(lecId) {
+      const lec = lectures.some((item) => item.id === lecId) ? lecId : lectures[0].id;
+      if (state.lec === lec && state.src) return;
+      showNote(notesFor(lec)[0]);
+    }
+
     function openFirst() {
-      if (!state.src) showNote(notesFor(state.lec)[0]);
+      openLecture(lectures[0].id);
     }
 
     function unload() {
@@ -956,7 +991,7 @@
 
     renderLectures();
     renderNotes();
-    courseControllers.mpc = { openFirst, unload };
+    courseControllers.mpc = { openFirst, openLecture, unload };
   })();
 
   (function initAvNotes() {
@@ -1002,14 +1037,11 @@
     function renderLectures() {
       lecNav.replaceChildren();
       lectures.forEach((lec) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
+        const btn = document.createElement("a");
+        btn.href = "#lecture-av-" + lec.id;
         btn.className = "sim-lec-btn" + (lec.id === state.lec ? " active" : "");
         btn.textContent = lec.name;
-        btn.addEventListener("click", () => {
-          state.lec = lec.id;
-          showNote(notesFor(lec.id)[0]);
-        });
+        if (lec.id === state.lec) btn.setAttribute("aria-current", "page");
         lecNav.appendChild(btn);
       });
     }
@@ -1054,8 +1086,14 @@
       });
     }
 
+    function openLecture(lecId) {
+      const lec = lectures.some((item) => item.id === lecId) ? lecId : lectures[0].id;
+      if (state.lec === lec && state.src) return;
+      showNote(notesFor(lec)[0]);
+    }
+
     function openFirst() {
-      if (!state.src) showNote(notesFor(state.lec)[0]);
+      openLecture(lectures[0].id);
     }
 
     function unload() {
@@ -1066,7 +1104,7 @@
 
     renderLectures();
     renderNotes();
-    courseControllers.av = { openFirst, unload };
+    courseControllers.av = { openFirst, openLecture, unload };
   })();
 
   function youtubeIdFromSrc(src) {
