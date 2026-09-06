@@ -145,13 +145,17 @@ function drawSpringV(cx, y0, y1){
 var smL = 14, smR = 206, smCx = (smL + smR) / 2;
 var plotL = 250, plotR = 884, plotW = plotR - plotL;
 var rows = [
-  { lab: 40, y0: 52, y1: 188, name: 'x(t) = A sin(ωₙt)', col: 'accent', f: Math.sin },
-  { lab: 214, y0: 226, y1: 362, name: 'ẋ(t) = Aωₙ cos(ωₙt)   90° 선행', col: 'low', f: Math.cos },
-  { lab: 388, y0: 400, y1: 536, name: 'ẍ(t) = −Aωₙ² sin(ωₙt)   180° 선행', col: 'high', f: function(u){ return -Math.sin(u); } }
+  { lab: 40, y0: 52, y1: 188, name: 'x(t) = A sin(ωₙt)', col: 'accent', f: Math.sin,
+    peak: function(A){ return '±' + A.toFixed(1) + ' mm'; } },
+  { lab: 214, y0: 226, y1: 362, name: 'ẋ(t) = Aωₙ cos(ωₙt)   90° 선행', col: 'low', f: Math.cos,
+    peak: function(A){ return '±' + (A * WN).toFixed(1) + ' mm/s'; } },
+  { lab: 388, y0: 400, y1: 536, name: 'ẍ(t) = −Aωₙ² sin(ωₙt)   180° 선행', col: 'high', f: function(u){ return -Math.sin(u); },
+    peak: function(A){ return '±' + (A * WN * WN).toFixed(0) + ' mm/s²'; } }
 ];
 
 function draw(){
   var A = st.A, th = st.th, s = Math.sin(th);
+  var ampScale = A / 20;
   ctx.clearRect(0, 0, W, H);
 
   ctx.fillStyle = PAL.surface2;
@@ -176,6 +180,8 @@ function draw(){
     var ym = (r.y0 + r.y1) / 2, halfH = (r.y1 - r.y0) / 2 - 12;
     ctx.fillStyle = PAL[r.col]; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
     ctx.fillText(r.name, plotL, r.lab);
+    ctx.fillStyle = PAL.muted; ctx.font = '12px ' + FONT; ctx.textAlign = 'right';
+    ctx.fillText(r.peak(A), plotR, r.lab);
     ctx.fillStyle = PAL.surface2;
     ctx.fillRect(plotL, r.y0, plotW, r.y1 - r.y0);
     ctx.strokeStyle = PAL.border; ctx.lineWidth = 1;
@@ -184,14 +190,14 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(plotL, ym); ctx.lineTo(plotR, ym); ctx.stroke();
     ctx.strokeStyle = PAL[r.col]; ctx.lineWidth = 2.5; ctx.beginPath();
     for (var i = 0; i <= 240; i++){
-      var u = i / 240 * WIN, X = plotL + i / 240 * plotW, Y = ym - r.f(u) * halfH;
+      var u = i / 240 * WIN, X = plotL + i / 240 * plotW, Y = ym - r.f(u) * halfH * ampScale;
       if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
     }
     ctx.stroke();
     ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
     ctx.beginPath(); ctx.moveTo(cx, r.y0 + 2); ctx.lineTo(cx, r.y1 - 2); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = PAL.float;
-    ctx.beginPath(); ctx.arc(cx, ym - r.f(cur) * halfH, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, ym - r.f(cur) * halfH * ampScale, 5, 0, Math.PI * 2); ctx.fill();
   });
   ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
   ['0', 'T/2', 'T', '3T/2', '2T'].forEach(function(lab, k){
