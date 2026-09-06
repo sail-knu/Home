@@ -1637,11 +1637,6 @@ a.member-card {
   white-space: nowrap;
 }
 
-.year-heading {
-  margin: 22px 0 8px;
-  color: var(--primary-color);
-}
-
 .lecture-grid {
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
 }
