@@ -100,6 +100,7 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
     <canvas id="cv" class="sim" width="900" height="500"></canvas>
     <div class="legend">
       <span><i style="background:var(--accent)"></i>x(t) = A sin(ωₙt + φ)</span>
+      <span><i style="background:var(--high);height:0;border-top:2px dashed var(--high);width:16px"></i>±A</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -117,6 +118,9 @@ var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var WN = 10;
+var X0MAX = 3, V0MAX = 30;
+var AMAX = Math.hypot(WN * X0MAX, V0MAX) / WN;
+var TIME_SCALE = 0.5;
 var st = { x0: 2, v0: 1, t: 0, running: true };
 var Twin = 2;
 
@@ -151,9 +155,11 @@ function drawSpringV(cx, y0, y1){
 }
 
 var PNL_X = 18, PNL_Y = 18, PNL_W = 200, PNL_H = 464;
-var CEIL_Y = 48, CX = 118, EQY = 230, AMP = 48, MS = 44;
-var plotL = 250, plotR = 876, plotTop = 70, plotBot = 452;
+var CEIL_Y = 48, CX = 118, EQY = 230, MS = 44;
+var AMP = 34;
+var plotL = 268, plotR = 876, plotTop = 70, plotBot = 452;
 var plotW = plotR - plotL, midY = (plotTop + plotBot) / 2, half = 135;
+var YS = half * 0.88 / AMAX;
 
 function draw(){
   var c = calc(), xNow = c.A * Math.sin(WN * st.t + c.phi);
@@ -188,8 +194,18 @@ function draw(){
   ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
 
-  var ys = half * 0.85 / Math.max(c.A, 1.2);
-  ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
+  ctx.font = '12px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  var ticks = [4, 2, 0, -2, -4], ti;
+  for (ti = 0; ti < ticks.length; ti++){
+    var yk = midY - ticks[ti] * YS;
+    ctx.strokeStyle = PAL.grid; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, yk); ctx.lineTo(plotR, yk); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = PAL.faint;
+    ctx.fillText(ticks[ti].toFixed(0), plotL - 8, yk);
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = PAL.faint; ctx.font = '11.5px ' + FONT;
+  ctx.fillText('mm', plotL - 28, plotTop + 8);
   for (var s = 0; s <= Twin; s++){
     var px = plotL + (s / Twin) * plotW;
     ctx.strokeStyle = PAL.grid; ctx.setLineDash([3, 4]);
@@ -197,9 +213,18 @@ function draw(){
     ctx.fillStyle = PAL.faint; ctx.fillText(s + ' s', px, plotBot + 20);
   }
 
+  ctx.strokeStyle = PAL.high; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+  var yA = midY - c.A * YS, yAm = midY + c.A * YS;
+  ctx.beginPath(); ctx.moveTo(plotL, yA); ctx.lineTo(plotR, yA); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(plotL, yAm); ctx.lineTo(plotR, yAm); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = PAL.high; ctx.font = '12px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('+A', plotR - 28, yA - 6);
+  ctx.fillText('−A', plotR - 28, yAm + 14);
+
   ctx.strokeStyle = PAL.accent; ctx.lineWidth = 2.6; ctx.beginPath();
   for (var pc = 0; pc <= plotW; pc++){
-    var tt = (pc / plotW) * Twin, yc = midY - c.A * Math.sin(WN * tt + c.phi) * ys;
+    var tt = (pc / plotW) * Twin, yc = midY - c.A * Math.sin(WN * tt + c.phi) * YS;
     if (pc) ctx.lineTo(plotL + pc, yc); else ctx.moveTo(plotL + pc, yc);
   }
   ctx.stroke();
@@ -208,7 +233,7 @@ function draw(){
   var cx = plotL + (tc / Twin) * plotW;
   ctx.beginPath(); ctx.moveTo(cx, plotTop); ctx.lineTo(cx, plotBot); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = PAL.float;
-  ctx.beginPath(); ctx.arc(cx, midY - xNow * ys, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, midY - xNow * YS, 6, 0, Math.PI * 2); ctx.fill();
 }
 
 function syncSpans(){
@@ -232,7 +257,7 @@ var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (st.running) st.t += dt;
+  if (st.running) st.t += dt * TIME_SCALE;
   draw();
   requestAnimationFrame(loop);
 }

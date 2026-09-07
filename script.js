@@ -493,7 +493,7 @@
 
   function courseDemoUrl(src) {
     const url = new URL(encodeURI(src), document.baseURI);
-    url.searchParams.set("v", "20260907c");
+    url.searchParams.set("v", "20260907d");
     return url.href;
   }
 
