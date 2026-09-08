@@ -356,7 +356,6 @@
         { lec: "1", title: "계측·모델링·제어 파이프라인", src: "lecture/mechatronics/demo/01강_큰그림파이프라인_demo.html" },
         { lec: "1", title: "개루프 vs 폐루프", src: "lecture/mechatronics/demo/01강_피드백제어개념_demo.html" },
         { lec: "2", title: "정확도 vs 정밀도", src: "lecture/mechatronics/demos/lec02/lec02_d4_target.html" },
-        { lec: "2", title: "샘플링 — 점만 남긴다", src: "lecture/mechatronics/demos/lec02/lec02_d1_sampling.html" },
         { lec: "2", title: "나이키스트 fₛ ≥ 2f", src: "lecture/mechatronics/demos/lec02/lec02_d2_nyquist.html" },
         { lec: "2", title: "잔여 노이즈 σ/√N", src: "lecture/mechatronics/demos/lec02/lec02_d5_avgn.html" },
         { lec: "3", title: "누적 평균은 과거를 못 잊음", src: "lecture/mechatronics/demos/lec03/lec03_d1_cum.html" },
