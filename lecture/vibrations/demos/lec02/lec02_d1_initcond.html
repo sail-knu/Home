@@ -146,6 +146,22 @@ function calc(){
   return { A: A, phi: phi };
 }
 function sgn(v){ return Math.abs(v) < 1e-9 ? '0' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1); }
+function setPlayBtn(){
+  $('play').textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
+  $('play').classList.toggle('btn-acc', st.running);
+}
+function arrow(x1, y1, x2, y2, color, lw){
+  var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  if (L < 6) return;
+  var ux = dx / L, uy = dy / L, hs = Math.min(9, L * 0.5);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hs * ux - hs * 0.45 * uy, y2 - hs * uy + hs * 0.45 * ux);
+  ctx.lineTo(x2 - hs * ux + hs * 0.45 * uy, y2 - hs * uy - hs * 0.45 * ux);
+  ctx.closePath(); ctx.fill();
+}
 function drawSpringV(cx, y0, y1){
   ctx.strokeStyle = PAL.spring; ctx.lineWidth = 2.2;
   ctx.beginPath(); ctx.moveTo(cx, y0);
@@ -163,7 +179,8 @@ var YS = half * 0.88 / AMAX;
 
 function draw(){
   var c = calc(), xNow = c.A * Math.sin(WN * st.t + c.phi);
-  var tc = ((st.t % Twin) + Twin) % Twin;
+  var vNow = c.A * WN * Math.cos(WN * st.t + c.phi);
+  var tc = Math.min(st.t, Twin);
   ctx.clearRect(0, 0, W, H);
 
   ctx.fillStyle = PAL.surface2;
@@ -183,6 +200,10 @@ function draw(){
   ctx.fillStyle = PAL['mass-ink']; ctx.font = 'bold 16px ' + FONT;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('m', CX, my); ctx.textBaseline = 'alphabetic';
+  var ax = CX + 16;
+  var vLen = (vNow / (AMAX * WN)) * 36;
+  if (Math.abs(vLen) < 5) vLen = vLen < 0 ? -5 : 5;
+  arrow(ax, my, ax, my - vLen, PAL.high, 2.4);
 
   ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
   ctx.fillText('x(t) = A sin(ωₙt + φ)', plotL, 28);
@@ -244,20 +265,27 @@ function syncSpans(){
 $('x0').addEventListener('input', function(){ st.x0 = parseFloat(this.value); st.t = 0; syncSpans(); draw(); });
 $('v0').addEventListener('input', function(){ st.v0 = parseFloat(this.value); st.t = 0; syncSpans(); draw(); });
 $('play').addEventListener('click', function(){
+  if (!st.running && st.t >= Twin - 1e-6) st.t = 0;
   st.running = !st.running;
-  this.textContent = st.running ? '⏸ 일시정지' : '▶ 재생';
-  this.classList.toggle('btn-acc', st.running);
+  setPlayBtn();
 });
 $('reset').addEventListener('click', function(){
   st.x0 = 2; st.v0 = 1; st.t = 0; st.running = true;
-  $('play').textContent = '⏸ 일시정지'; $('play').classList.add('btn-acc');
+  setPlayBtn();
   syncSpans(); draw();
 });
 var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (st.running) st.t += dt * TIME_SCALE;
+  if (st.running){
+    st.t += dt * TIME_SCALE;
+    if (st.t >= Twin){
+      st.t = Twin;
+      st.running = false;
+      setPlayBtn();
+    }
+  }
   draw();
   requestAnimationFrame(loop);
 }
