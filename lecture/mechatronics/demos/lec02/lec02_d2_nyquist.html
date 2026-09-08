@@ -77,7 +77,7 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 <header class="hero wrap">
   <p class="eyebrow">메카트로닉스 2강</p>
   <h1>나이키스트 fₛ ≥ 2f</h1>
-  <p class="lede">한 주기 동안 점 2개는 이론 하한입니다. <b>fₛ ≥ 2f</b>.</p>
+  <p class="lede">한 주기 동안 점 2개는 이론 하한입니다. <b>fₛ ≥ 2f</b>. 등호에서는 점을 마루·골에 찍어야 복원됩니다.</p>
 </header>
 
 <main class="wrap">
@@ -136,8 +136,11 @@ function aliasSigned(f, fs){ return f - fs * Math.round(f / fs); }
 function draw(){
   var fs = st.fs, tc = ((st.t % TW) + TW) % TW, i, k;
   var atNyq = Math.abs(fs - 2 * F) < 0.05;
-  var r = atNyq ? 0 : aliasSigned(F, fs);
-  var ok = fs > 2 * F + 1e-9;
+  var nFold = Math.round(F / fs);
+  var r = aliasSigned(F, fs);
+  var phi = Math.PI * nFold;
+  var t0 = 0.5 / fs;
+  var ok = fs >= 2 * F - 1e-9;
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = PAL.surface2;
   ctx.fillRect(L, T, R - L, B - T);
@@ -151,13 +154,13 @@ function draw(){
 
   ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
   ctx.fillText('fₛ ≥ 2f', L, 28);
-  ctx.fillStyle = ok ? PAL.ok : (atNyq ? PAL.high : PAL.bad);
+  ctx.fillStyle = ok ? PAL.ok : PAL.bad;
   ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
   var label = ok
-    ? 'fₛ = ' + fs.toFixed(1) + '  >  2f = 10.0   ·  복원 가능'
-    : (atNyq
-      ? 'fₛ = 2f = 10.0   ·  샘플이 0에 찍힘'
-      : 'fₛ = ' + fs.toFixed(1) + '  <  2f = 10.0   ·  복원 실패');
+    ? (atNyq
+      ? 'fₛ = 2f = 10.0   ·  복원 가능 (한 주기 점 2개)'
+      : 'fₛ = ' + fs.toFixed(1) + '  >  2f = 10.0   ·  복원 가능')
+    : 'fₛ = ' + fs.toFixed(1) + '  <  2f = 10.0   ·  복원 실패';
   ctx.fillText(label, R, 28);
 
   ctx.strokeStyle = PAL.muted; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.7; ctx.beginPath();
@@ -169,7 +172,7 @@ function draw(){
 
   ctx.strokeStyle = PAL.float; ctx.lineWidth = 2.5; ctx.setLineDash([7, 4]); ctx.beginPath();
   for (i = 0; i <= 500; i++){
-    var t2 = TW * i / 500, Y2 = yPix(Math.sin(2 * Math.PI * r * t2));
+    var t2 = TW * i / 500, Y2 = yPix(Math.sin(2 * Math.PI * r * t2 + phi));
     if (i) ctx.lineTo(xPix(t2), Y2); else ctx.moveTo(xPix(t2), Y2);
   }
   ctx.stroke(); ctx.setLineDash([]);
@@ -178,7 +181,9 @@ function draw(){
   ctx.fillStyle = PAL.accent;
   var rad = nSmp > 40 ? 3 : 4.2;
   for (k = 0; k <= nSmp; k++){
-    var ts = k / fs, ys = Math.sin(2 * Math.PI * F * ts);
+    var ts = t0 + k / fs;
+    if (ts > TW + 1e-9) break;
+    var ys = Math.sin(2 * Math.PI * F * ts);
     ctx.beginPath(); ctx.arc(xPix(ts), yPix(ys), rad, 0, Math.PI * 2); ctx.fill();
   }
 

@@ -89,10 +89,10 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
         <input type="range" id="fs" min="4" max="50" step="0.5" value="25">
       </div>
     </div>
-    <canvas id="cv" class="sim" width="900" height="420"></canvas>
+    <canvas id="cv" class="sim" width="900" height="640"></canvas>
     <div class="legend">
-      <span><i style="background:var(--muted)"></i>연속 신호 x(t) = sin(2π·5·t)</span>
-      <span><i style="background:var(--accent);height:8px;width:8px;border-radius:50%;vertical-align:1px"></i>샘플 z<sub>k</sub> = x(k / f<sub>s</sub>)</span>
+      <span><i style="background:var(--muted)"></i>위 · 연속 신호 x(t) = sin(2π·5·t)</span>
+      <span><i style="background:var(--accent);height:8px;width:8px;border-radius:50%;vertical-align:1px"></i>아래 · 점만 z<sub>k</sub> = x(k / f<sub>s</sub>)</span>
     </div>
     <div class="btn-row">
       <button class="btn btn-acc" id="play">⏸ 일시정지</button>
@@ -127,56 +127,83 @@ if (window.MutationObserver){
 }
 var FONT = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif';
 
-var L = 64, R = W - 22, T = 56, B = 372;
+var L = 64, R = W - 22;
+var P1 = { T: 48, B: 286, amp: 92 };
+var P2 = { T: 360, B: 598, amp: 92 };
 function xPix(t){ return L + t / TW * (R - L); }
-function yPix(y){ return (T + B) / 2 - y * 140; }
+function yPix(y, p){ return (p.T + p.B) / 2 - y * p.amp; }
 
-function draw(){
-  var fs = st.fs, tc = ((st.t % TW) + TW) % TW, i, k;
-  ctx.clearRect(0, 0, W, H);
+function frame(p){
+  var i;
   ctx.fillStyle = PAL.surface2;
-  ctx.fillRect(L, T, R - L, B - T);
+  ctx.fillRect(L, p.T, R - L, p.B - p.T);
   ctx.strokeStyle = PAL.grid; ctx.lineWidth = 1;
   for (i = 0; i <= TW; i++){
-    ctx.beginPath(); ctx.moveTo(xPix(i), T); ctx.lineTo(xPix(i), B); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xPix(i), p.T); ctx.lineTo(xPix(i), p.B); ctx.stroke();
   }
   ctx.strokeStyle = PAL.border2; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(L, (T + B) / 2); ctx.lineTo(R, (T + B) / 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(L, p.T); ctx.lineTo(L, p.B); ctx.lineTo(R, p.B); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(L, (p.T + p.B) / 2); ctx.lineTo(R, (p.T + p.B) / 2); ctx.stroke();
+}
 
-  ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
-  ctx.fillText('zₖ = x(k / fₛ)', L, 28);
+function samples(fs){
+  var n = Math.floor(TW * fs), a = [], k;
+  for (k = 0; k <= n; k++){
+    var ts = k / fs;
+    a.push({ t: ts, y: Math.sin(2 * Math.PI * F * ts) });
+  }
+  return a;
+}
+
+function draw(){
+  var fs = st.fs, tc = ((st.t % TW) + TW) % TW, i, k, smp = samples(fs), rad;
+  ctx.clearRect(0, 0, W, H);
+  frame(P1);
+  frame(P2);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('연속 신호 + 샘플', L, 28);
   ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText('f = 5 Hz,   N = ' + Math.floor(TW * fs) + '점 / 2 s', R, 28);
+  ctx.fillText('f = 5 Hz,   N = ' + (smp.length) + '점 / 2 s', R, 28);
+
+  ctx.fillStyle = PAL.text; ctx.font = 'bold 15px ' + FONT; ctx.textAlign = 'left';
+  ctx.fillText('점만 남긴다  ·  zₖ = x(k / fₛ)', L, 340);
 
   ctx.strokeStyle = PAL.muted; ctx.lineWidth = 2.4; ctx.globalAlpha = 0.75; ctx.beginPath();
   for (i = 0; i <= 500; i++){
-    var t = TW * i / 500, X = xPix(t), Y = yPix(Math.sin(2 * Math.PI * F * t));
+    var t = TW * i / 500, X = xPix(t), Y = yPix(Math.sin(2 * Math.PI * F * t), P1);
     if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
   }
   ctx.stroke(); ctx.globalAlpha = 1;
 
-  var nSmp = Math.floor(TW * fs);
   ctx.strokeStyle = PAL.accent; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.3;
-  for (k = 0; k <= nSmp; k++){
-    var ts = k / fs, ys = Math.sin(2 * Math.PI * F * ts);
-    ctx.beginPath(); ctx.moveTo(xPix(ts), yPix(0)); ctx.lineTo(xPix(ts), yPix(ys)); ctx.stroke();
+  for (k = 0; k < smp.length; k++){
+    ctx.beginPath();
+    ctx.moveTo(xPix(smp[k].t), yPix(0, P1));
+    ctx.lineTo(xPix(smp[k].t), yPix(smp[k].y, P1));
+    ctx.stroke();
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = PAL.accent;
-  var rad = nSmp > 50 ? 3 : 4.2;
-  for (k = 0; k <= nSmp; k++){
-    var ts2 = k / fs, ys2 = Math.sin(2 * Math.PI * F * ts2);
-    ctx.beginPath(); ctx.arc(xPix(ts2), yPix(ys2), rad, 0, Math.PI * 2); ctx.fill();
+  rad = smp.length > 50 ? 3 : 4.2;
+  for (k = 0; k < smp.length; k++){
+    ctx.beginPath(); ctx.arc(xPix(smp[k].t), yPix(smp[k].y, P1), rad, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.fillStyle = PAL.accent;
+  for (k = 0; k < smp.length; k++){
+    ctx.beginPath(); ctx.arc(xPix(smp[k].t), yPix(smp[k].y, P2), rad, 0, Math.PI * 2); ctx.fill();
   }
 
   ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(xPix(tc), T); ctx.lineTo(xPix(tc), B); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(xPix(tc), P1.T); ctx.lineTo(xPix(tc), P1.B); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xPix(tc), P2.T); ctx.lineTo(xPix(tc), P2.B); ctx.stroke();
+  ctx.setLineDash([]);
   ctx.fillStyle = PAL.float;
-  ctx.beginPath(); ctx.arc(xPix(tc), yPix(Math.sin(2 * Math.PI * F * tc)), 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(xPix(tc), yPix(Math.sin(2 * Math.PI * F * tc), P1), 6, 0, Math.PI * 2); ctx.fill();
 
   ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
-  for (i = 0; i <= TW; i++) ctx.fillText(i + ' s', xPix(i), B + 22);
+  for (i = 0; i <= TW; i++) ctx.fillText(i + ' s', xPix(i), P2.B + 22);
 }
 
 $('fs').addEventListener('input', function(){
