@@ -358,6 +358,7 @@
         { lec: "2", title: "정확도 vs 정밀도", src: "lecture/mechatronics/demos/lec02/lec02_d4_target.html" },
         { lec: "2", title: "나이키스트 fₛ ≥ 2f", src: "lecture/mechatronics/demos/lec02/lec02_d2_nyquist.html" },
         { lec: "2", title: "잔여 노이즈 σ/√N", src: "lecture/mechatronics/demos/lec02/lec02_d5_avgn.html" },
+        { lec: "2", title: "평균 필터의 한계", src: "lecture/mechatronics/demos/lec02/lec02_d6_avglag.html" },
         { lec: "3", title: "누적 평균은 과거를 못 잊음", src: "lecture/mechatronics/demos/lec03/lec03_d1_cum.html" },
         { lec: "3", title: "이동평균은 최근 N개만", src: "lecture/mechatronics/demos/lec03/lec03_d2_ma.html" },
         { lec: "3", title: "누적 vs 이동", src: "lecture/mechatronics/demos/lec03/lec03_d3_compare.html" },
@@ -490,7 +491,7 @@
 
   function courseDemoUrl(src) {
     const url = new URL(encodeURI(src), document.baseURI);
-    url.searchParams.set("v", "20260908");
+    url.searchParams.set("v", "20260908e");
     return url.href;
   }
 

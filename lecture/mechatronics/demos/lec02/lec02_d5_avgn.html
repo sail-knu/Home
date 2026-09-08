@@ -114,7 +114,7 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
-var TRUE_X = 14.40, MAXN = 160;
+var TRUE_X = 14.40, MAXN = 160, Y_HALF = 2.4;
 var st = { N: 20, sigma: 0.20, base: [] };
 
 var PAL = {};
@@ -158,8 +158,7 @@ function draw(){
     z.push(zk); sum += zk; avg.push(sum / (k + 1));
   }
   var last = avg[N - 1], theo = sig / Math.sqrt(N);
-  var half = Math.max(3 * sig, 0.45);
-  var yLo = TRUE_X - half, yHi = TRUE_X + half;
+  var yLo = TRUE_X - Y_HALF, yHi = TRUE_X + Y_HALF;
   function X(v){ return L + (v - 0.5) / N * (R - L); }
   function Y(v){ return T + (yHi - Math.max(yLo, Math.min(yHi, v))) / (yHi - yLo) * (B - T); }
 
