@@ -36,7 +36,6 @@
     return id === "#members" || id === "#professor" || id === "#member-im" || id === "#member-yu" || id === "#member-woo";
   }
   var activeCount = isMembersPage(window.location.hash) ? 2 : 0;
-  if (activeCount <= 0) canvas.style.display = "none";
 
   function size() {
     viewW = window.innerWidth;
@@ -333,7 +332,7 @@
 
   function tick() {
     raf = 0;
-    if (document.hidden || activeCount <= 0) return;
+    if (document.hidden) return;
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
       var n = activeCount;
@@ -376,13 +375,6 @@
       robots[1].passBot = 0;
     }
     activeCount = next;
-    canvas.style.display = next > 0 ? "block" : "none";
-    if (next <= 0) {
-      ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
-      ctx.clearRect(0, 0, viewW, viewH);
-    } else if (!document.hidden && !raf) {
-      raf = window.requestAnimationFrame(tick);
-    }
   };
 
   window.CanvasNestSetColor = function (rgb) {
@@ -401,11 +393,11 @@
   });
   window.addEventListener("resize", size);
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && activeCount > 0 && !raf) raf = window.requestAnimationFrame(tick);
+    if (!document.hidden && !raf) raf = window.requestAnimationFrame(tick);
   });
 
   size();
   robots[1].x = viewW * 0.78;
   robots[1].y = viewH * 0.72;
-  if (activeCount > 0) raf = window.requestAnimationFrame(tick);
+  raf = window.requestAnimationFrame(tick);
 })();

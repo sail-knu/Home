@@ -270,12 +270,19 @@ button,
   display: inline-grid;
   place-items: center;
   min-width: 28px;
+  color: var(--switch-fg);
+}
+
+.theme-btn.active {
+  color: var(--on-primary);
 }
 
 .theme-btn .icon {
   width: 14px;
   height: 14px;
   vertical-align: top;
+  color: inherit;
+  stroke: currentColor;
 }
 
 .logo-header,
