@@ -32,7 +32,11 @@
     for (var h = 0; h < beamCount; h++) robots[i].hits[h] = { ang: 0, dist: 0, kind: 0, x: 0, y: 0 };
   }
   var raf = 0;
-  var activeCount = (!window.location.hash || window.location.hash === "#home") ? 2 : 1;
+  function isMembersPage(id) {
+    return id === "#members" || id === "#professor" || id === "#member-im" || id === "#member-yu" || id === "#member-woo";
+  }
+  var activeCount = isMembersPage(window.location.hash) ? 2 : 0;
+  if (activeCount <= 0) canvas.style.display = "none";
 
   function size() {
     viewW = window.innerWidth;
@@ -329,7 +333,7 @@
 
   function tick() {
     raf = 0;
-    if (document.hidden) return;
+    if (document.hidden || activeCount <= 0) return;
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
       var n = activeCount;
@@ -354,8 +358,15 @@
   }
 
   window.setSailVehiclePage = function (targetId) {
-    var next = (!targetId || targetId === "#home") ? 2 : 1;
-    if (next === 2 && activeCount < 2) {
+    var next = isMembersPage(targetId) ? 2 : 0;
+    if (next > 0 && activeCount === 0) {
+      robots[0].x = viewW * 0.22;
+      robots[0].y = viewH * 0.28;
+      robots[0].th = 0.35;
+      robots[0].trail = [];
+      robots[0].ti = 0;
+      robots[0].passMouse = 0;
+      robots[0].passBot = 0;
       robots[1].x = viewW * 0.78;
       robots[1].y = viewH * 0.72;
       robots[1].th = 3.5;
@@ -365,6 +376,13 @@
       robots[1].passBot = 0;
     }
     activeCount = next;
+    canvas.style.display = next > 0 ? "block" : "none";
+    if (next <= 0) {
+      ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+      ctx.clearRect(0, 0, viewW, viewH);
+    } else if (!document.hidden && !raf) {
+      raf = window.requestAnimationFrame(tick);
+    }
   };
 
   window.CanvasNestSetColor = function (rgb) {
@@ -383,11 +401,11 @@
   });
   window.addEventListener("resize", size);
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && !raf) raf = window.requestAnimationFrame(tick);
+    if (!document.hidden && activeCount > 0 && !raf) raf = window.requestAnimationFrame(tick);
   });
 
   size();
   robots[1].x = viewW * 0.78;
   robots[1].y = viewH * 0.72;
-  raf = window.requestAnimationFrame(tick);
+  if (activeCount > 0) raf = window.requestAnimationFrame(tick);
 })();
