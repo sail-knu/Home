@@ -62,7 +62,7 @@
     const dest = document.getElementById("home-news-list");
     const items = document.querySelectorAll("#news .news-list > .news-item");
     if (!dest || !items.length) return;
-    [...items].slice(0, 3).forEach((item) => {
+    [...items].slice(0, 6).forEach((item) => {
       dest.appendChild(item.cloneNode(true));
     });
   })();
