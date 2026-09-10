@@ -118,6 +118,7 @@ var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var X0 = 1, V0 = 0, N = 720;
+var TMAX = 8;
 var st = { z: 0.1, wn: 10, t: 0, running: true };
 
 var PAL = {};
@@ -157,7 +158,7 @@ function xPix(t, Tmax){ return L + t / Tmax * (R - L); }
 function yPix(x, peak){ return (T + B) / 2 - x / peak * (B - T) * 0.42; }
 
 function draw(){
-  var z = st.z, wn = st.wn, Tmax = 16 * Math.PI / wn;
+  var z = st.z, wn = st.wn, Tmax = TMAX;
   var tc = st.t % Tmax, i, peak = 1e-6;
   var xs = new Float64Array(N + 1);
   for (i = 0; i <= N; i++){
@@ -241,7 +242,7 @@ var last = 0;
 function loop(now){
   var dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
   last = now;
-  if (st.running) st.t += dt * (16 * Math.PI / st.wn) / 7;
+  if (st.running) st.t += dt * (TMAX / 7);
   draw();
   requestAnimationFrame(loop);
 }
