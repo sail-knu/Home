@@ -341,8 +341,8 @@
         { id: "1", name: "1강 · 파이프라인" },
         { id: "2", name: "2강 · 센서·샘플링" },
         { id: "3", name: "3강 · 평균" },
-        { id: "4", name: "4강 · 필터" },
-        { id: "5", name: "5강 · 칼만 필터" },
+        { id: "4", name: "4강 · 칼만 필터" },
+        { id: "5", name: "5강 · 칼만 필터 2D" },
         { id: "6", name: "6강 · 모델링" },
         { id: "7", name: "7강 · 1·2차 응답" },
         { id: "9", name: "9강 · 라플라스" },
@@ -359,21 +359,15 @@
         { lec: "2", title: "나이키스트 fₛ ≥ 2f", src: "lecture/mechatronics/demos/lec02/lec02_d2_nyquist.html" },
         { lec: "2", title: "잔여 노이즈 σ/√N", src: "lecture/mechatronics/demos/lec02/lec02_d5_avgn.html" },
         { lec: "2", title: "평균 필터의 한계", src: "lecture/mechatronics/demos/lec02/lec02_d6_avglag.html" },
-        { lec: "3", title: "누적 평균은 과거를 못 잊음", src: "lecture/mechatronics/demos/lec03/lec03_d1_cum.html" },
-        { lec: "3", title: "이동평균은 최근 N개만", src: "lecture/mechatronics/demos/lec03/lec03_d2_ma.html" },
         { lec: "3", title: "누적 vs 이동", src: "lecture/mechatronics/demos/lec03/lec03_d3_compare.html" },
-        { lec: "3", title: "재귀식 = 배치식", src: "lecture/mechatronics/demos/lec03/lec03_d4_recursive.html" },
         { lec: "3", title: "지연 (N−1)/2", src: "lecture/mechatronics/demos/lec03/lec03_d5_lag.html" },
-        { lec: "4", title: "LPF의 α", src: "lecture/mechatronics/demos/lec04/lec04_d1_lpf.html" },
-        { lec: "4", title: "지수 가중치 (1−α)αᵐ", src: "lecture/mechatronics/demos/lec04/lec04_d2_weights.html" },
-        { lec: "4", title: "3필터 비교", src: "lecture/mechatronics/demos/lec04/lec04_d3_three.html" },
-        { lec: "4", title: "저역 통과", src: "lecture/mechatronics/demos/lec04/lec04_d4_lowpass.html" },
-        { lec: "4", title: "차단 주파수 fc", src: "lecture/mechatronics/demos/lec04/lec04_d5_fc.html" },
-        { lec: "5", title: "칼만 게인 K", src: "lecture/mechatronics/demos/lec05/lec05_d1_gain.html" },
-        { lec: "5", title: "σₚ·σ_z → K", src: "lecture/mechatronics/demos/lec05/lec05_d2_sigma.html" },
-        { lec: "5", title: "Q가 있으면 K가 안 죽는다", src: "lecture/mechatronics/demos/lec05/lec05_d3_qfloor.html" },
-        { lec: "5", title: "Q/R 성격", src: "lecture/mechatronics/demos/lec05/lec05_d4_qr.html" },
-        { lec: "5", title: "두 가우시안 융합", src: "lecture/mechatronics/demos/lec05/lec05_d5_gauss.html" },
+        { lec: "3", title: "LPF의 α", src: "lecture/mechatronics/demos/lec04/lec04_d1_lpf.html" },
+        { lec: "3", title: "3필터 비교", src: "lecture/mechatronics/demos/lec04/lec04_d3_three.html" },
+        { lec: "4", title: "칼만 게인 K", src: "lecture/mechatronics/demos/lec05/lec05_d1_gain.html" },
+        { lec: "4", title: "σₚ·σ_z → K", src: "lecture/mechatronics/demos/lec05/lec05_d2_sigma.html" },
+        { lec: "4", title: "Q가 있으면 K가 안 죽는다", src: "lecture/mechatronics/demos/lec05/lec05_d3_qfloor.html" },
+        { lec: "4", title: "Q/R 성격", src: "lecture/mechatronics/demos/lec05/lec05_d4_qr.html" },
+        { lec: "4", title: "두 가우시안 융합", src: "lecture/mechatronics/demos/lec05/lec05_d5_gauss.html" },
         { lec: "6", title: "RLC 상사성", src: "lecture/mechatronics/demos/lec06/lec06_d1_rlc.html" },
         { lec: "6", title: "FBD 부호", src: "lecture/mechatronics/demos/lec06/lec06_d2_fbd.html" },
         { lec: "6", title: "질량–스프링–댐퍼", src: "lecture/mechatronics/demos/lec06/lec06_d3_msd.html" },
@@ -768,7 +762,18 @@
     function openLecture(lecId) {
       const lec = data.lectures.some((item) => item.id === lecId) ? lecId : data.lectures[0].id;
       const first = demosFor(lec)[0];
-      if (!first) return;
+      if (!first) {
+        if (state.lec === lec && !state.src) return;
+        state.lec = lec;
+        state.src = "";
+        titleEl.textContent = lectureName(lec);
+        descEl.textContent = "준비 중";
+        nextCourseGen(host.id);
+        host.innerHTML = "";
+        renderLectures();
+        renderDemos();
+        return;
+      }
       if (state.lec === lec && state.src) return;
       showDemo(first);
     }
