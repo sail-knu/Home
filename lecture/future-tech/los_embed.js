@@ -45,29 +45,6 @@ function seg(k) {
   return { A: A, B: B, alpha: Math.atan2(dy, dx), L: hypot(dx, dy) };
 }
 
-function pointAhead(k, s0, dist) {
-  var rem = Math.max(s0, 0) + dist;
-  var i = k;
-  var n;
-  for (n = 0; n < 8; n++) {
-    if (i >= nSeg()) {
-      var last = WPS[WPS.length - 1];
-      return { x: last.x, y: last.y };
-    }
-    var sg = seg(i);
-    if (rem <= sg.L) {
-      return {
-        x: sg.A.x + rem * Math.cos(sg.alpha),
-        y: sg.A.y + rem * Math.sin(sg.alpha)
-      };
-    }
-    rem -= sg.L;
-    i += 1;
-  }
-  var end = WPS[WPS.length - 1];
-  return { x: end.x, y: end.y };
-}
-
 function guidance() {
   var g = seg(S.k);
   var ca = Math.cos(g.alpha), sa = Math.sin(g.alpha);
@@ -76,10 +53,15 @@ function guidance() {
   var e = -dx * sa + dy * ca;
   var sFoot = clamp(s, 0, g.L);
   var foot = { x: g.A.x + sFoot * ca, y: g.A.y + sFoot * sa };
-  var losPt = pointAhead(S.k, sFoot, P.delta);
+  var sLos = Math.max(s, 0) + P.delta;
+  var losPt = { x: g.A.x + sLos * ca, y: g.A.y + sLos * sa };
   var losOff = Math.atan2(-e, P.delta);
   var chid = g.alpha + losOff;
-  return { alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B, foot: foot, losPt: losPt, chid: chid, losOff: losOff };
+  return {
+    alpha: g.alpha, s: s, e: e, L: g.L, A: g.A, B: g.B,
+    ca: ca, sa: sa, sLos: sLos,
+    foot: foot, losPt: losPt, chid: chid, losOff: losOff
+  };
 }
 
 function reset() {
@@ -195,6 +177,19 @@ function draw() {
   for (i = 1; i < WPS.length; i++) ctx.lineTo(w2sx(WPS[i].x), w2sy(WPS[i].y));
   ctx.stroke();
 
+  var g = S.g || guidance();
+  if (g.sLos > g.L + 1e-6) {
+    var extS = g.sLos + 1.2;
+    ctx.strokeStyle = C.track;
+    ctx.lineWidth = 2.4;
+    ctx.setLineDash([7, 6]);
+    ctx.beginPath();
+    ctx.moveTo(w2sx(g.B.x), w2sy(g.B.y));
+    ctx.lineTo(w2sx(g.A.x + extS * g.ca), w2sy(g.A.y + extS * g.sa));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   var tgt = S.k + 1;
   for (i = 1; i < WPS.length; i++) {
     var rPx = Math.max(P.Racc * view.scale, 2);
@@ -233,7 +228,6 @@ function draw() {
     ctx.stroke();
   }
 
-  var g = S.g || guidance();
   ctx.strokeStyle = C.err;
   ctx.lineWidth = 1.4;
   ctx.setLineDash([5, 4]);

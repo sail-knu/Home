@@ -85,7 +85,7 @@ body{
 #los-host #los-btnPlay.danger { background: var(--devi); border-color: var(--devi); }
 </style>
 <div class="demo-app demo-los" id="demo-los">
-  <p class="tip"><b>Δ</b>는 얼마나 앞을 볼지, <b>R<sub>acc</sub></b>는 다음 웨이포인트에 얼마나 가까이 가야 구간을 넘길지입니다. 큰 Δ는 모서리를 깎고, 큰 R<sub>acc</sub>는 일찍 다음 구간으로 넘어갑니다.</p>
+  <p class="tip"><b>Δ</b>는 현재 구간을 따라 얼마나 앞을 볼지입니다. 남은 길이가 Δ보다 짧으면 다음 구간이 아니라 지금 구간을 <b>점선으로 외삽</b>하고, 그 위에 전방주시점을 둡니다. <b>R<sub>acc</sub></b> 안에 들어와야 다음 웨이포인트로 넘깁니다.</p>
   <div class="ctrl-bar">
     <div>
       <p class="ctrl-title">전방주시거리 Δ <span class="big-val" id="los-deltaV">4.0</span> m</p>
@@ -104,6 +104,7 @@ body{
   </div>
   <div class="legend">
     <span><i style="background:#0369a1"></i>경로</span>
+    <span><i style="border-top:2px dashed #0369a1;height:0;width:16px;background:transparent;border-radius:0;vertical-align:4px"></i>구간 외삽</span>
     <span><i style="background:#15803d"></i>자취</span>
     <span><i style="background:#4d7c0f"></i>LOS 시선</span>
     <span><i style="background:#b45309;height:8px;width:8px;border-radius:50%;border:1.5px dashed #b45309;background:transparent"></i>R<sub>acc</sub></span>
