@@ -25,7 +25,7 @@ var WORLD = { w: 42, h: 24 };
 var P = {
   delta: 4, Racc: 1.8,
   kpe: 0, kie: 0, kde: 0, kph: 1.2, iLim: 6,
-  v: 2.6, wmax: 42 * D2R, tauR: 1.6, dt: 0.01, dfc: 0.06,
+  v: 2.6, wmax: 42 * D2R, tauR: 1.0, dt: 0.01, dfc: 0.06,
   e0: 2.6, psi0: 40 * D2R
 };
 

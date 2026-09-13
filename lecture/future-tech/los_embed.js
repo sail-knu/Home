@@ -22,7 +22,7 @@ var WPS = [
   { x: 38, y: 17 }
 ];
 var WORLD = { w: 42, h: 24 };
-var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 38 * D2R, tauR: 1.6, dt: 0.02, e0: 2.6, psi0: 40 * D2R };
+var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 38 * D2R, tauR: 1.0, dt: 0.02, e0: 2.6, psi0: 40 * D2R };
 
 var S = {
   k: 0, x: 0, y: 0, yaw: 0, r: 0,
