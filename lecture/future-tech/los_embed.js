@@ -22,10 +22,10 @@ var WPS = [
   { x: 38, y: 17 }
 ];
 var WORLD = { w: 42, h: 24 };
-var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 95 * D2R, dt: 0.02, e0: 2.6, psi0: 40 * D2R };
+var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 38 * D2R, tauR: 1.6, dt: 0.02, e0: 2.6, psi0: 40 * D2R };
 
 var S = {
-  k: 0, x: 0, y: 0, yaw: 0,
+  k: 0, x: 0, y: 0, yaw: 0, r: 0,
   t: 0, running: false, done: false, prevToB: 1e9,
   trail: [], g: null
 };
@@ -65,7 +65,7 @@ function guidance() {
 }
 
 function reset() {
-  S.k = 0; S.t = 0; S.done = false; S.prevToB = 1e9; S.trail = []; S.g = null;
+  S.k = 0; S.t = 0; S.r = 0; S.done = false; S.prevToB = 1e9; S.trail = []; S.g = null;
   var g = seg(0);
   S.x = g.A.x - P.e0 * Math.sin(g.alpha);
   S.y = g.A.y + P.e0 * Math.cos(g.alpha);
@@ -81,10 +81,11 @@ function step(dt) {
   var g = guidance();
   S.g = g;
   var ePsi = wrap(g.alpha - S.yaw) + g.losOff;
-  var w = clamp(P.kPsi * ePsi, -P.wmax, P.wmax);
+  var wCmd = clamp(P.kPsi * ePsi, -P.wmax, P.wmax);
+  S.r += (wCmd - S.r) * (dt / P.tauR);
   S.x += P.v * Math.cos(S.yaw) * dt;
   S.y += P.v * Math.sin(S.yaw) * dt;
-  S.yaw = wrap(S.yaw + w * dt);
+  S.yaw = wrap(S.yaw + S.r * dt);
   S.t += dt;
   var last = S.trail[S.trail.length - 1];
   if (!last || hypot(S.x - last.x, S.y - last.y) > 0.08) S.trail.push({ x: S.x, y: S.y });
