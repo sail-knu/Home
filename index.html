@@ -1410,7 +1410,6 @@
 
             <nav class="sim-nav" aria-label="실습 시뮬레이터">
                 <button type="button" class="sim-nav-btn active" data-sim="sim-los">LOS 유도</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-path">직선 경로 추종 제어기</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-pid">역진자 PID 제어</button>
                 <button type="button" class="sim-nav-btn" data-sim="sim-pidpos">역진자 위치 제어</button>
             </nav>
@@ -1419,11 +1418,6 @@
                 <h3 class="subsection-title">LOS 유도</h3>
                 <p class="small-text">e<sub>ψ</sub> heading PID · Δ · R<sub>acc</sub></p>
                 <div id="los-host"></div>
-            </article>
-            <article class="sim-block is-hidden" id="sim-path">
-                <h3 class="subsection-title">직선 경로 추종 제어기</h3>
-                <p class="small-text">K<sub>p,e</sub> · K<sub>i,e</sub> · K<sub>d,e</sub> 와 Δ · R<sub>acc</sub></p>
-                <div id="path-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-pid">
                 <h3 class="subsection-title">역진자 PID 제어</h3>
@@ -1579,7 +1573,7 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260914d" defer></script>
+    <script src="script.js?v=20260914e" defer></script>
     <script
       color="29,78,137"
       opacity="0.32"

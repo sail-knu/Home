@@ -274,7 +274,6 @@
   });
 
   const futureEmbeds = {
-    "sim-path": { host: "path-host", html: "lecture/future-tech/path_embed.html?v=20260914c", js: "lecture/future-tech/path_embed.js?v=20260914c", refresh: "refresh_path_demo" },
     "sim-los": { host: "los-host", html: "lecture/future-tech/los_embed.html?v=20260914d", js: "lecture/future-tech/los_embed.js?v=20260914d", refresh: "refresh_los_demo" },
     "sim-pid": { host: "pid-host", html: "lecture/future-tech/pid_embed.html?v=20260904c", js: "lecture/future-tech/pid_embed.js?v=20260904c", refresh: "refresh_pid_demo" },
     "sim-pidpos": { host: "pidpos-host", html: "lecture/future-tech/pidpos_embed.html?v=20260904c", js: "lecture/future-tech/pidpos_embed.js?v=20260904c", refresh: "refresh_pidpos_demo" }
