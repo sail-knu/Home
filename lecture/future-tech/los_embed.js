@@ -22,11 +22,17 @@ var WPS = [
   { x: 38, y: 17 }
 ];
 var WORLD = { w: 42, h: 24 };
-var P = { delta: 4, Racc: 1.8, v: 1.7, kPsi: 2.4, wmax: 38 * D2R, tauR: 1.0, dt: 0.02, e0: 2.6, psi0: 40 * D2R };
+var P = {
+  delta: 4, Racc: 1.8, v: 1.7,
+  kp: 2.4, ki: 0, kd: 0, iLim: 2.5,
+  wmax: 38 * D2R, tauR: 1.0, dt: 0.02, dfc: 0.06,
+  e0: 2.6, psi0: 40 * D2R
+};
 
 var S = {
   k: 0, x: 0, y: 0, yaw: 0, r: 0,
-  t: 0, running: false, done: false, prevToB: 1e9,
+  t: 0, running: false, done: false, first: true,
+  iPsi: 0, ePsi: 0, ePsiPrev: 0, ePsiDot: 0, prevToB: 1e9,
   trail: [], g: null
 };
 
@@ -64,14 +70,24 @@ function guidance() {
   };
 }
 
+function resetPid() {
+  S.first = true;
+  S.iPsi = 0;
+  S.ePsi = 0;
+  S.ePsiPrev = 0;
+  S.ePsiDot = 0;
+}
+
 function reset() {
   S.k = 0; S.t = 0; S.r = 0; S.done = false; S.prevToB = 1e9; S.trail = []; S.g = null;
+  resetPid();
   var g = seg(0);
   S.x = g.A.x - P.e0 * Math.sin(g.alpha);
   S.y = g.A.y + P.e0 * Math.cos(g.alpha);
   S.yaw = wrap(g.alpha + P.psi0);
   S.trail.push({ x: S.x, y: S.y });
   S.g = guidance();
+  S.ePsi = wrap(S.g.chid - S.yaw);
   syncReadout();
   draw();
 }
@@ -80,8 +96,21 @@ function step(dt) {
   if (S.done) return;
   var g = guidance();
   S.g = g;
-  var ePsi = wrap(g.alpha - S.yaw) + g.losOff;
-  var wCmd = clamp(P.kPsi * ePsi, -P.wmax, P.wmax);
+  var ePsi = wrap(g.chid - S.yaw);
+  if (S.first) {
+    S.ePsiPrev = ePsi;
+    S.ePsiDot = 0;
+    S.first = false;
+  } else {
+    var dE = wrap(ePsi - S.ePsiPrev) / dt;
+    var kf = dt / (dt + P.dfc);
+    S.ePsiDot += (dE - S.ePsiDot) * kf;
+  }
+  S.ePsiPrev = ePsi;
+  S.ePsi = ePsi;
+  if (P.ki <= 0) S.iPsi = 0;
+  else S.iPsi = clamp(S.iPsi + ePsi * dt, -P.iLim, P.iLim);
+  var wCmd = clamp(P.kp * ePsi + P.ki * S.iPsi + P.kd * S.ePsiDot, -P.wmax, P.wmax);
   S.r += (wCmd - S.r) * (dt / P.tauR);
   S.x += P.v * Math.cos(S.yaw) * dt;
   S.y += P.v * Math.sin(S.yaw) * dt;
@@ -98,6 +127,7 @@ function step(dt) {
     if (S.k < nSeg() - 1) {
       S.k += 1;
       S.prevToB = 1e9;
+      resetPid();
     } else S.done = true;
   } else {
     S.prevToB = toB;
@@ -264,19 +294,34 @@ function draw() {
   ctx.restore();
 }
 
+function fmtSigned(v, digits, unit) {
+  return (v >= 0 ? '+' : '') + v.toFixed(digits) + unit;
+}
+
 function syncReadout() {
   var dv = document.getElementById('los-deltaV');
   var dr = document.getElementById('los-dRead');
   var rv = document.getElementById('los-raccV');
   var rr = document.getElementById('los-rRead');
   var ev = document.getElementById('los-e');
+  var ep = document.getElementById('los-epsi');
+  var kp = document.getElementById('los-kpV');
+  var ki = document.getElementById('los-kiV');
+  var kd = document.getElementById('los-kdV');
   var dTxt = P.delta.toFixed(1);
   var rTxt = P.Racc.toFixed(1);
   if (dv) dv.textContent = dTxt;
   if (dr) dr.textContent = dTxt + ' m';
   if (rv) rv.textContent = rTxt;
   if (rr) rr.textContent = rTxt + ' m';
-  if (ev) ev.textContent = S.g ? ((S.g.e >= 0 ? '+' : '') + S.g.e.toFixed(2) + ' m') : '—';
+  if (kp) kp.textContent = P.kp.toFixed(2);
+  if (ki) ki.textContent = P.ki.toFixed(2);
+  if (kd) kd.textContent = P.kd.toFixed(2);
+  if (ev) ev.textContent = S.g ? fmtSigned(S.g.e, 2, ' m') : '—';
+  if (ep) {
+    var ePsi = S.g ? wrap(S.g.chid - S.yaw) : S.ePsi;
+    ep.textContent = S.g ? fmtSigned(ePsi / D2R, 1, '°') : '—';
+  }
   var play = document.getElementById('los-btnPlay');
   if (play) {
     play.textContent = S.running ? '정지' : '시작';
@@ -295,6 +340,12 @@ function setRacc(v) {
   P.Racc = clamp(Number(v), 0.4, 6);
   syncReadout();
   draw();
+}
+
+function setGain(key, v, lo, hi) {
+  P[key] = clamp(Number(v), lo, hi);
+  if (key === 'ki' && P.ki <= 0) S.iPsi = 0;
+  syncReadout();
 }
 
 function togglePlay() {
@@ -353,6 +404,21 @@ function loop(now) {
   if (sr) {
     sr.value = String(P.Racc);
     sr.oninput = function () { setRacc(sr.value); };
+  }
+  var kp = document.getElementById('los-kp');
+  var ki = document.getElementById('los-ki');
+  var kd = document.getElementById('los-kd');
+  if (kp) {
+    kp.value = String(P.kp);
+    kp.oninput = function () { setGain('kp', kp.value, 0, 6); };
+  }
+  if (ki) {
+    ki.value = String(P.ki);
+    ki.oninput = function () { setGain('ki', ki.value, 0, 2); };
+  }
+  if (kd) {
+    kd.value = String(P.kd);
+    kd.oninput = function () { setGain('kd', kd.value, 0, 3); };
   }
   var play = document.getElementById('los-btnPlay');
   var rst = document.getElementById('los-btnReset');

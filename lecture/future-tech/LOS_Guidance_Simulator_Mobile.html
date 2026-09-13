@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>LOS 유도 — Δ와 R_acc</title>
+<title>LOS 유도 — heading PID</title>
 <style>
 body{
   margin:0;background:#e7eef2;color:#0b2130;
@@ -20,7 +20,7 @@ body{
 <div class="wrap">
   <a class="back" href="index.html">← 실습 목록</a>
   <span class="kicker">LOS</span>
-  <h1>Δ와 acceptance radius</h1>
+  <h1>LOS heading error PID</h1>
   <div id="los-host">
 <style>
 #los-host, #los-host * { box-sizing: border-box; }
@@ -58,8 +58,10 @@ body{
   padding: 12px 14px;
   margin: 0 0 12px;
 }
-@media (max-width: 620px) {
-  #los-host .ctrl-bar { grid-template-columns: 1fr; }
+#los-host .ctrl-bar.pid { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 720px) {
+  #los-host .ctrl-bar,
+  #los-host .ctrl-bar.pid { grid-template-columns: 1fr; }
 }
 #los-host .ctrl-title { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--text-3); }
 #los-host .big-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
@@ -69,7 +71,10 @@ body{
   background: var(--ink-4); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden;
 }
 #los-host #los-cv { display: block; width: 100%; height: 100%; }
-#los-host .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+#los-host .stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+@media (max-width: 620px) {
+  #los-host .stats { grid-template-columns: 1fr 1fr; }
+}
 #los-host .stat { background: var(--ink-3); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; }
 #los-host .stat .k { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-3); }
 #los-host .stat .v { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
@@ -85,7 +90,7 @@ body{
 #los-host #los-btnPlay.danger { background: var(--devi); border-color: var(--devi); }
 </style>
 <div class="demo-app demo-los" id="demo-los">
-  <p class="tip"><b>Δ</b>는 현재 구간을 따라 얼마나 앞을 볼지입니다. 남은 길이가 Δ보다 짧으면 다음 구간이 아니라 지금 구간을 <b>점선으로 외삽</b>하고, 그 위에 전방주시점을 둡니다. <b>R<sub>acc</sub></b> 안에 들어와야 다음 웨이포인트로 넘깁니다.</p>
+  <p class="tip">조준 오차 <b>e<sub>ψ</sub> = χ<sub>d</sub> − ψ</b>에 heading PID를 겁니다. <b>K<sub>p</sub></b>로 빨리 맞추고, <b>K<sub>d</sub></b>로 흔들림을 줄이세요. Δ는 현재 구간 전방주시, R<sub>acc</sub> 안에서만 다음 웨이포인트로 넘깁니다.</p>
   <div class="ctrl-bar">
     <div>
       <p class="ctrl-title">전방주시거리 Δ <span class="big-val" id="los-deltaV">4.0</span> m</p>
@@ -96,9 +101,24 @@ body{
       <input type="range" id="los-racc" min="0.4" max="6" step="0.1" value="1.8">
     </div>
   </div>
+  <div class="ctrl-bar pid">
+    <div>
+      <p class="ctrl-title">K<sub>p</sub> 비례 <span class="big-val" id="los-kpV">2.40</span></p>
+      <input type="range" id="los-kp" min="0" max="6" step="0.05" value="2.4">
+    </div>
+    <div>
+      <p class="ctrl-title">K<sub>i</sub> 적분 <span class="big-val" id="los-kiV">0.00</span></p>
+      <input type="range" id="los-ki" min="0" max="2" step="0.02" value="0">
+    </div>
+    <div>
+      <p class="ctrl-title">K<sub>d</sub> 미분 <span class="big-val" id="los-kdV">0.00</span></p>
+      <input type="range" id="los-kd" min="0" max="3" step="0.05" value="0">
+    </div>
+  </div>
   <div class="chart"><canvas id="los-cv"></canvas></div>
   <div class="stats">
     <div class="stat"><span class="k">횡방향 오차 e</span><span class="v" id="los-e">—</span></div>
+    <div class="stat"><span class="k">heading 오차 e<sub>ψ</sub></span><span class="v" id="los-epsi">—</span></div>
     <div class="stat"><span class="k">전방주시 Δ</span><span class="v" id="los-dRead">4.0 m</span></div>
     <div class="stat"><span class="k">Acceptance R<sub>acc</sub></span><span class="v" id="los-rRead">1.8 m</span></div>
   </div>
