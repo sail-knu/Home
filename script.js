@@ -359,7 +359,6 @@
         { lec: "2", title: "잔여 노이즈 σ/√N", src: "lecture/mechatronics/demos/lec02/lec02_d5_avgn.html" },
         { lec: "2", title: "평균 필터의 한계", src: "lecture/mechatronics/demos/lec02/lec02_d6_avglag.html" },
         { lec: "3", title: "누적 vs 이동", src: "lecture/mechatronics/demos/lec03/lec03_d3_compare.html" },
-        { lec: "3", title: "지연 (N−1)/2", src: "lecture/mechatronics/demos/lec03/lec03_d5_lag.html" },
         { lec: "3", title: "LPF의 α", src: "lecture/mechatronics/demos/lec04/lec04_d1_lpf.html" },
         { lec: "3", title: "3필터 비교", src: "lecture/mechatronics/demos/lec04/lec04_d3_three.html" },
         { lec: "4", title: "칼만 게인 K", src: "lecture/mechatronics/demos/lec05/lec05_d1_gain.html" },
