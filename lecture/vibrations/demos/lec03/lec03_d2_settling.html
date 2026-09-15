@@ -118,7 +118,7 @@ var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
 var X0 = 0.010, N = 720;
-var TMAX = 40;
+var TMAX = 20;
 var st = { z: 0.015, wn: 10, t: 0, running: true };
 
 var PAL = {};
@@ -194,12 +194,14 @@ function draw(){
   }
   ctx.stroke();
 
-  if (d.Ts < Tmax){
+  var tsOn = d.Ts <= Tmax;
+  var tsPx = tsOn ? xPix(d.Ts, Tmax) : null;
+  if (tsOn){
     ctx.strokeStyle = PAL.float; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(xPix(d.Ts, Tmax), T); ctx.lineTo(xPix(d.Ts, Tmax), B); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tsPx, T); ctx.lineTo(tsPx, B); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = PAL.float; ctx.font = '12px ' + FONT; ctx.textAlign = 'left';
-    ctx.fillText('Ts', xPix(d.Ts, Tmax) + 6, T + 16);
+    ctx.fillText('Ts', tsPx + 6, T + 16);
   }
 
   ctx.strokeStyle = PAL.float; ctx.setLineDash([4, 4]);
@@ -210,7 +212,13 @@ function draw(){
   ctx.fillStyle = PAL.faint; ctx.font = '12px ' + FONT; ctx.textAlign = 'center';
   for (i = 0; i <= 4; i++){
     var tt = i / 4 * Tmax;
+    if (tsOn && Math.abs(xPix(tt, Tmax) - tsPx) < 28) continue;
     ctx.fillText(tt.toFixed(1), xPix(tt, Tmax), B + 20);
+  }
+  if (tsOn){
+    ctx.fillStyle = PAL.float;
+    ctx.font = 'bold 12px ' + FONT;
+    ctx.fillText(d.Ts.toFixed(2), Math.max(L + 14, Math.min(R - 14, tsPx)), B + 20);
   }
 }
 
