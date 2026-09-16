@@ -211,7 +211,8 @@
 
   document.querySelectorAll(".project-grid").forEach((grid) => {
     grid.querySelectorAll(".project-card").forEach((card) => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;
         const on = card.classList.contains("selected");
         grid.querySelectorAll(".project-card.selected").forEach((c) => c.classList.remove("selected"));
         if (!on) card.classList.add("selected");
