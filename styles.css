@@ -1440,6 +1440,11 @@ a.project-page:hover {
   font-size: 2.4rem;
 }
 
+.profile-photo.avatar-fallback .avatar-icon {
+  width: 46%;
+  height: 46%;
+}
+
 .page-back {
   display: inline-flex;
   margin-bottom: 18px;
@@ -1595,6 +1600,13 @@ a.member-card {
   color: var(--primary-color);
   font-family: "Outfit", sans-serif;
   font-weight: 700;
+}
+
+.avatar-icon {
+  width: 54%;
+  height: 54%;
+  display: block;
+  fill: currentColor;
 }
 
 .member-photo img {
