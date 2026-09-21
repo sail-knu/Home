@@ -365,7 +365,7 @@
         { lec: "3", title: "3필터 비교", src: "lecture/mechatronics/demos/lec04/lec04_d3_three.html" },
         { lec: "4", title: "칼만 게인 K", src: "lecture/mechatronics/demos/lec05/lec05_d1_gain.html" },
         { lec: "4", title: "σₚ·σ_z → K", src: "lecture/mechatronics/demos/lec05/lec05_d2_sigma.html" },
-        { lec: "4", title: "Q가 있으면 K가 안 죽는다", src: "lecture/mechatronics/demos/lec05/lec05_d3_qfloor.html" },
+        { lec: "4", title: "Q와 K 하한", src: "lecture/mechatronics/demos/lec05/lec05_d3_qfloor.html" },
         { lec: "4", title: "Q/R 성격", src: "lecture/mechatronics/demos/lec05/lec05_d4_qr.html" },
         { lec: "4", title: "두 가우시안 융합", src: "lecture/mechatronics/demos/lec05/lec05_d5_gauss.html" },
         { lec: "6", title: "RLC 상사성", src: "lecture/mechatronics/demos/lec06/lec06_d1_rlc.html" },
