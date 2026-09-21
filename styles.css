@@ -1732,6 +1732,15 @@ a.member-card {
   --g-btn-ink: #fbfaf6;
 }
 
+.group-card[data-team="4"] {
+  --g-bg: #070b12;
+  --g-ink: #e8f4f1;
+  --g-muted: #8aa3ae;
+  --g-accent: #76e4c4;
+  --g-btn: #76e4c4;
+  --g-btn-ink: #070b12;
+}
+
 .group-card[data-team="6"] {
   --g-bg: #fffdf7;
   --g-ink: #20242b;
@@ -1757,6 +1766,15 @@ a.member-card {
   --g-accent: #52774a;
   --g-btn: #142b24;
   --g-btn-ink: #c9f568;
+}
+
+.group-card[data-team="9"] {
+  --g-bg: #111114;
+  --g-ink: #f4f1ea;
+  --g-muted: #9a9588;
+  --g-accent: #f5d56e;
+  --g-btn: #f97316;
+  --g-btn-ink: #111114;
 }
 
 .group-card[data-team="11"] {
