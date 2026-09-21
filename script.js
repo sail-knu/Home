@@ -84,6 +84,7 @@
       "#member-yu": "#members",
       "#member-woo": "#members",
       "#lecture-future": "#lecture",
+      "#lecture-future-group": "#lecture",
       "#lecture-mechatronics": "#lecture",
       "#lecture-vibrations": "#lecture",
       "#lecture-mpc": "#lecture",

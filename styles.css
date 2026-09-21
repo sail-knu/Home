@@ -1587,6 +1587,84 @@ a.member-card {
   font-size: 0.8rem;
 }
 
+.lecture-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.lecture-card-actions .lecture-sim-btn {
+  margin-top: 0;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+}
+
+.btn-outline:hover {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.group-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.group-card.is-pending {
+  opacity: 0.72;
+}
+
+.group-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.group-card h3 {
+  font-family: "Outfit", "Pretendard", sans-serif;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+  word-break: keep-all;
+}
+
+.group-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group-members a {
+  display: inline-flex;
+  color: var(--primary-color);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 28%, var(--surface-border));
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.group-members a:hover {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
 .member-photo,
 .avatar {
   width: 72px;
