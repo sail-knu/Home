@@ -86,11 +86,11 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
     <div class="ctrl-bar">
       <div>
         <p class="ctrl-title">과정 잡음 Q <span class="big-val" id="qv">0.05</span></p>
-        <input type="range" id="q" min="0" max="0.5" step="0.01" value="0.05">
+        <input type="range" id="q" min="0" max="80" step="1" value="17">
       </div>
       <div>
         <p class="ctrl-title">측정 분산 R <span class="big-val" id="rv">4.0</span></p>
-        <input type="range" id="r" min="0.2" max="10" step="0.1" value="4">
+        <input type="range" id="r" min="0" max="80" step="1" value="42">
       </div>
     </div>
     <canvas id="cv" class="sim" width="900" height="440"></canvas>
@@ -113,8 +113,29 @@ footer{color:var(--faint);font-size:13px;text-align:center;padding:34px 20px 44p
 var $ = function(id){ return document.getElementById(id); };
 var cv = $('cv'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height;
-var TRUE_X = 50, SIG = 2, N = 30, X0 = 60, P0 = 225;
+var TRUE_X = 50, SIG = 2, N = 40, X0 = 60, P0 = 225;
+var Q_LO = 0.01, Q_HI = 25, R_LO = 0.05, R_HI = 200, SL = 80;
 var st = { q: 0.05, r: 4, base: [] };
+
+function qFromS(s){
+  s = +s;
+  if (s <= 0) return 0;
+  return Q_LO * Math.pow(Q_HI / Q_LO, (s - 1) / (SL - 1));
+}
+function rFromS(s){
+  return R_LO * Math.pow(R_HI / R_LO, (+s) / SL);
+}
+function fmtQ(q){
+  if (q <= 0) return '0';
+  if (q < 0.1) return q.toFixed(3);
+  if (q < 10) return q.toFixed(2);
+  return q.toFixed(1);
+}
+function fmtR(r){
+  if (r < 1) return r.toFixed(2);
+  if (r < 10) return r.toFixed(1);
+  return String(Math.round(r));
+}
 
 var PAL = {};
 function readPalette(){
@@ -163,7 +184,7 @@ function draw(){
     P = (1 - K) * Pm;
     xs.push(x);
   }
-  var yLo = 44, yHi = 64;
+  var yLo = 38, yHi = 68;
 
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = PAL.surface2;
@@ -190,21 +211,26 @@ function draw(){
   ctx.fillStyle = PAL.text; ctx.font = 'bold 16px ' + FONT; ctx.textAlign = 'left';
   ctx.fillText('정적 50 m   ·   x₀ = 60   ·   P₀ = 225', L, 28);
   ctx.fillStyle = PAL.accent; ctx.font = '13px Consolas, monospace'; ctx.textAlign = 'right';
-  ctx.fillText('x̂₃₀ = ' + xs[N - 1].toFixed(2), Rgt, 28);
+  ctx.fillText('x̂₄₀ = ' + xs[N - 1].toFixed(2), Rgt, 28);
 
   ctx.fillStyle = PAL.faint; ctx.font = '12.5px ' + FONT; ctx.textAlign = 'center';
   for (i = 5; i <= N; i += 5) ctx.fillText(String(i), Xp(i), B + 22);
   ctx.textAlign = 'right';
+  ctx.fillText('40', L - 8, Yp(40, yLo, yHi) + 4);
   ctx.fillText('50', L - 8, Yp(50, yLo, yHi) + 4);
   ctx.fillText('60', L - 8, Yp(60, yLo, yHi) + 4);
 }
 
-$('q').addEventListener('input', function(){ st.q = parseFloat(this.value); $('qv').textContent = st.q.toFixed(2); draw(); });
-$('r').addEventListener('input', function(){ st.r = parseFloat(this.value); $('rv').textContent = st.r.toFixed(1); draw(); });
+function syncQ(){ st.q = qFromS($('q').value); $('qv').textContent = fmtQ(st.q); }
+function syncR(){ st.r = rFromS($('r').value); $('rv').textContent = fmtR(st.r); }
+$('q').addEventListener('input', function(){ syncQ(); draw(); });
+$('r').addEventListener('input', function(){ syncR(); draw(); });
 var tick = 1;
 $('reset').addEventListener('click', function(){
   st.base = genBase(20260905 + tick * 7919); tick += 1; draw();
 });
+syncQ();
+syncR();
 draw();
 })();
 </script>
