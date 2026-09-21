@@ -1705,7 +1705,8 @@ a.member-card {
   color: var(--g-btn-ink);
 }
 
-.group-card[data-theme] .group-members a {
+.group-card[data-theme] .group-members a,
+.group-card[data-theme] .group-members span {
   color: var(--g-ink);
   border-color: color-mix(in srgb, var(--g-accent) 40%, transparent);
 }
@@ -1730,6 +1731,15 @@ a.member-card {
   --g-accent: #157a72;
   --g-btn: #157a72;
   --g-btn-ink: #fbfaf6;
+}
+
+.group-card[data-team="4"] {
+  --g-bg: #0b1220;
+  --g-ink: #e8f6ef;
+  --g-muted: #8aa39a;
+  --g-accent: #b7f34a;
+  --g-btn: #b7f34a;
+  --g-btn-ink: #0b1220;
 }
 
 .group-card[data-team="6"] {
@@ -1777,7 +1787,8 @@ a.member-card {
   list-style: none;
 }
 
-.group-members a {
+.group-members a,
+.group-members span {
   display: inline-flex;
   color: var(--primary-color);
   border: 1px solid color-mix(in srgb, var(--primary-color) 28%, var(--surface-border));
