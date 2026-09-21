@@ -1590,12 +1590,18 @@ a.member-card {
 .lecture-card-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 14px;
 }
 
 .lecture-card-actions .lecture-sim-btn {
   margin-top: 0;
+}
+
+.lecture-sim-btn-sm {
+  padding: 6px 10px;
+  font-size: 0.75rem;
 }
 
 .btn-outline {
