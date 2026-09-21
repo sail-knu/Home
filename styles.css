@@ -1616,14 +1616,37 @@ a.member-card {
 }
 
 .group-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
+  overflow: hidden;
   border-radius: 16px;
-  padding: 22px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--copy-color);
+}
+
+.group-visual {
+  height: 118px;
+  background:
+    repeating-linear-gradient(
+      -18deg,
+      transparent,
+      transparent 10px,
+      color-mix(in srgb, var(--surface-border) 70%, transparent) 10px,
+      color-mix(in srgb, var(--surface-border) 70%, transparent) 11px
+    );
+}
+
+.group-visual svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.group-card-body {
+  padding: 18px 20px 20px;
 }
 
 .group-card.is-pending {
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .group-card-top {
@@ -1631,7 +1654,16 @@ a.member-card {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.group-kicker {
+  margin: 0 0 4px;
+  color: var(--g-accent, var(--primary-color));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .group-card h3 {
@@ -1639,6 +1671,95 @@ a.member-card {
   font-size: 1.05rem;
   margin-bottom: 12px;
   word-break: keep-all;
+}
+
+.group-card[data-theme="dark"],
+.group-card[data-theme="light"] {
+  background: var(--g-bg);
+  color: var(--g-ink);
+  border-color: color-mix(in srgb, var(--g-accent) 28%, transparent);
+}
+
+.group-card[data-theme="dark"] .lecture-term,
+.group-card[data-theme="light"] .lecture-term,
+.group-card[data-theme="dark"] .small-text,
+.group-card[data-theme="light"] .small-text {
+  color: var(--g-muted);
+}
+
+.group-card[data-theme="dark"] .bento-badge,
+.group-card[data-theme="light"] .bento-badge {
+  background: color-mix(in srgb, var(--g-accent) 16%, transparent);
+  color: var(--g-accent);
+  border: 0;
+}
+
+.group-card[data-theme] .btn-primary {
+  background: var(--g-btn);
+  color: var(--g-btn-ink);
+}
+
+.group-card[data-theme] .group-members a {
+  color: var(--g-ink);
+  border-color: color-mix(in srgb, var(--g-accent) 40%, transparent);
+}
+
+.group-card[data-theme] .group-members a:hover {
+  background: color-mix(in srgb, var(--g-accent) 16%, transparent);
+}
+
+.group-card[data-team="1"] {
+  --g-bg: #07111f;
+  --g-ink: #e8f6ff;
+  --g-muted: #9bb5c9;
+  --g-accent: #42d9ff;
+  --g-btn: #42d9ff;
+  --g-btn-ink: #07111f;
+}
+
+.group-card[data-team="3"] {
+  --g-bg: #fbfaf6;
+  --g-ink: #17232d;
+  --g-muted: #5e6a70;
+  --g-accent: #157a72;
+  --g-btn: #157a72;
+  --g-btn-ink: #fbfaf6;
+}
+
+.group-card[data-team="6"] {
+  --g-bg: #fffdf7;
+  --g-ink: #20242b;
+  --g-muted: #5a646d;
+  --g-accent: #425142;
+  --g-btn: #20242b;
+  --g-btn-ink: #d8ec5c;
+}
+
+.group-card[data-team="7"] {
+  --g-bg: #0f172a;
+  --g-ink: #f8fafc;
+  --g-muted: #94a3b8;
+  --g-accent: #38bdf8;
+  --g-btn: #38bdf8;
+  --g-btn-ink: #0f172a;
+}
+
+.group-card[data-team="8"] {
+  --g-bg: #f5f7f2;
+  --g-ink: #142b24;
+  --g-muted: #637269;
+  --g-accent: #52774a;
+  --g-btn: #142b24;
+  --g-btn-ink: #c9f568;
+}
+
+.group-card[data-team="11"] {
+  --g-bg: #020617;
+  --g-ink: #f8fafc;
+  --g-muted: #94a3b8;
+  --g-accent: #22d3ee;
+  --g-btn: #22d3ee;
+  --g-btn-ink: #020617;
 }
 
 .group-members {
