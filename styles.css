@@ -1724,6 +1724,15 @@ a.member-card {
   --g-btn-ink: #07111f;
 }
 
+.group-card[data-team="2"] {
+  --g-bg: #1b2b45;
+  --g-ink: #f4f7fb;
+  --g-muted: #98b4d0;
+  --g-accent: #6a8fb8;
+  --g-btn: #4682b4;
+  --g-btn-ink: #f4f7fb;
+}
+
 .group-card[data-team="3"] {
   --g-bg: #fbfaf6;
   --g-ink: #17232d;
