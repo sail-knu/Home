@@ -70,6 +70,33 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .player.is-still .frame img.still { background: #fff; }
   .now-copy { margin-top: 12px; }
   .now-copy p { margin: 0 0 6px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .now-page { justify-content: flex-start; padding-top: clamp(48px, 5.2vh, 70px); padding-bottom: 68px; }
+  .now-screen { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
+  .now-page h2 { margin: 8px 0 14px; font-size: clamp(28px, 3.1vw, 46px); }
+  .now-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(12px, 1.6vw, 22px); width: 100%; align-items: start;
+  }
+  .now-card { min-width: 0; display: flex; flex-direction: column; }
+  .now-card .head {
+    display: grid; grid-template-columns: 28px 1fr; column-gap: 8px; align-items: start;
+    margin-bottom: 8px; flex: 0 0 auto;
+  }
+  .now-card .head span {
+    color: var(--green); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; padding-top: 2px;
+  }
+  .now-card .head strong {
+    display: block; font-size: clamp(15px, 1.15vw, 17px); font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1.25;
+  }
+  .now-card .head em {
+    display: block; margin-top: 3px; color: var(--muted); font-style: normal; font-size: 12px; line-height: 1.35;
+  }
+  .now-card .player { flex: 0 0 auto; }
+  .now-card .frame { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 12px; }
+  .now-card .blurb { flex: 0 0 auto; margin-top: 8px; }
+  .now-card .blurb p { margin: 0 0 4px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+  .now-card .yt { margin-top: 2px; font-size: 12px; }
   .meta { margin: 8px 0 0; color: #8d8d8d; font-size: 12px; letter-spacing: 0.03em; }
   .yt {
     display: inline-block; margin-top: 8px; color: #9a9a9a;
@@ -439,7 +466,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     }
     .print-head { display: block; }
     .slide[data-name="2023–2025"] .split,
-    .slide[data-name="진행 연구"] .split { display: none !important; }
+    .slide[data-name="진행 연구"] .now-screen { display: none !important; }
     .clip-sheet {
       display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; margin-top: 8px;
     }
@@ -493,6 +520,10 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     .slide-inner { overflow: auto; justify-content: flex-start; }
     .card { min-height: 0; }
     .anim { height: 110px; }
+  }
+  @media screen and (max-width: 860px) {
+    .now-grid { grid-template-columns: 1fr; }
+    .now-card .frame { max-height: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .slide { transition: none; }
@@ -684,66 +715,81 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   </section>
 
   <section class="slide" data-name="진행 연구">
-    <div class="slide-inner">
-      <div class="split">
-        <div>
-          <p class="kicker">In progress</p>
-          <h2>진행중인 연구</h2>
-          <div class="menu" id="now-menu">
-            <button type="button" class="is-on"
-              data-kind="mp4"
-              data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
-              data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png"
-              data-thumb="images/thumbs/case_mc.png"
-              data-a="최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다."
-              data-b="계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.">
+    <div class="slide-inner now-page">
+      <div class="now-screen">
+        <p class="kicker">In progress</p>
+        <h2>진행중인 연구</h2>
+        <div class="now-grid">
+          <article class="now-card"
+            data-thumb="images/thumbs/case_mc.png"
+            data-a="최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다."
+            data-b="계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.">
+            <div class="head">
               <span>01</span>
-              <strong>회피 모드를 학습하는 MPC</strong>
-              <em>회피 모드 모사학습 기반 멀티모달 MPC</em>
-            </button>
-            <button type="button"
-              data-kind="mp4" data-src="videos/Ps9NJ6feaH8.mp4"
-              data-yt="Ps9NJ6feaH8" data-thumb="images/thumbs/Ps9NJ6feaH8.jpg"
-              data-a="하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다."
-              data-b="선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.">
-              <span>02</span>
-              <strong>선박 멀티모달 궤적</strong>
-              <em>선회원 제어장벽함수 기반 다중모드 궤적계획</em>
-            </button>
-            <button type="button"
-              data-kind="mp4" data-src="images/research/experiment_video.mp4"
-              data-thumb="images/thumbs/marqa.jpg"
-              data-a="자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다."
-              data-b="협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.">
-              <span>03</span>
-              <strong>MARQA</strong>
-              <em>자율운항 협상을 위한 언어모델 질의응답</em>
-            </button>
-            <button type="button"
-              data-kind="mp4" data-src="videos/pBSBDa7eUqQ.mp4"
-              data-yt="pBSBDa7eUqQ" data-thumb="images/thumbs/pBSBDa7eUqQ.jpg"
-              data-a="무인선이 모선의 크래들로 되돌아올 때, 부딪히지 않고 들어가도록 제어기를 설계합니다."
-              data-b="시뮬레이션과 수조 실험으로 회수 과정을 검증하고 있습니다.">
-              <span>04</span>
-              <strong>무인선 안전 회수</strong>
-              <em>부족구동 무인선의 크래들 회수 제어</em>
-            </button>
-          </div>
-        </div>
-        <div>
-          <div class="player" id="now-player" data-kind="mp4"
-            data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
-            data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png">
-            <div class="frame">
-              <video controls playsinline preload="metadata"></video>
-              <img class="still" alt="">
+              <div>
+                <strong>회피 모드를 학습하는 MPC</strong>
+                <em>회피 모드 모사학습 기반 멀티모달 MPC</em>
+              </div>
             </div>
-          </div>
-          <div class="now-copy" id="now-copy">
-            <p>최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다.</p>
-            <p>계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.</p>
-          </div>
-          <a class="yt" id="now-yt" target="_blank" rel="noopener" hidden></a>
+            <div class="player" data-kind="mp4"
+              data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
+              data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png">
+              <div class="frame">
+                <video controls playsinline preload="metadata"></video>
+                <img class="still" alt="">
+              </div>
+            </div>
+            <div class="blurb">
+              <p>최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다.</p>
+              <p>계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.</p>
+            </div>
+          </article>
+          <article class="now-card"
+            data-yt="Ps9NJ6feaH8"
+            data-thumb="images/thumbs/Ps9NJ6feaH8.jpg"
+            data-a="하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다."
+            data-b="선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.">
+            <div class="head">
+              <span>02</span>
+              <div>
+                <strong>선박 멀티모달 궤적</strong>
+                <em>선회원 제어장벽함수 기반 다중모드 궤적계획</em>
+              </div>
+            </div>
+            <div class="player" data-kind="mp4" data-src="videos/Ps9NJ6feaH8.mp4">
+              <div class="frame">
+                <video controls playsinline preload="metadata"></video>
+                <img class="still" alt="">
+              </div>
+            </div>
+            <div class="blurb">
+              <p>하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다.</p>
+              <p>선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.</p>
+              <a class="yt" href="https://www.youtube.com/watch?v=Ps9NJ6feaH8" target="_blank" rel="noopener">https://www.youtube.com/watch?v=Ps9NJ6feaH8</a>
+            </div>
+          </article>
+          <article class="now-card"
+            data-thumb="images/thumbs/marqa.jpg"
+            data-a="자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다."
+            data-b="협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.">
+            <div class="head">
+              <span>03</span>
+              <div>
+                <strong>MARQA</strong>
+                <em>자율운항 협상을 위한 언어모델 질의응답</em>
+              </div>
+            </div>
+            <div class="player" data-kind="mp4" data-src="images/research/experiment_video.mp4">
+              <div class="frame">
+                <video controls playsinline preload="metadata"></video>
+                <img class="still" alt="">
+              </div>
+            </div>
+            <div class="blurb">
+              <p>자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다.</p>
+              <p>협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.</p>
+            </div>
+          </article>
         </div>
       </div>
       <div class="print-head">
@@ -1095,7 +1141,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   var pastCopy = document.getElementById("past-copy");
   var pastMeta = document.getElementById("past-meta");
   var pastYt = document.getElementById("past-yt");
-  var nowYt = document.getElementById("now-yt");
   var i = 0;
 
   function setYt(el, id) {
@@ -1153,13 +1198,13 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     return { title: topic.title, clips: topic.clips };
   }));
   renderSheet(document.getElementById("now-sheet"), [{
-    clips: Array.prototype.map.call(document.querySelectorAll("#now-menu button"), function (btn) {
+    clips: Array.prototype.map.call(document.querySelectorAll(".now-card"), function (card) {
       return {
-        label: btn.querySelector("strong").textContent,
-        a: btn.getAttribute("data-a") || "",
-        b: btn.getAttribute("data-b") || "",
-        yt: btn.getAttribute("data-yt") || "",
-        thumb: btn.getAttribute("data-thumb") || ""
+        label: card.querySelector("strong").textContent,
+        a: card.getAttribute("data-a") || "",
+        b: card.getAttribute("data-b") || "",
+        yt: card.getAttribute("data-yt") || "",
+        thumb: card.getAttribute("data-thumb") || ""
       };
     })
   }]);
@@ -1284,25 +1329,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
 
   function step(d) { show(i + d); }
-
-  document.getElementById("now-menu").addEventListener("click", function (e) {
-    var btn = e.target.closest("button");
-    if (!btn || btn.parentNode.id !== "now-menu") return;
-    var player = document.getElementById("now-player");
-    ["kind", "src", "poster"].forEach(function (key) {
-      var val = btn.getAttribute("data-" + key) || "";
-      if (val) player.setAttribute("data-" + key, val);
-      else player.removeAttribute("data-" + key);
-    });
-    Array.prototype.forEach.call(btn.parentNode.children, function (el) {
-      el.classList.toggle("is-on", el === btn);
-    });
-    var copy = document.getElementById("now-copy");
-    copy.children[0].textContent = btn.getAttribute("data-a") || "";
-    copy.children[1].textContent = btn.getAttribute("data-b") || "";
-    setYt(nowYt, btn.getAttribute("data-yt") || "");
-    if (player.closest(".slide").classList.contains("is-active")) mount(player);
-  });
 
   prev.addEventListener("click", function () { step(-1); });
   next.addEventListener("click", function () { step(1); });
