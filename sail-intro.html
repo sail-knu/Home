@@ -71,6 +71,13 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .now-copy { margin-top: 12px; }
   .now-copy p { margin: 0 0 6px; color: var(--muted); font-size: 15px; line-height: 1.5; }
   .meta { margin: 8px 0 0; color: #8d8d8d; font-size: 12px; letter-spacing: 0.03em; }
+  .yt {
+    display: inline-block; margin-top: 8px; color: #9a9a9a;
+    font-size: 13px; text-decoration: none; word-break: break-all;
+  }
+  .yt:hover { color: var(--green); }
+  .yt[hidden] { display: none; }
+  .print-head, .clip-sheet { display: none; }
   .switch { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .switch[hidden] { display: none; }
   .switch button, .menu button { cursor: pointer; background: transparent; }
@@ -410,7 +417,78 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
   .year-note b { color: var(--green); font-weight: 600; }
 
-  @media (max-width: 980px), (max-height: 760px) {
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: 13.333in 7.5in; margin: 0; }
+    html, body {
+      height: auto !important; overflow: visible !important;
+      background: #000 !important; color: #f4f4f4 !important;
+    }
+    .dock, .progress { display: none !important; }
+    .deck { height: auto; }
+    .slide {
+      position: relative !important; inset: auto !important;
+      opacity: 1 !important; visibility: visible !important;
+      display: block !important; pointer-events: auto !important;
+      width: 13.333in; min-height: 7.5in; height: auto !important;
+      break-after: page; page-break-after: always; background: #000 !important;
+    }
+    .slide-inner {
+      height: auto !important; min-height: 7.5in; overflow: visible !important;
+      padding: 28px 40px 24px !important; justify-content: flex-start !important;
+    }
+    .print-head { display: block; }
+    .slide[data-name="2023–2025"] .split,
+    .slide[data-name="진행 연구"] .split { display: none !important; }
+    .clip-sheet {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; margin-top: 8px;
+    }
+    .clip-sheet .group { grid-column: 1 / -1; margin: 8px 0 0; font-size: 20px; }
+    .clip-sheet article { break-inside: avoid; page-break-inside: avoid; }
+    .clip-sheet img {
+      width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+      background: #111; border-radius: 10px; display: block;
+    }
+    .clip-sheet h3 { margin: 8px 0 4px; font-size: 16px; }
+    .clip-sheet p { margin: 0; color: #cfcfcf !important; font-size: 13px; line-height: 1.4; }
+    .clip-sheet a { color: #76b900 !important; font-size: 12px; word-break: break-all; }
+    video { display: none !important; }
+    h2 { font-size: 32px !important; margin: 4px 0 8px !important; }
+    .bio-mark { font-size: 64px !important; }
+    .cover-en { font-size: 16px !important; }
+    .who-name { font-size: 20px !important; margin: 8px 0 2px !important; }
+    .lead { font-size: 14px !important; margin-bottom: 4px !important; }
+    .career li { padding: 4px 0 !important; font-size: 12px !important; }
+    .portrait { width: 118px !important; height: 148px !important; }
+    .axes { margin-top: 8px !important; gap: 12px !important; }
+    .anim, .slide[data-name="향후"] .anim { height: 64px !important; }
+    .pubs li { font-size: 11px !important; padding: 3px 0 4px !important; }
+    .card { min-height: 0 !important; padding: 14px 14px 12px !important; }
+    .cards { gap: 10px !important; }
+    .yearline { margin-top: 10px !important; gap: 12px !important; }
+    .yearline article { padding: 12px 12px 8px !important; }
+    .yearline li { font-size: 13px !important; margin-bottom: 6px !important; }
+    .roster article { min-height: 0 !important; }
+    .roster-compact img, .roster-compact .ph { width: 48px !important; height: 48px !important; }
+    .people-page { gap: 12px !important; padding-top: 0 !important; }
+    .gear { gap: 10px !important; }
+    .gear-photo { height: 148px !important; }
+    .gear h3 { font-size: 20px !important; margin: 8px 0 4px !important; }
+    .duo { gap: 28px !important; }
+    .duo h2 { font-size: 28px !important; }
+    .duo .duty, .duo .perk { min-height: 0 !important; padding: 7px 0 !important; }
+    .duty h3 { font-size: 16px !important; }
+    .clip-sheet { gap: 8px 16px !important; }
+    .clip-sheet .group { font-size: 15px !important; margin: 2px 0 0 !important; }
+    .clip-sheet img { height: 112px !important; aspect-ratio: auto !important; }
+    .clip-sheet h3 { font-size: 13px !important; margin: 4px 0 2px !important; }
+    .clip-sheet p, .clip-sheet a { font-size: 11px !important; line-height: 1.3 !important; }
+    .plan-conf { margin-top: 8px !important; }
+    .confs .mark { height: 52px !important; margin-bottom: 6px !important; }
+    .confs h3 { font-size: 16px !important; }
+  }
+
+  @media screen and (max-width: 980px), screen and (max-height: 760px) {
     .split, .axes, .cards, .people, .agenda.four, .duties, .bio, .bio-side, .duo, .roster, .yearline, .gear, .confs { grid-template-columns: 1fr; }
     .slide-inner { overflow: auto; justify-content: flex-start; }
     .card { min-height: 0; }
@@ -541,9 +619,15 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
           </div>
           <div class="switch" id="past-switch" hidden></div>
           <div class="now-copy" id="past-copy"><p></p><p></p></div>
+          <a class="yt" id="past-yt" target="_blank" rel="noopener" hidden></a>
           <p class="meta" id="past-meta"></p>
         </div>
       </div>
+      <div class="print-head">
+        <p class="kicker">2023 — 2025</p>
+        <h2>이전 연구</h2>
+      </div>
+      <div class="clip-sheet" id="past-sheet"></div>
     </div>
   </section>
 
@@ -610,6 +694,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
               data-kind="mp4"
               data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
               data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png"
+              data-thumb="images/thumbs/case_mc.png"
               data-a="최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다."
               data-b="계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.">
               <span>01</span>
@@ -618,6 +703,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
             </button>
             <button type="button"
               data-kind="mp4" data-src="videos/Ps9NJ6feaH8.mp4"
+              data-yt="Ps9NJ6feaH8" data-thumb="images/thumbs/Ps9NJ6feaH8.jpg"
               data-a="하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다."
               data-b="선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.">
               <span>02</span>
@@ -626,6 +712,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
             </button>
             <button type="button"
               data-kind="mp4" data-src="images/research/experiment_video.mp4"
+              data-thumb="images/thumbs/marqa.jpg"
               data-a="자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다."
               data-b="협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.">
               <span>03</span>
@@ -634,6 +721,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
             </button>
             <button type="button"
               data-kind="mp4" data-src="videos/pBSBDa7eUqQ.mp4"
+              data-yt="pBSBDa7eUqQ" data-thumb="images/thumbs/pBSBDa7eUqQ.jpg"
               data-a="무인선이 모선의 크래들로 되돌아올 때, 부딪히지 않고 들어가도록 제어기를 설계합니다."
               data-b="시뮬레이션과 수조 실험으로 회수 과정을 검증하고 있습니다.">
               <span>04</span>
@@ -655,8 +743,14 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
             <p>최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다.</p>
             <p>계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.</p>
           </div>
+          <a class="yt" id="now-yt" target="_blank" rel="noopener" hidden></a>
         </div>
       </div>
+      <div class="print-head">
+        <p class="kicker">In progress</p>
+        <h2>진행중인 연구</h2>
+      </div>
+      <div class="clip-sheet" id="now-sheet"></div>
     </div>
   </section>
 
@@ -919,10 +1013,10 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       title: "제한 수로 비선형 모델예측제어", em: "2023–2024",
       meta: "TMECH 2024 · JFR 2024 · IJRR 2023 · RA-L 2023",
       clips: [
-        { kind: "mp4", src: "videos/p2MESqGvOSE.mp4", label: "Canal NMPC",
+        { kind: "mp4", src: "videos/p2MESqGvOSE.mp4", yt: "p2MESqGvOSE", thumb: "images/thumbs/p2MESqGvOSE.jpg", label: "Canal NMPC",
           a: "A ship navigates a narrow canal while avoiding obstacles.",
           b: "Model predictive control sets rudder and thrust under obstacle constraints." },
-        { kind: "mp4", src: "videos/vTFZQQuFJvI.mp4", label: "Navigable-area MPC",
+        { kind: "mp4", src: "videos/vTFZQQuFJvI.mp4", yt: "vTFZQQuFJvI", thumb: "images/thumbs/vTFZQQuFJvI.jpg", label: "Navigable-area MPC",
           a: "A camera finds the navigable water surface, and the ship follows that region.",
           b: "The detected region is used as a path constraint in model predictive control." }
       ]
@@ -931,7 +1025,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       title: "캐스케이드 튜브 기반 접안제어", em: "2023–2024",
       meta: "TCST 2024 · IFAC 2023",
       clips: [
-        { kind: "mp4", src: "videos/nMzKQgqXK3o.mp4", label: "Tube MPC",
+        { kind: "mp4", src: "videos/nMzKQgqXK3o.mp4", yt: "nMzKQgqXK3o", thumb: "images/thumbs/nMzKQgqXK3o.jpg", label: "Tube MPC",
           a: "The ship docks under wind and model error.",
           b: "Uncertainty is wrapped in a tube, and the trajectory keeps that tube off the berth." }
       ]
@@ -940,7 +1034,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       title: "학습기반 동역학 모델링", em: "2023",
       meta: "AURO 2023 · CDC 2023",
       clips: [
-        { kind: "img", src: "images/research/koopman.png", label: "Koopman",
+        { kind: "img", src: "images/research/koopman.png", thumb: "images/research/koopman.png", label: "Koopman",
           a: "Ship dynamics are learned from voyage data for multistep prediction.",
           b: "A parameter-varying Koopman model tracks changing conditions and is used for control." }
       ]
@@ -949,10 +1043,10 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       title: "동적 장애물 환경 경로계획", em: "2024",
       meta: "KRoC 2024 Outstanding Paper",
       clips: [
-        { kind: "mp4", src: "videos/rMhYUBd4eCY.mp4", label: "Pedestrians",
+        { kind: "mp4", src: "videos/rMhYUBd4eCY.mp4", yt: "rMhYUBd4eCY", thumb: "images/thumbs/rMhYUBd4eCY.jpg", label: "Pedestrians",
           a: "Indoors, the robot replans around people and moving obstacles.",
           b: "Model predictive control includes the wheel constraint and was tested on a mobile robot." },
-        { kind: "mp4", src: "videos/VH7DcQ5LjnM.mp4", label: "AGV",
+        { kind: "mp4", src: "videos/VH7DcQ5LjnM.mp4", yt: "VH7DcQ5LjnM", thumb: "images/thumbs/VH7DcQ5LjnM.jpg", label: "AGV",
           a: "An AGV replans to avoid moving obstacles.",
           b: "Model predictive control recomputes the trajectory under the nonholonomic constraint." }
       ]
@@ -961,13 +1055,13 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       title: "선회원 기반 제어장벽함수", em: "2025",
       meta: "JICROS 2025 · TCST · Mechatronics 2026, accepted",
       clips: [
-        { kind: "mp4", src: "videos/t__N0BX2tBQ.mp4", label: "Multi-vessel",
+        { kind: "mp4", src: "videos/t__N0BX2tBQ.mp4", yt: "t__N0BX2tBQ", thumb: "images/thumbs/t__N0BX2tBQ.jpg", label: "Multi-vessel",
           a: "Several vessels avoid each other under the COLREGs.",
           b: "A turning circle constrains both the avoidance side and safety." },
-        { kind: "mp4", src: "videos/_fUdCjV7Lbg.mp4", label: "Turning-circle CBF",
+        { kind: "mp4", src: "videos/_fUdCjV7Lbg.mp4", yt: "_fUdCjV7Lbg", thumb: "images/thumbs/_fUdCjV7Lbg.jpg", label: "Turning-circle CBF",
           a: "A turning-circle control barrier function keeps commands inside the turning limit.",
           b: "The collision constraint is solved in real time for left and right turns." },
-        { kind: "mp4", src: "videos/HvF8yXl9-hc.mp4", label: "Single encounter",
+        { kind: "mp4", src: "videos/HvF8yXl9-hc.mp4", yt: "HvF8yXl9-hc", thumb: "images/thumbs/HvF8yXl9-hc.jpg", label: "Single encounter",
           a: "A single encounter gets a COLREGs-compliant avoidance side.",
           b: "The same turning-circle constraint is applied to that case." }
       ]
@@ -1000,7 +1094,76 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   var pastSwitch = document.getElementById("past-switch");
   var pastCopy = document.getElementById("past-copy");
   var pastMeta = document.getElementById("past-meta");
+  var pastYt = document.getElementById("past-yt");
+  var nowYt = document.getElementById("now-yt");
   var i = 0;
+
+  function setYt(el, id) {
+    if (!el) return;
+    if (!id) {
+      el.hidden = true;
+      el.removeAttribute("href");
+      el.textContent = "";
+      return;
+    }
+    var href = "https://www.youtube.com/watch?v=" + id;
+    el.hidden = false;
+    el.href = href;
+    el.textContent = href;
+  }
+
+  function clipCard(clip) {
+    var art = document.createElement("article");
+    var img = document.createElement("img");
+    img.src = clip.thumb || clip.src || "";
+    img.alt = clip.label || "";
+    var h = document.createElement("h3");
+    h.textContent = clip.label || "";
+    var p1 = document.createElement("p");
+    p1.textContent = clip.a || "";
+    var p2 = document.createElement("p");
+    p2.textContent = clip.b || "";
+    art.appendChild(img);
+    art.appendChild(h);
+    art.appendChild(p1);
+    art.appendChild(p2);
+    if (clip.yt) {
+      var link = document.createElement("a");
+      link.href = "https://www.youtube.com/watch?v=" + clip.yt;
+      link.textContent = link.href;
+      art.appendChild(link);
+    }
+    return art;
+  }
+
+  function renderSheet(root, groups) {
+    if (!root) return;
+    groups.forEach(function (group) {
+      if (group.title) {
+        var h = document.createElement("h3");
+        h.className = "group";
+        h.textContent = group.title;
+        root.appendChild(h);
+      }
+      group.clips.forEach(function (clip) { root.appendChild(clipCard(clip)); });
+    });
+  }
+
+  renderSheet(document.getElementById("past-sheet"), PAST.map(function (topic) {
+    return { title: topic.title, clips: topic.clips };
+  }));
+  renderSheet(document.getElementById("now-sheet"), [{
+    clips: Array.prototype.map.call(document.querySelectorAll("#now-menu button"), function (btn) {
+      return {
+        label: btn.querySelector("strong").textContent,
+        a: btn.getAttribute("data-a") || "",
+        b: btn.getAttribute("data-b") || "",
+        yt: btn.getAttribute("data-yt") || "",
+        thumb: btn.getAttribute("data-thumb") || ""
+      };
+    })
+  }]);
+
   PAST.forEach(function (topic, idx) {
     var btn = document.createElement("button");
     btn.type = "button";
@@ -1062,6 +1225,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       copy.children[0].textContent = clip.a || "";
       copy.children[1].textContent = clip.b || "";
     }
+    setYt(pastYt, clip.yt || "");
     if (player.closest(".slide").classList.contains("is-active")) mount(player);
   }
 
@@ -1136,6 +1300,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     var copy = document.getElementById("now-copy");
     copy.children[0].textContent = btn.getAttribute("data-a") || "";
     copy.children[1].textContent = btn.getAttribute("data-b") || "";
+    setYt(nowYt, btn.getAttribute("data-yt") || "");
     if (player.closest(".slide").classList.contains("is-active")) mount(player);
   });
 
