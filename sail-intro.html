@@ -9,6 +9,7 @@
 try { if (localStorage.getItem("sail-theme") === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 </script>
 <meta name="description" content="국립공주대학교 SAIL 안전 자율·지능연구실 소개">
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,8 +50,8 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
 
   .split {
     display: grid;
-    grid-template-columns: minmax(280px, 0.86fr) minmax(420px, 1.2fr);
-    gap: clamp(24px, 3.5vw, 56px);
+    grid-template-columns: minmax(220px, 0.52fr) minmax(520px, 1.72fr);
+    gap: clamp(16px, 2vw, 32px);
     align-items: center; width: 100%;
   }
 
@@ -70,8 +71,8 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .player.is-still .frame img.still { background: #fff; }
   .now-copy { margin-top: 12px; }
   .now-copy p { margin: 0 0 6px; color: var(--muted); font-size: 15px; line-height: 1.5; }
-  .now-page { justify-content: flex-start; padding-top: clamp(48px, 5.2vh, 70px); padding-bottom: 68px; }
-  .now-screen { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
+  .now-page { justify-content: center; }
+  .now-screen { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; width: 100%; }
   .now-page h2 { margin: 8px 0 14px; font-size: clamp(28px, 3.1vw, 46px); }
   .now-grid {
     display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -94,9 +95,20 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
   .now-card .player { flex: 0 0 auto; }
   .now-card .frame { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 12px; }
-  .now-card .blurb { flex: 0 0 auto; margin-top: 8px; }
-  .now-card .blurb p { margin: 0 0 4px; color: var(--muted); font-size: 13px; line-height: 1.4; }
-  .now-card .yt { margin-top: 2px; font-size: 12px; }
+  .now-points {
+    list-style: none; margin: 16px 0 0; padding: 0;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .now-points li {
+    position: relative; margin: 0; padding-left: 18px;
+    color: var(--ink); font-size: clamp(16px, 1.28vw, 20px); font-weight: 500;
+    line-height: 1.6; letter-spacing: -0.01em;
+  }
+  .now-points li::before {
+    content: ""; position: absolute; left: 0; top: 0.55em;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+  }
+  .now-card .yt { margin-top: 8px; font-size: 12px; }
   .meta { margin: 8px 0 0; color: #8d8d8d; font-size: 12px; letter-spacing: 0.03em; }
   .yt {
     display: inline-block; margin-top: 8px; color: #9a9a9a;
@@ -169,6 +181,43 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
   .career b { color: var(--green); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; }
   .career small { display: block; margin-top: 2px; color: #8a8a8a; font-size: 12px; }
+  .slide[data-name="소개"] .slide-inner { position: relative; padding-top: 196px; }
+  .slide[data-name="소개"] .seal-frame {
+    display: block; width: 148px; height: 148px; overflow: hidden; flex: 0 0 auto;
+  }
+  .slide[data-name="소개"] .seal {
+    width: calc(148px * 1000 / 749);
+    height: auto;
+    max-width: none;
+    margin-left: calc(-148px * 132 / 749);
+    margin-top: calc(-148px * 3 / 743);
+  }
+  .slide[data-name="소개"] .cover-top {
+    position: absolute; top: clamp(18px, 2.6vh, 36px); left: var(--pad-x);
+    gap: 24px; font-size: 42px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15;
+    z-index: 2;
+  }
+  .mark-lockup {
+    display: grid; grid-template-columns: auto 1fr; column-gap: 18px; align-items: center;
+  }
+  .mark-lockup .sail-logo { grid-column: 1; grid-row: 1; }
+  .mark-lockup .bio-mark { grid-column: 2; grid-row: 1; }
+  .mark-lockup .cover-en { grid-column: 2; grid-row: 2; }
+  .slide[data-name="소개"] .sail-logo {
+    display: block; width: auto; height: clamp(84px, 9vw, 124px); margin: 0; flex: 0 0 auto;
+  }
+  .slide[data-name="소개"] .bio-mark { margin: 0; font-size: clamp(72px, 7.4vw, 108px); }
+  .slide[data-name="소개"] .cover-en { margin-top: 10px; font-size: clamp(18px, 1.7vw, 24px); }
+  .slide[data-name="소개"] .cover-ko { margin-top: 8px; font-size: 20px; }
+  .slide[data-name="소개"] .who-name { margin-top: 28px; font-size: 34px; }
+  .slide[data-name="소개"] .lead { font-size: clamp(18px, 1.55vw, 23px); }
+  .slide[data-name="소개"] .bio-side { grid-template-columns: 184px 1fr; gap: 22px; }
+  .slide[data-name="소개"] .portrait { width: 184px; height: 230px; }
+  .slide[data-name="소개"] .career li {
+    grid-template-columns: 112px 1fr; padding: 12px 0; font-size: 17px;
+  }
+  .slide[data-name="소개"] .career b { font-size: 15px; }
+  .slide[data-name="소개"] .career small { font-size: 14px; }
 
   .axes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 28px; }
   .axes article { border-top: 1px solid var(--line); padding-top: 12px; }
@@ -242,9 +291,11 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .agenda strong { display: block; margin-top: 10px; font-size: clamp(16px, 1.4vw, 20px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.3; }
 
   .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
-  .slide-inner.fill { justify-content: flex-start; padding-top: 72px; }
-  .cards-fill { flex: 1; min-height: 0; }
-  .cards-fill .card { min-height: 0; height: 100%; }
+  .slide-inner.fill { justify-content: center; }
+  .slide[data-name="현재"] .cards { align-items: stretch; flex: 0 0 auto; }
+  .slide[data-name="현재"] .card { min-height: 0; height: auto; }
+  .slide[data-name="현재"] .card p + p { margin-top: 8px; }
+  .slide[data-name="현재"] .card .src { margin-top: 12px; color: #8e8e8e; font-size: 13px; }
   .card {
     min-height: 280px; display: flex; flex-direction: column;
     border: 1px solid var(--line); border-radius: 16px; padding: 26px 24px 22px; background: #070707;
@@ -350,6 +401,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   html[data-theme="light"] .menu button.is-on,
   html[data-theme="light"] .switch button.is-on { background: rgba(118, 185, 0, 0.16); }
   html[data-theme="light"] .seal { filter: none; }
+  html[data-theme="light"] .sail-logo { filter: invert(1); }
   html[data-theme="light"] .dock { background: linear-gradient(transparent, rgba(244, 244, 244, 0.94) 42%); }
   html[data-theme="light"] .ticks button { background: #cfcfcf; }
   html[data-theme="light"] .nav-btn { background: rgba(255, 255, 255, 0.8); }
@@ -361,7 +413,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   html[data-theme="light"] .anim,
   html[data-theme="light"] .confs .mark { background: #111; color: #f4f4f4; }
 
-  .duo { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: start; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
   .duo h2 { font-size: clamp(28px, 3vw, 42px); margin-bottom: 10px; }
   .duo .duties { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
   .duo .perks { margin-top: 0; max-width: none; }
@@ -387,7 +439,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .roster .role { margin: 0; color: var(--green); font-size: 13px; }
   .roster .since { margin: 0; color: var(--muted); font-size: 13px; }
   .roster .topic { margin: 4px 0 0; color: #d5d5d5; font-size: 13px; line-height: 1.4; }
-  .people-page { justify-content: flex-start; gap: 28px; padding-top: 64px; }
+  .people-page { justify-content: center; gap: 28px; }
   .people-page h2 { font-size: clamp(28px, 3vw, 40px); margin: 6px 0 12px; }
   .roster-compact { grid-template-columns: 1fr; gap: 10px; }
   .roster-compact article { min-height: 0; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 16px; padding: 10px 16px; }
@@ -413,7 +465,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     background: #111; border-radius: 12px; margin-bottom: 10px; padding: 10px;
   }
   .confs .mark.light { background: #f4f4f4; }
-  .confs .mark.word { color: #f4f4f4; font-size: 22px; font-weight: 700; letter-spacing: 0.08em; }
   .confs img { max-width: 100%; max-height: 64px; object-fit: contain; }
   .confs h3 { margin: 0 0 4px; font-size: 20px; letter-spacing: -0.03em; }
   .confs p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -424,8 +475,9 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .gear p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
   .year-range {
     font-size: clamp(22px, 2vw, 28px); letter-spacing: -0.03em; text-transform: none;
-    font-weight: 600; line-height: 1; margin: 0 0 8px;
+    font-weight: 600; line-height: 1.2; margin: 0 0 8px;
   }
+  .year-range span { margin-left: 14px; color: var(--ink); font-weight: 600; }
   .yearline {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px;
     margin-top: 28px;
@@ -480,6 +532,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     .clip-sheet p { margin: 0; color: #cfcfcf !important; font-size: 13px; line-height: 1.4; }
     .clip-sheet a { color: #76b900 !important; font-size: 12px; word-break: break-all; }
     video { display: none !important; }
+    .sail-logo { filter: none !important; }
     h2 { font-size: 32px !important; margin: 4px 0 8px !important; }
     .bio-mark { font-size: 64px !important; }
     .cover-en { font-size: 16px !important; }
@@ -518,6 +571,14 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   @media screen and (max-width: 980px), screen and (max-height: 760px) {
     .split, .axes, .cards, .people, .agenda.four, .duties, .bio, .bio-side, .duo, .roster, .yearline, .gear, .confs { grid-template-columns: 1fr; }
     .slide-inner { overflow: auto; justify-content: flex-start; }
+    .slide[data-name="소개"] .slide-inner { padding-top: 28px; }
+    .slide[data-name="소개"] .cover-top { position: static; font-size: 26px; margin-bottom: 16px; }
+    .slide[data-name="소개"] .seal-frame { width: 88px; height: 88px; }
+    .slide[data-name="소개"] .seal {
+      width: calc(88px * 1000 / 749);
+      margin-left: calc(-88px * 132 / 749);
+      margin-top: calc(-88px * 3 / 743);
+    }
     .card { min-height: 0; }
     .anim { height: 110px; }
   }
@@ -537,14 +598,17 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
 
   <section class="slide is-active" data-name="소개">
     <div class="slide-inner">
+      <div class="cover-top">
+        <span class="seal-frame"><img class="seal" src="images/logos/knu-w.png" alt="국립공주대학교"></span>
+        <span>국립공주대학교 · 기계자동차공학부</span>
+      </div>
       <div class="bio">
         <div>
-          <div class="cover-top">
-            <img class="seal" src="images/logos/knu-w.png" alt="">
-            <span>국립공주대학교 · 기계자동차공학부</span>
+          <div class="mark-lockup">
+            <img class="sail-logo" src="SAIL_Logo_white.png?v=icon" alt="">
+            <h1 class="bio-mark">SAIL</h1>
+            <p class="cover-en"><span>S</span>afe <span>A</span>utonomy &amp; <span>I</span>ntelligence <span>L</span>aboratory</p>
           </div>
-          <h1 class="bio-mark">SAIL</h1>
-          <p class="cover-en"><span>S</span>afe <span>A</span>utonomy &amp; <span>I</span>ntelligence <span>L</span>aboratory</p>
           <p class="cover-ko">안전 자율·지능연구실</p>
           <h2 class="who-name">이찬규 <span>Changyu Lee</span></h2>
           <p class="lead">무인 이동체의 안전 경로계획·제어를 연구합니다.</p>
@@ -556,14 +620,13 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
             <li><b>2025.09–</b><div>조교수, 국립공주대학교<small>기계자동차공학부</small></div></li>
             <li><b>2025.04–08</b><div>박사후연구원, KAIST<small>MORIN Lab</small></div></li>
             <li><b>2025.02</b><div>박사, KAIST 기계공학<small>Safety-enhanced MPC for autonomous surface vehicles</small></div></li>
-            <li><b>2020.02</b><div>석사, KAIST 기계공학</div></li>
+            <li><b>2020.02</b><div>석사, KAIST 기계공학<small>Stochastic MPC for an unmanned underwater vehicle</small></div></li>
             <li><b>2018</b><div>학사, 한양대학교<small>수학 · 기계공학</small></div></li>
           </ol>
         </div>
       </div>
     </div>
   </section>
-
   <section class="slide" data-name="Research">
     <div class="slide-inner">
       <p class="kicker">연구</p>
@@ -632,7 +695,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       </div>
     </div>
   </section>
-
   <section class="slide" data-name="2023–2025">
     <div class="slide-inner">
       <div class="split">
@@ -661,7 +723,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       <div class="clip-sheet" id="past-sheet"></div>
     </div>
   </section>
-
   <section class="slide" data-name="현재">
     <div class="slide-inner fill">
       <p class="kicker">2026 —</p>
@@ -681,7 +742,6 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
           <h3>한국연구재단 신진연구</h3>
           <p>멀티모달 안전 궤적을 위해, 도달가능성 분석에 기반한 MPPI 알고리즘을 개발합니다.</p>
           <p>여러 움직임 후보 중에서 안전한 궤적을 고르는 계획·제어가 이 과제의 중심입니다.</p>
-          <div class="who">이찬규<small>임재민 · 유재민 · 우민지</small></div>
         </article>
         <article class="card">
           <div class="anim" aria-hidden="true">
@@ -695,7 +755,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
           <h3>신임교수 정착연구</h3>
           <p>모델예측제어로, 외란이 있어도 무인이동체가 목표를 따라가게 하는 알고리즘을 만듭니다.</p>
           <p>경로를 유지하면서 안전 여유를 남기는 강건 제어가 목표입니다.</p>
-          <div class="who">이찬규<small>국립공주대학교 신임교수정착연구비</small></div>
+          <p class="src">국립공주대학교 신임교수정착연구비</p>
         </article>
         <article class="card">
           <div class="anim" aria-hidden="true">
@@ -708,22 +768,17 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
           <span class="idx">03 · 산학</span>
           <h3>삼성중공업</h3>
           <p>경로계획 · 제어</p>
-          <div class="who">이찬규<small>유재민</small></div>
         </article>
       </div>
     </div>
   </section>
-
   <section class="slide" data-name="진행 연구">
     <div class="slide-inner now-page">
       <div class="now-screen">
         <p class="kicker">In progress</p>
         <h2>진행중인 연구</h2>
         <div class="now-grid">
-          <article class="now-card"
-            data-thumb="images/thumbs/case_mc.png"
-            data-a="최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다."
-            data-b="계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.">
+          <article class="now-card" data-thumb="images/thumbs/case_mc.png">
             <div class="head">
               <span>01</span>
               <div>
@@ -739,16 +794,15 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
                 <img class="still" alt="">
               </div>
             </div>
-            <div class="blurb">
-              <p>최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다.</p>
-              <p>계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.</p>
-            </div>
+            <ul class="now-points">
+              <li>A neural net picks the avoidance direction.</li>
+              <li>Multimodal MPC gets much lighter to run.</li>
+              <li>It learns the teacher's safe avoidance mode.</li>
+            </ul>
           </article>
           <article class="now-card"
             data-yt="Ps9NJ6feaH8"
-            data-thumb="images/thumbs/Ps9NJ6feaH8.jpg"
-            data-a="하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다."
-            data-b="선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.">
+            data-thumb="images/thumbs/Ps9NJ6feaH8.jpg">
             <div class="head">
               <span>02</span>
               <div>
@@ -762,16 +816,14 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
                 <img class="still" alt="">
               </div>
             </div>
-            <div class="blurb">
-              <p>하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다.</p>
-              <p>선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.</p>
-              <a class="yt" href="https://www.youtube.com/watch?v=Ps9NJ6feaH8" target="_blank" rel="noopener">https://www.youtube.com/watch?v=Ps9NJ6feaH8</a>
-            </div>
+            <ul class="now-points">
+              <li>Several candidates replace a single path.</li>
+              <li>Choose tracking, avoidance, or berthing.</li>
+              <li>A turning-circle CBF checks that the ship can turn.</li>
+            </ul>
+            <a class="yt" href="https://www.youtube.com/watch?v=Ps9NJ6feaH8" target="_blank" rel="noopener">https://www.youtube.com/watch?v=Ps9NJ6feaH8</a>
           </article>
-          <article class="now-card"
-            data-thumb="images/thumbs/marqa.jpg"
-            data-a="자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다."
-            data-b="협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.">
+          <article class="now-card" data-thumb="images/thumbs/marqa.jpg">
             <div class="head">
               <span>03</span>
               <div>
@@ -785,10 +837,11 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
                 <img class="still" alt="">
               </div>
             </div>
-            <div class="blurb">
-              <p>자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다.</p>
-              <p>협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.</p>
-            </div>
+            <ul class="now-points">
+              <li>Language-model Q&amp;A is added to autonomous ships.</li>
+              <li>The ship can ask and answer about the situation.</li>
+              <li>It explains decisions in negotiation encounters.</li>
+            </ul>
           </article>
         </div>
       </div>
@@ -799,48 +852,107 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       <div class="clip-sheet" id="now-sheet"></div>
     </div>
   </section>
-
-  <section class="slide" data-name="1년">
+  <section class="slide" data-name="향후">
     <div class="slide-inner">
-      <p class="kicker year-range">2025.09 — 2026.09</p>
-      <div class="yearline">
+      <p class="kicker">Next</p>
+      <h2>향후 계획</h2>
+      <div class="axes">
         <article>
-          <h3>국제 저널</h3>
-          <ul>
-            <li><b>TCST</b>선회원 제어장벽함수, 비홀로노믹 충돌회피</li>
-            <li><b>Mechatronics</b>COLREGs 준수 충돌회피</li>
-            <li><b>IJCAS</b>전·후방 도달가능성 기반 접안</li>
-            <li><b>Ocean Engineering</b>L1-MPC, 부족구동 선박 경로추종</li>
-          </ul>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <circle class="barrier" cx="236" cy="78" r="30"></circle>
+              <circle class="obs" cx="236" cy="78" r="9"></circle>
+              <g class="arm-upper">
+                <line x1="64" y1="118" x2="128" y2="62" stroke="#76b900" stroke-width="7" stroke-linecap="round"></line>
+                <circle cx="64" cy="118" r="6" fill="#3a3a3a"></circle>
+                <g class="arm-fore">
+                  <line x1="128" y1="62" x2="196" y2="86" stroke="#f4f4f4" stroke-width="5" stroke-linecap="round"></line>
+                  <circle cx="196" cy="86" r="4" fill="#76b900"></circle>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <span>01</span>
+          <h3>매니퓰레이터 CBF</h3>
+          <p>7자유도 로봇팔이 사람의 작업 공간을 침범하지 않도록 관절 속도 명령에 안전 필터를 적용합니다. 사람이 가까워지면 위험한 방향의 움직임만 조정해, 가능한 범위에서 작업을 계속합니다.</p>
         </article>
         <article>
-          <h3>국제 학회</h3>
-          <ul>
-            <li><b>IFAC WC · 2편</b>베어링 편대 추종, COLREGs 충돌회피</li>
-            <li><b>ICCAS · 2편</b>구동 지연 보상 경로추종, 선회원 CBF 멀티모달 궤적</li>
-            <li><b>OCEANS</b>외란 관측기 기반 무인선 경로추종</li>
-          </ul>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <circle class="barrier" cx="200" cy="78" r="34"></circle>
+              <circle class="obs" cx="200" cy="78" r="11"></circle>
+              <line x1="28" y1="124" x2="198" y2="78" stroke="#3a3a3a" stroke-width="2" stroke-dasharray="5 5"></line>
+              <circle class="raw-dot" r="4"></circle>
+              <circle class="safe-dot" r="5"></circle>
+            </svg>
+          </div>
+          <span>02</span>
+          <h3>Physical AI</h3>
+          <p>학습 정책이 만든 행동 명령을 모델예측제어와 제어장벽함수로 점검하고, 안전 범위를 벗어나는 입력만 보정합니다. 선박에서 개발한 안전 제어 기술을 모바일 로봇과 매니퓰레이터로 확장합니다.</p>
         </article>
         <article>
-          <h3>과제</h3>
-          <ul>
-            <li><b>한국연구재단 신진</b>도달가능성 기반 MPPI, 멀티모달 안전 궤적. 2026–2029</li>
-            <li><b>신임교수 정착연구</b>외란에 강건한 무인이동체 모델예측제어. 2026–2027</li>
-            <li><b>삼성중공업</b>경로계획 · 제어</li>
-          </ul>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="lane" d="M24 108 C 90 108, 130 40, 190 52 S 270 112, 304 64"></path>
+              <circle class="teacher" r="5"></circle>
+              <circle class="student" r="5"></circle>
+            </svg>
+          </div>
+          <span>03</span>
+          <h3>학습 기반 제어</h3>
+          <p>모델예측제어가 선택한 회피 방식을 모사학습으로 학습합니다. 이를 매니퓰레이터에도 적용해 온라인 최적화의 계산 부담을 줄이고, 신경망 추론으로 안전한 제어 입력을 빠르게 생성합니다.</p>
+        </article>
+      </div>
+      <div class="plan-conf">
+        <h3>학회 참가 계획</h3>
+        <div class="confs">
+            <article>
+              <div class="mark"><img src="images/logos/icros-2026.png" alt="ICROS"></div>
+              <h3>ICROS</h3>
+              <p>2027.06.30–07.03<br>강원 고성, 소노캄 델피노</p>
+            </article>
+            <article>
+              <div class="mark"><img src="images/logos/iccas-2026.png" alt="ICCAS"></div>
+              <h3>ICCAS</h3>
+              <p>2027.11.02–05<br>제주 쉐라톤 제주 호텔</p>
+            </article>
+          <article>
+            <div class="mark light"><img src="images/logos/kros.png" alt="한국로봇학회"></div>
+            <h3>한국로봇학회</h3>
+            <p>2027.02.15–17<br>홍천 소노 비발디파크</p>
+          </article>
+          <article>
+            <div class="mark"><img src="images/logos/icra.png" alt="ICRA"></div>
+            <h3>ICRA</h3>
+            <p>2027.05.24–28<br>서울 COEX</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="slide" data-name="장비">
+    <div class="slide-inner">
+      <p class="kicker">Equipment</p>
+      <h2>장비</h2>
+      <div class="gear">
+        <article>
+          <div class="gear-photo"><img src="images/robots/limo.png" alt="LIMO 모바일 로봇"></div>
+          <h3>LIMO</h3>
+          <p>모바일 로봇. 실내 자율주행과 장애물 회피 실험.</p>
         </article>
         <article>
-          <h3>합류</h3>
-          <ul>
-            <li><b>유재민 · 2026.01</b>ICROS 2026, 적응형 제어장벽함수. 학부 첫 학기 1저자</li>
-            <li><b>임재민 · 2026.03</b>모바일 로봇 안전 경로계획</li>
-            <li><b>우민지 · 2026.09</b>멀티모달 MPPI</li>
-          </ul>
+          <div class="gear-photo"><img src="images/robots/nero.png" alt="NERO 매니퓰레이터"></div>
+          <h3>NERO</h3>
+          <p>7자유도 매니퓰레이터. 조작과 학습 실험.</p>
+        </article>
+        <article>
+          <div class="gear-photo"><img src="images/robots/mocap_opti.png" alt="OptiTrack Prime 모션캡쳐 카메라 예시"></div>
+          <h3>모션캡쳐</h3>
+          <p>OptiTrack Prime 계열 예시. 2027년 구매 예정. 로봇과 사람의 움직임을 측정합니다.</p>
         </article>
       </div>
     </div>
   </section>
-
   <section class="slide" data-name="인원">
     <div class="slide-inner people-page">
       <div>
@@ -909,110 +1021,46 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       </div>
     </div>
   </section>
-
-  <section class="slide" data-name="장비">
+  <section class="slide" data-name="1년">
     <div class="slide-inner">
-      <p class="kicker">Equipment</p>
-      <h2>장비</h2>
-      <div class="gear">
+      <p class="kicker year-range">2025.09 — 2026.09 <span>최근 1년 News</span></p>
+      <div class="yearline">
         <article>
-          <div class="gear-photo"><img src="images/robots/limo.png" alt="LIMO 모바일 로봇"></div>
-          <h3>LIMO</h3>
-          <p>모바일 로봇. 실내 자율주행과 장애물 회피 실험.</p>
+          <h3>국제 저널 게재</h3>
+          <ul>
+            <li><b>TCST</b>선회원 제어장벽함수, 비홀로노믹 충돌회피</li>
+            <li><b>Mechatronics</b>COLREGs 준수 충돌회피</li>
+            <li><b>IJCAS</b>전·후방 도달가능성 기반 접안</li>
+            <li><b>Ocean Engineering</b>L1-MPC, 부족구동 선박 경로추종</li>
+          </ul>
         </article>
         <article>
-          <div class="gear-photo"><img src="images/robots/nero.png" alt="NERO 매니퓰레이터"></div>
-          <h3>NERO</h3>
-          <p>7자유도 매니퓰레이터. 조작과 학습 실험.</p>
+          <h3>국제 학회 발표</h3>
+          <ul>
+            <li><b>IFAC WC · 2편</b>베어링 편대 추종, COLREGs 충돌회피</li>
+            <li><b>ICCAS · 2편</b>구동 지연 보상 경로추종, 선회원 CBF 멀티모달 궤적</li>
+            <li><b>OCEANS</b>외란 관측기 기반 무인선 경로추종</li>
+          </ul>
         </article>
         <article>
-          <div class="gear-photo"><img src="images/robots/mocap_opti.png" alt="OptiTrack Prime 모션캡쳐 카메라 예시"></div>
-          <h3>모션캡쳐</h3>
-          <p>OptiTrack Prime 계열 예시. 2027년 구매 예정. 로봇과 사람의 움직임을 측정합니다.</p>
+          <h3>과제 선정</h3>
+          <ul>
+            <li><b>한국연구재단 신진</b>도달가능성 기반 MPPI, 멀티모달 안전 궤적. 2026–2029</li>
+            <li><b>신임교수 정착연구</b>외란에 강건한 무인이동체 모델예측제어. 2026–2027</li>
+            <li><b>삼성중공업</b>경로계획 · 제어</li>
+          </ul>
+        </article>
+        <article>
+          <h3>연구실 신규 참여</h3>
+          <ul>
+            <li><b>유재민 · 2026.01</b>ICROS 2026, 적응형 제어장벽함수. 학부 첫 학기 1저자</li>
+            <li><b>임재민 · 2026.03</b>모바일 로봇 안전 경로계획</li>
+            <li><b>우민지 · 2026.09</b>멀티모달 MPPI</li>
+          </ul>
         </article>
       </div>
     </div>
   </section>
-
-  <section class="slide" data-name="향후">
-    <div class="slide-inner">
-      <p class="kicker">Next</p>
-      <h2>향후 계획</h2>
-      <div class="axes">
-        <article>
-          <div class="anim" aria-hidden="true">
-            <svg viewBox="0 0 320 150">
-              <circle class="barrier" cx="236" cy="78" r="30"></circle>
-              <circle class="obs" cx="236" cy="78" r="9"></circle>
-              <g class="arm-upper">
-                <line x1="64" y1="118" x2="128" y2="62" stroke="#76b900" stroke-width="7" stroke-linecap="round"></line>
-                <circle cx="64" cy="118" r="6" fill="#3a3a3a"></circle>
-                <g class="arm-fore">
-                  <line x1="128" y1="62" x2="196" y2="86" stroke="#f4f4f4" stroke-width="5" stroke-linecap="round"></line>
-                  <circle cx="196" cy="86" r="4" fill="#76b900"></circle>
-                </g>
-              </g>
-            </svg>
-          </div>
-          <span>01</span>
-          <h3>매니퓰레이터 CBF</h3>
-          <p>7자유도 로봇팔이 사람의 작업 공간을 침범하지 않도록 관절 속도 명령에 안전 필터를 적용합니다. 사람이 가까워지면 위험한 방향의 움직임만 조정해, 가능한 범위에서 작업을 계속합니다.</p>
-        </article>
-        <article>
-          <div class="anim" aria-hidden="true">
-            <svg viewBox="0 0 320 150">
-              <circle class="barrier" cx="200" cy="78" r="34"></circle>
-              <circle class="obs" cx="200" cy="78" r="11"></circle>
-              <line x1="28" y1="124" x2="198" y2="78" stroke="#3a3a3a" stroke-width="2" stroke-dasharray="5 5"></line>
-              <circle class="raw-dot" r="4"></circle>
-              <circle class="safe-dot" r="5"></circle>
-            </svg>
-          </div>
-          <span>02</span>
-          <h3>Physical AI</h3>
-          <p>학습 정책이 만든 행동 명령을 모델예측제어와 제어장벽함수로 점검하고, 안전 범위를 벗어나는 입력만 보정합니다. 선박에서 개발한 안전 제어 기술을 모바일 로봇과 매니퓰레이터로 확장합니다.</p>
-        </article>
-        <article>
-          <div class="anim" aria-hidden="true">
-            <svg viewBox="0 0 320 150">
-              <path class="lane" d="M24 108 C 90 108, 130 40, 190 52 S 270 112, 304 64"></path>
-              <circle class="teacher" r="5"></circle>
-              <circle class="student" r="5"></circle>
-            </svg>
-          </div>
-          <span>03</span>
-          <h3>학습 기반 제어</h3>
-          <p>모델예측제어가 선택한 회피 방식을 모사학습으로 학습합니다. 이를 매니퓰레이터에도 적용해 온라인 최적화의 계산 부담을 줄이고, 신경망 추론으로 안전한 제어 입력을 빠르게 생성합니다.</p>
-        </article>
-      </div>
-      <div class="plan-conf">
-        <h3>학회 참가 계획</h3>
-        <div class="confs">
-            <article>
-              <div class="mark word">ICROS</div>
-              <h3>ICROS</h3>
-              <p>2027.06.30–07.03<br>강원 고성, 소노캄 델피노</p>
-            </article>
-            <article>
-              <div class="mark word">ICCAS</div>
-              <h3>ICCAS</h3>
-              <p>2027.11.02–05<br>제주 쉐라톤 제주 호텔</p>
-            </article>
-          <article>
-            <div class="mark light"><img src="images/logos/kros.png" alt="한국로봇학회"></div>
-            <h3>한국로봇학회</h3>
-            <p>2027.02.15–17<br>홍천 소노 비발디파크</p>
-          </article>
-          <article>
-            <div class="mark"><img src="images/logos/icra.png" alt="ICRA"></div>
-            <h3>ICRA</h3>
-            <p>2027.05.24–28<br>서울 COEX</p>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="slide" data-name="연구실">
     <div class="slide-inner">
       <div class="duo">
@@ -1164,14 +1212,15 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     img.alt = clip.label || "";
     var h = document.createElement("h3");
     h.textContent = clip.label || "";
-    var p1 = document.createElement("p");
-    p1.textContent = clip.a || "";
-    var p2 = document.createElement("p");
-    p2.textContent = clip.b || "";
     art.appendChild(img);
     art.appendChild(h);
-    art.appendChild(p1);
-    art.appendChild(p2);
+    var lines = clip.lines && clip.lines.length ? clip.lines : [clip.a || "", clip.b || ""];
+    lines.forEach(function (line) {
+      if (!line) return;
+      var p = document.createElement("p");
+      p.textContent = line;
+      art.appendChild(p);
+    });
     if (clip.yt) {
       var link = document.createElement("a");
       link.href = "https://www.youtube.com/watch?v=" + clip.yt;
@@ -1201,8 +1250,9 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     clips: Array.prototype.map.call(document.querySelectorAll(".now-card"), function (card) {
       return {
         label: card.querySelector("strong").textContent,
-        a: card.getAttribute("data-a") || "",
-        b: card.getAttribute("data-b") || "",
+        lines: Array.prototype.map.call(card.querySelectorAll(".now-points li"), function (li) {
+          return li.textContent;
+        }),
         yt: card.getAttribute("data-yt") || "",
         thumb: card.getAttribute("data-thumb") || ""
       };
