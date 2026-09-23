@@ -588,7 +588,10 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
   @media screen and (max-width: 900px) {
     :root { --pad-x: 18px; }
-    .slide-inner {
+    .slide-inner,
+    .slide-inner.fill,
+    .slide-inner.now-page,
+    .slide-inner.people-page {
       padding: 18px var(--pad-x) calc(92px + env(safe-area-inset-bottom));
       justify-content: flex-start;
       overflow-x: clip;
@@ -628,6 +631,8 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
     .axes h3, .card h3, .confs h3, .gear h3 { font-size: 18px; }
     .card { min-height: 0; padding: 16px; }
     .card .anim, .anim, .slide[data-name="향후"] .anim { height: 72px; flex-basis: 72px; }
+    .slide[data-name="현재"] .card .anim { height: auto; flex: none; }
+    .slide[data-name="현재"] .card .anim svg { width: 100%; height: auto; aspect-ratio: 320 / 150; }
     .gear { gap: 12px; }
     .gear-photo { height: 168px; }
     .gear p, .confs p, .yearline li { font-size: 14px; }
