@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>SAIL 연구실 소개</title>
+<script>
+try { if (localStorage.getItem("sail-theme") === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+</script>
+<meta name="description" content="국립공주대학교 SAIL 안전 자율·지능연구실 소개">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #76b900;
+    --bg: #000;
+    --ink: #f4f4f4;
+    --muted: #a7a7a7;
+    --line: rgba(255, 255, 255, 0.14);
+    --pad-x: clamp(28px, 4.6vw, 84px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+  body { font-family: Inter, "Segoe UI", "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+  button, a { font-family: inherit; }
+  button { color: inherit; }
+
+  .deck { position: relative; height: 100%; }
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+  }
+  .slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; z-index: 1; }
+  .slide-inner {
+    height: 100%;
+    padding: clamp(64px, 8vh, 92px) var(--pad-x) 76px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .kicker {
+    margin: 0; color: var(--green); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  h1, h2, h3 { font-weight: 600; letter-spacing: -0.035em; }
+  h2 { margin: 12px 0 16px; font-size: clamp(34px, 4.2vw, 62px); line-height: 1.08; }
+  .lead { margin: 0 0 8px; max-width: 40em; color: var(--muted); font-size: clamp(16px, 1.25vw, 19px); line-height: 1.55; }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.86fr) minmax(420px, 1.2fr);
+    gap: clamp(24px, 3.5vw, 56px);
+    align-items: center; width: 100%;
+  }
+
+  .player .frame {
+    position: relative; width: 100%; aspect-ratio: 16 / 9;
+    background: #0c0c0c; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  }
+  .player.is-still .frame { background: #fff; }
+  .player .frame iframe,
+  .player .frame video,
+  .player .frame img.still {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; object-fit: contain;
+  }
+  .player .frame video,
+  .player .frame img.still { display: none; }
+  .player .frame iframe { display: block; }
+  .player.is-still .frame img.still { background: #fff; }
+  .now-copy { margin-top: 12px; }
+  .now-copy p { margin: 0 0 6px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .meta { margin: 8px 0 0; color: #8d8d8d; font-size: 12px; letter-spacing: 0.03em; }
+  .switch { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .switch[hidden] { display: none; }
+  .switch button, .menu button { cursor: pointer; background: transparent; }
+  .switch button {
+    border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; color: #cfcfcf; font-size: 13px;
+  }
+  .switch button.is-on, .menu button.is-on {
+    border-color: var(--green); color: #fff; background: rgba(118, 185, 0, 0.12);
+  }
+  .facade {
+    position: absolute; inset: 0; display: block; text-decoration: none; background: #111;
+  }
+  .facade img { width: 100%; height: 100%; object-fit: cover; }
+  .facade .play {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 64px; height: 64px; border-radius: 50%; background: rgba(0, 0, 0, 0.55);
+    border: 2px solid #fff;
+  }
+  .facade .play::before {
+    content: ""; position: absolute; left: 26px; top: 20px;
+    border-style: solid; border-width: 12px 0 12px 18px; border-color: transparent transparent transparent #fff;
+  }
+
+  .menu { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .menu button {
+    display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto;
+    column-gap: 8px; text-align: left; border: 1px solid transparent;
+    border-bottom: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  }
+  .menu button span {
+    grid-row: 1 / span 2; align-self: center; color: var(--green);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.08em;
+  }
+  .menu button strong { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+  .menu button em { color: var(--muted); font-style: normal; font-size: 13px; }
+
+  .bio {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(28px, 4vw, 64px); align-items: center;
+    position: relative;
+  }
+  .bio::before {
+    content: ""; position: absolute; right: -12vw; top: -28vh; width: 46vw; height: 46vw;
+    background: radial-gradient(circle, rgba(118, 185, 0, 0.2), transparent 68%); pointer-events: none;
+  }
+  .cover-top { display: flex; align-items: center; gap: 12px; color: #d5d5d5; font-size: 15px; }
+  .seal { height: 44px; width: auto; filter: invert(1); }
+  .bio-mark { margin: 10px 0 0; font-size: clamp(64px, 8vw, 104px); line-height: 0.88; letter-spacing: -0.06em; }
+  .cover-en { margin: 12px 0 0; font-size: clamp(16px, 1.6vw, 22px); font-weight: 500; }
+  .cover-en span { color: var(--green); }
+  .cover-ko { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
+  .who-name { margin: 22px 0 4px; font-size: 26px; }
+  .who-name span { font-weight: 500; color: #9a9a9a; font-size: 0.72em; }
+  .bio-side { position: relative; display: grid; grid-template-columns: 148px 1fr; gap: 18px; align-items: start; }
+  .portrait {
+    width: 148px; height: 186px; object-fit: cover; object-position: center 16%;
+    border-radius: 14px; border: 1px solid var(--line);
+  }
+  .career { list-style: none; margin: 0; padding: 0; }
+  .career li {
+    display: grid; grid-template-columns: 92px 1fr; gap: 10px;
+    padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.4;
+  }
+  .career b { color: var(--green); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; }
+  .career small { display: block; margin-top: 2px; color: #8a8a8a; font-size: 12px; }
+
+  .axes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 28px; }
+  .axes article { border-top: 1px solid var(--line); padding-top: 12px; }
+  .axes span, .agenda span, .card .idx, .duty span, .perk span {
+    color: var(--green); font-size: 13px; font-weight: 600; letter-spacing: 0.14em;
+  }
+  .axes h3, .card h3 { margin: 8px 0; font-size: 22px; letter-spacing: -0.03em; }
+  .axes p, .card p, .person p, .duty p, .perk p {
+    margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5;
+  }
+  .anim { height: 108px; margin-bottom: 4px; }
+  .pubs { list-style: none; margin: 12px 0 0; padding: 0; }
+  .pubs li {
+    padding: 6px 0 7px;
+    border-top: 1px solid var(--line);
+    color: #cfcfcf;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .pubs b {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .slide[data-name="Research"] h2 { white-space: nowrap; }
+  .anim svg { width: 100%; height: 100%; display: block; }
+  .lane, .wall { fill: none; stroke: #2c2c2c; stroke-width: 2; }
+  .obs { fill: #1a1a1a; stroke: #3a3a3a; }
+  .barrier { fill: none; stroke: var(--green); stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: pulse 2.6s ease-in-out infinite; }
+  .mover { fill: var(--green); offset-path: path("M16 118 C 90 118, 112 34, 160 34 S 230 118, 304 118"); offset-rotate: 0deg; animation: along 4.4s linear infinite; }
+  .horizon circle { fill: var(--green); opacity: 0; animation: hop 2.4s ease-in-out infinite; }
+  .horizon circle:nth-child(2) { animation-delay: 0.18s; }
+  .horizon circle:nth-child(3) { animation-delay: 0.36s; }
+  .horizon circle:nth-child(4) { animation-delay: 0.54s; }
+  .horizon circle:nth-child(5) { animation-delay: 0.72s; }
+  .ego { fill: #fff; transform-box: fill-box; transform-origin: center; animation: ego 2.4s ease-in-out infinite alternate; }
+  .ship { fill: var(--green); offset-path: path("M24 96 C 80 96, 110 52, 168 52 S 250 108, 300 72"); offset-rotate: auto; animation: along 3.8s linear infinite; }
+  .cand { fill: none; stroke: #3a3a3a; stroke-width: 1.5; animation: fadeCand 3.2s ease-in-out infinite; }
+  .cand:nth-child(2) { animation-delay: 0.4s; }
+  .cand:nth-child(3) { animation-delay: 0.8s; }
+  .pick { fill: none; stroke: var(--green); stroke-width: 2; }
+  .mppi-dot { fill: var(--green); offset-path: path("M28 112 C 110 112, 150 42, 210 50 S 280 78, 304 60"); offset-rotate: 0deg; animation: along 3.2s linear infinite; }
+  .tube { fill: none; stroke: rgba(118, 185, 0, 0.22); stroke-width: 28; stroke-linecap: round; }
+  .tracker { fill: #fff; offset-path: path("M24 78 C 90 78, 130 58, 190 58 S 260 96, 304 74"); animation: along 3.6s ease-in-out infinite alternate; }
+  .plan { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 7; animation: march 1s linear infinite; }
+  .planner { fill: var(--green); offset-path: path("M22 118 C 70 118, 96 100, 118 78 S 150 36, 188 46 S 240 108, 304 62"); offset-rotate: auto; animation: along 4s linear infinite; }
+  .arm-upper, .arm-fore { transform-box: view-box; }
+  .arm-upper { transform-origin: 64px 118px; animation: armSwing 3.2s ease-in-out infinite alternate; }
+  .arm-fore { transform-origin: 128px 62px; animation: foreSwing 3.2s ease-in-out infinite alternate; }
+  .raw-dot { fill: #666; offset-path: path("M28 124 L 198 78"); animation: along 2.6s ease-in infinite; }
+  .safe-dot { fill: var(--green); offset-path: path("M164 46 A 34 34 0 0 1 232 96"); animation: along 2.6s ease-in-out infinite alternate; }
+  .teacher { fill: #fff; offset-path: path("M24 108 C 90 108, 130 40, 190 52 S 270 112, 304 64"); animation: along 4.2s linear infinite; }
+  .student { fill: var(--green); offset-path: path("M24 108 C 90 108, 130 40, 190 52 S 270 112, 304 64"); animation: along 4.2s linear infinite; animation-delay: -0.55s; }
+  @keyframes armSwing { to { transform: rotate(-32deg); } }
+  @keyframes foreSwing { to { transform: rotate(46deg); } }
+  .card .anim { flex: 0 0 132px; height: 132px; margin: 0 0 10px; }
+  @keyframes along { to { offset-distance: 100%; } }
+  @keyframes pulse { 50% { transform: scale(1.14); opacity: 0.45; } }
+  @keyframes hop { 0%, 100% { opacity: 0; } 35%, 70% { opacity: 1; } }
+  @keyframes ego { to { transform: translateX(26px); } }
+  @keyframes fadeCand { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.95; } }
+  @keyframes march { to { stroke-dashoffset: -26; } }
+  .slide:not(.is-active) .anim * { animation-play-state: paused; }
+
+  .chapter h2 { font-size: clamp(56px, 8vw, 112px); margin-bottom: 8px; }
+  .agenda { display: grid; gap: 18px; margin-top: 42px; border-top: 1px solid var(--line); padding-top: 22px; }
+  .agenda.four { grid-template-columns: repeat(4, 1fr); }
+  .agenda strong { display: block; margin-top: 10px; font-size: clamp(16px, 1.4vw, 20px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.3; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
+  .slide-inner.fill { justify-content: flex-start; padding-top: 72px; }
+  .cards-fill { flex: 1; min-height: 0; }
+  .cards-fill .card { min-height: 0; height: 100%; }
+  .card {
+    min-height: 280px; display: flex; flex-direction: column;
+    border: 1px solid var(--line); border-radius: 16px; padding: 26px 24px 22px; background: #070707;
+  }
+  .card .who { margin-top: auto; padding-top: 22px; color: #e8e8e8; font-size: 14px; }
+  .card .who small { display: block; margin-top: 4px; color: #8e8e8e; font-size: 12px; }
+
+  .people { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .person {
+    display: grid; grid-template-columns: 92px 1fr; gap: 16px; align-items: center;
+    border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; background: #070707;
+    color: inherit; text-decoration: none;
+  }
+  .person:hover { border-color: rgba(118, 185, 0, 0.7); }
+  .logo-well {
+    height: 72px; display: flex; align-items: center; justify-content: center;
+    background: #fff; border-radius: 10px; overflow: hidden;
+  }
+  .logo-well img { max-width: 78px; max-height: 52px; object-fit: contain; }
+  .logo-well.hust img { max-height: 64px; }
+  .wordmark { font-weight: 700; letter-spacing: 0.08em; font-size: 15px; color: #111; }
+  .person h3 { margin: 0 0 2px; font-size: 18px; letter-spacing: -0.02em; }
+  .person .role { margin: 0 0 6px; color: var(--green); font-size: 12px; letter-spacing: 0.04em; }
+  .person p { font-size: 14px; }
+
+  .duties {
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column; gap: 0 42px;
+  }
+  .duty {
+    display: grid; grid-template-columns: 44px 1fr; gap: 8px 12px;
+    padding: 16px 0 14px; border-top: 1px solid var(--line);
+  }
+  .duty h3 { margin: 0 0 4px; font-size: 20px; }
+  .duty span { padding-top: 3px; }
+  .perks { max-width: 720px; margin-top: 8px; }
+  .perk {
+    display: grid; grid-template-columns: 44px 1fr; gap: 12px;
+    padding: 14px 0; border-top: 1px solid var(--line); align-items: center;
+  }
+  .perk p { color: #e8e8e8; font-size: 18px; }
+
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; height: 56px;
+    display: flex; align-items: center; gap: 14px; padding: 0 22px 6px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85) 40%);
+  }
+  .brand { color: #fff; font-weight: 700; letter-spacing: 0.14em; font-size: 13px; }
+  .brand b { color: var(--green); font-weight: 700; }
+  .ticks { display: flex; gap: 6px; flex: 1; align-items: center; }
+  .ticks button { width: 18px; height: 4px; padding: 0; border: 0; border-radius: 99px; background: #2a2a2a; cursor: pointer; }
+  .ticks button.is-on { width: 36px; background: var(--green); }
+  .nav-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.35); color: #fff; cursor: pointer; font-size: 18px; line-height: 1;
+  }
+  .nav-btn:hover { border-color: var(--green); color: var(--green); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .count { min-width: 64px; text-align: right; color: #9a9a9a; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 6; background: #161616; }
+  .progress i { display: block; height: 100%; width: 100%; background: var(--green); transform-origin: left center; transform: scaleX(0.08); }
+  .theme-btn { font-size: 15px; }
+
+  html[data-theme="light"] {
+    --bg: #f4f4f4;
+    --ink: #161616;
+    --muted: #4d4d4d;
+    --line: rgba(0, 0, 0, 0.12);
+  }
+  html[data-theme="light"] .card,
+  html[data-theme="light"] .person,
+  html[data-theme="light"] .roster article,
+  html[data-theme="light"] .gear article,
+  html[data-theme="light"] .yearline article,
+  html[data-theme="light"] .year-note,
+  html[data-theme="light"] .guide article,
+  html[data-theme="light"] .pay article { background: #fff; }
+  html[data-theme="light"] .cover-grid {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  }
+  html[data-theme="light"] .menu button,
+  html[data-theme="light"] .switch button,
+  html[data-theme="light"] .rail .item,
+  html[data-theme="light"] .pubs li,
+  html[data-theme="light"] .cover-top,
+  html[data-theme="light"] .card .who,
+  html[data-theme="light"] .perk p,
+  html[data-theme="light"] .duo .perk p,
+  html[data-theme="light"] .roster .topic,
+  html[data-theme="light"] .year-note { color: #222; }
+  html[data-theme="light"] .menu button.is-on,
+  html[data-theme="light"] .switch button.is-on,
+  html[data-theme="light"] .rail .item.is-on,
+  html[data-theme="light"] .brand,
+  html[data-theme="light"] .nav-btn,
+  html[data-theme="light"] .yearline li b { color: #111; }
+  html[data-theme="light"] .who-name span,
+  html[data-theme="light"] .career small,
+  html[data-theme="light"] .card .who small,
+  html[data-theme="light"] .roster h3 span,
+  html[data-theme="light"] .meta,
+  html[data-theme="light"] .count { color: #5c5c5c; }
+  html[data-theme="light"] .menu button.is-on,
+  html[data-theme="light"] .switch button.is-on { background: rgba(118, 185, 0, 0.16); }
+  html[data-theme="light"] .seal { filter: none; }
+  html[data-theme="light"] .dock { background: linear-gradient(transparent, rgba(244, 244, 244, 0.94) 42%); }
+  html[data-theme="light"] .ticks button { background: #cfcfcf; }
+  html[data-theme="light"] .nav-btn { background: rgba(255, 255, 255, 0.8); }
+  html[data-theme="light"] .progress { background: #dedede; }
+  html[data-theme="light"] .year-line { background: #d5d5d5; }
+  html[data-theme="light"] .year-block li { color: #333; }
+  html[data-theme="light"] .facade,
+  html[data-theme="light"] .scene,
+  html[data-theme="light"] .anim,
+  html[data-theme="light"] .confs .mark { background: #111; color: #f4f4f4; }
+
+  .duo { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: start; }
+  .duo h2 { font-size: clamp(28px, 3vw, 42px); margin-bottom: 10px; }
+  .duo .duties { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
+  .duo .perks { margin-top: 0; max-width: none; }
+  .duo .duty,
+  .duo .perk {
+    min-height: 86px;
+    padding: 16px 0 14px;
+    box-sizing: border-box;
+    align-items: center;
+  }
+  .duo .perk p { margin: 0; font-size: 20px; line-height: 1.2; color: #f4f4f4; }
+  .roster { display: grid; grid-template-columns: 1.15fr repeat(3, 1fr); gap: 14px; margin-top: 8px; }
+  .roster article {
+    border: 1px solid var(--line); border-radius: 16px; background: #070707; padding: 18px;
+    display: flex; flex-direction: column; gap: 8px; min-height: 280px;
+  }
+  .roster img, .roster .ph {
+    width: 100%; height: 210px; object-fit: cover; object-position: center 16%; border-radius: 12px; background: #111;
+  }
+  .roster .ph { display: flex; align-items: center; justify-content: center; color: #555; font-size: 28px; letter-spacing: 0.06em; border: 1px solid var(--line); }
+  .roster h3 { margin: 8px 0 0; font-size: 22px; }
+  .roster h3 span { display: block; margin-top: 2px; color: #9a9a9a; font-size: 14px; font-weight: 500; }
+  .roster .role { margin: 0; color: var(--green); font-size: 13px; }
+  .roster .since { margin: 0; color: var(--muted); font-size: 13px; }
+  .roster .topic { margin: 4px 0 0; color: #d5d5d5; font-size: 13px; line-height: 1.4; }
+  .people-page { justify-content: flex-start; gap: 28px; padding-top: 64px; }
+  .people-page h2 { font-size: clamp(28px, 3vw, 40px); margin: 6px 0 12px; }
+  .roster-compact { grid-template-columns: 1fr; gap: 10px; }
+  .roster-compact article { min-height: 0; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 16px; padding: 10px 16px; }
+  .roster-compact img, .roster-compact .ph { width: 56px; height: 56px; flex: 0 0 56px; }
+  .roster-compact h3 { margin: 0; font-size: 18px; white-space: nowrap; flex: 0 0 auto; }
+  .roster-compact h3 span { display: inline; margin: 0 0 0 8px; }
+  .roster-compact .role,
+  .roster-compact .since,
+  .roster-compact .topic { margin: 0; white-space: nowrap; }
+  .people-page .person { padding: 12px 14px; }
+  .people-page .logo-well { height: 56px; }
+  .people-page .person p { font-size: 13px; }
+  .gear { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 8px; }
+  .gear article { border: 1px solid var(--line); border-radius: 16px; background: #070707; padding: 16px 16px 22px; }
+  .gear-photo { height: 280px; display: flex; align-items: center; justify-content: center; background: #111; border-radius: 12px; }
+  .gear-photo svg { width: 78%; height: 78%; }
+  .mocap { fill: var(--green); offset-path: path("M110 90 C 110 58, 210 58, 210 90 C 210 122, 110 122, 110 90"); animation: along 3.4s linear infinite; }
+  .slide[data-name="향후"] .anim { height: 78px; }
+  .confs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 8px; }
+  .confs article { border-top: 1px solid var(--line); padding-top: 12px; }
+  .confs .mark {
+    height: 84px; display: flex; align-items: center; justify-content: center;
+    background: #111; border-radius: 12px; margin-bottom: 10px; padding: 10px;
+  }
+  .confs .mark.light { background: #f4f4f4; }
+  .confs .mark.word { color: #f4f4f4; font-size: 22px; font-weight: 700; letter-spacing: 0.08em; }
+  .confs img { max-width: 100%; max-height: 64px; object-fit: contain; }
+  .confs h3 { margin: 0 0 4px; font-size: 20px; letter-spacing: -0.03em; }
+  .confs p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+  .plan-conf { margin-top: 18px; }
+  .plan-conf > h3 { margin: 0 0 10px; font-size: 22px; }
+  .gear-photo img { max-width: 92%; max-height: 92%; object-fit: contain; }
+  .gear h3 { margin: 16px 0 6px; font-size: 28px; }
+  .gear p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
+  .year-range {
+    font-size: clamp(22px, 2vw, 28px); letter-spacing: -0.03em; text-transform: none;
+    font-weight: 600; line-height: 1; margin: 0 0 8px;
+  }
+  .yearline {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px;
+    margin-top: 28px;
+  }
+  .yearline article {
+    background: #111; border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px 18px;
+  }
+  .yearline h3 { margin: 0 0 14px; font-size: 22px; }
+  .yearline ul { margin: 0; padding: 0; list-style: none; }
+  .yearline li { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+  .yearline li b { display: block; color: #f0f0f0; font-weight: 600; }
+  .year-note {
+    margin-top: 22px; padding: 16px 18px; border-radius: 12px;
+    background: #111; border: 1px solid var(--line);
+    color: #e8e8e8; font-size: 16px; line-height: 1.5;
+  }
+  .year-note b { color: var(--green); font-weight: 600; }
+
+  .guide { display: grid; gap: 14px; }
+  .guide article {
+    border: 1px solid var(--line); border-radius: 16px; background: #070707;
+    padding: 18px 18px 16px;
+  }
+  .guide h3 { margin: 0 0 8px; font-size: 20px; }
+  .guide p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .pay {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;
+  }
+  .pay article {
+    border: 1px solid var(--line); border-radius: 14px; background: #070707;
+    padding: 16px 18px 14px;
+  }
+  .pay h3 { margin: 0 0 6px; font-size: 18px; }
+  .pay .num { margin: 0 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
+  .pay .num b { color: var(--green); font-weight: 600; }
+  .pay p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .pay .span2 { grid-column: 1 / -1; }
+  .reqs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .reqs article {
+    border-top: 1px solid var(--line); padding-top: 14px;
+  }
+  .reqs h3 { margin: 0 0 4px; font-size: 22px; }
+  .reqs .term { margin: 0 0 10px; color: var(--green); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; }
+  .reqs ul { margin: 0; padding: 0; list-style: none; }
+  .reqs li { margin: 0 0 8px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+  .reqs li b { color: var(--ink); font-weight: 600; }
+  .block-title { margin: 22px 0 0; font-size: 22px; }
+  .incs article {
+    display: grid; grid-template-columns: 108px 1.35fr 1.15fr; gap: 18px;
+    align-items: baseline; padding: 11px 0; border-top: 1px solid var(--line);
+  }
+  .incs b { color: var(--green); font-size: 13px; font-weight: 600; letter-spacing: 0.03em; }
+  .incs span { font-size: 16px; }
+  .incs em { font-style: normal; color: var(--muted); font-size: 15px; }
+
+  @media (max-width: 980px), (max-height: 760px) {
+    .split, .axes, .cards, .people, .agenda.four, .duties, .bio, .bio-side, .duo, .roster, .yearline, .gear, .confs, .pay, .reqs { grid-template-columns: 1fr; }
+    .incs article, .pay .span2 { grid-template-columns: 1fr; }
+    .slide-inner { overflow: auto; justify-content: flex-start; }
+    .card { min-height: 0; }
+    .anim { height: 110px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+    .anim * { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"><i id="bar"></i></div>
+<div class="deck" id="deck">
+
+  <section class="slide is-active" data-name="소개">
+    <div class="slide-inner">
+      <div class="bio">
+        <div>
+          <div class="cover-top">
+            <img class="seal" src="images/logos/knu-w.png" alt="">
+            <span>국립공주대학교 · 기계자동차공학부</span>
+          </div>
+          <h1 class="bio-mark">SAIL</h1>
+          <p class="cover-en"><span>S</span>afe <span>A</span>utonomy &amp; <span>I</span>ntelligence <span>L</span>aboratory</p>
+          <p class="cover-ko">안전 자율·지능연구실</p>
+          <h2 class="who-name">이찬규 <span>Changyu Lee</span></h2>
+          <p class="lead">무인 이동체의 안전 경로계획·제어를 연구합니다.</p>
+          <p class="lead">KAIST에서 자율운항선 모델예측제어로 박사학위를 받고, 2025년 9월 공주대학교에 부임.</p>
+        </div>
+        <div class="bio-side">
+          <img class="portrait" src="images/members/lck.jpg" alt="이찬규">
+          <ol class="career">
+            <li><b>2025.09–</b><div>조교수, 국립공주대학교<small>기계자동차공학부</small></div></li>
+            <li><b>2025.04–08</b><div>박사후연구원, KAIST<small>MORIN Lab</small></div></li>
+            <li><b>2025.02</b><div>박사, KAIST 기계공학<small>Safety-enhanced MPC for autonomous surface vehicles</small></div></li>
+            <li><b>2020.02</b><div>석사, KAIST 기계공학</div></li>
+            <li><b>2018</b><div>학사, 한양대학교<small>수학 · 기계공학</small></div></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="Research">
+    <div class="slide-inner">
+      <p class="kicker">연구</p>
+      <h2>안전 경로계획 및 제어</h2>
+      <p class="lead">선박과 모바일 로봇이 복잡한 환경에서 충돌 없이 목표까지 도달하게 합니다.</p>
+      <p class="lead">제어기는 안전에 대한 논증을 담고, 실제 로봇에서 검증합니다.</p>
+      <div class="axes">
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="lane" d="M16 118 C 90 118, 112 34, 160 34 S 230 118, 304 118"></path>
+              <circle class="barrier" cx="160" cy="78" r="32"></circle>
+              <circle class="obs" cx="160" cy="78" r="9"></circle>
+              <circle class="mover" r="5"></circle>
+            </svg>
+          </div>
+          <span>01</span>
+          <h3>안전 제어</h3>
+          <p>제어장벽함수와 도달가능성 해석으로, 계획이 충돌 영역 밖에 있게 합니다.</p>
+          <ul class="pubs">
+            <li><b>TCST 2026</b>Turning-circle control barrier function</li>
+            <li><b>Mechatronics 2026</b>COLREGs avoidance with a turning-circle CBF</li>
+            <li><b>IFAC 2023</b>Berthing under wind using reachability analysis</li>
+          </ul>
+        </article>
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <line class="lane" x1="24" y1="78" x2="300" y2="78"></line>
+              <g class="horizon">
+                <circle cx="128" cy="78" r="4"></circle>
+                <circle cx="162" cy="64" r="4"></circle>
+                <circle cx="196" cy="56" r="4"></circle>
+                <circle cx="230" cy="64" r="4"></circle>
+                <circle cx="264" cy="78" r="4"></circle>
+              </g>
+              <circle class="ego" cx="78" cy="78" r="7"></circle>
+            </svg>
+          </div>
+          <span>02</span>
+          <h3>모델예측제어</h3>
+          <p>모델예측제어는 수 초 앞을 예측하고, 외란 아래에서도 경로를 유지합니다.</p>
+          <ul class="pubs">
+            <li><b>TCST 2024</b>Cascade tube MPC for ship berthing</li>
+            <li><b>TMECH 2024</b>NMPC for canal navigation</li>
+            <li><b>CDC 2023</b>Parameter-varying Koopman operator</li>
+          </ul>
+        </article>
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="wall" d="M16 36 H304"></path>
+              <path class="wall" d="M16 118 H304"></path>
+              <polygon class="ship" points="0,-8 20,0 0,8"></polygon>
+            </svg>
+          </div>
+          <span>03</span>
+          <h3>이동체 자율성</h3>
+          <p>같은 알고리즘을 자율운항 선박과 모바일 로봇에 적용하고, 운하·접안·보행 공간에서 검증합니다.</p>
+          <ul class="pubs">
+            <li><b>JFR 2024</b>Canal and nearshore field experiment</li>
+            <li><b>IJRR 2023</b>Pohang Canal Dataset</li>
+            <li><b>KRoC 2024</b>Mobile robot navigation in a crowd</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="2023–2025">
+    <div class="slide-inner">
+      <div class="split">
+        <div>
+          <p class="kicker">2023 — 2025</p>
+          <h2>이전 연구</h2>
+          <div class="menu" id="past-menu"></div>
+        </div>
+        <div>
+          <div class="player" id="past-player">
+            <div class="frame">
+              <video controls playsinline preload="metadata"></video>
+              <img class="still" alt="">
+            </div>
+          </div>
+          <div class="switch" id="past-switch" hidden></div>
+          <div class="now-copy" id="past-copy"><p></p><p></p></div>
+          <p class="meta" id="past-meta"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="현재">
+    <div class="slide-inner fill">
+      <p class="kicker">2026 —</p>
+      <h2>현재 진행 중인 연구 및 과제</h2>
+      <div class="cards cards-fill">
+        <article class="card">
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="cand" d="M28 112 C 90 110, 140 96, 200 78 S 270 46, 304 38"></path>
+              <path class="cand" d="M28 112 C 100 114, 160 124, 220 102 S 280 76, 304 68"></path>
+              <path class="cand" d="M28 112 C 80 78, 130 48, 190 58 S 260 92, 304 84"></path>
+              <path class="pick" d="M28 112 C 110 112, 150 42, 210 50 S 280 78, 304 60"></path>
+              <circle class="mppi-dot" r="5"></circle>
+            </svg>
+          </div>
+          <span class="idx">01 · 2026–2029</span>
+          <h3>한국연구재단 신진연구</h3>
+          <p>멀티모달 안전 궤적을 위해, 도달가능성 분석에 기반한 MPPI 알고리즘을 개발합니다.</p>
+          <p>여러 움직임 후보 중에서 안전한 궤적을 고르는 계획·제어가 이 과제의 중심입니다.</p>
+          <div class="who">이찬규<small>임재민 · 유재민 · 우민지</small></div>
+        </article>
+        <article class="card">
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="tube" d="M24 78 C 90 78, 130 58, 190 58 S 260 96, 304 74"></path>
+              <path class="lane" d="M24 78 C 90 78, 130 58, 190 58 S 260 96, 304 74"></path>
+              <circle class="tracker" r="6"></circle>
+            </svg>
+          </div>
+          <span class="idx">02 · 2026–2027</span>
+          <h3>신임교수 정착연구</h3>
+          <p>모델예측제어로, 외란이 있어도 무인이동체가 목표를 따라가게 하는 알고리즘을 만듭니다.</p>
+          <p>경로를 유지하면서 안전 여유를 남기는 강건 제어가 목표입니다.</p>
+          <div class="who">이찬규<small>국립공주대학교 신임교수정착연구비</small></div>
+        </article>
+        <article class="card">
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <circle class="obs" cx="156" cy="62" r="14"></circle>
+              <path class="plan" d="M22 118 C 70 118, 96 100, 118 78 S 150 36, 188 46 S 240 108, 304 62"></path>
+              <polygon class="planner" points="0,-7 16,0 0,7"></polygon>
+            </svg>
+          </div>
+          <span class="idx">03 · 산학</span>
+          <h3>삼성중공업</h3>
+          <p>경로계획 · 제어</p>
+          <div class="who">이찬규<small>유재민</small></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="진행 연구">
+    <div class="slide-inner">
+      <div class="split">
+        <div>
+          <p class="kicker">In progress</p>
+          <h2>진행중인 연구</h2>
+          <div class="menu" id="now-menu">
+            <button type="button" class="is-on"
+              data-kind="mp4"
+              data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
+              data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png"
+              data-a="최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다."
+              data-b="계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.">
+              <span>01</span>
+              <strong>회피 모드를 학습하는 MPC</strong>
+              <em>회피 모드 모사학습 기반 멀티모달 MPC</em>
+            </button>
+            <button type="button"
+              data-kind="mp4" data-src="videos/Ps9NJ6feaH8.mp4"
+              data-a="하나의 경로 대신 추종, 회피, 접안 후보를 여러 개 만들고 그중에서 고릅니다."
+              data-b="선회원 제어장벽함수가 각 후보가 배가 실제로 돌 수 있는 궤적인지 판정합니다.">
+              <span>02</span>
+              <strong>선박 멀티모달 궤적</strong>
+              <em>선회원 제어장벽함수 기반 다중모드 궤적계획</em>
+            </button>
+            <button type="button"
+              data-kind="mp4" data-src="images/research/experiment_video.mp4"
+              data-a="자율운항 선박이 상황에 대해 묻고 답할 수 있도록, 언어모델 기반 질의응답을 붙입니다."
+              data-b="협상이 필요한 조우에서도 항해 판단을 말로 설명할 수 있게 하는 연구입니다.">
+              <span>03</span>
+              <strong>MARQA</strong>
+              <em>자율운항 협상을 위한 언어모델 질의응답</em>
+            </button>
+            <button type="button"
+              data-kind="mp4" data-src="videos/pBSBDa7eUqQ.mp4"
+              data-a="무인선이 모선의 크래들로 되돌아올 때, 부딪히지 않고 들어가도록 제어기를 설계합니다."
+              data-b="시뮬레이션과 수조 실험으로 회수 과정을 검증하고 있습니다.">
+              <span>04</span>
+              <strong>무인선 안전 회수</strong>
+              <em>부족구동 무인선의 크래들 회수 제어</em>
+            </button>
+          </div>
+        </div>
+        <div>
+          <div class="player" id="now-player" data-kind="mp4"
+            data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
+            data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png">
+            <div class="frame">
+              <video controls playsinline preload="metadata"></video>
+              <img class="still" alt="">
+            </div>
+          </div>
+          <div class="now-copy" id="now-copy">
+            <p>최적화 대신 신경망이 회피 방향을 고르게 해, 멀티모달 MPC를 더 가볍게 만듭니다.</p>
+            <p>계산은 줄이면서, 교사가 고른 안전한 회피 모드를 따라가도록 학습합니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="1년">
+    <div class="slide-inner">
+      <p class="kicker year-range">2025.09 — 2026.09</p>
+      <div class="yearline">
+        <article>
+          <h3>국제 저널</h3>
+          <ul>
+            <li><b>TCST</b>선회원 제어장벽함수, 비홀로노믹 충돌회피</li>
+            <li><b>Mechatronics</b>COLREGs 준수 충돌회피</li>
+            <li><b>IJCAS</b>전·후방 도달가능성 기반 접안</li>
+            <li><b>Ocean Engineering</b>L1-MPC, 부족구동 선박 경로추종</li>
+          </ul>
+        </article>
+        <article>
+          <h3>국제 학회</h3>
+          <ul>
+            <li><b>IFAC WC · 2편</b>베어링 편대 추종, COLREGs 충돌회피</li>
+            <li><b>ICCAS · 2편</b>구동 지연 보상 경로추종, 선회원 CBF 멀티모달 궤적</li>
+            <li><b>OCEANS</b>외란 관측기 기반 무인선 경로추종</li>
+          </ul>
+        </article>
+        <article>
+          <h3>과제</h3>
+          <ul>
+            <li><b>한국연구재단 신진</b>도달가능성 기반 MPPI, 멀티모달 안전 궤적. 2026–2029</li>
+            <li><b>신임교수 정착연구</b>외란에 강건한 무인이동체 모델예측제어. 2026–2027</li>
+            <li><b>삼성중공업</b>경로계획 · 제어</li>
+          </ul>
+        </article>
+        <article>
+          <h3>합류</h3>
+          <ul>
+            <li><b>유재민 · 2026.01</b>ICROS 2026, 적응형 제어장벽함수. 학부 첫 학기 1저자</li>
+            <li><b>임재민 · 2026.03</b>모바일 로봇 안전 경로계획</li>
+            <li><b>우민지 · 2026.09</b>멀티모달 MPPI</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="인원">
+    <div class="slide-inner people-page">
+      <div>
+      <p class="kicker">SAIL</p>
+      <h2>연구실 인원</h2>
+      <div class="roster roster-compact">
+        <article>
+          <div class="ph">임</div>
+          <h3>임재민<span>Jaemin Im</span></h3>
+          <p class="role">학부연구생</p>
+          <p class="since">2026.03–</p>
+          <p class="topic">모바일 로봇 안전 경로계획 · CBF · RRT</p>
+        </article>
+        <article>
+          <div class="ph">유</div>
+          <h3>유재민<span>Jaemin Yu</span></h3>
+          <p class="role">학부연구생</p>
+          <p class="since">2026.01–</p>
+          <p class="topic">적응형 CBF · 경로추종 · 장애물 회피</p>
+        </article>
+        <article>
+          <div class="ph">우</div>
+          <h3>우민지<span>Minji Woo</span></h3>
+          <p class="role">학부연구생</p>
+          <p class="since">2026.09–</p>
+          <p class="topic">멀티모달 MPPI</p>
+        </article>
+      </div>
+      </div>
+      <div>
+      <h2>Collaborators</h2>
+      <div class="people">
+        <a class="person" href="https://byungkwanlee.github.io/ByungKwanLee-CV/" target="_blank" rel="noopener">
+          <div class="logo-well"><img src="images/logos/nvidia.svg" alt="NVIDIA"></div>
+          <div>
+            <h3>이병관 <span style="font-weight:500;color:#aaa">Byung-Kwan Lee</span></h3>
+            <p class="role">NVIDIA · Research Scientist</p>
+            <p>회피 모드 imitation learning MPC 연구 협업 중</p>
+          </div>
+        </a>
+        <a class="person" href="https://kanghoonyoon.github.io/" target="_blank" rel="noopener">
+          <div class="logo-well"><img src="images/logos/huawei.png" alt="Huawei"></div>
+          <div>
+            <h3>윤강훈 <span style="font-weight:500;color:#aaa">Kanghoon Yoon</span></h3>
+            <p class="role">Huawei Research · Senior AI Engineer</p>
+            <p>회피 모드 imitation learning MPC 연구 협업 중</p>
+          </div>
+        </a>
+        <a class="person" href="https://sites.google.com/view/tranvanquoc/home" target="_blank" rel="noopener">
+          <div class="logo-well hust"><img src="images/logos/hust.png" alt="HUST"></div>
+          <div>
+            <h3>Quoc Van Tran</h3>
+            <p class="role">HUST · Lecturer</p>
+            <p>선박 편대 제어 · 제어장벽함수 연구 협업 중</p>
+          </div>
+        </a>
+        <div class="person">
+          <div class="logo-well"><img src="images/logos/kaist.png" alt="KAIST"></div>
+          <div>
+            <h3>김진환 <span style="font-weight:500;color:#aaa">Jinwhan Kim</span></h3>
+            <p class="role">KAIST · MORIN Lab</p>
+            <p>자율운항 선박 인지·계획·제어 연구 협업 중</p>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="장비">
+    <div class="slide-inner">
+      <p class="kicker">Equipment</p>
+      <h2>장비</h2>
+      <div class="gear">
+        <article>
+          <div class="gear-photo"><img src="images/robots/limo.png" alt="LIMO 모바일 로봇"></div>
+          <h3>LIMO</h3>
+          <p>모바일 로봇. 실내 자율주행과 장애물 회피 실험.</p>
+        </article>
+        <article>
+          <div class="gear-photo"><img src="images/robots/nero.png" alt="NERO 매니퓰레이터"></div>
+          <h3>NERO</h3>
+          <p>7자유도 매니퓰레이터. 조작과 학습 실험.</p>
+        </article>
+        <article>
+          <div class="gear-photo"><img src="images/robots/mocap_opti.png" alt="OptiTrack Prime 모션캡쳐 카메라 예시"></div>
+          <h3>모션캡쳐</h3>
+          <p>OptiTrack Prime 계열 예시. 2027년 구매 예정. 로봇과 사람의 움직임을 측정합니다.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="향후">
+    <div class="slide-inner">
+      <p class="kicker">Next</p>
+      <h2>향후 계획</h2>
+      <div class="axes">
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <circle class="barrier" cx="236" cy="78" r="30"></circle>
+              <circle class="obs" cx="236" cy="78" r="9"></circle>
+              <g class="arm-upper">
+                <line x1="64" y1="118" x2="128" y2="62" stroke="#76b900" stroke-width="7" stroke-linecap="round"></line>
+                <circle cx="64" cy="118" r="6" fill="#3a3a3a"></circle>
+                <g class="arm-fore">
+                  <line x1="128" y1="62" x2="196" y2="86" stroke="#f4f4f4" stroke-width="5" stroke-linecap="round"></line>
+                  <circle cx="196" cy="86" r="4" fill="#76b900"></circle>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <span>01</span>
+          <h3>매니퓰레이터 CBF</h3>
+          <p>7자유도 로봇팔이 사람의 작업 공간을 침범하지 않도록 관절 속도 명령에 안전 필터를 적용합니다. 사람이 가까워지면 위험한 방향의 움직임만 조정해, 가능한 범위에서 작업을 계속합니다.</p>
+        </article>
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <circle class="barrier" cx="200" cy="78" r="34"></circle>
+              <circle class="obs" cx="200" cy="78" r="11"></circle>
+              <line x1="28" y1="124" x2="198" y2="78" stroke="#3a3a3a" stroke-width="2" stroke-dasharray="5 5"></line>
+              <circle class="raw-dot" r="4"></circle>
+              <circle class="safe-dot" r="5"></circle>
+            </svg>
+          </div>
+          <span>02</span>
+          <h3>Physical AI</h3>
+          <p>학습 정책이 만든 행동 명령을 모델예측제어와 제어장벽함수로 점검하고, 안전 범위를 벗어나는 입력만 보정합니다. 선박에서 개발한 안전 제어 기술을 모바일 로봇과 매니퓰레이터로 확장합니다.</p>
+        </article>
+        <article>
+          <div class="anim" aria-hidden="true">
+            <svg viewBox="0 0 320 150">
+              <path class="lane" d="M24 108 C 90 108, 130 40, 190 52 S 270 112, 304 64"></path>
+              <circle class="teacher" r="5"></circle>
+              <circle class="student" r="5"></circle>
+            </svg>
+          </div>
+          <span>03</span>
+          <h3>학습 기반 제어</h3>
+          <p>모델예측제어가 선택한 회피 방식을 모사학습으로 학습합니다. 이를 매니퓰레이터에도 적용해 온라인 최적화의 계산 부담을 줄이고, 신경망 추론으로 안전한 제어 입력을 빠르게 생성합니다.</p>
+        </article>
+      </div>
+      <div class="plan-conf">
+        <h3>학회 참가 계획</h3>
+        <div class="confs">
+            <article>
+              <div class="mark word">ICROS</div>
+              <h3>ICROS</h3>
+              <p>2027.06.30–07.03<br>강원 고성, 소노캄 델피노</p>
+            </article>
+            <article>
+              <div class="mark word">ICCAS</div>
+              <h3>ICCAS</h3>
+              <p>2027.11.02–05<br>제주 쉐라톤 제주 호텔</p>
+            </article>
+          <article>
+            <div class="mark light"><img src="images/logos/kros.png" alt="한국로봇학회"></div>
+            <h3>한국로봇학회</h3>
+            <p>2027.02.15–17<br>홍천 소노 비발디파크</p>
+          </article>
+          <article>
+            <div class="mark"><img src="images/logos/icra.png" alt="ICRA"></div>
+            <h3>ICRA</h3>
+            <p>2027.05.24–28<br>서울 COEX</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="연구실">
+    <div class="slide-inner">
+      <div class="duo">
+        <div>
+          <p class="kicker">SAIL</p>
+          <h2>연구실에서 하는 일</h2>
+          <div class="duties">
+            <div class="duty"><span>01</span><div><h3>매주 개별 미팅</h3><p>진행을 1:1로 보고, 다음 주 할 일을 정합니다.</p></div></div>
+            <div class="duty"><span>02</span><div><h3>랩 세미나</h3><p>읽은 논문이나 실험 결과를 연구실에서 발표하고, 서로 피드백합니다.</p></div></div>
+            <div class="duty"><span>03</span><div><h3>학회 참석</h3><p>국내외 학회에서 결과를 발표합니다.</p></div></div>
+            <div class="duty"><span>04</span><div><h3>논문 작성</h3><p>정리된 실험으로 논문 초안과 그림을 만듭니다.</p></div></div>
+            <div class="duty"><span>05</span><div><h3>과제 참여</h3><p>국가·기업 과제에서 경로계획, 제어, 실험을 맡습니다.</p></div></div>
+          </div>
+        </div>
+        <div>
+          <p class="kicker">Advising</p>
+          <h2>학부생 연구지도</h2>
+          <div class="guide">
+            <article>
+              <h3>대학원 진학 희망</h3>
+              <p>장기 성과를 기준으로, 논문 읽기에서 주제 발굴까지 이어갑니다. 연구 주제는 본인이 찾도록 지도합니다.</p>
+            </article>
+            <article>
+              <h3>진학을 고민하는 경우</h3>
+              <p>국내 학회 발표로 졸업논문을 대체하는 단기 성과를 목표로 합니다. 주제는 본인이 고르거나, 지도교수가 방향을 제시합니다.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="혜택">
+    <div class="slide-inner fill">
+      <p class="kicker">Support</p>
+      <h2>참여 혜택</h2>
+      <p class="lead">인건비는 월 기준입니다.</p>
+      <div class="pay">
+        <article>
+          <h3>학사</h3>
+          <p class="num">학기 <b>20만 원</b> · 방학 <b>50만 원</b></p>
+          <p>방학 중 다른 활동이 있으면 20만 원</p>
+        </article>
+        <article>
+          <h3>석사</h3>
+          <p class="num">1년차 <b>140만 원</b></p>
+          <p>연차마다 +10만 원. 과제 참여 시 +30–50만 원</p>
+        </article>
+        <article>
+          <h3>박사</h3>
+          <p class="num">1년차 <b>200만 원</b></p>
+          <p>연차마다 +10만 원. 과제 참여 시 +30–50만 원</p>
+        </article>
+        <article>
+          <h3>학석연계</h3>
+          <p class="num">4학년 2학기부터</p>
+          <p>선정되면 석사과정 인건비를 지급합니다.</p>
+        </article>
+        <article class="span2">
+          <h3>공통</h3>
+          <p>국제학회 논문을 투고해 선정되면 참가비 전액. 교내외 교육 참여비 지원. 대한기계학회 인공지능연구회 등.</p>
+          <p>개인 연구용 PC, 모바일 로봇, AI 구독료.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="졸업">
+    <div class="slide-inner fill">
+      <p class="kicker">Degree</p>
+      <h2>졸업 요건</h2>
+      <div class="reqs">
+        <article>
+          <h3>학사</h3>
+          <p class="term">기간 제한 없음</p>
+          <ul>
+            <li><b>국내학회 발표 1회</b> 필수</li>
+            <li>국내 저널 제출 권장</li>
+            <li>국내학회 발표로 졸업논문 대체</li>
+            <li>제어로봇시스템학회, 한국로봇학회, 대한기계학회 등</li>
+          </ul>
+        </article>
+        <article>
+          <h3>석사</h3>
+          <p class="term">2년</p>
+          <ul>
+            <li><b>국제학회 발표 1회</b></li>
+            <li><b>국내 저널 게재 1회</b></li>
+            <li>국제저널 제출. SCIE Q2 이상</li>
+            <li>IFAC, IEEE, ASME 주관 학회</li>
+          </ul>
+        </article>
+        <article>
+          <h3>박사</h3>
+          <p class="term">4–5년</p>
+          <ul>
+            <li><b>국제학회 발표 2회</b></li>
+            <li><b>국제저널 2편 게재</b></li>
+            <li>SCIE Q2 이상, 그중 1편은 Q1 이상</li>
+            <li>IFAC, IEEE 저널. MDPI는 권하지 않습니다.</li>
+          </ul>
+        </article>
+      </div>
+      <h3 class="block-title">인센티브</h3>
+      <div class="incs">
+        <article>
+          <b>SCIE 게재</b>
+          <span>IEEE Transactions급, 또는 JCR 상위 5%</span>
+          <em>월급 +15만 원, 또는 연말 일시금</em>
+        </article>
+        <article>
+          <b>SCIE 게재</b>
+          <span>Q1 이상</span>
+          <em>월급 +10만 원, 또는 연말 일시금</em>
+        </article>
+        <article>
+          <b>SCIE 게재</b>
+          <span>Q2 이상</span>
+          <em>월급 +5만 원, 또는 연말 일시금</em>
+        </article>
+        <article>
+          <b>과제 수주</b>
+          <span>제안서 작성 후 과제 선정</span>
+          <em>우선 참여, 월급 인상, 해당 과제 인센티브</em>
+        </article>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="dock">
+  <div class="brand">SAIL <b>·</b> KNU</div>
+    <button class="nav-btn theme-btn" id="theme" type="button" aria-label="라이트 모드">☀</button>
+    <button class="nav-btn" id="prev" type="button" aria-label="이전">‹</button>
+  <div class="ticks" id="ticks"></div>
+  <button class="nav-btn" id="next" type="button" aria-label="다음">›</button>
+  <div class="count" id="count" aria-live="polite">01 / 09</div>
+</div>
+
+<script>
+(function () {
+  var PAST = [
+    {
+      title: "제한 수로 비선형 모델예측제어", em: "2023–2024",
+      meta: "TMECH 2024 · JFR 2024 · IJRR 2023 · RA-L 2023",
+      clips: [
+        { kind: "mp4", src: "videos/p2MESqGvOSE.mp4", label: "Canal NMPC",
+          a: "A ship navigates a narrow canal while avoiding obstacles.",
+          b: "Model predictive control sets rudder and thrust under obstacle constraints." },
+        { kind: "mp4", src: "videos/vTFZQQuFJvI.mp4", label: "Navigable-area MPC",
+          a: "A camera finds the navigable water surface, and the ship follows that region.",
+          b: "The detected region is used as a path constraint in model predictive control." }
+      ]
+    },
+    {
+      title: "캐스케이드 튜브 기반 접안제어", em: "2023–2024",
+      meta: "TCST 2024 · IFAC 2023",
+      clips: [
+        { kind: "mp4", src: "videos/nMzKQgqXK3o.mp4", label: "Tube MPC",
+          a: "The ship docks under wind and model error.",
+          b: "Uncertainty is wrapped in a tube, and the trajectory keeps that tube off the berth." }
+      ]
+    },
+    {
+      title: "학습기반 동역학 모델링", em: "2023",
+      meta: "AURO 2023 · CDC 2023",
+      clips: [
+        { kind: "img", src: "images/research/koopman.png", label: "Koopman",
+          a: "Ship dynamics are learned from voyage data for multistep prediction.",
+          b: "A parameter-varying Koopman model tracks changing conditions and is used for control." }
+      ]
+    },
+    {
+      title: "동적 장애물 환경 경로계획", em: "2024",
+      meta: "KRoC 2024 Outstanding Paper",
+      clips: [
+        { kind: "mp4", src: "videos/rMhYUBd4eCY.mp4", label: "Pedestrians",
+          a: "Indoors, the robot replans around people and moving obstacles.",
+          b: "Model predictive control includes the wheel constraint and was tested on a mobile robot." },
+        { kind: "mp4", src: "videos/VH7DcQ5LjnM.mp4", label: "AGV",
+          a: "An AGV replans to avoid moving obstacles.",
+          b: "Model predictive control recomputes the trajectory under the nonholonomic constraint." }
+      ]
+    },
+    {
+      title: "선회원 기반 제어장벽함수", em: "2025",
+      meta: "JICROS 2025 · TCST · Mechatronics 2026, accepted",
+      clips: [
+        { kind: "mp4", src: "videos/t__N0BX2tBQ.mp4", label: "Multi-vessel",
+          a: "Several vessels avoid each other under the COLREGs.",
+          b: "A turning circle constrains both the avoidance side and safety." },
+        { kind: "mp4", src: "videos/_fUdCjV7Lbg.mp4", label: "Turning-circle CBF",
+          a: "A turning-circle control barrier function keeps commands inside the turning limit.",
+          b: "The collision constraint is solved in real time for left and right turns." },
+        { kind: "mp4", src: "videos/HvF8yXl9-hc.mp4", label: "Single encounter",
+          a: "A single encounter gets a COLREGs-compliant avoidance side.",
+          b: "The same turning-circle constraint is applied to that case." }
+      ]
+    }
+  ];
+
+  var themeBtn = document.getElementById("theme");
+  function applyTheme(mode) {
+    document.documentElement.setAttribute("data-theme", mode);
+    var light = mode === "light";
+    themeBtn.textContent = light ? "☾" : "☀";
+    themeBtn.setAttribute("aria-label", light ? "다크 모드" : "라이트 모드");
+    try { localStorage.setItem("sail-theme", mode); } catch (err) {}
+  }
+  var stored = "dark";
+  try { stored = localStorage.getItem("sail-theme") || "dark"; } catch (err) {}
+  applyTheme(stored === "light" ? "light" : "dark");
+  themeBtn.addEventListener("click", function () {
+    applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
+  });
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var ticks = document.getElementById("ticks");
+  var count = document.getElementById("count");
+  var bar = document.getElementById("bar");
+  var prev = document.getElementById("prev");
+  var next = document.getElementById("next");
+  var pastMenu = document.getElementById("past-menu");
+  var pastPlayer = document.getElementById("past-player");
+  var pastSwitch = document.getElementById("past-switch");
+  var pastCopy = document.getElementById("past-copy");
+  var pastMeta = document.getElementById("past-meta");
+  var i = 0;
+  PAST.forEach(function (topic, idx) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.innerHTML = "<span>" + String(idx + 1).padStart(2, "0") + "</span><strong></strong><em></em>";
+    btn.querySelector("strong").textContent = topic.title;
+    btn.querySelector("em").textContent = topic.em;
+    btn.addEventListener("click", function () { selectPast(idx); });
+    pastMenu.appendChild(btn);
+  });
+
+  function clearFrame(frame) {
+    var iframe = frame.querySelector("iframe");
+    var video = frame.querySelector("video");
+    var facade = frame.querySelector(".facade");
+    if (iframe) iframe.remove();
+    if (facade) facade.remove();
+    if (video) {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.style.display = "none";
+    }
+    var img = frame.querySelector("img.still");
+    if (img) img.style.display = "none";
+  }
+
+  function mount(player) {
+    if (!player) return;
+    var kind = player.getAttribute("data-kind");
+    var src = player.getAttribute("data-src") || "";
+    var frame = player.querySelector(".frame");
+    var video = frame.querySelector("video");
+    var img = frame.querySelector("img.still");
+    clearFrame(frame);
+    player.classList.toggle("is-still", kind === "img");
+    if (kind === "mp4") {
+      video.style.display = "block";
+      var poster = player.getAttribute("data-poster");
+      if (poster) video.poster = poster;
+      else video.removeAttribute("poster");
+      video.src = src;
+    } else if (kind === "img") {
+      img.style.display = "block";
+      img.src = src;
+      img.alt = player.getAttribute("data-cap") || "";
+    }
+  }
+
+  function unmount(player) {
+    if (player) clearFrame(player.querySelector(".frame"));
+  }
+
+  function applyClip(player, copy, clip) {
+    player.setAttribute("data-kind", clip.kind);
+    player.setAttribute("data-src", clip.src);
+    if (clip.poster) player.setAttribute("data-poster", clip.poster);
+    else player.removeAttribute("data-poster");
+    if (copy) {
+      copy.children[0].textContent = clip.a || "";
+      copy.children[1].textContent = clip.b || "";
+    }
+    if (player.closest(".slide").classList.contains("is-active")) mount(player);
+  }
+
+  function selectPast(idx) {
+    var topic = PAST[idx];
+    Array.prototype.forEach.call(pastMenu.children, function (el, n) {
+      el.classList.toggle("is-on", n === idx);
+    });
+    pastMeta.textContent = topic.meta || "";
+    pastSwitch.innerHTML = "";
+    pastSwitch.hidden = topic.clips.length < 2;
+    topic.clips.forEach(function (clip, n) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = clip.label;
+      if (n === 0) b.className = "is-on";
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        Array.prototype.forEach.call(pastSwitch.children, function (el) {
+          el.classList.toggle("is-on", el === b);
+        });
+        applyClip(pastPlayer, pastCopy, clip);
+      });
+      pastSwitch.appendChild(b);
+    });
+    applyClip(pastPlayer, pastCopy, topic.clips[0]);
+  }
+
+  slides.forEach(function (slide, idx) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.title = slide.getAttribute("data-name") || String(idx + 1);
+    b.addEventListener("click", function () { show(idx); });
+    ticks.appendChild(b);
+  });
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (slide, idx) {
+      var on = idx === i;
+      slide.classList.toggle("is-active", on);
+      slide.setAttribute("aria-hidden", on ? "false" : "true");
+      slide.querySelectorAll(".player").forEach(function (player) {
+        if (on) mount(player);
+        else unmount(player);
+      });
+    });
+    Array.prototype.forEach.call(ticks.children, function (tick, idx) {
+      tick.classList.toggle("is-on", idx === i);
+    });
+    count.textContent = String(i + 1).padStart(2, "0") + " / " + String(slides.length).padStart(2, "0");
+    bar.style.transform = "scaleX(" + ((i + 1) / slides.length) + ")";
+    prev.disabled = i === 0;
+    next.disabled = i === slides.length - 1;
+    if (history.replaceState) history.replaceState(null, "", "#" + (i + 1));
+  }
+
+  function step(d) { show(i + d); }
+
+  document.getElementById("now-menu").addEventListener("click", function (e) {
+    var btn = e.target.closest("button");
+    if (!btn || btn.parentNode.id !== "now-menu") return;
+    var player = document.getElementById("now-player");
+    ["kind", "src", "poster"].forEach(function (key) {
+      var val = btn.getAttribute("data-" + key) || "";
+      if (val) player.setAttribute("data-" + key, val);
+      else player.removeAttribute("data-" + key);
+    });
+    Array.prototype.forEach.call(btn.parentNode.children, function (el) {
+      el.classList.toggle("is-on", el === btn);
+    });
+    var copy = document.getElementById("now-copy");
+    copy.children[0].textContent = btn.getAttribute("data-a") || "";
+    copy.children[1].textContent = btn.getAttribute("data-b") || "";
+    if (player.closest(".slide").classList.contains("is-active")) mount(player);
+  });
+
+  prev.addEventListener("click", function () { step(-1); });
+  next.addEventListener("click", function () { step(1); });
+
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "video") return;
+    if ((tag === "button" || tag === "a") && (e.key === " " || e.key === "Enter")) return;
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].indexOf(e.key) >= 0) {
+      e.preventDefault();
+      step(1);
+    } else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].indexOf(e.key) >= 0) {
+      e.preventDefault();
+      step(-1);
+    } else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  var touchX = null;
+  document.addEventListener("touchstart", function (e) {
+    touchX = e.changedTouches[0].clientX;
+  }, { passive: true });
+  document.addEventListener("touchend", function (e) {
+    if (touchX == null) return;
+    var dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+    touchX = null;
+  }, { passive: true });
+
+  selectPast(0);
+  var start = 0;
+  var hash = (location.hash || "").match(/(\d+)/);
+  if (hash) start = Math.max(0, Math.min(slides.length - 1, parseInt(hash[1], 10) - 1));
+  show(start);
+})();
+</script>
+</body>
+</html>
