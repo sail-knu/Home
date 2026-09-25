@@ -256,7 +256,10 @@
                         <h2 class="section-title">Research Overview</h2>
                         <div class="underline"></div>
                     </div>
-                    <a href="#research" class="home-news-more" data-i18n="news_view_all">전체 보기</a>
+                    <div class="home-news-links">
+                        <a href="html_presentation/sail-research.html" class="home-news-more" target="_blank" rel="noopener" data-i18n="research_slides">연구소개 슬라이드</a>
+                        <a href="#research" class="home-news-more" data-i18n="news_view_all">전체 보기</a>
+                    </div>
                 </div>
                 <div class="research-grid">
                     <div class="research-card cursor-pointer" data-core="safe">
@@ -391,7 +394,7 @@
                     <div class="news-date">2026. 09.</div>
                     <div>
                         <h3>한국해양공학회 <span class="jcr-pill">KSOE</span> 2026</h3>
-                        <p>"선회권 기반 제어장벽함수를 이용한 선박 충돌회피를 위한 다중모드 궤적 최적화"가 한국해양공학회 <span class="jcr-pill">KSOE</span> 학술대회에 발표됩니다.</p>
+                        <p>"선회권 기반 제어장벽함수를 이용한 선박 충돌회피를 위한 다중모드 궤적 최적화"가 한국해양공학회 <span class="jcr-pill">KSOE</span> 학술대회에 발표됩니다. <a class="project-page" href="html_presentation/ksoe2026.html" target="_blank" rel="noopener">Slides</a></p>
                     </div>
                 </article>
                 <article class="news-item">
@@ -494,6 +497,9 @@
             <div class="section-header">
                 <h2 class="section-title">Research</h2>
                 <div class="underline"></div>
+            </div>
+            <div class="lecture-card-actions">
+                <a href="html_presentation/sail-research.html" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="research_slides_open">연구소개 슬라이드 보기</a>
             </div>
             <div class="tabs">
                 <button class="tab-btn active" onclick="openTab(event, 'research-algorithm')">Algorithm</button>
@@ -1380,7 +1386,7 @@
 
             <div id="domestic-conference" class="tab-content" style="display:none;">
                 <ul class="pub-list">
-                    <li>[17] 이찬규*, "선회권 기반 제어장벽함수를 이용한 선박 충돌회피를 위한 다중모드 궤적 최적화," <em>한국해양공학회</em> <span class="jcr-pill">KSOE</span>, 2026.</li>
+                    <li>[17] 이찬규*, "선회권 기반 제어장벽함수를 이용한 선박 충돌회피를 위한 다중모드 궤적 최적화," <em>한국해양공학회</em> <span class="jcr-pill">KSOE</span>, 2026. <a class="project-page" href="html_presentation/ksoe2026.html" target="_blank" rel="noopener">Slides</a></li>
                     <li>[16] 유재민, 이찬규*, "효율적인 경로 추종 및 장애물 회피를 위한 적응형 제어 장벽 함수," <em>제어로봇시스템학회 학술대회</em> <span class="jcr-pill">ICROS</span>, 2026.</li>
                     <li>[15] 이찬규*, "회전원 기반 제어 장벽 함수를 이용한 멀티모달 경로 계획," <em>제어로봇시스템학회 학술대회</em> <span class="jcr-pill">ICROS</span>, 2026.</li>
                     <li>[14] 신영하, 이찬규, 김진환*, "유무인 상호작용을 고려한 대형 언어모델 기반 자율 운항 선박 질의응답 프레임워크," <em>한국해양과학기술협의회 춘계 공동학술대회</em> <span class="jcr-pill">KOSTS</span>, 2026.</li>
@@ -2038,6 +2044,8 @@
         "robot_limo": `Indoor / pedestrian mobile robot for dynamic obstacle avoidance experiments.`,
         "email_tba": `Email to be added`,
         "news_view_all": `View all`,
+        "research_slides": `Research slides`,
+        "research_slides_open": `View research slides`,
         "no_pub_yet": `No publications listed yet.`,
         "course_intro": `Undergraduate lab simulators. Pick one with the buttons below.`,
         "course_intro_mech": `Interactive demos for sensing, filtering, and modeling. Pick a lecture, then a simulator.`,

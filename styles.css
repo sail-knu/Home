@@ -577,6 +577,13 @@ html[data-lang="ko"] .univ-lockup {
   text-decoration: underline;
 }
 
+.home-news-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+
 #home-news .news-item {
   cursor: pointer;
 }

@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회전원 기반 제어 장벽 함수를 이용한 수상선의 멀티모달 궤적 계획 — 한국해양공학회</title>
+<link rel="stylesheet" href="presentation_assets/katex/katex.min.css">
+<script defer src="presentation_assets/katex/katex.min.js"></script>
+<script defer src="presentation_assets/katex/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{
+    delimiters:[
+      {left:'\\[',right:'\\]',display:true},
+      {left:'\\(',right:'\\)',display:false}
+    ],
+    throwOnError:false,
+    strict:'ignore'
+  });
+});
+</script>
+<style>
+/* ============ Apple-style design system ============ */
+:root{
+  --bg-light:#f5f5f7;
+  --bg-white:#ffffff;
+  --bg-dark:#000000;
+  --bg-dark2:#161617;
+  --text-dark:#1d1d1f;
+  --text-gray:#6e6e73;
+  --text-light:#f5f5f7;
+  --text-lightgray:#a1a1a6;
+  --blue:#0071e3;
+  --blue-bright:#2997ff;
+  --green:#30d158;
+  --orange:#ff9f0a;
+  --red:#ff453a;
+  --purple:#bf5af2;
+  --card-radius:24px;
+  --grad-hero:linear-gradient(96deg,#2997ff 0%,#7b6cff 45%,#bf5af2 75%,#ff6482 100%);
+  --grad-blue:linear-gradient(96deg,#0a84ff,#64d2ff);
+  --grad-green:linear-gradient(96deg,#30d158,#a8e063);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:#000;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro KR","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic","Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+/* ============ Stage & slides ============ */
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
+#stage{position:relative;width:1280px;height:720px;transform-origin:center center;}
+.slide{
+  position:absolute;inset:0;width:1280px;height:720px;
+  padding:72px 90px;
+  opacity:0;visibility:hidden;
+  transition:opacity .55s cubic-bezier(.32,.08,.24,1),visibility .55s;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.slide.active{opacity:1;visibility:visible;z-index:2;}
+.slide.light{background:var(--bg-light);color:var(--text-dark);}
+.slide.white{background:var(--bg-white);color:var(--text-dark);}
+.slide.dark{background:var(--bg-dark);color:var(--text-light);}
+.slide.dark2{background:var(--bg-dark2);color:var(--text-light);}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(26px);}
+.slide.active .reveal{animation:rise .8s cubic-bezier(.22,.61,.21,1) forwards;}
+.slide.active .reveal:nth-child(1),.slide.active .d1{animation-delay:.05s;}
+.slide.active .d2{animation-delay:.18s;}
+.slide.active .d3{animation-delay:.31s;}
+.slide.active .d4{animation-delay:.44s;}
+.slide.active .d5{animation-delay:.57s;}
+.slide.active .d6{animation-delay:.70s;}
+@keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+/* ============ Typography ============ */
+.eyebrow{
+  font-size:17px;font-weight:600;letter-spacing:.02em;
+  color:var(--blue);text-transform:none;margin-bottom:14px;
+}
+.dark .eyebrow,.dark2 .eyebrow{color:var(--blue-bright);}
+h1{font-size:64px;font-weight:700;letter-spacing:-.02em;line-height:1.08;}
+h2{font-size:46px;font-weight:700;letter-spacing:-.018em;line-height:1.12;margin-bottom:10px;white-space:nowrap;}
+h3{font-size:23px;font-weight:700;letter-spacing:-.01em;}
+.subtitle{font-size:22px;font-weight:400;color:var(--text-gray);line-height:1.5;margin-top:18px;}
+.dark .subtitle,.dark2 .subtitle{color:var(--text-lightgray);}
+.grad-text{background:var(--grad-hero);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.grad-blue-text{background:var(--grad-blue);-webkit-background-clip:text;background-clip:text;color:transparent;}
+p,li{font-size:19px;line-height:1.55;}
+.small{font-size:15px;color:var(--text-gray);}
+.dark .small,.dark2 .small{color:var(--text-lightgray);}
+b{font-weight:700;}
+
+/* ============ Components ============ */
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:980px;
+  font-size:15px;font-weight:600;letter-spacing:.01em;
+  background:rgba(255,255,255,.1);color:var(--text-light);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(10px);
+}
+.light .badge,.white .badge{background:rgba(0,0,0,.05);color:var(--text-dark);border:1px solid rgba(0,0,0,.08);}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--blue-bright);}
+
+.cards{display:grid;gap:20px;margin-top:34px;}
+.cards.c2{grid-template-columns:1fr 1fr;}
+.cards.c3{grid-template-columns:1fr 1fr 1fr;}
+.card{
+  background:#fff;border-radius:var(--card-radius);
+  padding:30px 30px;box-shadow:0 2px 14px rgba(0,0,0,.05);
+}
+.dark .card,.dark2 .card{background:#1c1c1e;box-shadow:none;border:1px solid rgba(255,255,255,.09);}
+.card .icon{font-size:34px;margin-bottom:14px;display:block;}
+.card h3{margin-bottom:10px;}
+.card p{font-size:17px;color:var(--text-gray);line-height:1.55;}
+.dark .card p,.dark2 .card p{color:var(--text-lightgray);}
+.card .num{
+  font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:1;
+  margin-bottom:8px;
+}
+
+.eq{
+  font-family:"STIX Two Math",Georgia,"Times New Roman",serif;
+  font-style:italic;font-size:24px;letter-spacing:.01em;
+  padding:18px 26px;border-radius:16px;
+  background:rgba(0,113,227,.06);color:var(--text-dark);
+  display:inline-block;
+}
+.dark .eq,.dark2 .eq{background:rgba(41,151,255,.12);color:#e8f2ff;}
+.eq sub,.eq sup{font-size:.62em;font-style:normal;}
+.eq .rm{font-style:normal;}
+.eq.math-eq{font-family:inherit;font-style:normal;}
+.math-eq .katex-display{margin:0;text-align:left;}
+.math-eq.center .katex-display{text-align:center;}
+.numbered-eq{position:relative;padding-right:54px!important;}
+.numbered-eq .eq-number{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  font-family:"STIX Two Math",Georgia,"Times New Roman",serif;
+  font-size:14px;font-style:normal;color:inherit;
+}
+.paper-figure{
+  width:100%;height:330px;object-fit:contain;display:block;
+  border-radius:20px;background:#fff;padding:8px;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);
+}
+.asset-frame{
+  background:#fff;border-radius:20px;padding:10px;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;
+}
+.asset-frame img{width:100%;height:100%;object-fit:contain;display:block;}
+.tc-geometry{display:grid;grid-template-rows:1fr 1fr;gap:10px;height:430px;}
+.tc-geometry figure{margin:0;min-height:0;position:relative;}
+.tc-geometry img{width:100%;height:100%;object-fit:contain;display:block;}
+.tc-geometry figcaption{
+  position:absolute;left:10px;top:8px;padding:4px 9px;border-radius:980px;
+  background:rgba(255,255,255,.9);font-size:12.5px;font-weight:700;color:#1d1d1f;
+}
+.mode-video-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mode-video{
+  position:relative;background:#fff;border-radius:14px;padding:32px 6px 6px;
+  box-shadow:0 2px 12px rgba(0,0,0,.05);overflow:hidden;
+}
+/* crop the white margins of the 1000x500 clips to their plot area (x 50-960, y 105-420) */
+.mode-video .mode-crop{position:relative;aspect-ratio:910/315;overflow:hidden;}
+.mode-video video{position:absolute;left:-5.49%;top:-33.33%;width:109.89%;height:auto;display:block;background:#fff;}
+.mode-video .mode-label{
+  position:absolute;top:7px;left:8px;z-index:2;padding:4px 9px;border-radius:980px;
+  background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700;
+}
+.source-caption{font-size:12.5px;color:var(--text-gray);line-height:1.35;}
+.approach-limit{
+  --limit-accent:#0071e3;
+  position:relative;flex:0 0 88px;margin-top:4px;padding:15px 4px 0;
+  border-top:1px solid #dcdce1;
+}
+.approach-limit::before{
+  content:"";position:absolute;top:-1px;left:0;width:36px;height:2px;
+  background:var(--limit-accent);
+}
+.approach-limit-heading{display:flex;align-items:center;gap:12px;margin-bottom:7px;}
+.approach-limit-label{font-size:12px;font-weight:700;color:var(--limit-accent);flex-shrink:0;}
+.approach-limit h3{font-size:22px;line-height:1.25;letter-spacing:-.025em;}
+.approach-limit p{font-size:15.5px;line-height:1.45;color:var(--text-gray);margin:0;}
+/* slide 3: problem → existing method → limit → proposal */
+.gap-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;flex:1;min-height:0;margin-top:8px;}
+.gap-col{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.gap-col .problem-head{margin-bottom:10px;}
+.gap-card{flex:1;min-height:0;margin:0;padding:12px 18px 10px;display:flex;flex-direction:column;}
+.gap-card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.gap-card-head h3{font-size:18px;letter-spacing:-.01em;}
+.gap-tag{flex:none;padding:3px 10px;border-radius:980px;background:rgba(0,0,0,.05);font-size:12px;font-weight:700;color:var(--text-gray);}
+.gap-fig{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
+.gap-col .approach-limit{--limit-accent:#d70015;flex:none;margin-top:10px;padding-top:11px;}
+.gap-col .approach-limit-heading,.proposal-item .approach-limit-heading{margin-bottom:6px;}
+.gap-col .approach-limit h3,.proposal-item h3{font-size:20px;line-height:1.25;letter-spacing:-.025em;}
+.gap-col .approach-limit p,.proposal-item p{font-size:15px;line-height:1.45;color:var(--text-gray);margin:0;}
+.proposal-band{
+  position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:30px;
+  margin-top:24px;border-radius:20px;
+  background:linear-gradient(96deg,rgba(10,132,255,.08),rgba(100,210,255,.12));
+  border:1px solid rgba(10,132,255,.22);
+}
+.proposal-band::before{content:"";position:absolute;top:18px;bottom:18px;left:50%;width:1px;background:rgba(10,132,255,.2);}
+.proposal-item{--limit-accent:#0071e3;position:relative;padding:19px 22px 14px;}
+.proposal-arrow{
+  position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  width:30px;height:30px;border-radius:50%;background:var(--grad-blue);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(10,132,255,.3);
+}
+.slide-footer .source-caption{margin-right:auto;}
+
+.pill-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+.pill{
+  padding:9px 18px;border-radius:980px;font-size:16px;font-weight:600;
+  background:rgba(0,113,227,.09);color:var(--blue);
+}
+.dark .pill,.dark2 .pill{background:rgba(41,151,255,.15);color:var(--blue-bright);}
+
+/* table */
+table.apple{
+  width:100%;border-collapse:separate;border-spacing:0;
+  background:#fff;border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);
+  font-size:18px;
+}
+table.apple th{
+  background:#fafafa;font-weight:600;color:var(--text-gray);
+  padding:14px 18px;text-align:center;font-size:15.5px;
+  border-bottom:1px solid #e8e8ed;
+}
+table.apple td{
+  padding:15px 18px;text-align:center;border-bottom:1px solid #f0f0f2;
+  color:var(--text-dark);
+}
+table.apple tr:last-child td{border-bottom:none;}
+table.apple td:first-child,table.apple th:first-child{text-align:left;padding-left:26px;}
+table.apple tr.hl td{background:rgba(48,209,88,.09);font-weight:700;}
+table.apple.compact th,table.apple.compact td{padding-top:8px;padding-bottom:8px;}
+
+/* animated result clip (WebP) */
+img.anim-clip{cursor:pointer;}
+.clip-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:14px;color:var(--text-gray);}
+.clip-legend span{display:inline-flex;align-items:center;gap:6px;}
+.clip-legend i{width:18px;height:3px;border-radius:2px;display:inline-block;}
+
+/* flow diagram */
+.flow{display:flex;align-items:stretch;gap:0;margin-top:36px;}
+.flow .step{
+  flex:1;background:#fff;border-radius:20px;padding:24px 20px;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);text-align:center;
+}
+.dark .flow .step,.dark2 .flow .step{background:#1c1c1e;border:1px solid rgba(255,255,255,.09);box-shadow:none;}
+.flow .step .n{
+  width:34px;height:34px;border-radius:50%;background:var(--grad-blue);
+  color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+}
+.flow .step h3{font-size:18.5px;margin-bottom:8px;}
+.flow .step p{font-size:15px;color:var(--text-gray);line-height:1.45;}
+.dark .flow .step p,.dark2 .flow .step p{color:var(--text-lightgray);}
+.flow .arrow{
+  display:flex;align-items:center;padding:0 10px;
+  font-size:26px;color:#c7c7cc;font-weight:300;
+}
+.dark .flow .arrow,.dark2 .flow .arrow{color:#48484a;}
+
+/* two-col layout */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;flex:1;min-height:0;}
+.cols.c64{grid-template-columns:1.35fr 1fr;}
+.cols.c46{grid-template-columns:1fr 1.35fr;}
+
+/* list style */
+ul.clean{list-style:none;margin-top:22px;}
+ul.clean li{
+  position:relative;padding-left:34px;margin-bottom:16px;
+  font-size:19px;line-height:1.5;color:var(--text-dark);
+}
+.dark ul.clean li,.dark2 ul.clean li{color:var(--text-light);}
+ul.clean li::before{
+  content:"";position:absolute;left:0;top:8px;
+  width:9px;height:9px;border-radius:50%;background:var(--blue);
+}
+.dark ul.clean li::before,.dark2 ul.clean li::before{background:var(--blue-bright);}
+ul.clean li .sub{display:block;font-size:16px;color:var(--text-gray);margin-top:3px;}
+ul.clean.lg li{font-size:26px;line-height:1.45;}
+ul.clean.lg li .sub{font-size:21px;margin-top:8px;line-height:1.45;}
+ul.clean.lg li::before{top:12px;width:11px;height:11px;}
+.dark ul.clean li .sub,.dark2 ul.clean li .sub{color:var(--text-lightgray);}
+
+/* numbered problem columns */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;flex:1;min-height:0;margin-top:18px;}
+.problem-col{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.problem-head{display:flex;align-items:center;gap:12px;}
+.problem-head .n{
+  width:32px;height:32px;border-radius:50%;background:var(--grad-blue);flex:none;
+  color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;
+}
+.problem-head h3{font-size:24px;}
+.problem-desc{font-size:18px;line-height:1.45;color:var(--text-gray);margin:6px 0 14px 44px;word-break:keep-all;}
+.horizon-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.horizon-video{background:#fff;border-radius:16px;padding:6px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.horizon-video video{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:10px;background:#fff;}
+.horizon-result{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:15px;font-weight:600;white-space:nowrap;}
+.horizon-result .h{padding:3px 10px;border-radius:980px;background:rgba(0,0,0,.06);color:var(--text-dark);font-size:13.5px;}
+.horizon-result.fail{color:#d70015;}
+.horizon-result.ok{color:#248a3d;}
+/* 지역 최적해 애니메이션 (slide 2): 원본 MATLAB 그림 스타일을 그대로 따른다 */
+.lm-anim{display:block;width:100%;height:100%;cursor:pointer;font-family:Helvetica,Arial,sans-serif;}
+.lm-anim text{fill:#262626;font-size:8px;}
+.lm-anim .lm-time{font-size:9.5px;font-weight:600;}
+.lm-anim .lm-lab{font-size:8.5px;}
+.lm-anim .v{font-family:"Times New Roman",Times,serif;font-style:italic;font-size:10px;}
+.lm-anim .lm-grid{fill:none;stroke:#ebebeb;stroke-width:.6;}
+.lm-anim .lm-box{fill:none;stroke:#262626;stroke-width:.7;}
+.lm-anim .lm-tickm{fill:none;stroke:#262626;stroke-width:.6;}
+.lm-anim .lm-road{stroke:#000;stroke-width:1.6;}
+.lm-anim .lm-goal{stroke:#f00;stroke-width:1.3;}
+.lm-anim .lm-goal-t{fill:#d70015;font-size:7.5px;}
+.lm-anim .lm-obs1{fill:#89abc7;}
+.lm-anim .lm-obs2{fill:#ec7a7b;}
+.lm-anim .lm-traj{fill:none;stroke:#00f;stroke-width:1.4;stroke-linejoin:round;}
+.lm-anim .lm-pred{fill:none;stroke:#f0f;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;}
+.lm-anim .lm-ref circle{fill:#f00;}
+.lm-anim .lm-ship circle{fill:none;stroke:#000;stroke-width:1.1;}
+.lm-anim .lm-ship path{fill:#1d1d1f;}
+
+/* check / cross lists */
+ul.check li::before{content:"✓";background:none;color:var(--green);font-weight:800;font-size:19px;top:0;}
+ul.cross li::before{content:"✕";background:none;color:var(--red);font-weight:800;font-size:17px;top:1px;}
+
+/* bar chart */
+.chart{display:flex;align-items:flex-end;gap:44px;height:300px;margin-top:26px;padding:0 10px;}
+.chart .group{flex:1;display:flex;flex-direction:column;height:100%;}
+.chart .bars{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:12px;}
+.chart .bar{
+  width:64px;border-radius:12px 12px 4px 4px;position:relative;
+  transition:height 1s cubic-bezier(.22,.61,.21,1);
+}
+.chart .bar .v{
+  position:absolute;top:-30px;left:0;right:0;text-align:center;
+  font-size:19px;font-weight:700;letter-spacing:-.02em;
+}
+.chart .glabel{text-align:center;font-size:17px;font-weight:600;color:var(--text-gray);margin-top:14px;}
+/* slide 12: narrower bars so the chart fits a half-width column */
+#mcChart{gap:22px;}
+#mcChart .bars{gap:8px;}
+#mcChart .bar{width:46px;}
+.bar.gray{background:#aeaeb2;}
+.bar.blue{background:#64d2ff;}
+.bar.grad{background:var(--grad-blue);box-shadow:0 6px 18px rgba(10,132,255,.35);}
+.legend{display:flex;gap:26px;justify-content:center;margin-top:22px;}
+.legend .item{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600;color:var(--text-gray);}
+.legend .sw{width:16px;height:16px;border-radius:5px;}
+/* slide 11: penetration-depth dot strip (one dot per violating trial) */
+.sev-frame{padding:14px 18px 10px;}
+#sevChart{display:block;width:100%;height:auto;overflow:visible;}
+#sevChart .grid{stroke:#ececf0;stroke-width:1;}
+#sevChart .base{stroke:#c7c7cc;stroke-width:1;}
+#sevChart .tick{font-size:12px;font-weight:500;fill:#8e8e93;}
+#sevChart .key{font-size:12px;font-weight:500;fill:#6e6e73;}
+#sevChart .dlab{font-size:16px;font-weight:700;fill:#1d1d1f;}
+#sevChart .dsub{font-size:11.5px;font-weight:500;fill:#8e8e93;}
+#sevChart .cnt{font-size:13.5px;font-weight:600;fill:#6e6e73;}
+#sevChart .cnt.hl{font-weight:700;fill:#1d1d1f;}
+#sevChart .hlrow{fill:rgba(0,113,227,.07);}
+#sevChart .iqr{opacity:.3;}
+#sevChart .med{stroke:#1d1d1f;stroke-width:2.2;stroke-linecap:round;}
+#sevChart .halo{stroke:#fff;stroke-width:5;stroke-linecap:round;}
+#sevChart .dot{stroke:#fff;stroke-width:1;transform-box:fill-box;transform-origin:center;}
+#sevChart .dot.hl{filter:drop-shadow(0 1px 3px rgba(10,132,255,.5));}
+.slide.active #sevChart .dot{animation:sevPop .5s cubic-bezier(.22,.61,.21,1) both;animation-delay:var(--d);}
+@keyframes sevPop{from{opacity:0;transform:scale(.2);}}
+
+/* horizontal time comparison */
+.time-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.time-name{font-size:16.5px;font-weight:700;color:var(--text-dark);}
+.time-name span{font-size:14px;font-weight:500;color:var(--text-gray);margin-left:8px;}
+.time-val{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1;}
+.time-val small{font-size:16px;font-weight:600;margin-left:3px;}
+.time-track{height:14px;border-radius:980px;background:#fff;overflow:hidden;}
+.time-bar{height:100%;border-radius:980px;transform-origin:left center;}
+.time-bar.seq{background:#aeaeb2;}
+.time-bar.par{background:var(--grad-blue);}
+.slide.active .time-bar{animation:growx 1s cubic-bezier(.22,.61,.21,1) .55s both;}
+@keyframes growx{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+
+/* big stat */
+.stat-row{display:flex;gap:56px;justify-content:center;align-items:baseline;margin-top:44px;}
+.stat{text-align:center;}
+.stat .big{font-size:120px;font-weight:700;letter-spacing:-.04em;line-height:1;}
+.stat .lbl{font-size:19px;color:var(--text-lightgray);margin-top:14px;font-weight:500;}
+
+/* footer of slide */
+.slide-footer{
+  position:absolute;bottom:34px;left:90px;right:90px;
+  display:flex;justify-content:flex-end;align-items:center;
+  font-size:13.5px;color:#aeaeb2;font-weight:500;letter-spacing:.01em;
+}
+.dark .slide-footer,.dark2 .slide-footer{color:#6e6e73;}
+
+/* annotated OCP equations (slide 7) */
+.ocp{
+  --blue-fg:#0066cc;--blue-bg:rgba(0,113,227,.09);
+  --purple-fg:#8a3fc0;--purple-bg:rgba(175,82,222,.11);
+  --orange-fg:#bd5800;--orange-bg:rgba(255,149,0,.14);
+  --teal-fg:#0a7485;--teal-bg:rgba(0,168,190,.12);
+  --green-fg:#15803d;--green-bg:rgba(48,209,88,.14);
+  --ann-gray:#86868b;
+}
+.ocp-card{position:relative;background:#f5f5f7;border-radius:20px;padding:12px 18px 14px;}
+.ocp-tag{font-size:12.5px;font-weight:700;color:var(--text-gray);letter-spacing:.01em;}
+.ocp-idx{position:absolute;top:12px;right:18px;font-size:12.5px;color:var(--text-gray);}
+.ocp-eq{display:flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;}
+.ocp-eq .tm{position:relative;display:inline-block;}
+.ocp-eq .op{margin:0 .2em;}
+.ocp .chip{padding:1px 6px;border-radius:9px;}
+.ocp .c-blue{--fg:var(--blue-fg);background:var(--blue-bg);color:var(--fg);}
+.ocp .c-purple{--fg:var(--purple-fg);background:var(--purple-bg);color:var(--fg);}
+.ocp .c-orange{--fg:var(--orange-fg);background:var(--orange-bg);color:var(--fg);}
+.ocp .c-teal{--fg:var(--teal-fg);background:var(--teal-bg);color:var(--fg);}
+.ocp .c-green{--fg:var(--green-fg);background:var(--green-bg);color:var(--fg);}
+.ocp .c-plain{--fg:var(--ann-gray);color:var(--text-dark);}
+/* arrow annotation: label + stem + arrowhead pointing at the term */
+.ocp .ann{
+  position:absolute;left:50%;transform:translateX(-50%);
+  white-space:nowrap;text-align:center;line-height:1.2;
+  color:var(--fg,var(--ann-gray));font-family:inherit;pointer-events:none;
+}
+.ocp .ann b{display:block;font-size:13px;font-weight:700;}
+.ocp .ann small{display:block;font-size:11.5px;font-weight:500;color:var(--ann-gray);margin-top:1px;}
+.ocp .ann::before,.ocp .ann::after{content:"";position:absolute;left:50%;}
+.ocp .ann::before{width:1.5px;margin-left:-.75px;background:currentColor;opacity:.7;}
+.ocp .ann::after{margin-left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;}
+.ocp .ann.dn{top:100%;padding-top:var(--stem,17px);}
+.ocp .ann.dn::before{top:7px;height:calc(var(--stem,17px) - 9px);}
+.ocp .ann.dn::after{top:2px;border-bottom:6px solid currentColor;}
+.ocp .ann.up{bottom:100%;padding-bottom:var(--stem,13px);}
+.ocp .ann.up::before{bottom:7px;height:calc(var(--stem,13px) - 9px);}
+.ocp .ann.up::after{bottom:2px;border-top:6px solid currentColor;}
+/* constraints with leader arrows */
+.ocp-st{display:grid;grid-template-columns:auto 1fr auto;column-gap:0;row-gap:7px;align-items:center;}
+.ocp-st .kw{padding-right:12px;}
+.ocp-st .eqlead{display:flex;align-items:center;min-width:0;}
+.ocp-st .eqlead .lead{flex:1;min-width:26px;}
+.ocp-st .lead{position:relative;height:1.5px;margin:0 10px 0 9px;background:currentColor;color:#b8b8bd;}
+.ocp-st .lead::before{content:"";position:absolute;left:-3px;top:50%;transform:translateY(-50%);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;border-right:6px solid currentColor;}
+.ocp-st .lead::after{content:"";position:absolute;right:-2px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:currentColor;}
+.ocp-st .lead.c-green{background:var(--green-fg);color:var(--green-fg);}
+.ocp-st .lab{font-size:13.5px;line-height:1.3;color:var(--text-gray);}
+.ocp-st .lab b{color:var(--text-dark);margin-right:5px;}
+.ocp-st .lab.c-green{background:none;color:var(--text-gray);}
+.ocp-st .lab.c-green b{color:var(--green-fg);}
+.ocp-st .lab small{display:block;font-size:12px;}
+
+/* slide 8: block diagram in the style of the project page's overview figure */
+.par{display:grid;grid-template-columns:316px 1fr;grid-template-rows:80px 42px 176px 42px 80px;}
+.par-box{
+  border:2px solid #8e8e93;border-radius:16px;background:#f5f5f7;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+.par-box b{font-size:19px;letter-spacing:-.01em;}
+.par-box .m{font-size:16.5px;margin-top:3px;}
+.par-arrow{display:flex;justify-content:center;align-items:center;}
+.par-stack{position:relative;}
+.par-card{
+  position:absolute;width:250px;height:110px;border-radius:16px;
+  border:2px solid rgba(10,132,255,.45);background:#eef5ff;
+  padding:3px 12px;font-size:12.5px;font-weight:600;color:rgba(0,102,204,.55);white-space:nowrap;
+}
+.par-card.k2{left:22px;top:22px;background:#e6f0ff;}
+.par-card.k3{left:44px;top:44px;background:#deebff;}
+.par-card.front{
+  left:66px;top:66px;border-color:#0a84ff;background:#d9e9ff;color:var(--text-dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(10,132,255,.18);
+}
+.par-card.front b{font-size:19px;}
+.par-card.front .m{font-size:16px;font-weight:400;margin-top:3px;}
+.par-note{display:flex;align-items:center;min-width:0;white-space:nowrap;}
+.par-note .lead{
+  position:relative;flex:none;width:30px;height:1.5px;margin:0 14px 0 10px;background:#c7c7cc;
+}
+.par-note .lead::before{content:"";position:absolute;left:-3px;top:50%;transform:translateY(-50%);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;border-right:6px solid #c7c7cc;}
+.par-note .lead::after{content:"";position:absolute;right:-2px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:#c7c7cc;}
+.par-note .lab{display:block;font-size:12.5px;font-weight:700;color:var(--blue);margin-bottom:2px;}
+.par-note p{font-size:16px;line-height:1.4;color:var(--text-dark);}
+.par-note .sub{display:block;font-size:13.5px;line-height:1.4;color:var(--text-gray);margin-top:1px;}
+.par-batch{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12.5px;color:var(--text-gray);}
+.par-batch em{font-style:normal;font-weight:700;width:38px;flex:none;}
+.par-batch .q{display:flex;gap:3px;}
+.par-batch .q i{width:11px;height:11px;border-radius:3px;background:#0a84ff;}
+.par-batch .q i.idle{background:none;border:1.5px solid #d1d1d6;}
+
+/* dense grouped bar chart (slide 12 timing) */
+.chart.dense{gap:12px;height:292px;margin-top:34px;padding:0 2px;}
+.chart.dense .group{border-radius:14px;padding:0 4px 8px;}
+.chart.dense .group.hl{background:rgba(0,113,227,.07);}
+.chart.dense .bars{gap:7px;}
+.chart.dense .bar{width:34px;border-radius:9px 9px 3px 3px;}
+.chart.dense .bar .v{font-size:13.5px;top:-22px;letter-spacing:-.01em;}
+.chart.dense .glabel{font-size:15.5px;margin-top:10px;line-height:1.25;color:var(--text-dark);}
+.chart.dense .glabel small{display:block;font-size:12px;font-weight:500;color:#8e8e93;}
+.chart.dense .group.hl .glabel{color:var(--blue);}
+.chart.dense .speedup{display:inline-block;margin-top:6px;padding:2px 9px;border-radius:980px;
+  background:rgba(48,209,88,.13);color:#1fa94a;font-size:13px;font-weight:700;}
+
+/* Branch / Guard selection animation (slide 07) */
+.bg-scene{background:#fff;border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;cursor:pointer;}
+.bg-scene svg{display:block;width:100%;height:auto;}
+.bg-scene text{font-family:inherit;}
+.bg-scene .pop{transform-box:fill-box;transform-origin:center;}
+.bg-scene .ring{transform-box:fill-box;transform-origin:center;fill:none;stroke:#0a84ff;stroke-width:2;vector-effect:non-scaling-stroke;opacity:0;}
+.bg-scene .rl{stroke:#c7c7cc;stroke-width:1.3;stroke-dasharray:1;stroke-dashoffset:1;}
+.bg-scene .ko{fill:rgba(142,142,147,.06);stroke:#aeaeb2;stroke-width:1.4;stroke-dasharray:3 3;}
+.bg-scene .hull{fill:#8e8e93;stroke:#1d1d1f;stroke-width:.8;}
+.bg-scene .badge circle{fill:#1d1d1f;}
+.bg-scene .badge text{fill:#fff;font-size:10.5px;font-weight:700;text-anchor:middle;}
+.bg-scene .pulse{fill:none;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center;}
+.bg-scene .pill rect{rx:5;}
+.bg-scene .pill text{font-size:10px;font-weight:700;text-anchor:middle;}
+.bg-scene .on rect{fill:var(--pc);}
+.bg-scene .on text{fill:#fff;}
+.bg-scene .off rect{fill:#f2f2f7;stroke:#d1d1d6;stroke-width:.8;}
+.bg-scene .off text{fill:#c7c7cc;}
+.bg-scene .cap{font-size:15px;font-weight:700;fill:#1d1d1f;opacity:0;}
+.bg-scene .tile{fill:#f2f2f7;stroke:#d1d1d6;stroke-width:.8;}
+.bg-scene .stripe{fill:#bf5af2;opacity:0;}
+.bg-scene .cnt{font-size:40px;font-weight:700;fill:#0a84ff;text-anchor:middle;opacity:0;letter-spacing:-.02em;}
+.bg-scene .fade{opacity:0;}
+.slide.active .bg-scene .ring{animation:bgRing 1.8s linear .9s both;}
+.slide.active .bg-scene .rl{animation:bgDraw .35s ease-out calc(var(--d) - .3s) both;}
+.slide.active .bg-scene .badge .pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) var(--d) both;}
+.slide.active .bg-scene .branch .hull{animation:bgHullB .4s ease var(--c) both;}
+.slide.active .bg-scene .branch .ko{animation:bgKoB .4s ease var(--c) both;}
+.slide.active .bg-scene .branch .badge circle{animation:bgFillB .4s ease var(--c) both;}
+.slide.active .bg-scene .branch .rl,.slide.active .bg-scene .rl.branch{animation:bgDraw .35s ease-out calc(var(--d) - .3s) both,bgLineB .4s ease var(--c) both;}
+.slide.active .bg-scene .guard .hull{animation:bgHullG .4s ease var(--c) both;}
+.slide.active .bg-scene .guard .ko{animation:bgKoG .4s ease var(--c) both;}
+.slide.active .bg-scene .guard .badge circle{animation:bgFillG .4s ease var(--c) both;}
+.slide.active .bg-scene .rl.guard{animation:bgDraw .35s ease-out calc(var(--d) - .3s) both,bgLineG .4s ease var(--c) both;}
+.slide.active .bg-scene .excl .hull{animation:bgHullX .5s ease var(--c) both;}
+.slide.active .bg-scene .excl .ko{animation:bgKoX .5s ease var(--c) both;}
+.slide.active .bg-scene .excl .badge{animation:bgDim .5s ease var(--c) both;}
+.slide.active .bg-scene .rl.excl{animation:bgDraw .35s ease-out calc(var(--d) - .3s) both,bgDim .5s ease var(--c) both;}
+.slide.active .bg-scene .pulse{animation:bgPulse .8s ease-out var(--c) both;}
+.slide.active .bg-scene .pill .pop,.slide.active .bg-scene .tag .pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) calc(var(--c) + .12s) both;}
+.slide.active .bg-scene .cap{animation:bgIn .35s ease var(--in) both,bgOut .3s ease var(--out) forwards;}
+.slide.active .bg-scene .cap.last{animation:bgIn .35s ease var(--in) both;}
+.slide.active .bg-scene .cnt{animation:bgIn .2s ease var(--in) both,bgOut .15s ease var(--out) forwards;}
+.slide.active .bg-scene .cnt.last{animation:bgPopIn .4s cubic-bezier(.3,1.6,.5,1) var(--in) both;}
+.slide.active .bg-scene .tile{animation:bgTile .3s ease var(--t) both;}
+.slide.active .bg-scene .stripe{animation:bgIn .3s ease var(--t) both;}
+.slide.active .bg-scene .fade{animation:bgIn .5s ease var(--in) both;}
+.slide.active .bg-card.branch{animation:bgGlowB 2.5s ease 3.1s both;}
+.slide.active .bg-card.guard{animation:bgGlowG 1.9s ease 5.7s both;}
+@keyframes bgRing{0%{transform:scale(0);opacity:.55;}80%{opacity:.3;}100%{transform:scale(1);opacity:0;}}
+@keyframes bgDraw{to{stroke-dashoffset:0;}}
+@keyframes bgPop{from{opacity:0;transform:scale(.2);}}
+@keyframes bgPopIn{from{opacity:0;transform:scale(.6);}to{opacity:1;}}
+@keyframes bgIn{from{opacity:0;}to{opacity:1;}}
+@keyframes bgOut{to{opacity:0;}}
+@keyframes bgDim{to{opacity:.3;}}
+@keyframes bgHullB{to{fill:#0a84ff;}}
+@keyframes bgHullG{to{fill:#bf5af2;}}
+@keyframes bgHullX{to{fill:#e5e5ea;stroke:#c7c7cc;}}
+@keyframes bgKoB{to{stroke:#0a84ff;fill:rgba(10,132,255,.10);}}
+@keyframes bgKoG{to{stroke:#bf5af2;fill:rgba(191,90,242,.10);}}
+@keyframes bgKoX{to{stroke:#e5e5ea;fill:rgba(0,0,0,0);}}
+@keyframes bgFillB{to{fill:#0a84ff;}}
+@keyframes bgFillG{to{fill:#bf5af2;}}
+@keyframes bgLineB{to{stroke:rgba(10,132,255,.55);}}
+@keyframes bgLineG{to{stroke:rgba(191,90,242,.55);}}
+@keyframes bgPulse{0%{opacity:0;transform:scale(1);}2%{opacity:.8;}100%{opacity:0;transform:scale(2.1);}}
+@keyframes bgTile{to{fill:#0a84ff;stroke:#0a84ff;}}
+@keyframes bgGlowB{0%,100%{box-shadow:0 2px 14px rgba(0,0,0,.05);}12%,85%{box-shadow:0 0 0 3px rgba(10,132,255,.5),0 10px 28px rgba(10,132,255,.18);}}
+@keyframes bgGlowG{0%,100%{box-shadow:0 2px 14px rgba(0,0,0,.05);}14%,82%{box-shadow:0 0 0 3px rgba(191,90,242,.5),0 10px 28px rgba(191,90,242,.18);}}
+.bg-card{background:#fff;border-radius:20px;padding:16px 22px 16px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.bg-card h3{font-size:19px;margin-bottom:2px;}
+.bg-card .num{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
+.bg-card p{font-size:14.5px;line-height:1.5;color:var(--text-gray);word-break:keep-all;}
+@media (prefers-reduced-motion:reduce){.slide.active .bg-scene *,.slide.active .bg-card{animation-duration:.01s!important;animation-delay:0s!important;}}
+/* 시뮬레이션 설정 애니메이션 (slide 9): .bg-scene 의 cap/fade 타이밍과 클릭 재생을 그대로 사용 */
+.sim-scene .ss-pop{transform-box:fill-box;transform-origin:center;}
+.sim-scene .ss-draw{stroke-dasharray:1;stroke-dashoffset:1;}
+.sim-scene .ss-ping{fill:none;stroke:#0a84ff;stroke-width:1.6;opacity:0;transform-box:fill-box;transform-origin:center;}
+.sim-scene .ss-tile-bg{fill:#f5f5f7;stroke:rgba(10,132,255,0);stroke-width:1.5;}
+.sim-scene .ss-tile-c{opacity:0;}
+.sim-scene .ss-num{font-size:21px;font-weight:700;fill:#1d1d1f;letter-spacing:-.02em;}
+.sim-scene .ss-num tspan{font-size:13px;}
+.sim-scene .ss-lab{font-size:11.5px;fill:#6e6e73;text-anchor:end;}
+.sim-scene .ss-chip rect{fill:#f2f2f7;stroke:#d1d1d6;stroke-width:.8;}
+.sim-scene .ss-chip text{font-size:10.5px;font-weight:700;fill:#aeaeb2;text-anchor:middle;}
+.sim-scene .ss-cnt{font-size:17px;font-weight:700;fill:#1d1d1f;opacity:0;transform-box:fill-box;transform-origin:left center;}
+.sim-scene .ss-new{fill:none;stroke:#0a84ff;stroke-width:1.8;opacity:0;transform-box:fill-box;transform-origin:center;}
+.slide.active .sim-scene .ss-new{animation:bgPulse 1.1s ease-out var(--t) both;}
+.slide.active .sim-scene .ss-pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) var(--t) both;}
+.slide.active .sim-scene .ss-draw{animation:bgDraw var(--dur,.6s) var(--ease,ease-in-out) var(--t) both;}
+.slide.active .sim-scene .ss-ping{animation:bgPulse 1s ease-out var(--t) 4 both;}
+.slide.active .sim-scene .ss-tile-bg{animation:ssTileHi .9s ease var(--t) both;}
+.slide.active .sim-scene .ss-tile-c{animation:bgIn .4s ease var(--t) both;}
+.slide.active .sim-scene .ss-chip rect{animation:ssChipOn .3s ease var(--on) both,ssChipOff .3s ease var(--off) forwards;}
+.slide.active .sim-scene .ss-chip text{animation:ssChipTxOn .3s ease var(--on) both,ssChipTxOff .3s ease var(--off) forwards;}
+.slide.active .sim-scene .ss-chip.last rect{animation:ssChipOn .3s ease var(--on) both;}
+.slide.active .sim-scene .ss-chip.last text{animation:ssChipTxOn .3s ease var(--on) both;}
+.slide.active .sim-scene .ss-cnt{animation:bgPopIn .4s cubic-bezier(.3,1.6,.5,1) var(--in) both,bgOut .15s ease var(--out) forwards;}
+.slide.active .sim-scene .ss-cnt.last{animation:bgPopIn .4s cubic-bezier(.3,1.6,.5,1) var(--in) both;}
+@keyframes ssTileHi{0%{fill:#f5f5f7;stroke:rgba(10,132,255,0);}25%{fill:#e8f2ff;stroke:rgba(10,132,255,.85);}100%{fill:#f5f5f7;stroke:rgba(10,132,255,0);}}
+@keyframes ssChipOn{to{fill:#0a84ff;stroke:#0a84ff;}}
+@keyframes ssChipOff{to{fill:#f2f2f7;stroke:#d1d1d6;}}
+@keyframes ssChipTxOn{to{fill:#fff;}}
+@keyframes ssChipTxOff{to{fill:#aeaeb2;}}
+/* 수동 밀도 전환 (data-show=1|2|3): !important 로 끝난 애니메이션 상태를 덮어쓴다 */
+.sim-scene .ss-chip{cursor:pointer;}
+.sim-scene[data-show] .cap{opacity:0!important;}
+.sim-scene[data-show] .cap.c3{opacity:1!important;}
+.sim-scene[data-show] .ss-cnt{opacity:0!important;}
+.sim-scene[data-show="1"] .ss-cnt[data-d="1"],.sim-scene[data-show="2"] .ss-cnt[data-d="2"],.sim-scene[data-show="3"] .ss-cnt[data-d="3"]{opacity:1!important;}
+.sim-scene[data-show="1"] g[data-d="2"],.sim-scene[data-show="1"] g[data-d="3"],.sim-scene[data-show="2"] g[data-d="3"]{visibility:hidden;}
+.sim-scene[data-show] .ss-chip rect{fill:#f2f2f7!important;stroke:#d1d1d6!important;}
+.sim-scene[data-show] .ss-chip text{fill:#aeaeb2!important;}
+.sim-scene[data-show="1"] .ss-chip[data-go="1"] rect,.sim-scene[data-show="2"] .ss-chip[data-go="2"] rect,.sim-scene[data-show="3"] .ss-chip[data-go="3"] rect{fill:#0a84ff!important;stroke:#0a84ff!important;}
+.sim-scene[data-show="1"] .ss-chip[data-go="1"] text,.sim-scene[data-show="2"] .ss-chip[data-go="2"] text,.sim-scene[data-show="3"] .ss-chip[data-go="3"] text{fill:#fff!important;}
+
+/* 회전원 기반 CBF 작도 애니메이션 (slide 4): .bg-scene 의 cap/fade 타이밍과 클릭 재생을 그대로 사용 */
+/* 주의: .tc-erase 는 흰색(#fff) 획으로 점선 회전원을 덮었다가 걷어내는 방식이다. .bg-scene/.tc-scene 배경을 #fff 이외의 색으로 바꾸면 snippet 안 .tc-erase 의 stroke 색도 같은 색으로 바꿀 것. */
+.tc-scene .mi{font-family:KaTeX_Math,"Times New Roman",serif;font-style:italic;}
+.tc-scene .mr{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;}
+.tc-scene .mb{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;font-weight:700;}
+.tc-scene .tc-pop{transform-box:fill-box;transform-origin:center;}
+.tc-scene .tc-draw{stroke-dasharray:1 1.1;stroke-dashoffset:1;}
+.tc-scene .tc-erase{stroke-dasharray:1 1.1;stroke-dashoffset:0;}
+.tc-scene .tc-ghost{opacity:0;}
+.tc-scene .tc-spin,.tc-scene .tc-swing{transform-box:view-box;}
+.tc-scene .tc-rline{stroke-dasharray:1 1.1;stroke-dashoffset:1;}
+.tc-scene .tc-tmp{opacity:0;}
+.slide.active .tc-scene .tc-pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) var(--t) both;}
+.slide.active .tc-scene .tc-draw{animation:bgDraw var(--dur,.5s) var(--ease,ease-in-out) var(--t) both;}
+.slide.active .tc-scene .tc-erase{animation:tcErase var(--dur,.5s) var(--ease,ease-in-out) var(--t) both;}
+.slide.active .tc-scene .tc-ghost{animation:tcGhost var(--dur) linear var(--t) both;}
+.slide.active .tc-scene .tc-spin.ccw{animation:tcCcw var(--dur) linear var(--t) both;}
+.slide.active .tc-scene .tc-spin.cw{animation:tcCw var(--dur) linear var(--t) both;}
+.slide.active .tc-scene .tc-swing.ccw{animation:tcSwL .6s cubic-bezier(.45,0,.3,1) var(--t) both;}
+.slide.active .tc-scene .tc-swing.cw{animation:tcSwR .6s cubic-bezier(.45,0,.3,1) var(--t) both;}
+.slide.active .tc-scene .tc-rline{animation:bgDraw .35s ease-out var(--t) both,bgOut .3s ease var(--out) forwards;}
+.slide.active .tc-scene .tc-tmp{animation:bgIn .35s ease var(--in) both,bgOut .3s ease var(--out) forwards;}
+.slide.active .tc-scene .tc-later{animation:tcUndim .5s ease var(--in) both;}
+.slide.active .tc-scene .tc-dimu{animation:tcDimU var(--dur) ease var(--t) both;}
+@keyframes tcErase{from{stroke-dashoffset:0;}to{stroke-dashoffset:-1.05;}}
+@keyframes tcGhost{0%{opacity:0;}6%,94%{opacity:1;}100%{opacity:0;}}
+@keyframes tcCcw{from{transform:rotate(0deg);}to{transform:rotate(-360deg);}}
+@keyframes tcCw{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes tcSwL{from{transform:rotate(0deg);}to{transform:rotate(-90deg);}}
+@keyframes tcSwR{from{transform:rotate(0deg);}to{transform:rotate(90deg);}}
+@keyframes tcUndim{from{opacity:.32;}to{opacity:1;}}
+@keyframes tcDimU{0%,100%{opacity:1;}12%,85%{opacity:.3;}}
+
+/* ============ UI chrome ============ */
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--grad-hero);z-index:100;transition:width .4s cubic-bezier(.22,.61,.21,1);}
+#counter{
+  position:fixed;bottom:20px;right:26px;z-index:100;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.55);
+  background:rgba(20,20,22,.6);padding:6px 14px;border-radius:980px;
+  backdrop-filter:blur(10px);font-variant-numeric:tabular-nums;
+}
+#navBtns{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:10px;opacity:0;transition:opacity .3s;}
+body:hover #navBtns{opacity:1;}
+#navBtns button{
+  width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(20,20,22,.65);color:#fff;font-size:18px;
+  backdrop-filter:blur(10px);transition:background .2s;
+}
+#navBtns button:hover{background:rgba(60,60,64,.85);}
+#hint{
+  position:fixed;bottom:20px;left:26px;z-index:100;font-size:12.5px;
+  color:rgba(255,255,255,.4);font-weight:500;
+}
+</style>
+</head>
+<body>
+
+<div id="viewport">
+<div id="stage">
+
+<!-- ================= Slide 1 : Title ================= -->
+<section class="slide white">
+  <div style="position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div class="reveal d1" style="display:flex;gap:12px;margin-bottom:44px;">
+      <span class="badge"><span class="dot"></span>2026 한국해양공학회 추계학술대회</span>
+      <span class="badge">세션 · 장비, 공간정보/통신</span>
+      <span class="badge">10:50 – 11:10</span>
+    </div>
+    <h1 class="reveal d2" style="font-size:58px;max-width:1060px;">
+      회전원 기반 제어 장벽 함수를 이용한<br>
+      <span style="color:var(--blue);">수상선의 멀티모달 궤적 계획</span>
+    </h1>
+    <p class="reveal d3" style="font-size:21px;color:var(--text-gray);margin-top:26px;font-weight:400;">
+      Multimodal Trajectory Planning for Surface Vehicles<br>using Turning Circle-based Control Barrier Functions
+    </p>
+    <div class="reveal d4" style="margin-top:52px;align-self:flex-end;text-align:right;">
+      <div style="font-size:36px;font-weight:700;">이찬규 <span style="font-weight:400;color:var(--text-gray);font-size:24px;">Changyu Lee</span></div>
+      <div style="font-size:24px;color:var(--text-gray);margin-top:6px;">국립공주대학교 기계자동차공학부 조교수</div>
+    </div>
+  </div>
+  <div class="slide-footer" style="justify-content:flex-end;"><span>한국해양공학회</span></div>
+</section>
+
+<!-- ================= Slide 2 : TRUST motivation ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">연구 배경</div>
+    <h2>동적 환경에서 Local Trajectory Planning의 문제점</h2>
+    <p style="font-size:19px;color:var(--text-gray);margin-top:4px;">대표 기법인 모델 예측 제어(MPC)가 동적 장애물을 회피하며 목표에 도달할 때 겪는 두 가지 문제</p>
+  </div>
+  <div class="problem-grid">
+    <div class="problem-col reveal d2">
+      <div class="problem-head"><span class="n">1</span><h3>지역 최적해 고착</h3></div>
+      <p class="problem-desc">단일 호모토피 클래스 안에서 최적화하므로<br>지역 최적해에 빠지기 쉬움</p>
+      <figure style="margin:0;">
+        <div class="asset-frame" style="width:446px;height:261.5px;margin:0 auto;">
+          <svg id="lmAnim" class="lm-anim" viewBox="0 0 426 241.5" role="img" aria-label="두 장애물 앞에서 지역 최적해에 갇혀 목표로 진행하지 못하는 MPC 궤적 애니메이션 (t = 0–20 s)">
+            <defs><clipPath id="lmClip"><rect x="34" y="34" width="384" height="144"/></clipPath></defs>
+            <text class="lm-time" x="226" y="25" text-anchor="middle">Time: 20.00 s</text>
+            <path class="lm-grid" d="M58 34V178M118 34V178M178 34V178M238 34V178M298 34V178M358 34V178M34 46H418M34 106H418M34 166H418"/>
+            <g clip-path="url(#lmClip)">
+              <path class="lm-road" d="M34 49H418M34 163H418"/>
+              <path class="lm-goal" d="M406 102.4l7.2 7.2M413.2 102.4l-7.2 7.2"/>
+              <circle class="lm-obs1" cx="310" cy="88" r="12"/>
+              <circle class="lm-obs2" cx="298" cy="118" r="12"/>
+              <polyline class="lm-traj" points=""/>
+              <g class="lm-ref lm-refdots"></g>
+              <polyline class="lm-pred" points=""/>
+              <g class="lm-ship" transform="translate(271.1 93.5)"><circle r="9"/><path d="M6 0 2.4 2.6H-5.4V-2.6H2.4Z"/></g>
+            </g>
+            <text class="lm-goal-t" x="416" y="123" text-anchor="end">Goal (50, 0) →</text>
+            <rect class="lm-box" x="34" y="34" width="384" height="144"/>
+            <path class="lm-tickm" d="M58 178v-3M118 178v-3M178 178v-3M238 178v-3M298 178v-3M358 178v-3M58 34v3M118 34v3M178 34v3M238 34v3M298 34v3M358 34v3M34 46h3M34 106h3M34 166h3M418 46h-3M418 106h-3M418 166h-3"/>
+            <g text-anchor="middle"><text x="58" y="189">0</text><text x="118" y="189">5</text><text x="178" y="189">10</text><text x="238" y="189">15</text><text x="298" y="189">20</text><text x="358" y="189">25</text><text x="418" y="189">30</text></g>
+            <g text-anchor="end"><text x="30" y="49">5</text><text x="30" y="109">0</text><text x="30" y="169">−5</text></g>
+            <text class="lm-lab" x="226" y="202" text-anchor="middle"><tspan class="v">x</tspan> [m]</text>
+            <text class="lm-lab" transform="translate(13 106) rotate(-90)" text-anchor="middle"><tspan class="v">y</tspan> [m]</text>
+            <g class="lm-leg">
+              <path class="lm-traj" d="M27 221h14"/><text x="44" y="224">Trajectory</text>
+              <rect class="lm-obs1" x="90" y="217.5" width="14" height="7"/><text x="107" y="224">Obstacle 1</text>
+              <rect class="lm-obs2" x="155" y="217.5" width="14" height="7"/><text x="172" y="224">Obstacle 2</text>
+              <g class="lm-ref"><circle cx="227" cy="221" r="1.6"/></g><text x="237" y="224">Reference Path</text>
+              <path class="lm-pred" d="M302 221h14"/><text x="319" y="224">Predicted Trajectories</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption class="source-caption" style="text-align:center;margin-top:8px;">두 장애물 앞에서 지역 최적해에 갇힌 MPC 궤적 (t = 0–20 s)</figcaption>
+      </figure>
+    </div>
+    <div class="problem-col reveal d3">
+      <div class="problem-head"><span class="n">2</span><h3>긴 예측구간의 연산 부담</h3></div>
+      <p class="problem-desc">긴 예측구간을 사용하면 연산 부담이 크고,<br>짧으면 장애물 회피에 실패함</p>
+      <div class="horizon-grid" aria-label="예측구간 1.5초와 3.0초 MPC의 충돌회피 결과 영상">
+        <div>
+          <div class="horizon-video"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/1_5sMPC.mp4"></video></div>
+          <div class="horizon-result fail"><span class="h">예측구간 1.5 s</span>장애물 앞 정지</div>
+        </div>
+        <div>
+          <div class="horizon-video"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/3_0sMPC.mp4"></video></div>
+          <div class="horizon-result ok"><span class="h">예측구간 3.0 s</span>회피 후 목표 도달</div>
+        </div>
+      </div>
+      <p class="source-caption" style="text-align:center;margin-top:8px;">동일 조건에서 예측구간만 달리한 MPC 충돌회피 결과</p>
+    </div>
+  </div>
+  <div class="slide-footer"><span>02</span></div>
+</section>
+
+<!-- ================= Slide 3 : 기존 접근의 한계 → 연구 목표 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">기존 접근의 한계 · 연구 목표</div>
+    <h2>기존 방법의 두 한계와 이를 함께 푸는 제안</h2>
+  </div>
+  <div class="gap-grid">
+    <div class="gap-col reveal d2">
+      <div class="problem-head"><span class="n">1</span><h3>지역 최적해 고착</h3></div>
+      <figure class="asset-frame gap-card">
+        <figcaption class="gap-card-head"><span class="gap-tag">기존 방법</span><h3>Multi-modal (Homotopy) Planning</h3></figcaption>
+        <div class="gap-fig"><img src="presentation_contents/guidepath.png" alt="Guidance planner가 여러 위상 경로를 만들고 병렬 local planner가 이를 최적화한 뒤 하나를 선택하는 구조"></div>
+      </figure>
+      <div class="approach-limit">
+        <div class="approach-limit-heading"><span class="approach-limit-label">한계</span><h3>계산 부담 증가</h3></div>
+        <p>별도의 상위 수준 가이드 경로 생성 단계 필요</p>
+      </div>
+    </div>
+    <div class="gap-col reveal d3">
+      <div class="problem-head"><span class="n">2</span><h3>긴 예측구간의 연산 부담</h3></div>
+      <figure class="asset-frame gap-card">
+        <figcaption class="gap-card-head"><span class="gap-tag">기존 방법</span><h3>Euclidean Distance-based CBF (ED-CBF)</h3></figcaption>
+        <div class="gap-fig"><img src="presentation_contents/ed_cbf.png" alt="선박과 장애물 사이의 거리 및 모든 방향에 동일하게 적용되는 ED-CBF 안전 제약"></div>
+      </figure>
+      <div class="approach-limit">
+        <div class="approach-limit-heading"><span class="approach-limit-label">한계</span><h3>회피 방향 모호성 · 회전 능력 미반영</h3></div>
+        <p>거리 중심 회피로 좌·우 통과 방향 정보 부족 · 선회 한계 미반영</p>
+      </div>
+    </div>
+  </div>
+  <div class="proposal-band reveal d4">
+    <div class="proposal-item">
+      <span class="proposal-arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2.5v10.5M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="approach-limit-heading"><span class="approach-limit-label">제안</span><h3>가이드 경로 없는 멀티모달 궤적 계획</h3></div>
+      <p>다수의 회피 위상을 고려하는 경로 최적화 기법</p>
+    </div>
+    <div class="proposal-item">
+      <span class="proposal-arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2.5v10.5M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="approach-limit-heading"><span class="approach-limit-label">제안</span><h3>회전원 기반 CBF (TC-CBF)</h3></div>
+      <p>선박의 선회 능력을 반영하고 회피 방향을 지정할 수 있는 CBF</p>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">출처: <a href="https://doi.org/10.1109/TRO.2024.3475047" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">de Groot et al., <i>IEEE T-RO</i> 41, 110-126, 2025</a> ·
+    <a href="https://doi.org/10.23919/ACC50511.2021.9483029" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">Zeng et al., ACC 2021, 3882-3889</a></span>
+    <span>03</span>
+  </div>
+</section>
+
+<!-- ================= Slide 4 : TC-CBF ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">핵심 아이디어 ①</div>
+    <h2>회전원 기반 제어 장벽 함수 <span class="grad-blue-text">TC-CBF</span></h2>
+  </div>
+  <div class="cols c64" style="margin-top:4px;">
+    <div>
+      <p class="reveal d2" style="font-size:19px;color:var(--text-gray);margin-bottom:20px;">
+        <b style="color:var(--text-dark);font-weight:600;">Turning Circle-based Control Barrier Function</b><br>
+        통과 방향의 <b style="color:var(--text-dark);">회전원 중심과 장애물 사이의 거리</b>로 안전 여유를 정의합니다.
+      </p>
+      <div class="reveal d3" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="eq math-eq" style="font-size:18px;padding:13px 20px;">\[
+          r_{\mathrm{ss}}=K_n\delta_{\max},\qquad
+          R_{\min}(u)=\frac{u}{r_{\mathrm{ss}}}
+        \]
+          <p style="font-size:14.5px;line-height:1.4;color:var(--text-gray);margin-top:6px;">최대 타각에서의 정상상태 선회율로 최소 선회 반경을 계산합니다.</p>
+        </div>
+        <div class="eq math-eq" style="font-size:18px;padding:13px 20px;">\[
+          \mathbf{p}_{\sigma}=\mathbf{p}+R
+          \begin{bmatrix}
+          \cos(\psi-\sigma\pi/2)\\
+          \sin(\psi-\sigma\pi/2)
+          \end{bmatrix}
+        \]
+          <p style="font-size:14.5px;line-height:1.4;color:var(--text-gray);margin-top:6px;">위치와 선수각을 기준으로 선택한 방향의 회전원 중심을 구합니다.</p>
+        </div>
+        <div class="eq math-eq" style="font-size:18px;padding:13px 20px;">\[
+          h^{\sigma}(\mathbf{x})=
+          \big\|\mathbf{p}_{\sigma}-\mathbf{o}\big\|
+          -\big(o_r+R_s+R\big)
+        \]
+          <p style="font-size:14.5px;line-height:1.4;color:var(--text-gray);margin-top:6px;">중심 간 거리에서 장애물·선박·회전원 반경을 빼 안전 여유를 정의합니다.</p>
+        </div>
+      </div>
+      <ul class="clean check reveal d4" style="margin-top:16px;">
+        <li style="font-size:16.5px;">\(\sigma=+1\)은 우현, \(\sigma=-1\)은 좌현 회전원을 선택</li>
+        <li style="font-size:16.5px;">\(h^{\sigma}\ge0\)이면 해당 방향으로 <b>비상 선회가 가능한 상태</b></li>
+        <li style="font-size:16.5px;">\(R=R_{\min}(u)\)로 <b>선박의 유한한 선회 성능</b>을 반영</li>
+      </ul>
+    </div>
+    <div class="reveal d3"><div class="bg-scene tc-scene" title="클릭하면 다시 재생"><svg viewBox="0 0 448 472" role="img" aria-label="좌현 회전원(σ=−1)과 우현 회전원(σ=+1)의 작도: 최소 선회 반경 R=u/r_ss를 선수 방향에서 좌현 또는 우현 쪽으로 90° 돌려 회전원 중심 p_σ를 구하고, 최대 타각 비상 선회 시 안전 반경 R_s의 원판이 쓸고 가는 영역의 바깥 경계인 반경 R+R_s 원 밖에 장애물이 있으면 안전 여유 h^σ ≥ 0으로 해당 방향 비상 선회가 가능함을 보이는 애니메이션. σ 선택이 곧 통과 방향 선택임을 요약한다.">
+  <defs>
+    <marker id="tcAh" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0.5 L8,4 L0,7.5 Z" fill="#1d1d1f"/></marker>
+    <pattern id="tcHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#d1d1d6" stroke-width="1.3"/></pattern>
+  </defs>
+
+  <!-- ===== 좌현 회전원 σ = −1 : p (133.21,204.26), ψ 화면상 20° 위, 중심 p₋₁ (112,146), R = 62, R_s = 17, o_r = 26, ‖p₋₁ − o‖ = 175 (패널 전체를 위로 5 px 이동) ===== -->
+  <g transform="translate(0,-5)">
+    <text class="fade" x="20" y="60" font-size="13.5" font-weight="700" fill="#bf5af2" style="--in:.6s">좌현 회전원 · <tspan class="mi">σ</tspan><tspan class="mr"> = −1</tspan></text>
+    <!-- 비상 선회 시 R_s 원판이 쓸고 가는 영역 (반경 R − R_s … R + R_s) -->
+    <path class="tc-draw" pathLength="1" d="M133.21,204.26A62,62 0 1 0 90.79,87.74A62,62 0 1 0 133.21,204.26" fill="none" stroke="#bf5af2" stroke-opacity=".13" stroke-width="34" style="--t:4.45s;--dur:1.8s;--ease:linear"/>
+    <circle class="fade" cx="112" cy="146" r="79" fill="none" stroke="#bf5af2" stroke-opacity=".8" stroke-width="1.1" stroke-dasharray="2 3" style="--in:6.3s"/>
+    <!-- 회전원 (자선 위치에서 반시계 방향으로 그려짐: 흰 지우개 획이 물러남) -->
+    <circle cx="112" cy="146" r="62" fill="none" stroke="#bf5af2" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <path class="tc-erase" pathLength="1" d="M133.21,204.26A62,62 0 1 0 90.79,87.74A62,62 0 1 0 133.21,204.26" fill="none" stroke="#fff" stroke-width="4.5" style="--t:3.5s;--dur:.9s"/>
+    <!-- 선수 방향에 수직인 반경 R (회전이 끝나면 점선으로 교체) -->
+    <line class="fade" x1="133.21" y1="204.26" x2="112" y2="146" stroke="#bf5af2" stroke-width="1.4" stroke-dasharray="4 3" style="--in:3.3s"/>
+    <!-- 좌현 비상 선회 방향 (반시계) -->
+    <path class="tc-draw" pathLength="1" d="M133.21,204.26A62,62 0 0 0 159.49,106.15" fill="none" stroke="#bf5af2" stroke-width="2.2" style="--t:4.45s;--dur:.55s;--ease:linear"/>
+    <g transform="translate(159.49,106.15) rotate(-130)"><polygon class="tc-pop" points="3,0 -7,-4.6 -7,4.6" fill="#bf5af2" style="--t:4.95s"/></g>
+    <!-- 장애물 -->
+    <g class="tc-pop" style="--t:.85s">
+      <circle cx="285.3" cy="170.36" r="26" fill="#f5f5f7"/>
+      <circle cx="285.3" cy="170.36" r="26" fill="url(#tcHatch)" stroke="#8e8e93" stroke-width="1.3"/>
+    </g>
+    <g class="fade" style="--in:1.1s">
+      <line x1="285.3" y1="170.36" x2="303.68" y2="188.74" stroke="#6e6e73" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <circle cx="285.3" cy="170.36" r="2.4" fill="#1d1d1f"/>
+      <text x="318" y="175" font-size="12.5" font-weight="700" fill="#6e6e73">장애물</text>
+      <text x="287" y="162" text-anchor="middle" font-size="14" fill="#1d1d1f"><tspan class="mb">o</tspan></text>
+      <text x="307" y="202" font-size="14" fill="#1d1d1f"><tspan class="mi">o</tspan><tspan class="mi" font-size="11" dy="3">r</tspan></text>
+    </g>
+    <!-- 중심 간 거리 ‖p₋₁ − o‖ 와 안전 여유 h^(σ=−1) = 175 − (26 + 17 + 62) = 70 -->
+    <g transform="translate(112,146) rotate(8)">
+      <line class="tc-draw" pathLength="1" x1="0" y1="0" x2="175" y2="0" stroke="#ff453a" stroke-width="1.8" style="--t:7.05s;--dur:.45s"/>
+      <g transform="translate(175,0)"><polygon class="tc-pop" points="0,0 -9,-4 -9,4" fill="#ff453a" style="--t:7.45s"/></g>
+      <g transform="rotate(180)"><polygon class="tc-pop" points="0,0 -9,-4 -9,4" fill="#ff453a" style="--t:7.45s"/></g>
+      <line class="tc-draw" pathLength="1" x1="79" y1="0" x2="149" y2="0" stroke="#30d158" stroke-width="4.5" style="--t:7.85s;--dur:.35s"/>
+      <g class="fade" style="--in:7.85s"><line x1="79" y1="-6" x2="79" y2="6" stroke="#30d158" stroke-width="1.6"/><line x1="149" y1="-6" x2="149" y2="6" stroke="#30d158" stroke-width="1.6"/></g>
+    </g>
+    <!-- 자선: p, 선수각 ψ (화면상 20° 위), 속력 u, 안전 반경 R_s -->
+    <g class="tc-pop" style="--t:.7s">
+      <g transform="translate(133.21,204.26) rotate(-20)">
+        <circle r="17" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.2"/>
+        <line x1="0" y1="0" x2="0" y2="17" stroke="#1d1d1f" stroke-width="1" stroke-dasharray="2.5 2"/>
+        <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#1d1d1f"/>
+      </g>
+    </g>
+    <g class="fade" style="--in:1.0s">
+      <g class="tc-dimu" style="--t:1.25s;--dur:2.35s"><line x1="142.6" y1="200.84" x2="170.79" y2="190.58" stroke="#1d1d1f" stroke-width="1.6" marker-end="url(#tcAh)"/></g>
+      <text x="178" y="200" font-size="15" fill="#1d1d1f"><tspan class="mi">u</tspan></text>
+      <text x="127" y="234" text-anchor="end" font-size="15" fill="#1d1d1f"><tspan class="mb">p</tspan></text>
+      <text x="142" y="233" font-size="15" fill="#1d1d1f"><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan></text>
+    </g>
+    <!-- 식 (1)→(2): 선수 방향으로 R = u / r_ss 를 그린 뒤 p 를 중심으로 −90°(화면 반시계) 회전 → p₋₁ (u 화살표·선체 위에 그려지도록 자선 뒤에 배치) -->
+    <g class="tc-swing ccw" style="--t:2.75s;transform-origin:133.21px 204.26px">
+      <line class="tc-rline" pathLength="1" x1="133.21" y1="204.26" x2="191.47" y2="183.05" stroke="#bf5af2" stroke-width="2.2" style="--t:1.3s;--out:3.35s"/>
+    </g>
+    <text class="tc-tmp" x="172" y="170" text-anchor="middle" font-size="14" fill="#bf5af2" style="--in:1.45s;--out:2.45s"><tspan class="mi">R</tspan><tspan class="mr"> = </tspan><tspan class="mi">u</tspan><tspan class="mr"> / </tspan><tspan class="mi">r</tspan><tspan class="mr" font-size="11" dy="3">ss</tspan></text>
+    <!-- 좌현 비상 선회를 수행하는 가상 선박 (p₋₁ 기준 반시계 360°, 1.8 s) -->
+    <g class="tc-ghost" style="--t:4.45s;--dur:1.8s">
+      <g class="tc-spin ccw" style="transform-origin:112px 146px">
+        <g transform="translate(133.21,204.26) rotate(-20)">
+          <circle r="17" fill="#bf5af2" fill-opacity=".16" stroke="#bf5af2" stroke-width="1.3"/>
+          <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#bf5af2"/>
+        </g>
+      </g>
+    </g>
+    <circle class="tc-pop" cx="112" cy="146" r="3.6" fill="#bf5af2" style="--t:3.35s"/>
+    <text class="fade" x="105" y="140" text-anchor="end" font-size="15" fill="#bf5af2" style="--in:3.45s"><tspan class="mb">p</tspan><tspan class="mr" font-size="11" dy="3.5">−1</tspan></text>
+    <text class="fade" x="110" y="185" text-anchor="middle" font-size="15" fill="#bf5af2" style="--in:3.4s"><tspan class="mi">R</tspan></text>
+    <text class="fade" x="187" y="106" font-size="14" fill="#bf5af2" style="--in:6.4s"><tspan class="mi">R</tspan><tspan class="mr"> + </tspan><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan></text>
+    <text class="fade" x="225" y="187" text-anchor="middle" font-size="14.5" fill="#d70015" style="--in:7.5s"><tspan class="mr">∥</tspan><tspan class="mb">p</tspan><tspan class="mr" font-size="11" dy="3.5">−1</tspan><tspan class="mr" dy="-3.5"> − </tspan><tspan class="mb">o</tspan><tspan class="mr">∥</tspan></text>
+    <g class="fade" style="--in:8.05s">
+      <text x="225" y="131" text-anchor="middle" font-size="11.5" font-weight="700" fill="#248a3d">안전 여유</text>
+      <text x="225" y="150" text-anchor="middle" font-size="15" font-weight="700" fill="#248a3d"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-6">σ</tspan><tspan class="mr" font-size="11">=−1</tspan></text>
+    </g>
+    <g class="tc-pop" style="--t:8.4s">
+      <rect x="202" y="210" width="226" height="26" rx="13" fill="rgba(48,209,88,.13)"/>
+      <text x="315" y="227.5" text-anchor="middle" font-size="13.5" font-weight="700" fill="#248a3d">✓ <tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-5">σ</tspan><tspan class="mr" font-size="11">=−1</tspan><tspan class="mr" dy="5"> ≥ 0</tspan> · 좌현 비상 선회 가능</text>
+    </g>
+  </g>
+
+  <line class="fade" x1="20" y1="237" x2="428" y2="237" stroke="#e5e5ea" stroke-width="1" style="--in:.6s"/>
+
+  <!-- ===== 우현 회전원 σ = +1 : p (121.37,311.6), ψ 화면상 8° 위, 중심 p₊₁ (130,373), R = 62, R_s = 17, o_r = 26, ‖p₊₁ − o‖ = 170 (패널 전체를 위로 15 px 이동) ===== -->
+  <g transform="translate(0,-15)">
+  <g class="tc-later" style="--in:9.0s">
+    <text class="fade" x="20" y="267" font-size="13.5" font-weight="700" fill="#0a84ff" style="--in:.6s">우현 회전원 · <tspan class="mi">σ</tspan><tspan class="mr"> = +1</tspan></text>
+    <path class="tc-draw" pathLength="1" d="M121.37,311.6A62,62 0 1 1 138.63,434.4A62,62 0 1 1 121.37,311.6" fill="none" stroke="#0a84ff" stroke-opacity=".12" stroke-width="34" style="--t:11.25s;--dur:1.8s;--ease:linear"/>
+    <circle class="fade" cx="130" cy="373" r="79" fill="none" stroke="#0a84ff" stroke-opacity=".8" stroke-width="1.1" stroke-dasharray="2 3" style="--in:13.1s"/>
+    <!-- 회전원 (자선 위치에서 시계 방향으로 그려짐) -->
+    <circle cx="130" cy="373" r="62" fill="none" stroke="#0a84ff" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <path class="tc-erase" pathLength="1" d="M121.37,311.6A62,62 0 1 1 138.63,434.4A62,62 0 1 1 121.37,311.6" fill="none" stroke="#fff" stroke-width="4.5" style="--t:10.45s;--dur:.7s"/>
+    <line class="fade" x1="121.37" y1="311.6" x2="130" y2="373" stroke="#0a84ff" stroke-width="1.4" stroke-dasharray="4 3" style="--in:10.25s"/>
+    <!-- 우현 비상 선회 방향 (시계) -->
+    <path class="tc-draw" pathLength="1" d="M121.37,311.6A62,62 0 0 1 190.65,385.89" fill="none" stroke="#0a84ff" stroke-width="2.2" style="--t:11.25s;--dur:.55s;--ease:linear"/>
+    <g transform="translate(190.65,385.89) rotate(102)"><polygon class="tc-pop" points="3,0 -7,-4.6 -7,4.6" fill="#0a84ff" style="--t:11.75s"/></g>
+    <g class="tc-pop" style="--t:.95s">
+      <circle cx="282.79" cy="298.48" r="26" fill="#f5f5f7"/>
+      <circle cx="282.79" cy="298.48" r="26" fill="url(#tcHatch)" stroke="#8e8e93" stroke-width="1.3"/>
+    </g>
+    <g class="fade" style="--in:9.15s">
+      <line x1="282.79" y1="298.48" x2="301.18" y2="316.86" stroke="#6e6e73" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <circle cx="282.79" cy="298.48" r="2.4" fill="#1d1d1f"/>
+      <text x="316" y="303" font-size="12.5" font-weight="700" fill="#6e6e73">장애물</text>
+      <text x="284" y="290" text-anchor="middle" font-size="14" fill="#1d1d1f"><tspan class="mb">o</tspan></text>
+      <text x="305" y="331" font-size="14" fill="#1d1d1f"><tspan class="mi">o</tspan><tspan class="mi" font-size="11" dy="3">r</tspan></text>
+    </g>
+    <!-- 중심 간 거리 ‖p₊₁ − o‖ 와 안전 여유 h^(σ=+1) = 170 − (26 + 17 + 62) = 65 -->
+    <g transform="translate(130,373) rotate(-26)">
+      <line class="tc-draw" pathLength="1" x1="0" y1="0" x2="170" y2="0" stroke="#ff453a" stroke-width="1.8" style="--t:13.3s;--dur:.4s"/>
+      <g transform="translate(170,0)"><polygon class="tc-pop" points="0,0 -9,-4 -9,4" fill="#ff453a" style="--t:13.65s"/></g>
+      <g transform="rotate(180)"><polygon class="tc-pop" points="0,0 -9,-4 -9,4" fill="#ff453a" style="--t:13.65s"/></g>
+      <line class="tc-draw" pathLength="1" x1="79" y1="0" x2="144" y2="0" stroke="#30d158" stroke-width="4.5" style="--t:13.95s;--dur:.3s"/>
+      <g class="fade" style="--in:13.95s"><line x1="79" y1="-6" x2="79" y2="6" stroke="#30d158" stroke-width="1.6"/><line x1="144" y1="-6" x2="144" y2="6" stroke="#30d158" stroke-width="1.6"/></g>
+    </g>
+    <!-- 자선: 선수각 화면상 8° 위 -->
+    <g class="tc-pop" style="--t:.8s">
+      <g transform="translate(121.37,311.6) rotate(-8)">
+        <circle r="17" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.2"/>
+        <line x1="0" y1="0" x2="0" y2="-17" stroke="#1d1d1f" stroke-width="1" stroke-dasharray="2.5 2"/>
+        <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#1d1d1f"/>
+      </g>
+    </g>
+    <g class="tc-dimu" style="--t:9.2s;--dur:1.5s"><line class="fade" x1="131.27" y1="310.21" x2="160.98" y2="306.04" stroke="#1d1d1f" stroke-width="1.6" marker-end="url(#tcAh)" style="--in:.9s"/></g>
+    <g class="fade" style="--in:9.15s">
+      <text x="168" y="297" font-size="15" fill="#1d1d1f"><tspan class="mi">u</tspan></text>
+      <text x="113" y="291" text-anchor="end" font-size="15" fill="#1d1d1f"><tspan class="mb">p</tspan></text>
+      <text x="125" y="290" font-size="15" fill="#1d1d1f"><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan></text>
+    </g>
+    <!-- 선수 방향으로 R 을 그린 뒤 p 를 중심으로 +90°(화면 시계) 회전 → p₊₁ (u 화살표·선체 위에 그려지도록 자선 뒤에 배치) -->
+    <g class="tc-swing cw" style="--t:9.7s;transform-origin:121.37px 311.6px">
+      <line class="tc-rline" pathLength="1" x1="121.37" y1="311.6" x2="182.77" y2="302.97" stroke="#0a84ff" stroke-width="2.2" style="--t:9.3s;--out:10.3s"/>
+    </g>
+    <!-- 우현 비상 선회를 수행하는 가상 선박 (p₊₁ 기준 시계 360°, 1.8 s) -->
+    <g class="tc-ghost" style="--t:11.25s;--dur:1.8s">
+      <g class="tc-spin cw" style="transform-origin:130px 373px">
+        <g transform="translate(121.37,311.6) rotate(-8)">
+          <circle r="17" fill="#0a84ff" fill-opacity=".16" stroke="#0a84ff" stroke-width="1.3"/>
+          <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#0a84ff"/>
+        </g>
+      </g>
+    </g>
+    <circle class="tc-pop" cx="130" cy="373" r="3.6" fill="#0a84ff" style="--t:10.3s"/>
+    <text class="fade" x="123" y="391" text-anchor="end" font-size="15" fill="#0071e3" style="--in:10.4s"><tspan class="mb">p</tspan><tspan class="mr" font-size="11" dy="3.5">+1</tspan></text>
+    <text class="fade" x="113" y="349" text-anchor="middle" font-size="15" fill="#0071e3" style="--in:10.35s"><tspan class="mi">R</tspan></text>
+    <text class="fade" x="66" y="440" text-anchor="end" font-size="14" fill="#0071e3" style="--in:13.2s"><tspan class="mi">R</tspan><tspan class="mr"> + </tspan><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan></text>
+    <text class="fade" x="228" y="344" font-size="14.5" fill="#d70015" style="--in:13.7s"><tspan class="mr">∥</tspan><tspan class="mb">p</tspan><tspan class="mr" font-size="11" dy="3.5">+1</tspan><tspan class="mr" dy="-3.5"> − </tspan><tspan class="mb">o</tspan><tspan class="mr">∥</tspan></text>
+    <g class="fade" style="--in:14.1s">
+      <text x="216" y="300" text-anchor="middle" font-size="11.5" font-weight="700" fill="#248a3d">안전 여유</text>
+      <text x="226" y="317" text-anchor="end" font-size="15" font-weight="700" fill="#248a3d"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-6">σ</tspan><tspan class="mr" font-size="11">=+1</tspan></text>
+    </g>
+    <g class="tc-pop" style="--t:14.4s">
+      <rect x="214" y="404" width="214" height="26" rx="13" fill="rgba(48,209,88,.13)"/>
+      <text x="321" y="421.5" text-anchor="middle" font-size="13.5" font-weight="700" fill="#248a3d">✓ <tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-5">σ</tspan><tspan class="mr" font-size="11">=+1</tspan><tspan class="mr" dy="5"> ≥ 0</tspan> · 우현 비상 선회 가능</text>
+    </g>
+  </g>
+  </g>
+
+  <!-- 요약 -->
+  <g class="fade" style="--in:14.8s">
+    <rect x="20" y="444" width="408" height="22" rx="11" fill="#f5f5f7"/>
+    <text x="224" y="459.5" text-anchor="middle" font-size="12.5" fill="#1d1d1f"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-5">σ</tspan><tspan class="mr" dy="5"> ≥ 0</tspan>을 강제하면 <tspan class="mi">σ</tspan> 방향으로 회피 → <tspan font-weight="700" fill="#0a84ff"><tspan class="mi">σ</tspan> 선택 = 통과 방향 선택</tspan></text>
+  </g>
+
+  <text class="cap" x="20" y="34" style="--in:.9s;--out:4.3s">① 선수 방향과 수직인 좌현 쪽으로 <tspan class="mi">R</tspan>만큼 → 중심 <tspan class="mb">p</tspan><tspan class="mr" font-size="11" dy="3.5">−1</tspan></text>
+  <text class="cap" x="20" y="34" style="--in:4.4s;--out:6.8s">② 비상 선회 시 쓸고 가는 영역 → 바깥 경계 <tspan class="mi">R</tspan><tspan class="mr"> + </tspan><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan></text>
+  <text class="cap" x="20" y="34" style="--in:6.9s;--out:8.9s">③ 장애물이 <tspan class="mi">R</tspan><tspan class="mr"> + </tspan><tspan class="mi">R</tspan><tspan class="mi" font-size="11" dy="3">s</tspan><tspan dy="-3"> 원 밖 → 안전 여유 </tspan><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="-6">σ</tspan><tspan class="mr" font-size="11">=−1</tspan><tspan class="mr" dy="6"> ≥ 0</tspan></text>
+  <text class="cap last" x="20" y="34" style="--in:9.0s">④ 우현 회전원(<tspan class="mi">σ</tspan><tspan class="mr"> = +1</tspan>)도 같은 방식으로 판정</text>
+  <text class="fade" x="436" y="22" text-anchor="end" font-size="10.5" fill="#aeaeb2" style="--in:15.2s">↻ 클릭하면 다시 재생</text>
+</svg></div></div>
+    <div class="reveal d3" style="display:none;">
+      <svg viewBox="0 0 440 420" style="width:100%;border-radius:20px;background:#f5f5f7;">
+        <!-- port turning circle (above, since heading +x) -->
+        <circle cx="120" cy="120" r="80" fill="rgba(191,90,242,.10)" stroke="#bf5af2" stroke-width="2.5" stroke-dasharray="7 6"/>
+        <circle cx="120" cy="120" r="4.5" fill="#bf5af2"/>
+        <text x="120" y="66" text-anchor="middle" font-size="14.5" fill="#bf5af2" font-weight="700">좌현 회전원 (σ = −1)</text>
+        <!-- starboard turning circle -->
+        <circle cx="120" cy="280" r="80" fill="rgba(10,132,255,.10)" stroke="#0a84ff" stroke-width="2.5" stroke-dasharray="7 6"/>
+        <circle cx="120" cy="280" r="4.5" fill="#0a84ff"/>
+        <text x="120" y="382" text-anchor="middle" font-size="14.5" fill="#0a84ff" font-weight="700">우현 회전원 (σ = +1)</text>
+        <!-- R labels -->
+        <line x1="120" y1="280" x2="176" y2="336" stroke="#0a84ff" stroke-width="1.8"/>
+        <text x="158" y="322" font-size="14" fill="#0a84ff" font-style="italic">R</text>
+        <!-- ship -->
+        <g transform="translate(120,200)">
+          <path d="M -14 -9 L 16 0 L -14 9 Z" fill="#1d1d1f"/>
+          <line x1="16" y1="0" x2="52" y2="0" stroke="#1d1d1f" stroke-width="2.5" marker-end="url(#ah)"/>
+          <text x="34" y="-12" font-size="14" fill="#1d1d1f" font-style="italic">ψ</text>
+        </g>
+        <!-- obstacle -->
+        <circle cx="345" cy="220" r="44" fill="#3a3a3c"/>
+        <circle cx="345" cy="220" r="64" fill="none" stroke="#8e8e93" stroke-width="1.5" stroke-dasharray="5 5"/>
+        <text x="345" y="226" text-anchor="middle" font-size="14.5" fill="#fff" font-weight="600">장애물</text>
+        <text x="345" y="300" text-anchor="middle" font-size="13.5" fill="#6e6e73" font-style="italic">o&#8342; + R&#8347;</text>
+        <!-- clearance measure from starboard circle center -->
+        <line x1="124" y1="277" x2="340" y2="223" stroke="#30d158" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+        <text x="228" y="238" text-anchor="middle" font-size="15.5" fill="#1fa94a" font-weight="700" font-style="italic">‖p&#963; − o‖</text>
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#1d1d1f"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <div class="slide-footer"><span>04</span></div>
+</section>
+
+<!-- ================= Slide 5 : 모드 열거 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">핵심 아이디어 ②</div>
+    <h2>통과 방향 조합으로 <span class="grad-blue-text">\(K=2^M\)개의 회피 위상</span> 생성</h2>
+  </div>
+  <div class="cols" style="margin-top:2px;grid-template-columns:1fr 1.4fr;gap:32px;">
+    <div>
+      <ul class="clean reveal d2" style="word-break:keep-all;">
+        <li>최근접 <b>\(M\)척</b>의 좌·우현 조합을 열거하여 <b>\(K=2^M\)개의 동일 구조 OCP</b>를 구성</li>
+        <li>각 최적해가 <b>서로 다른 호모토피 클래스</b>의 궤적을 생성</li>
+        <li><b>선회 성능으로 실현할 수 없는 통과 방향 조합</b>은 <span style="white-space:nowrap;">TC-CBF</span> 제약에 의해 배제</li>
+      </ul>
+      <div class="reveal d4" style="margin-top:24px;display:flex;gap:14px;">
+        <div style="flex:1;background:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 2px 14px rgba(0,0,0,.05);text-align:center;">
+          <div style="font-size:36px;font-weight:700;letter-spacing:-.02em;" class="grad-blue-text">\(M=2\)</div>
+          <div class="small" style="margin-top:4px;">\(K=4\) 모드</div>
+        </div>
+        <div style="flex:1;background:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 2px 14px rgba(0,0,0,.05);text-align:center;">
+          <div style="font-size:36px;font-weight:700;letter-spacing:-.02em;" class="grad-blue-text">\(M=4\)</div>
+          <div class="small" style="margin-top:4px;">\(K=16\) 모드 (본 연구)</div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal d3">
+      <div class="mode-video-grid" aria-label="두 장애물에 대한 네 가지 회피 모드 영상">
+        <div class="mode-video"><span class="mode-label">L · L</span><div class="mode-crop"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/LL_Mode2.mp4"></video></div></div>
+        <div class="mode-video"><span class="mode-label">L · R</span><div class="mode-crop"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/LR_Mode3.mp4"></video></div></div>
+        <div class="mode-video"><span class="mode-label">R · L</span><div class="mode-crop"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/RL_Mode1.mp4"></video></div></div>
+        <div class="mode-video"><span class="mode-label">R · R</span><div class="mode-crop"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/RR_Mode4.mp4"></video></div></div>
+      </div>
+      <p class="source-caption" style="text-align:center;margin-top:9px;">동일 초기조건에서 4개 OCP를 병렬 평가하고 최저 비용 모드를 선택</p>
+    </div>
+  </div>
+  <div class="slide-footer"><span>05</span></div>
+</section>
+
+<!-- ================= Slide 6 : OCP 공식화 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">공식화</div>
+    <h2>모드별 최적 제어 문제(OCP)의 정식화</h2>
+  </div>
+  <div class="cols c64" style="margin-top:4px;">
+    <div class="ocp">
+      <div class="ocp-card reveal d2">
+        <div class="ocp-idx">\(i=0,\ldots,N-1\;\cdot\;j=1,\ldots,N_o\)</div>
+        <!-- cost: one line, each term annotated -->
+        <div class="ocp-eq" style="font-size:15px;padding:30px 0 50px;">
+          <span class="tm c-plain">\(\displaystyle\min_{\mathbf{x},\mathbf{u},\mathbf{s}}\)<span class="ann dn" style="--stem:9px;"><b>결정 변수</b></span></span>
+          <span class="tm c-plain" style="margin-left:.45em;">\(\displaystyle\sum_{i=0}^{N-1}\)<span class="ann up" style="--stem:8px;"><b>\(N\)단계 예측 구간</b></span></span>
+          <span class="op" style="margin-left:0;">\(\Big(\)</span>
+          <span class="tm chip c-blue">\(\|\mathbf{x}_i-\mathbf{r}_i\|_Q^2\)<span class="ann dn"><b>추종 오차</b><small>LOS 참조 궤적</small></span></span>
+          <span class="op">\(+\)</span>
+          <span class="tm chip c-purple">\(\|\mathbf{u}_i\|_{R_d}^2\)<span class="ann dn"><b>입력 억제</b><small>가속 · 조타 속도</small></span></span>
+          <span class="op">\(+\)</span>
+          <span class="tm chip c-orange">\(\rho_2\|\mathbf{s}_i\|_2^2+\rho_1\|\mathbf{s}_i\|_1\)<span class="ann dn"><b>슬랙 페널티</b><small>제약 위반량 최소화</small></span></span>
+          <span class="op" style="margin-right:0;">\(\Big)\)</span>
+          <span class="op">\(+\)</span>
+          <span class="tm chip c-teal">\(\|\mathbf{x}_N-\mathbf{r}_N\|_P^2\)<span class="ann dn"><b>종단 비용</b><small>예측 구간 끝 오차</small></span></span>
+        </div>
+        <!-- constraints with leader arrows -->
+        <div class="ocp-st" style="font-size:14.5px;">
+          <span class="kw">\(\text{s.t.}\)</span>
+          <span class="eqlead"><span>\(\mathbf{x}_0=\mathbf{x}_{\mathrm{init}}\)</span><span class="lead"></span></span>
+          <span class="lab"><b>초기 조건</b>현재 측정 상태에서 출발</span>
+
+          <span></span>
+          <span class="eqlead"><span>\(\mathbf{x}_{i+1}=f_d(\mathbf{x}_i,\mathbf{u}_i)\)</span><span class="lead"></span></span>
+          <span class="lab"><b>선박 동역학</b>Nomoto 모델 · RK4 이산화</span>
+
+          <span></span>
+          <span class="eqlead"><span>\(\left.\begin{aligned}&|\delta|\le\delta_{\max},\ \ |\dot{\delta}|\le\dot{\delta}_{\max}\\ &|a|\le a_{\max},\ \ u_{\min}\le u\le u_{\max}\end{aligned}\right\}\)</span><span class="lead"></span></span>
+          <span class="lab"><b>물리적 한계</b>타각 · 조타 속도 · 가속도 · 선속</span>
+
+          <span></span>
+          <span class="eqlead"><span class="chip c-green" style="color:var(--text-dark);margin-left:-6px;">\(g_j^{\textcolor{#15803d}{\sigma_j^{(k)}}}(\mathbf{x}_i)\ge-\textcolor{#bd5800}{s_{ij}},\quad \textcolor{#bd5800}{s_{ij}}\ge0\)</span><span class="lead c-green"></span></span>
+          <span class="lab c-green"><b>TC-CBF 안전 제약</b><small>모드 \(k\)의 통과 방향 \(\sigma_j^{(k)}\) 적용</small><small>슬랙 \(s_{ij}\)로 완화하여 가해성 유지</small></span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+      <ul class="clean reveal d3" style="margin-top:0;">
+        <li style="font-size:17.5px;"><b>상태</b> \(\mathbf{x}=[x,y,\psi,u,r,\delta]^\top\), <b>입력</b> \(\mathbf{u}=[a,\dot{\delta}]^\top\)</li>
+        <li style="font-size:17.5px;"><b>슬랙 변수</b>: 과도한 제약이 발생하는 순간에도 최적화 문제의 가해성을 유지</li>
+        <li style="font-size:17.5px;"><b>LOS 기반 참조 궤적</b>: 웨이포인트 경로와 전방 주시 거리(Δ = 5L)로 생성</li>
+        <li style="font-size:17.5px;margin-bottom:0;"><b>속도 추종 가중치 강화</b>: 감속보다 침로 변경을 우선</li>
+      </ul>
+      <!-- CBF constraint function -->
+      <div class="ocp">
+        <div class="ocp-card reveal d4" style="padding:10px 16px 12px;background:rgba(0,113,227,.05);">
+          <div class="ocp-tag" style="position:absolute;top:10px;right:16px;">TC-CBF 이산시간 조건</div>
+          <div class="ocp-eq" style="font-size:13.5px;padding:26px 0 44px;">
+            <span class="op" style="margin-left:0;">\(g_j^{\sigma_j}(\mathbf{x}_i)=\)</span>
+            <span class="tm c-plain">\(\dfrac{1}{L}\)<span class="ann up" style="--stem:9px;"><b>선박 길이 정규화</b></span></span>
+            <span class="op" style="margin-right:0;">\(\Big[\)</span>
+            <span class="tm chip c-green">\(h^{\sigma_j}(\mathbf{x}_i^{+},\mathbf{o}_{j,i+1})\)<span class="ann dn"><b>다음 단계 안전 여유</b><small>자선·장애물 1단계 예측</small></span></span>
+            <span class="op">\(-\)</span>
+            <span class="tm chip c-blue">\((1-\alpha)\,h^{\sigma_j}(\mathbf{x}_i,\mathbf{o}_{j,i})\)<span class="ann dn"><b>현재 안전 여유 × (1−α)</b><small>여유 감소 속도 제한</small></span></span>
+            <span class="op" style="margin-left:0;">\(\Big]\ge0\)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>06</span></div>
+</section>
+
+<!-- ================= Slide 7 : Branch / Guard 장애물 선택 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">공식화</div>
+    <h2><span class="grad-blue-text">Branch / Guard</span> 2계층 구조로 모드 수 제한</h2>
+  </div>
+  <div class="cols c64" style="margin-top:4px;gap:28px;">
+    <div class="reveal d2">
+      <div class="bg-scene" title="클릭하면 다시 재생">
+        <svg viewBox="0 0 604 450" role="img" aria-label="탐지 선박을 표면거리 순으로 정렬해 가까운 4척은 Branch, 다음 2척은 Guard로 배정하는 과정">
+          <circle class="ring" cx="130" cy="210" r="310"/>
+          <line class="rl branch" pathLength="1" x1="145.0" y1="198.3" x2="184.0" y2="167.7" style="--d:1.41s;--c:3.3s"/>
+          <line class="rl branch" pathLength="1" x1="146.8" y1="219.0" x2="212.2" y2="254.0" style="--d:1.55s;--c:3.75s"/>
+          <line class="rl branch" pathLength="1" x1="148.9" y1="211.4" x2="276.1" y2="220.6" style="--d:1.86s;--c:4.2s"/>
+          <line class="rl branch" pathLength="1" x1="147.6" y1="202.9" x2="294.4" y2="144.1" style="--d:2.04s;--c:4.65s"/>
+          <line class="rl guard" pathLength="1" x1="143.2" y1="223.7" x2="270.8" y2="356.3" style="--d:2.19s;--c:5.9s"/>
+          <line class="rl guard" pathLength="1" x1="148.4" y1="205.2" x2="374.6" y2="145.8" style="--d:2.48s;--c:6.35s"/>
+          <line class="rl excl" pathLength="1" x1="147.6" y1="217.1" x2="390.4" y2="314.9" style="--d:2.64s;--c:7.9s"/>
+          <g class="tgt branch" transform="translate(199,156)" style="--d:1.41s;--c:3.3s">
+            <circle class="pulse" r="19" stroke="#0a84ff"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(120)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">1</text></g></g>
+            <g class="pill" transform="translate(14,-31)" style="--pc:#0a84ff"><g class="pop"><g class="on"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="on" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt branch" transform="translate(229,263)" style="--d:1.55s;--c:3.75s">
+            <circle class="pulse" r="19" stroke="#0a84ff"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(-90)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">2</text></g></g>
+            <g class="pill" transform="translate(14,15)" style="--pc:#0a84ff"><g class="pop"><g class="on"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="on" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt branch" transform="translate(295,222)" style="--d:1.86s;--c:4.2s">
+            <circle class="pulse" r="19" stroke="#0a84ff"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(180)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">3</text></g></g>
+            <g class="pill" transform="translate(14,-31)" style="--pc:#0a84ff"><g class="pop"><g class="on"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="on" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt branch" transform="translate(312,137)" style="--d:2.04s;--c:4.65s">
+            <circle class="pulse" r="19" stroke="#0a84ff"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(90)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">4</text></g></g>
+            <g class="pill" transform="translate(14,-31)" style="--pc:#0a84ff"><g class="pop"><g class="on"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="on" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt guard" transform="translate(284,370)" style="--d:2.19s;--c:5.9s">
+            <circle class="pulse" r="19" stroke="#bf5af2"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(-130)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">5</text></g></g>
+            <g class="pill" transform="translate(14,-31)" style="--pc:#bf5af2"><g class="pop"><g class="on"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="off" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt guard" transform="translate(393,141)" style="--d:2.48s;--c:6.35s">
+            <circle class="pulse" r="19" stroke="#bf5af2"/>
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(180)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">6</text></g></g>
+            <g class="pill" transform="translate(14,-31)" style="--pc:#bf5af2"><g class="pop"><g class="off"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">좌</text></g><g class="on" transform="translate(19,0)"><rect width="17" height="16" rx="5"/><text x="8.5" y="11.6">우</text></g></g></g>
+          </g>
+          <g class="tgt excl" transform="translate(408,322)" style="--d:2.64s;--c:7.9s">
+            <circle class="ko" r="19"/>
+            <polygon class="hull" transform="rotate(-150)" points="12.0,0.0 5.3,3.8 -12.0,3.8 -12.0,-3.8 5.3,-3.8"/>
+            <g class="badge" transform="translate(-19,-19)"><g class="pop"><circle r="9"/><text y="3.7">7</text></g></g>
+            <g class="tag" transform="translate(0,34)"><g class="pop"><text text-anchor="middle" font-size="11.5" font-weight="700" fill="#aeaeb2">제외</text></g></g>
+          </g>
+          <g transform="translate(130,210)">
+            <polygon points="17.0,0.0 7.5,5.4 -17.0,5.4 -17.0,-5.4 7.5,-5.4" fill="#1d1d1f"/>
+            <text y="27" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d1d1f">자선</text>
+          </g>
+          <text class="cap" x="20" y="34" style="--in:0.9s;--out:3.0s">① 탐지 선박을 표면거리 순으로 정렬</text>
+          <text class="cap" x="20" y="34" style="--in:3.1s;--out:5.6s">② 가까운 4척 → <tspan fill="#0a84ff">Branch</tspan>: 좌·우 모두 열거</text>
+          <text class="cap" x="20" y="34" style="--in:5.7s;--out:7.6s">③ 다음 2척 → <tspan fill="#bf5af2">Guard</tspan>: 방위 기반 고정</text>
+          <text class="cap last" x="20" y="34" style="--in:7.7s">④ 7번째 이후 선박은 제약에서 제외</text>
+          <line x1="448" y1="56" x2="448" y2="392" stroke="#e5e5ea" stroke-width="1"/>
+          <text class="fade" x="526" y="52" text-anchor="middle" font-size="13" font-weight="600" fill="#6e6e73" style="--in:.9s">모드 수 K</text>
+          <text class="cnt" x="526" y="98" style="--in:0.95s;--out:3.3s">1</text>
+          <text class="cnt" x="526" y="98" style="--in:3.3s;--out:3.75s">2</text>
+          <text class="cnt" x="526" y="98" style="--in:3.75s;--out:4.2s">4</text>
+          <text class="cnt" x="526" y="98" style="--in:4.2s;--out:4.65s">8</text>
+          <text class="cnt last pop" x="526" y="98" style="--in:4.65s">16</text>
+          <rect class="tile" x="466" y="116" width="26" height="26" rx="6" style="--t:1.000s"/>
+          <rect class="tile" x="498" y="116" width="26" height="26" rx="6" style="--t:3.300s"/>
+          <rect class="tile" x="530" y="116" width="26" height="26" rx="6" style="--t:3.750s"/>
+          <rect class="tile" x="562" y="116" width="26" height="26" rx="6" style="--t:3.775s"/>
+          <rect class="tile" x="466" y="148" width="26" height="26" rx="6" style="--t:4.200s"/>
+          <rect class="tile" x="498" y="148" width="26" height="26" rx="6" style="--t:4.225s"/>
+          <rect class="tile" x="530" y="148" width="26" height="26" rx="6" style="--t:4.250s"/>
+          <rect class="tile" x="562" y="148" width="26" height="26" rx="6" style="--t:4.275s"/>
+          <rect class="tile" x="466" y="180" width="26" height="26" rx="6" style="--t:4.650s"/>
+          <rect class="tile" x="498" y="180" width="26" height="26" rx="6" style="--t:4.675s"/>
+          <rect class="tile" x="530" y="180" width="26" height="26" rx="6" style="--t:4.700s"/>
+          <rect class="tile" x="562" y="180" width="26" height="26" rx="6" style="--t:4.725s"/>
+          <rect class="tile" x="466" y="212" width="26" height="26" rx="6" style="--t:4.750s"/>
+          <rect class="tile" x="498" y="212" width="26" height="26" rx="6" style="--t:4.775s"/>
+          <rect class="tile" x="530" y="212" width="26" height="26" rx="6" style="--t:4.800s"/>
+          <rect class="tile" x="562" y="212" width="26" height="26" rx="6" style="--t:4.825s"/>
+          <rect class="stripe" x="470" y="135" width="18" height="4" rx="2" style="--t:6.60s"/>
+          <rect class="stripe" x="502" y="135" width="18" height="4" rx="2" style="--t:6.62s"/>
+          <rect class="stripe" x="534" y="135" width="18" height="4" rx="2" style="--t:6.64s"/>
+          <rect class="stripe" x="566" y="135" width="18" height="4" rx="2" style="--t:6.66s"/>
+          <rect class="stripe" x="470" y="167" width="18" height="4" rx="2" style="--t:6.68s"/>
+          <rect class="stripe" x="502" y="167" width="18" height="4" rx="2" style="--t:6.70s"/>
+          <rect class="stripe" x="534" y="167" width="18" height="4" rx="2" style="--t:6.72s"/>
+          <rect class="stripe" x="566" y="167" width="18" height="4" rx="2" style="--t:6.74s"/>
+          <rect class="stripe" x="470" y="199" width="18" height="4" rx="2" style="--t:6.76s"/>
+          <rect class="stripe" x="502" y="199" width="18" height="4" rx="2" style="--t:6.78s"/>
+          <rect class="stripe" x="534" y="199" width="18" height="4" rx="2" style="--t:6.80s"/>
+          <rect class="stripe" x="566" y="199" width="18" height="4" rx="2" style="--t:6.82s"/>
+          <rect class="stripe" x="470" y="231" width="18" height="4" rx="2" style="--t:6.84s"/>
+          <rect class="stripe" x="502" y="231" width="18" height="4" rx="2" style="--t:6.86s"/>
+          <rect class="stripe" x="534" y="231" width="18" height="4" rx="2" style="--t:6.88s"/>
+          <rect class="stripe" x="566" y="231" width="18" height="4" rx="2" style="--t:6.90s"/>
+          <text class="fade" x="526" y="266" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0a84ff" style="--in:4.9s">Branch: 2⁴ = 16</text>
+          <text class="fade" x="526" y="286" text-anchor="middle" font-size="12.5" font-weight="700" fill="#bf5af2" style="--in:6.8s">+ Guard 2척 고정</text>
+          <text class="fade" x="526" y="303" text-anchor="middle" font-size="11.5" fill="#8e8e93" style="--in:6.8s">(모든 모드에 포함)</text>
+          <g class="fade" style="--in:8.5s">
+            <rect x="62" y="404" width="480" height="32" rx="16" fill="#f5f5f7"/>
+            <text x="302" y="425" text-anchor="middle" font-size="14" fill="#1d1d1f">모든 모드에 <tspan font-weight="700">제약 6척</tspan> 반영 (Branch 4 + Guard 2) · 풀이 OCP <tspan font-weight="700" fill="#0a84ff">16개</tspan></text>
+          </g>
+          <text class="fade" x="592" y="22" text-anchor="end" font-size="10.5" fill="#aeaeb2" style="--in:9s">↻ 클릭하면 다시 재생</text>
+        </svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="reveal d3"><div class="bg-card branch" style="border-top:5px solid #0a84ff;">
+        <h3 style="color:#0a84ff;">Branch 집합</h3>
+        <div class="num">\(M=4\)척</div>
+        <p>가장 가까운 선박에 대해 <b>\(K=2^M=16\)개의 통과 방향 조합</b>을 열거하고 병렬로 풀이</p>
+      </div></div>
+      <div class="reveal d4"><div class="bg-card guard" style="border-top:5px solid #bf5af2;">
+        <h3 style="color:#bf5af2;">Guard 집합</h3>
+        <div class="num">\(N_g=2\)척</div>
+        <p>그다음으로 가까운 선박은 <b>방위 기반 고정 통과 방향</b>으로 모든 모드에 포함하여 탈출 기동을 보존</p>
+      </div></div>
+      <div class="reveal d5" style="padding:14px 20px;border-radius:18px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.05);">
+        <p style="font-size:14.5px;line-height:1.5;word-break:keep-all;">모든 모드는 <b>\(N_o=6\)척</b>을 제약에 반영하지만, 분기 대상은 4척으로 제한하여 <b>\(K=16\)개의 OCP</b>만 풉니다.
+        따라서 혼잡 해역에서도 추가 선박을 누락하지 않고 고려할 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>07</span></div>
+</section>
+
+<!-- ================= Slide 8 : 병렬 연산 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">핵심 아이디어 ③</div>
+    <h2>동일 구조의 16개 모드를 <span class="grad-blue-text">OpenMP로 일괄 병렬화</span></h2>
+  </div>
+  <div class="cols c64" style="margin-top:4px;grid-template-columns:minmax(0,1fr) 380px;gap:40px;">
+    <div class="par reveal d2">
+      <div class="par-box"><b>모드 열거</b><span class="m">\(K=2^M=16\)개 모드</span></div>
+      <div class="par-note"><span class="lead"></span><div>
+        <span class="lab">동일 솔버 구조</span>
+        <p>모든 모드는 \(\boldsymbol{\sigma}^{(k)}\)만 다름</p>
+        <span class="sub">코드를 한 번 생성하고 \(K\)개 인스턴스를 일괄 실행</span>
+      </div></div>
+
+      <div class="par-arrow"><svg width="20" height="38" viewBox="0 0 20 38"><path d="M10 2V26" stroke="#1d1d1f" stroke-width="3"/><path d="M3 24L10 36L17 24Z" fill="#1d1d1f"/></svg></div>
+      <div></div>
+
+      <div class="par-stack">
+        <div class="par-card">OCP 1 · \((+1,+1,+1,+1)\)</div>
+        <div class="par-card k2">OCP 2 · \((+1,+1,+1,-1)\)</div>
+        <div class="par-card k3">OCP 3 · \((+1,+1,-1,+1)\)</div>
+        <div class="par-card front"><b>OCP 16</b><span class="m">\(\boldsymbol{\sigma}^{(16)}=(-1,-1,-1,-1)\)</span></div>
+      </div>
+      <div class="par-note"><span class="lead"></span><div>
+        <p><img src="presentation_contents/acados_logo.png" alt="acados" style="height:20px;width:auto;vertical-align:-4px;"> <b>+ HPIPM</b> · 모드당 RTI-SQP 1회</p>
+        <span class="lab" style="margin-top:10px;">OpenMP · 스레드 \(P=12\)</span>
+        <div class="par-batch"><em>배치 1</em><span class="q"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>OCP 1–8</span></div>
+        <div class="par-batch"><em>배치 2</em><span class="q"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>OCP 9–16</span></div>
+        <span class="sub" style="margin-top:6px;">16개 모드를 \(\lceil 16/12\rceil=2\)회 배치로 처리</span>
+      </div></div>
+
+      <div class="par-arrow"><svg width="20" height="38" viewBox="0 0 20 38"><path d="M10 2V26" stroke="#1d1d1f" stroke-width="3"/><path d="M3 24L10 36L17 24Z" fill="#1d1d1f"/></svg></div>
+      <div></div>
+
+      <div class="par-box"><b>최저 비용 모드 실행</b><span class="m">\(\mathbf{u}_0^{*}\) (<b style="font-size:inherit;color:var(--blue);">16 OCP</b>)</span></div>
+      <div class="par-note"><span class="lead"></span><div>
+        <span class="lab">매 주기 1 Hz 재계획</span>
+        <p>이전 최적해로 warm start</p>
+      </div></div>
+    </div>
+    <div class="reveal d4">
+      <div style="background:#f5f5f7;border-radius:20px;padding:26px 28px;">
+        <h3 style="font-size:20px;margin-bottom:20px;">연산 시간 비교 (K = 16)</h3>
+        <div class="time-row">
+          <div class="time-head"><span class="time-name">순차 풀이<span>1 thread</span></span><span class="time-val" style="color:#6e6e73;">8.23<small>ms</small></span></div>
+          <div class="time-track"><div class="time-bar seq" style="width:100%;"></div></div>
+        </div>
+        <div class="time-row" style="margin-top:18px;">
+          <div class="time-head"><span class="time-name">병렬 배치<span>12 threads</span></span><span class="time-val" style="color:var(--blue);">1.35<small>ms</small></span></div>
+          <div class="time-track"><div class="time-bar par" style="width:16.4%;"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:22px;padding-top:18px;border-top:1px solid #dcdce1;">
+          <div style="font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1;color:#1fa94a;">6.1×</div>
+          <div><b style="font-size:17px;">속도 향상</b><span class="small" style="display:block;">순차 대비 병렬 배치의 연산 시간</span></div>
+        </div>
+      </div>
+      <p class="source-caption" style="margin-top:10px;">예측 구간 600 s(\(T_s=20\) s, \(N=30\)단계)</p>
+    </div>
+  </div>
+  <div class="slide-footer"><span>08</span></div>
+</section>
+
+<!-- ================= Slide 9 : 시뮬레이션 설정 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">검증</div>
+    <h2>VLCC급 선박을 이용한 구조화 교통 시나리오</h2>
+  </div>
+  <div class="cols c64" style="margin-top:4px;">
+    <div class="reveal d2">
+      <div class="bg-scene sim-scene" title="클릭하면 다시 재생">
+        <svg viewBox="0 0 604 450" role="img" aria-label="33.7 km 웨이포인트 항로에 VLCC급 자선을 두고, 추월·정면·횡단 선박과 정적 장애물을 밀도 D1에서 D3까지 늘려 배치한 뒤 1 Hz로 재계획하는 시뮬레이션 설정">
+          <defs>
+            <mask id="ssRouteMask" maskUnits="userSpaceOnUse" x="0" y="0" width="604" height="450">
+              <path class="ss-draw" style="--t:1.0s;--dur:1.4s;--ease:linear" pathLength="1" d="M39.8 194.5L237.8 194.5L402.8 95.5L567.8 95.5" fill="none" stroke="#fff" stroke-width="10" stroke-linejoin="round"/>
+            </mask>
+          </defs>
+          <path d="M39.8 194.5L237.8 194.5L402.8 95.5L567.8 95.5" fill="none" stroke="#2e8b57" stroke-width="1.8" stroke-dasharray="6 4" stroke-linejoin="round" mask="url(#ssRouteMask)"/>
+          <g transform="translate(39.8,194.5)"><g class="ss-pop" style="--t:1.0s"><circle r="4" fill="#fff" stroke="#2e8b57" stroke-width="1.6"/></g></g>
+          <g transform="translate(237.8,194.5)"><g class="ss-pop" style="--t:1.5s"><circle r="4" fill="#fff" stroke="#2e8b57" stroke-width="1.6"/></g></g>
+          <g transform="translate(402.8,95.5)"><g class="ss-pop" style="--t:1.98s"><circle r="4" fill="#fff" stroke="#2e8b57" stroke-width="1.6"/></g></g>
+          <g transform="translate(567.8,95.5)"><g class="ss-pop" style="--t:2.4s"><circle r="7" fill="none" stroke="#2e8b57" stroke-width="1.2"/><circle r="4" fill="#2e8b57"/></g></g>
+          <text class="fade" x="567.8" y="80" text-anchor="middle" font-size="12" font-weight="700" fill="#2e8b57" style="--in:2.4s">도착</text>
+          <line class="ss-draw" style="--t:11.4s;--dur:.7s" pathLength="1" x1="39.8" y1="194.5" x2="119" y2="194.5" stroke="#0a84ff" stroke-width="7" stroke-opacity=".28"/>
+          <g class="fade" style="--in:12.0s"><line x1="119" y1="186" x2="119" y2="203" stroke="#0a84ff" stroke-width="1.5"/><text x="60" y="217" font-size="11.5" font-weight="700" fill="#0a84ff">600 s ≈ 4.8 km</text></g>
+          <g data-d="1" transform="translate(102.5,190.4)"><g class="ss-pop" style="--t:5.30s"><line x2="13.2" y2="0" stroke="#30b0c7" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.3" fill="#30b0c7" fill-opacity=".1" stroke="#30b0c7" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(0)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#30b0c7" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(138.8,174.7)"><g class="ss-pop" style="--t:5.37s"><circle r="5.8" fill="#d1d1d6" stroke="#8e8e93" stroke-width="1"/></g></g>
+          <g data-d="1" transform="translate(173.5,183)"><g class="ss-pop" style="--t:5.44s"><line x2="-17.2" y2="0" stroke="#bf5af2" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.6" fill="#bf5af2" fill-opacity=".1" stroke="#bf5af2" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-180)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#bf5af2" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(181.7,220.9)"><g class="ss-pop" style="--t:5.51s"><line x2="0" y2="-15.2" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.9" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-90)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(204.8,163.2)"><g class="ss-pop" style="--t:5.58s"><line x2="0" y2="16.5" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.4" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(90)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(258.5,203.3)"><g class="ss-pop" style="--t:5.65s"><circle r="5" fill="#d1d1d6" stroke="#8e8e93" stroke-width="1"/></g></g>
+          <g data-d="1" transform="translate(324.7,121.2)"><g class="ss-pop" style="--t:5.72s"><circle r="6.9" fill="#d1d1d6" stroke="#8e8e93" stroke-width="1"/></g></g>
+          <g data-d="1" transform="translate(395.6,104.7)"><g class="ss-pop" style="--t:5.79s"><line x2="11.3" y2="-6.8" stroke="#30b0c7" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.9" fill="#30b0c7" fill-opacity=".1" stroke="#30b0c7" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-31)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#30b0c7" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(462.8,75.7)"><g class="ss-pop" style="--t:5.86s"><line x2="-17.2" y2="0" stroke="#bf5af2" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.3" fill="#bf5af2" fill-opacity=".1" stroke="#bf5af2" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-180)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#bf5af2" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(464.5,123.6)"><g class="ss-pop" style="--t:5.93s"><line x2="0" y2="-13.9" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="9.1" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-90)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="1" transform="translate(490.9,64.2)"><g class="ss-pop" style="--t:6.00s"><line x2="0" y2="17.8" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.6" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(90)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g></g>
+          <g data-d="2" transform="translate(208.1,197.8)"><g class="ss-pop" style="--t:7.60s"><line x2="13.2" y2="0" stroke="#30b0c7" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.4" fill="#30b0c7" fill-opacity=".1" stroke="#30b0c7" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(0)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#30b0c7" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:7.60s"/></g>
+          <g data-d="2" transform="translate(263.8,157.7)"><g class="ss-pop" style="--t:7.67s"><line x2="-14.7" y2="8.8" stroke="#bf5af2" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.4" fill="#bf5af2" fill-opacity=".1" stroke="#bf5af2" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-211)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#bf5af2" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:7.67s"/></g>
+          <g data-d="2" transform="translate(289,196.5)"><g class="ss-pop" style="--t:7.74s"><line x2="-9.5" y2="-15.8" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.6" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-121)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:7.74s"/></g>
+          <g data-d="2" transform="translate(281.1,132)"><g class="ss-pop" style="--t:7.81s"><line x2="7.5" y2="12.5" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.3" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(59)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:7.81s"/></g>
+          <g data-d="2" transform="translate(424.9,110.4)"><g class="ss-pop" style="--t:7.88s"><circle r="6.3" fill="#d1d1d6" stroke="#8e8e93" stroke-width="1"/></g><circle class="ss-new" r="11" style="--t:7.88s"/></g>
+          <g data-d="3" transform="translate(301.2,152.6)"><g class="ss-pop" style="--t:9.90s"><line x2="11.3" y2="-6.8" stroke="#30b0c7" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="9.1" fill="#30b0c7" fill-opacity=".1" stroke="#30b0c7" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-31)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#30b0c7" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:9.90s"/></g>
+          <g data-d="3" transform="translate(356.9,107.6)"><g class="ss-pop" style="--t:9.97s"><line x2="-14.7" y2="8.8" stroke="#bf5af2" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="9.6" fill="#bf5af2" fill-opacity=".1" stroke="#bf5af2" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-211)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#bf5af2" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:9.97s"/></g>
+          <g data-d="3" transform="translate(378.7,140.7)"><g class="ss-pop" style="--t:10.04s"><line x2="-8.1" y2="-13.6" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="7.4" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(-121)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:10.04s"/></g>
+          <g data-d="3" transform="translate(371.6,77.6)"><g class="ss-pop" style="--t:10.11s"><line x2="9.8" y2="16.4" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><circle r="8.6" fill="#ff9f0a" fill-opacity=".1" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2.5 2"/><polygon transform="rotate(59)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#ff9f0a" stroke="#1d1d1f" stroke-width=".6"/></g><circle class="ss-new" r="11" style="--t:10.11s"/></g>
+          <g data-d="3" transform="translate(520.6,112)"><g class="ss-pop" style="--t:10.18s"><circle r="4.6" fill="#d1d1d6" stroke="#8e8e93" stroke-width="1"/></g><circle class="ss-new" r="11" style="--t:10.18s"/></g>
+          <g transform="translate(39.8,194.5)">
+            <g class="ss-pop" style="--t:3.0s">
+              <circle r="9.9" fill="none" stroke="#0a84ff" stroke-width="1" stroke-dasharray="2 2"/>
+              <circle r="8.25" fill="rgba(29,29,31,.06)" stroke="#1d1d1f" stroke-width="1"/>
+              <polygon points="8,0 3.5,2.6 -8,2.6 -8,-2.6 3.5,-2.6" fill="#1d1d1f"/>
+            </g>
+            <circle class="ss-ping" r="10" style="--t:11.4s"/>
+          </g>
+          <text class="fade" x="39.8" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1d1d1f" style="--in:3.0s">자선</text>
+          <g class="fade" style="--in:3.25s">
+            <line x1="44" y1="185" x2="56" y2="149" stroke="#aeaeb2" stroke-width="1" stroke-dasharray="3 2.5"/>
+            <rect x="22" y="52" width="190" height="96" rx="12" fill="#fff" stroke="#d2d2d7" stroke-width="1"/>
+            <polygon transform="translate(72,100)" points="10,0 4.5,2.8 -10,2.8 -10,-2.8 4.5,-2.8" fill="#1d1d1f"/>
+            <polygon transform="translate(124,76)" points="6,0 2.6,2 -6,2 -6,-2 2.6,-2" fill="#1d1d1f"/>
+            <text x="136" y="80" font-size="12" fill="#1d1d1f"><tspan font-weight="700">L</tspan> 320 m</text>
+          </g>
+          <g class="fade" style="--in:3.55s">
+            <circle cx="72" cy="100" r="31.7" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.3"/>
+            <line x1="118" y1="98" x2="130" y2="98" stroke="#1d1d1f" stroke-width="1.3"/>
+            <text x="136" y="102" font-size="12" fill="#1d1d1f"><tspan font-weight="700">R</tspan><tspan font-size="8.5" dy="2.5" font-weight="700">s</tspan><tspan dy="-2.5"> 500 m</tspan></text>
+          </g>
+          <g class="fade" style="--in:3.9s">
+            <circle cx="72" cy="100" r="38" fill="none" stroke="#0a84ff" stroke-width="1.3" stroke-dasharray="3 2.5"/>
+            <line x1="118" y1="120" x2="130" y2="120" stroke="#0a84ff" stroke-width="1.3" stroke-dasharray="3 2"/>
+            <text x="136" y="124" font-size="12" font-weight="600" fill="#0a84ff">+100 m 버퍼</text>
+          </g>
+          <text class="fade" x="22" y="247" font-size="10.5" fill="#aeaeb2" style="--in:5.2s">※ 선박 위치는 교통 생성 규칙에 따른 배치 예시</text>
+          <text class="fade" x="584" y="252" text-anchor="end" font-size="10.5" fill="#aeaeb2" style="--in:10.4s">D1·D2·D3 클릭 또는 1·2·3 키로 밀도 전환</text>
+          <g class="fade" style="--in:5.15s">
+            <rect x="404" y="150" width="180" height="90" rx="14" fill="#f5f5f7"/>
+            <text x="416" y="170" font-size="11.5" font-weight="700" fill="#6e6e73">교통 밀도</text>
+            <g class="ss-chip" data-go="1" style="--on:5.3s;--off:7.6s"><rect x="488" y="157" width="28" height="18" rx="6"/><text x="502" y="169.8">D1</text></g>
+            <g class="ss-chip" data-go="2" style="--on:7.6s;--off:9.9s"><rect x="518" y="157" width="28" height="18" rx="6"/><text x="532" y="169.8">D2</text></g>
+            <g class="ss-chip last" data-go="3" style="--on:9.9s"><rect x="548" y="157" width="28" height="18" rx="6"/><text x="562" y="169.8">D3</text></g>
+            <circle cx="420" cy="224" r="4" fill="#30b0c7"/><text x="427" y="228" font-size="11" fill="#6e6e73">추월</text>
+            <circle cx="461" cy="224" r="4" fill="#bf5af2"/><text x="468" y="228" font-size="11" fill="#6e6e73">정면</text>
+            <circle cx="502" cy="224" r="4" fill="#ff9f0a"/><text x="509" y="228" font-size="11" fill="#6e6e73">횡단</text>
+            <circle cx="543" cy="224" r="4" fill="#d1d1d6" stroke="#8e8e93"/><text x="550" y="228" font-size="11" fill="#6e6e73">정적</text>
+          </g>
+          <text class="ss-cnt" data-d="1" x="416" y="202" style="--in:5.3s;--out:7.6s">동적 <tspan fill="#0a84ff">8</tspan>척 · 정적 <tspan fill="#0a84ff">3</tspan>개</text>
+          <text class="ss-cnt" data-d="2" x="416" y="202" style="--in:7.6s;--out:9.9s">동적 <tspan fill="#0a84ff">12</tspan>척 · 정적 <tspan fill="#0a84ff">4</tspan>개</text>
+          <text class="ss-cnt last" data-d="3" x="416" y="202" style="--in:9.9s">동적 <tspan fill="#0a84ff">16</tspan>척 · 정적 <tspan fill="#0a84ff">5</tspan>개</text>
+          <g class="ss-tile" style="--t:2.45s"><rect class="ss-tile-bg" x="20" y="258" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="34" y="293">33.7<tspan>km</tspan></text><text class="ss-lab" x="188" y="282">항로 길이</text><text class="ss-lab" x="188" y="298">변침 2회</text></g></g>
+          <g class="ss-tile" style="--t:3.35s"><rect class="ss-tile-bg" x="211" y="258" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="225" y="293">320<tspan>m</tspan></text><text class="ss-lab" x="379" y="282">선체 길이 L</text><text class="ss-lab" x="379" y="298">KVLCC2급</text></g></g>
+          <g class="ss-tile" style="--t:3.5s"><rect class="ss-tile-bg" x="402" y="258" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="416" y="293">7.97<tspan>m/s</tspan></text><text class="ss-lab" x="570" y="290">설계 속도 U</text></g></g>
+          <g class="ss-tile" style="--t:3.65s"><rect class="ss-tile-bg" x="20" y="320" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="34" y="355">2.0<tspan>L</tspan></text><text class="ss-lab" x="188" y="344">정상 선회 반경</text><text class="ss-lab" x="188" y="360">최대타각 35°</text></g></g>
+          <g class="ss-tile" style="--t:3.9s"><rect class="ss-tile-bg" x="211" y="320" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="225" y="355">500<tspan>m</tspan></text><text class="ss-lab" x="379" y="344">안전 반경 R<tspan font-size="8.5" dy="2">s</tspan></text><text class="ss-lab" x="379" y="360">+ CBF 버퍼 100 m</text></g></g>
+          <g class="ss-tile" style="--t:11.55s"><rect class="ss-tile-bg" x="402" y="320" width="182" height="54" rx="12"/><g class="ss-tile-c"><text class="ss-num" x="416" y="355">1<tspan>Hz</tspan></text><text class="ss-lab" x="570" y="344">재계획 주기</text><text class="ss-lab" x="570" y="360">예측 구간 600 s</text></g></g>
+          <text class="cap" x="20" y="34" style="--in:0.9s;--out:2.9s">① 웨이포인트 항로 33.7 km · 변침 2회</text>
+          <text class="cap" x="20" y="34" style="--in:3.0s;--out:5.0s">② 자선: VLCC급 선박 · 안전 반경 500 m</text>
+          <text class="cap c3" x="20" y="34" style="--in:5.1s;--out:11.2s">③ <tspan fill="#30b0c7">추월</tspan> · <tspan fill="#bf5af2">정면</tspan> · <tspan fill="#ff9f0a">횡단</tspan> 조우 + 정적 장애물, D1 → D3</text>
+          <text class="cap last" x="20" y="34" style="--in:11.3s">④ 1 Hz 재계획 · 예측 구간 600 s (≈ 4.8 km)</text>
+          <g class="fade" style="--in:13.2s">
+            <rect x="32" y="394" width="540" height="32" rx="16" fill="#f5f5f7"/>
+            <text x="302" y="415" text-anchor="middle" font-size="13.5" fill="#1d1d1f">밀도별 <tspan font-weight="700">100회</tspan> 대응표본 Monte Carlo · 세 방법에 <tspan font-weight="700" fill="#0a84ff">동일한 교통 조건</tspan> 적용</text>
+          </g>
+          <text class="fade" x="592" y="22" text-anchor="end" font-size="10.5" fill="#aeaeb2" style="--in:13.6s">↻ 클릭하면 다시 재생</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3 class="reveal d4" style="margin-bottom:14px;">비교 방법: 모두 동일하게 6척을 고려</h3>
+      <div class="reveal d5" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:#f5f5f7;border-radius:16px;padding:17px 22px;display:flex;justify-content:space-between;align-items:center;">
+          <div><b style="font-size:17.5px;">ED-CBF</b><span class="small" style="display:block;">무방향 거리 제약 6개 · 기존 CBF-MPC</span></div>
+          <span class="pill" style="background:#e8e8ed;color:#6e6e73;">K = 1</span>
+        </div>
+        <div style="background:#f5f5f7;border-radius:16px;padding:17px 22px;display:flex;justify-content:space-between;align-items:center;">
+          <div><b style="font-size:17.5px;">TC-CBF 단일 모드</b><span class="small" style="display:block;">방위 기반 고정 통과 방향 · 분기 없음</span></div>
+          <span class="pill" style="background:#e8e8ed;color:#6e6e73;">K = 1</span>
+        </div>
+        <div style="background:rgba(10,132,255,.08);border:1.5px solid rgba(10,132,255,.3);border-radius:16px;padding:17px 22px;display:flex;justify-content:space-between;align-items:center;">
+          <div><b style="font-size:17.5px;color:var(--blue);">제안 방법</b><span class="small" style="display:block;">Branch 4척, Guard 2척 · 위상 열거</span></div>
+          <span class="pill">K = 16</span>
+        </div>
+      </div>
+      <p class="small reveal d6" style="margin-top:14px;">세 방법은 <b>통과 방향 결정 방식</b>만 다르므로 위상 분기의 효과를 분리하여 비교</p>
+    </div>
+  </div>
+  <div class="slide-footer"><span>09</span></div>
+</section>
+
+<!-- ================= Slide 10 : 대표 시나리오 결과 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">결과 ① · 동일 교통 표본의 대표 시나리오</div>
+    <h2>단일 모드는 조기 실패, 제안 방법은 <span class="grad-blue-text">전 밀도에서 완주</span></h2>
+  </div>
+  <div class="reveal d3" style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;">
+    <table class="apple compact">
+      <tr>
+        <th style="width:17%;">밀도</th>
+        <th>ED-CBF (K=1)</th>
+        <th>TC-CBF 단일 (K=1)</th>
+        <th>제안 (K=16)</th>
+      </tr>
+      <tr>
+        <td><b>D1</b> · 동적 8척</td>
+        <td style="color:var(--red);">t = 297 s 안전영역 침범</td>
+        <td style="color:var(--red);">t = 341 s 안전영역 침범</td>
+        <td style="color:#1fa94a;"><b>완주</b> · 위상 재결정 8회 · 최소 여유 60 m</td>
+      </tr>
+      <tr>
+        <td><b>D2</b> · 동적 12척</td>
+        <td style="color:var(--red);">t = 327 s 안전영역 침범</td>
+        <td style="color:var(--red);">t = 315 s 안전영역 침범</td>
+        <td style="color:#1fa94a;"><b>완주</b> · 위상 재결정 17회 · 최소 여유 82 m</td>
+      </tr>
+      <tr>
+        <td><b>D3</b> · 동적 16척</td>
+        <td style="color:var(--red);">t = 437 s 안전영역 침범</td>
+        <td style="color:var(--red);">t = 406 s 안전영역 침범</td>
+        <td style="color:#1fa94a;"><b>완주</b> · 위상 재결정 26회 · 최소 여유 92 m</td>
+      </tr>
+    </table>
+    <div class="reveal d4" style="margin-top:12px;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px 22px;flex-wrap:wrap;word-break:keep-all;">
+        <b style="font-size:15px;">D3 · 제안 방법 (K=16) 전체 항해</b>
+        <div class="clip-legend" style="margin-top:0;">
+          <span><i style="background:#34506b;"></i>자선 궤적</span>
+          <span><i style="background:#8fb6d6;"></i>후보 모드</span>
+          <span><i style="background:#c0392b;"></i>선택 모드</span>
+          <span><i style="background:#d99a5e;"></i>상대선 등속 예측 (+600 s)</span>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;width:100%;display:flex;justify-content:center;margin-bottom:-16px;">
+        <div class="asset-frame" style="height:100%;flex:none;display:flex;padding:14px 30px;">
+          <img class="anim-clip" style="width:auto;height:100%;aspect-ratio:860/445;object-fit:cover;object-position:center bottom;" src="presentation_contents/v10_D4t1_mm16_poster.jpg" data-anim="presentation_contents/v10_D4t1_mm16.webp" alt="교통 밀도 D3에서 제안 방법(K=16)이 목적지까지 항해하는 영상" title="클릭하면 처음부터 다시 재생">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>10</span></div>
+</section>
+
+<!-- ================= Slide 11 : Monte Carlo 통계 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">결과 ② · Monte Carlo 통계(밀도별 100회)</div>
+    <h2>제안 방법 성공률 <span class="grad-blue-text">99 / 97 / 86%</span>, 침범 빈도·깊이 감소</h2>
+  </div>
+  <div class="cols" style="margin-top:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);">
+    <div class="reveal d2">
+      <div class="chart" id="mcChart">
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="40"><span class="v">40</span></div>
+            <div class="bar blue" data-h="76"><span class="v">76</span></div>
+            <div class="bar grad" data-h="99"><span class="v">99</span></div>
+          </div>
+          <div class="glabel">D1 (동적 8척)</div>
+        </div>
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="31"><span class="v">31</span></div>
+            <div class="bar blue" data-h="77"><span class="v">77</span></div>
+            <div class="bar grad" data-h="97"><span class="v">97</span></div>
+          </div>
+          <div class="glabel">D2 (동적 12척)</div>
+        </div>
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="20"><span class="v">20</span></div>
+            <div class="bar blue" data-h="65"><span class="v">65</span></div>
+            <div class="bar grad" data-h="86"><span class="v">86</span></div>
+          </div>
+          <div class="glabel">D3 (동적 16척)</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="sw" style="background:#aeaeb2;"></span>ED-CBF</div>
+        <div class="item"><span class="sw" style="background:#64d2ff;"></span>TC-CBF 단일</div>
+        <div class="item"><span class="sw" style="background:var(--grad-blue);"></span>제안 (K=16)</div>
+      </div>
+      <p class="small" style="text-align:center;margin-top:10px;">성공률[%]: 안전영역을 침범하지 않고 완주한 시행의 비율</p>
+    </div>
+    <div class="reveal d4">
+      <h3 style="margin-bottom:12px;">침범 깊이 분포 <span class="small" style="font-weight:500;">· 위반 시행별 최대 침범 깊이</span></h3>
+      <div class="asset-frame sev-frame">
+        <svg id="sevChart" role="img" aria-label="밀도·방법별 안전영역 최대 침범 깊이 분포. 점 하나가 위반 시행 1회"></svg>
+      </div>
+      <script>
+      (function(){
+        // 위반 시행별 최대 침범 깊이 [m] — python_code/results/out_mc_{ed,tc1,mm16}.json, level 2/3/4 = D1/D2/D3
+        const D={
+          ed:[[17.7,23.7,27.1,37.2,46.4,49.7,53.2,57.3,61.5,67,73.9,112.5,128.8,148.9,155.7,157,158.5,161.2,161.6,162.1,163.5,175.5,176.1,200.4,203,218.5,221.3,229.3,236,243.5,256.1,263.3,266.8,271.6,277.6,288.6,292.9,296.2,297.9,309.2,312.1,321.2,342.9,351.7,352.2,353.6,356.2,363.9,367.5,371.2,377.5,377.9,378.1,378.6,391.8,394.7,397.8,429.3,454,518.4],
+              [13.4,21.4,31.7,46,46,51.2,57,71.9,73,88.7,100.1,101.1,126.7,127.1,130.8,144.9,153.7,171.4,173.6,173.7,177.4,181.4,182.6,184.2,196.8,197.1,203.1,203.2,203.9,210.5,212.5,212.6,213.8,224.8,228.5,231.1,235.7,236.6,239.9,241.6,257.7,258.4,258.7,264.8,265.4,266.5,270.4,284.5,288.3,290.3,290.8,295,299.5,299.8,300.4,304.3,307.4,313.9,320.4,343.7,343.7,369.4,376.4,388.6,389.1,427,431.4,511.7,547.9],
+              [2.6,4.4,28,36.3,44.2,52.5,59.5,70.1,78.8,86,94.1,95.4,111.4,112.4,114.3,133.1,141.9,142.7,144.4,157.7,163,164.9,169.1,173.4,187.7,192.4,224,229.8,231.3,232,234.7,235,244.3,247.8,249.8,254.2,256,259.1,260.4,260.8,270.4,270.9,274.1,275.1,278.9,282,285.6,293.8,298.4,300.2,304.5,305.9,309.8,310.8,311.3,314.1,323,327.5,329.2,331.7,334.5,336.8,340.2,348.5,351.9,364.9,372,373.1,373.7,377.6,385.9,387.3,403,404.6,438.8,443.4,452.2,480.1,487.2,523.6]],
+          tc1:[[18.3,219,296.8,338,421.1,423.9,438.9,502.1,515,545.1,590,592.7,624.1,635.1,669.2,678.3,711,775.1,785.6,793.5,801.6,832.6,835.7,890.1],
+               [132.2,204.4,302.8,350.3,411.9,458.6,467.9,496.1,563.3,594.6,601.7,646.1,662.9,668.7,672.3,684.5,718,721.9,725.7,744.6,780,795.2,819.6],
+               [6.3,37.7,73.8,120.6,122.1,143.7,174.8,198.1,268.6,277.2,288.2,346.3,471.1,504.7,588.4,597.6,607.3,608.5,638.1,640.3,645.4,669.7,690.3,704.4,708.2,719.8,733.2,743.9,758.8,771.1,850.6]],
+          mm16:[[218.6],[106.2,126.8,274],[3.3,8.7,12,13.1,15.7,23.2,40.1,48.2,75,106.2]]
+        };
+        const M=[{k:'ed',name:'ED-CBF',c:'#aeaeb2'},{k:'tc1',name:'TC-CBF 단일',c:'#64d2ff'},{k:'mm16',name:'제안 (K=16)',c:'#0a84ff',hl:1}];
+        const G=[['D1','동적 8척'],['D2','동적 12척'],['D3','동적 16척']];
+        const W=494,X0=64,X1=448,XMAX=900,TOP=26,RH=24,GAP=14,R=3.3;
+        const NS='http://www.w3.org/2000/svg',svg=document.getElementById('sevChart');
+        const x=v=>X0+(X1-X0)*v/XMAX, yEnd=TOP+9*RH+2*GAP, H=yEnd+22;
+        const el=(t,a,p=svg)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+        const txt=(a,s)=>{el('text',a).textContent=s;};
+        const q=(s,p)=>{const i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo);};
+        svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+        // key + count header
+        el('circle',{cx:X0+4,cy:9,r:R+.5,fill:'#8e8e93'});
+        txt({class:'key',x:X0+13,y:13},'위반 1회');
+        el('line',{class:'med',x1:X0+78,x2:X0+78,y1:2,y2:16});
+        txt({class:'key',x:X0+86,y:13},'중앙값');
+        el('rect',{x:X0+138,y:4,width:20,height:10,rx:5,fill:'#8e8e93',opacity:.3});
+        txt({class:'key',x:X0+164,y:13},'사분위 범위');
+        txt({class:'key',x:W,y:13,'text-anchor':'end'},'위반 횟수');
+        // grid
+        [0,200,400,600,800].forEach(t=>{
+          el('line',{class:t?'grid':'base',x1:x(t),x2:x(t),y1:TOP-4,y2:yEnd+2});
+          txt({class:'tick',x:x(t),y:yEnd+17,'text-anchor':'middle'},t);
+        });
+        txt({class:'tick',x:X1,y:yEnd+17,'text-anchor':'end'},'[m]');
+        G.forEach(([gn,gs],gi)=>{
+          const gy=TOP+gi*(3*RH+GAP);
+          txt({class:'dlab',x:0,y:gy+RH*1.5-1},gn);
+          txt({class:'dsub',x:0,y:gy+RH*1.5+14},gs);
+          M.forEach((m,mi)=>{
+            const cy=gy+mi*RH+RH/2, v=D[m.k][gi].slice().sort((a,b)=>a-b);
+            if(m.hl)el('rect',{class:'hlrow',x:X0-8,y:cy-RH/2+1,width:W-X0+8+4,height:RH-2,rx:8});
+            if(v.length>=5)el('rect',{class:'iqr',x:x(q(v,.25)),y:cy-6,width:x(q(v,.75))-x(q(v,.25)),height:12,rx:6,fill:m.c});
+            // beeswarm: nearest-to-centre slot without overlap, else least-overlap slot
+            const r=m.hl?R+.8:R, d=2*r+.8, lim=RH/2-r-.5, pts=[];
+            v.forEach((val,i)=>{
+              const px=x(val), near=pts.filter(p=>Math.abs(p.x-px)<d), c=[0];
+              near.forEach(p=>{const dy=Math.sqrt(d*d-(p.x-px)**2);c.push(p.y+dy,p.y-dy);});
+              c.sort((a,b)=>Math.abs(a)-Math.abs(b));
+              let y=c.find(y=>Math.abs(y)<=lim+1e-6&&near.every(p=>(p.x-px)**2+(p.y-y)**2>=d*d-1e-6));
+              if(y===undefined){let best=-1;for(let s=-lim;s<=lim+1e-6;s+=lim/4){const m2=Math.min(...near.map(p=>(p.x-px)**2+(p.y-s)**2));if(m2>best){best=m2;y=s;}}}
+              pts.push({x:px,y,val});
+            });
+            pts.forEach(p=>{
+              const dot=el('circle',{class:'dot'+(m.hl?' hl':''),cx:p.x.toFixed(1),cy:(cy+p.y).toFixed(1),r,fill:m.c});
+              dot.style.setProperty('--d',(.55+gi*.1+(p.x-X0)/(X1-X0)*.55).toFixed(2)+'s');
+              el('title',{},dot).textContent=`${m.name} · ${gn} · ${p.val} m`;
+            });
+            if(v.length>=5){
+              const mx=x(q(v,.5));
+              el('line',{class:'halo',x1:mx,x2:mx,y1:cy-8,y2:cy+8});
+              el('line',{class:'med',x1:mx,x2:mx,y1:cy-8,y2:cy+8});
+            }
+            txt({class:'cnt'+(m.hl?' hl':''),x:W,y:cy+5,'text-anchor':'end'},v.length+'회');
+          });
+        });
+      })();
+      </script>
+      <div style="margin-top:12px;padding:13px 17px;border-radius:14px;background:rgba(48,209,88,.09);border:1px solid rgba(48,209,88,.25);">
+        <p style="font-size:15.5px;"><b style="color:#1fa94a;">제안: 중앙값 44 m · 300회 중 14회 위반</b><br>D3에서도 중앙값 19 m, 최댓값 106 m</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>11</span></div>
+</section>
+
+<!-- ================= Slide 12 : 연산 시간 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">결과 ③ · 계산 비용</div>
+    <h2>32개 모드 병렬 연산 시간 <span class="grad-blue-text">2.26 ms</span>, 1초 주기의 0.2%</h2>
+  </div>
+  <div class="cols" style="margin-top:4px;">
+    <div class="reveal d2">
+      <!-- 막대 높이 = 값 / 17 ms (선형 축) -->
+      <div class="chart dense" id="timingChart">
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="5.0"><span class="v">0.85</span></div>
+            <div class="bar grad" data-h="2.9"><span class="v">0.49</span></div>
+          </div>
+          <div class="glabel">K = 2<small>M = 1</small><span class="speedup">1.7×</span></div>
+        </div>
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="9.9"><span class="v">1.69</span></div>
+            <div class="bar grad" data-h="3.2"><span class="v">0.54</span></div>
+          </div>
+          <div class="glabel">K = 4<small>M = 2</small><span class="speedup">3.1×</span></div>
+        </div>
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="20.3"><span class="v">3.45</span></div>
+            <div class="bar grad" data-h="3.5"><span class="v">0.59</span></div>
+          </div>
+          <div class="glabel">K = 8<small>M = 3</small><span class="speedup">5.8×</span></div>
+        </div>
+        <div class="group hl">
+          <div class="bars">
+            <div class="bar gray" data-h="48.4"><span class="v">8.23</span></div>
+            <div class="bar grad" data-h="7.9"><span class="v">1.35</span></div>
+          </div>
+          <div class="glabel"><b>K = 16</b><small>M = 4 · 본 연구</small><span class="speedup">6.1×</span></div>
+        </div>
+        <div class="group">
+          <div class="bars">
+            <div class="bar gray" data-h="94.1"><span class="v">16.00</span></div>
+            <div class="bar grad" data-h="13.3"><span class="v">2.26</span></div>
+          </div>
+          <div class="glabel">K = 32<small>M = 5</small><span class="speedup">7.1×</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="sw" style="background:#aeaeb2;"></span>순차 풀이</div>
+        <div class="item"><span class="sw" style="background:var(--grad-blue);"></span>OpenMP 병렬 배치</div>
+        <div class="item"><span class="sw" style="background:rgba(48,209,88,.3);"></span>속도 향상</div>
+      </div>
+      <p class="small" style="text-align:center;margin-top:10px;font-size:13.5px;line-height:1.5;">주기당 연산 시간[ms] · 50회 평균(표준편차 ≤ 0.65 ms)<br>\(N_o=6\) 고정(Branch \(M\) + Guard \(6-M\)) · Intel Core Ultra 7 270K Plus, 24코어</p>
+    </div>
+    <div>
+      <ul class="clean check reveal d3">
+        <li>순차 연산 시간은 K에 <b>거의 선형적으로</b> 증가하며, 병렬 연산 시간은 배치 실행 횟수 <b>⌈K/P⌉</b>에 비례</li>
+        <li>최고 밀도 D3의 폐루프 시뮬레이션: 평균 연산 시간 <b>1.7 ms</b>, 최댓값 <b>4 ms 미만</b>
+          <span class="sub">직렬 오버헤드(파라미터 갱신·모드 선택) &lt; 0.15 ms</span></li>
+        <li>1 s 재계획 주기와 비교하여 <b>실시간 적용에 충분한 계산 여유</b>를 확인</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer"><span>12</span></div>
+</section>
+
+<!-- ================= Slide 13 : COLREGs 확장 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">확장 · 항법 규칙 선호의 통합</div>
+    <h2>모드 선택 비용에 COLREGs 선호를 <span class="grad-blue-text">soft penalty</span>로 반영</h2>
+  </div>
+  <div class="cols c46" style="margin-top:4px;">
+    <div>
+      <div class="reveal d2" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="eq math-eq" style="font-size:16.5px;padding:13px 18px;">\[
+          \mathcal{V}_k=\left\{j\;\middle|\;
+          \sigma_j^{(k)}\neq\sigma_j^{\mathrm{pref}}\right\}
+        \]</div>
+        <div class="eq math-eq" style="font-size:16.5px;padding:13px 18px;">\[
+          \widetilde{J}_k=J_k^{\ast}+\lambda\,\bar{J}
+          \sum_{j\in\mathcal{V}_k}w_j u_j
+        \]</div>
+      </div>
+      <ul class="clean reveal d3" style="margin-top:20px;">
+        <li style="font-size:17.5px;">모든 모드의 OCP를 <b>먼저 푼 뒤</b>, 규칙 위반 패널티를 더해 <b>모드 선택 비용만 조정</b>
+          <span class="sub">\(\mathcal{V}_k\): 규칙 선호 통과 방향과 다른 장애물 집합<br>\(u_j\): DCPA/TCPA 기반 조우 긴급도</span></li>
+        <li style="font-size:17.5px;"><b>경성 제약 대신 연성 선호</b>로 반영하여, 규칙 선호 모드의 비용이 과도하면 이미 계산된 대체 모드를 선택</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="reveal d4" style="margin-bottom:12px;">COLREGs 선호가 바꾼 모드 선택</h3>
+      <div class="asset-frame reveal d5" style="padding:6px;">
+        <video autoplay muted loop playsinline preload="auto" poster="presentation_contents/colregs_line_poster.jpg" src="presentation_contents/colregs_line.mp4" aria-label="COLREGs 선호를 반영한 직선 항로 시나리오 시뮬레이션 영상 (150배속)" style="width:100%;display:block;border-radius:12px;background:#fff;"></video>
+      </div>
+      <div class="legend reveal d6" style="margin-top:10px;gap:20px;">
+        <div class="item" style="font-size:14px;"><span style="width:22px;border-top:2.5px solid #7fb3d5;"></span>후보 모드 (8개)</div>
+        <div class="item" style="font-size:14px;"><span style="width:22px;border-top:3px solid #c0392b;"></span>선택 모드</div>
+        <div class="item" style="font-size:14px;"><span style="width:22px;border-top:3px solid #1f4e79;"></span>자선 항적</div>
+        <div class="item" style="font-size:14px;"><span style="width:14px;height:14px;border:1.5px dotted #8e8e93;border-radius:50%;"></span>안전영역</div>
+      </div>
+      <p class="small reveal d6" style="margin-top:8px;line-height:1.5;">직선 항로 30 km · 표적선 5척 · 정적 장애물 2기 · \(M=3\), \(K=8\) · 150배속<br><b>5개 조우에서 규칙 선호를 따르며 안전영역 침범 없이 완주</b></p>
+    </div>
+    <div style="display:none;">
+      <h3 class="reveal d4" style="margin-bottom:14px;">시연 조건: 직선 항로 30 km, 표적선 5척 및 정적 장애물 2기</h3>
+      <div class="reveal d5" style="display:flex;flex-direction:column;gap:11px;">
+        <div style="background:#f5f5f7;border-radius:14px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16.5px;"><b>횡단</b> (Rule 15) × 3척</span>
+          <span style="font-size:15.5px;color:#1fa94a;font-weight:700;">✓ 상대선 선미 통과</span>
+        </div>
+        <div style="background:#f5f5f7;border-radius:14px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16.5px;"><b>추월</b> (Rule 13) × 1척</span>
+          <span style="font-size:15.5px;color:#1fa94a;font-weight:700;">✓ 여유 간격 유지</span>
+        </div>
+        <div style="background:#f5f5f7;border-radius:14px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16.5px;"><b>정면 조우</b> (Rule 14) × 1척</span>
+          <span style="font-size:15.5px;color:#1fa94a;font-weight:700;">✓ 좌현 대 좌현 통과</span>
+        </div>
+      </div>
+      <p class="small reveal d6" style="margin-top:14px;">\(M=3\)(\(K=8\) 모드), Guard 3척: <b>5개 조우에서 규칙 선호와 일치하는 회피를 수행했으며 안전영역 침범은 발생하지 않음</b></p>
+    </div>
+  </div>
+  <div class="slide-footer"><span>13</span></div>
+</section>
+
+<!-- ================= Slide 14 : 결론 ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">결론</div>
+    <h2>TC-CBF 위상 열거로 <span class="grad-blue-text">상위 계획기 없는 멀티모달 계획</span></h2>
+  </div>
+  <div class="cards c2" style="flex:1;align-content:start;margin-top:26px;">
+    <div class="card reveal d2">
+      <h3>🧩 기여 요약</h3>
+      <ul class="clean check" style="margin-top:14px;">
+        <li style="font-size:17px;margin-bottom:12px;">TC-CBF 파라미터 σ에 좌·우 통과 방향 결정을 내장하여 <b>가이드 경로가 필요 없는 멀티모달 계획</b>을 구성</li>
+        <li style="font-size:17px;margin-bottom:12px;">최소 선회 반경으로 <b>유한한 선회 성능을 안전 제약에 반영</b>하고, 공통 솔버 구조를 <b>OpenMP로 일괄 병렬화</b></li>
+        <li style="font-size:17px;margin-bottom:0;">Monte Carlo 검증: 성공률 <b>99 / 97 / 86%</b> · 침범 깊이 중앙값 <b>44 m</b> · 32개 모드 <b>2.26 ms</b></li>
+      </ul>
+    </div>
+    <div class="card reveal d3">
+      <h3>🔭 향후 연구</h3>
+      <ul class="clean" style="margin-top:14px;">
+        <li style="font-size:17px;margin-bottom:12px;"><b>상호작용을 고려한 교통 예측</b>: 등속 예측을 넘어 상대선의 반응을 모델링</li>
+        <li style="font-size:17px;margin-bottom:12px;"><b>예측 불확실성</b>의 명시적 반영</li>
+        <li style="font-size:17px;margin-bottom:0;"><b>학습 기반 연산량 저감</b>: 유력한 회피 위상만 예측하여 풀이할 OCP 수를 축소</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer"><span>14</span></div>
+</section>
+
+<!-- ================= Slide 15 : 향후 연구 · SideNet 개요 ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">향후 연구 · 학습 기반 연산량 저감</div>
+    <h2>모방 학습으로 회피 위상을 제안하는 <span class="grad-blue-text">SideNet</span><br>제어 주기당 OCP 풀이를 16회에서 2회로 축소</h2>
+  </div>
+  <div class="cols" style="margin-top:6px;grid-template-columns:1fr 1.3fr;gap:32px;align-items:start;">
+    <figure class="reveal d2" style="margin:0;">
+      <div class="asset-frame" style="height:324px;">
+        <img src="presentation_contents/sidenet/motv.png" alt="16개 OCP를 모두 푸는 전문가 MM-MPC와, SideNet 제안 모드와 직전 모드의 OCP 2개만 푸는 SideNet-MPC의 블록 구조 비교">
+      </div>
+      <figcaption class="source-caption" style="text-align:center;margin-top:8px;">전문가(MM-MPC)는 16개, SideNet-MPC는 2개 OCP만 풀고 최저 비용 모드를 실행</figcaption>
+    </figure>
+    <div>
+      <div class="asset-frame reveal d3" style="height:186px;">
+        <img src="presentation_contents/sidenet/avoidnet.png" alt="분기 장애물 4척을 노드로 하는 완전 그래프에서 엣지 조건부 메시지 전달 후 장애물별 통과 방향 로짓을 출력하는 SideNet 구조">
+      </div>
+      <ul class="clean reveal d4" style="margin-top:16px;word-break:keep-all;">
+        <li style="font-size:16.5px;margin-bottom:12px;"><b>모방 학습</b>: 16개 모드를 모두 푸는 MM-MPC(전문가)의 최저 비용 모드를 정답으로 학습</li>
+        <li style="font-size:16.5px;margin-bottom:12px;"><b>그래프 신경망</b>: 분기 장애물 4척을 완전 그래프로 연결하여 <b>장애물 쌍 사이 간격</b>을 메시지 전달로 반영
+          <span class="sub" style="font-size:14.5px;">노드 특징 14차원(장애물 8 + 자선 6) · 엣지 특징 6차원 · 로짓 \(\ell_i\)의 부호가 통과 방향 \(\sigma_i\)를 결정</span></li>
+        <li style="font-size:16.5px;margin-bottom:0;"><b>후보 2개만 풀이</b>: SideNet 제안 모드와 직전 실행 모드 중 비용이 낮은 쪽을 실행</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">출처: <a href="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">Lee, Lee &amp; Yoon, Imitation Learning of Avoidance Modes for Computationally Efficient MM-MPC (심사 중)</a></span>
+    <span>15</span>
+  </div>
+</section>
+
+<!-- ================= Slide 16 : Q&A ================= -->
+<section class="slide white">
+  <div style="position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+    <h1 class="reveal d1" style="font-size:88px;"><span class="grad-blue-text">감사합니다</span></h1>
+    <p class="reveal d2" style="font-size:24px;color:var(--text-gray);margin-top:24px;">Q&amp;A</p>
+    <div class="reveal d3" style="margin-top:56px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+      <span class="badge">✉️ leeck@kongju.ac.kr · 국립공주대학교 기계자동차공학부</span>
+    </div>
+  </div>
+  <div class="slide-footer"><span>16</span></div>
+</section>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<div id="progress"></div>
+<div id="counter">1 / 16</div>
+<div id="navBtns">
+  <button id="btnPrev" aria-label="이전">‹</button>
+  <button id="btnNext" aria-label="다음">›</button>
+</div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let cur=0;
+
+  function goTo(i,push=true){
+    i=Math.max(0,Math.min(total-1,i));
+    if(i===cur&&slides[cur].classList.contains('active'))return;
+    slides.forEach((s,k)=>{
+      s.classList.toggle('active',k===i);
+      s.querySelectorAll('video').forEach(v=>{
+        if(k===i){
+          v.currentTime=0;
+          const playPromise=v.play();
+          if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+        }else{
+          v.pause();
+        }
+      });
+      // animated WebP clips play once: restart on entry, show the poster elsewhere
+      s.querySelectorAll('img[data-anim]').forEach(im=>{
+        if(!im.dataset.poster)im.dataset.poster=im.getAttribute('src');
+        im.src=k===i?im.dataset.anim+'?t='+Date.now():im.dataset.poster;
+      });
+    });
+    cur=i;
+    document.getElementById('counter').textContent=(i+1)+' / '+total;
+    document.getElementById('progress').style.width=((i+1)/total*100)+'%';
+    if(push)location.hash='#'+(i+1);
+    // animate charts
+    slides[i].querySelectorAll('.bar').forEach(b=>{
+      b.style.height='0%';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.height=b.dataset.h+'%';}));
+    });
+  }
+  function next(){goTo(cur+1);}
+  function prev(){goTo(cur-1);}
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){goTo(0);}
+    else if(e.key==='End'){goTo(total-1);}
+    else if(e.key==='f'||e.key==='F'){
+      if(document.fullscreenElement)document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+  document.getElementById('btnNext').addEventListener('click',next);
+  document.getElementById('btnPrev').addEventListener('click',prev);
+  document.querySelectorAll('img[data-anim]').forEach(im=>{
+    im.addEventListener('click',()=>{im.src=im.dataset.anim+'?t='+Date.now();});
+  });
+
+  // touch swipe
+  let tx=0;
+  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(dx<-50)next();else if(dx>50)prev();
+  },{passive:true});
+
+  // scale stage to fit
+  const stage=document.getElementById('stage');
+  function fit(){
+    const s=Math.min(innerWidth/1280,innerHeight/720);
+    stage.style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();
+
+  // init from hash
+  const h=parseInt((location.hash||'').replace('#',''),10);
+  goTo(isNaN(h)?0:h-1,false);
+  addEventListener('hashchange',()=>{
+    const n=parseInt(location.hash.replace('#',''),10);
+    if(!isNaN(n))goTo(n-1,false);
+  });
+})();
+</script>
+<script>
+// Branch/Guard 애니메이션: 장면을 클릭하면 슬라이드의 단계 애니메이션을 처음부터 다시 재생
+document.querySelectorAll('.bg-scene').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const sec=el.closest('.slide');
+    if(!sec||!sec.getAnimations)return;
+    sec.getAnimations({subtree:true}).forEach(a=>{
+      if(a.animationName&&a.animationName!=='rise'){a.cancel();a.play();}
+    });
+  });
+});
+</script>
+<script>
+// 시뮬레이션 설정: D1·D2·D3 칩 클릭 또는 1·2·3 키로 교통 밀도를 직접 전환 (빈 곳 클릭 시 자동 재생으로 복귀)
+document.querySelectorAll('.sim-scene').forEach(el=>{
+  const sec=el.closest('.slide');
+  const spring='cubic-bezier(.3,1.6,.5,1)';
+  function show(d){
+    let from=+(el.dataset.show||0);
+    if(!from){
+      // 자동 재생 중이면 현재 보이는 밀도를 기억하고 장면을 끝 상태로 보낸다
+      const css=el.getAnimations({subtree:true}).filter(a=>a.animationName);
+      const t=Math.max(0,...css.map(a=>a.currentTime||0));
+      from=t<5300?0:t<7600?1:t<9900?2:3;
+      css.forEach(a=>a.finish());
+    }
+    el.dataset.show=d;
+    let n=0;
+    el.querySelectorAll('g[data-d]').forEach(g=>{
+      const k=+g.dataset.d;
+      if(k>d||k<=from)return;
+      const delay=60*n++;
+      g.querySelector('.ss-pop').animate([{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1)'}],{duration:350,easing:spring,delay,fill:'backwards'});
+      const ring=g.querySelector('.ss-new');
+      if(ring)ring.animate([{opacity:.8,transform:'scale(1)'},{opacity:0,transform:'scale(2.1)'}],{duration:1100,easing:'ease-out',delay});
+    });
+    const cnt=el.querySelector('.ss-cnt[data-d="'+d+'"]');
+    if(cnt)cnt.animate([{transform:'scale(.6)'},{transform:'scale(1)'}],{duration:400,easing:spring});
+  }
+  el.querySelectorAll('.ss-chip[data-go]').forEach(c=>{
+    c.addEventListener('click',e=>{
+      // 패널이 나타나기 전의 클릭은 일반 클릭(다시 재생)으로 처리
+      if(!el.dataset.show&&parseFloat(getComputedStyle(c.parentNode).opacity)<.5)return;
+      e.stopPropagation();show(+c.dataset.go);
+    });
+  });
+  el.addEventListener('click',()=>{delete el.dataset.show;});
+  new MutationObserver(()=>{delete el.dataset.show;}).observe(sec,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('keydown',e=>{
+    if(sec.classList.contains('active')&&(e.key==='1'||e.key==='2'||e.key==='3'))show(+e.key);
+  });
+});
+</script>
+<script>
+// 지역 최적해 애니메이션 (slide 2): local_minima.png 에서 디지타이즈한 실제 궤적(0.1 s 간격)과
+// 정지 장애물 가정(obs_v_pred = 0) 표준 MPC 의 예측궤적(0.5 s 간격, N = 20)을 2배속으로 반복 재생. 클릭하면 처음부터.
+(function(){
+  const svg=document.getElementById('lmAnim');
+  if(!svg)return;
+  const sec=svg.closest('.slide');
+  const TR=[0,0,0,0,0.01,0,0.02,0,0.04,0,0.06,0,0.08,0,0.11,0,0.14,0,0.18,0,0.23,0,0.27,0,0.32,0,0.38,0,0.44,0,0.5,0,0.56,0,0.63,0,0.7,0,0.78,0,0.85,0,0.94,0,1.02,0,1.1,0,1.19,0,1.27,0,1.36,0,1.45,0,1.54,0,1.63,0,1.72,0,1.81,0,1.9,0,1.99,0,2.09,0,2.18,0,2.27,0,2.36,0,2.45,0,2.55,0,2.64,0,2.73,0,2.82,0,2.91,0,3.01,0,3.1,0,3.19,0,3.28,0,3.37,0,3.47,0,3.56,0,3.65,0,3.74,0,3.83,0,3.93,0,4.02,0,4.11,0,4.2,0,4.29,0,4.39,0,4.48,0,4.57,0,4.66,0.01,4.75,0.01,4.85,0.02,4.93,0.04,5.03,0.04,5.12,0.05,5.21,0.05,5.3,0.06,5.39,0.06,5.49,0.06,5.58,0.07,5.67,0.07,5.76,0.08,5.85,0.08,5.95,0.09,6.04,0.09,6.13,0.1,6.22,0.1,6.31,0.11,6.41,0.11,6.5,0.12,6.59,0.12,6.68,0.13,6.77,0.14,6.86,0.14,6.96,0.15,7.05,0.15,7.14,0.16,7.23,0.16,7.32,0.17,7.42,0.17,7.51,0.18,7.6,0.18,7.69,0.19,7.78,0.2,7.87,0.2,7.97,0.21,8.06,0.21,8.15,0.22,8.24,0.23,8.33,0.24,8.43,0.25,8.52,0.26,8.61,0.27,8.71,0.28,8.8,0.3,8.9,0.31,9,0.32,9.09,0.33,9.19,0.34,9.29,0.35,9.39,0.37,9.49,0.38,9.59,0.39,9.69,0.4,9.79,0.41,9.89,0.43,9.99,0.44,10.1,0.45,10.2,0.46,10.31,0.48,10.41,0.49,10.52,0.5,10.62,0.52,10.73,0.53,10.84,0.55,10.94,0.56,11.05,0.58,11.16,0.59,11.27,0.6,11.38,0.62,11.49,0.63,11.6,0.64,11.71,0.65,11.82,0.67,11.93,0.68,12.04,0.7,12.15,0.71,12.26,0.73,12.37,0.74,12.48,0.76,12.58,0.77,12.69,0.78,12.8,0.8,12.91,0.81,13.02,0.82,13.13,0.84,13.24,0.85,13.35,0.87,13.46,0.88,13.57,0.9,13.68,0.91,13.79,0.93,13.9,0.94,14.01,0.95,14.12,0.96,14.23,0.97,14.34,0.98,14.45,0.99,14.56,0.99,14.67,1,14.77,1,14.88,1.01,14.98,1.01,15.09,1.01,15.19,1.02,15.29,1.02,15.39,1.03,15.49,1.03,15.59,1.03,15.68,1.03,15.78,1.03,15.87,1.04,15.96,1.04,16.05,1.04,16.14,1.04,16.23,1.04,16.32,1.04,16.41,1.04,16.49,1.04,16.57,1.04,16.65,1.04,16.73,1.04,16.81,1.04,16.89,1.04,16.96,1.04,17.03,1.04,17.1,1.04,17.17,1.04,17.24,1.04,17.3,1.04,17.37,1.04,17.43,1.04,17.49,1.04,17.55,1.04,17.6,1.04,17.66,1.04,17.71,1.04,17.76,1.04];
+  const PR=[0.12,0,0.35,0,0.66,0,1.04,0,1.48,0,1.97,0,2.48,0,3,0,3.54,0,4.07,0,4.6,0.01,5.12,0.01,5.62,0.01,6.1,0.01,6.56,0.02,7,0.02,7.42,0.03,7.82,0.03,8.2,0.04,8.58,0.04,0.26,0,0.54,0,0.89,0,1.3,0,1.75,0,2.23,0,2.73,0,3.24,0,3.77,0,4.29,0.01,4.8,0.01,5.31,0.01,5.81,0.01,6.29,0.02,6.75,0.02,7.2,0.03,7.62,0.03,8.04,0.04,8.44,0.04,8.84,0.05,0.51,0,0.85,0,1.24,0,1.67,0,2.12,0,2.6,0,3.1,0,3.6,0,4.11,0,4.62,0.01,5.12,0.01,5.61,0.01,6.1,0.01,6.57,0.02,7.02,0.02,7.46,0.03,7.88,0.03,8.29,0.04,8.69,0.05,9.09,0.05,0.85,0,1.23,0,1.64,0,2.07,0,2.53,0,3,0,3.49,0,3.98,0,4.47,0.01,4.96,0.01,5.45,0.01,5.93,0.01,6.4,0.02,6.86,0.02,7.3,0.03,7.74,0.03,8.15,0.04,8.56,0.04,8.95,0.05,9.34,0.06,1.27,0,1.69,0,2.12,0,2.56,0,3.02,0,3.48,0,3.95,0,4.42,0,4.89,0.01,5.37,0.01,5.83,0.01,6.3,0.01,6.75,0.02,7.19,0.02,7.62,0.03,8.04,0.04,8.45,0.04,8.84,0.05,9.22,0.06,9.6,0.07,1.7,0,2.14,0,2.58,0,3.02,0,3.47,0,3.93,0,4.39,0,4.85,0,5.32,0.01,5.78,0.01,6.24,0.01,6.69,0.02,7.13,0.02,7.56,0.03,7.98,0.04,8.38,0.05,8.77,0.06,9.15,0.07,9.51,0.08,9.87,0.09,2.17,0,2.62,0,3.07,0,3.52,0,3.97,0,4.43,0,4.88,0,5.34,0.01,5.8,0.01,6.25,0.01,6.7,0.02,7.14,0.03,7.57,0.04,7.99,0.05,8.39,0.06,8.77,0.08,9.14,0.09,9.49,0.11,9.83,0.13,10.17,0.15,2.63,0,3.08,0,3.53,0,3.98,0,4.44,0,4.89,0,5.35,0,5.81,0.01,6.26,0.01,6.72,0.02,7.16,0.03,7.59,0.04,8.01,0.06,8.41,0.07,8.8,0.09,9.17,0.11,9.52,0.13,9.84,0.15,10.16,0.18,10.46,0.2,3.09,0,3.54,0,3.99,0,4.45,0,4.9,0,5.36,0,5.82,0.01,6.28,0.01,6.73,0.02,7.18,0.03,7.61,0.04,8.04,0.05,8.45,0.07,8.84,0.09,9.21,0.11,9.56,0.14,9.89,0.16,10.2,0.19,10.48,0.22,10.76,0.25,3.55,0,4,0,4.46,0,4.91,0,5.37,0,5.83,0,6.28,0.01,6.74,0.01,7.19,0.02,7.64,0.04,8.07,0.05,8.49,0.07,8.89,0.09,9.27,0.11,9.63,0.14,9.96,0.17,10.27,0.2,10.56,0.24,10.82,0.28,11.08,0.32,4.01,0,4.46,0,4.92,0,5.37,0,5.83,0,6.29,0.01,6.75,0.01,7.21,0.02,7.66,0.03,8.1,0.04,8.53,0.06,8.94,0.08,9.33,0.1,9.7,0.13,10.05,0.16,10.37,0.2,10.66,0.24,10.92,0.28,11.17,0.33,11.4,0.37,4.47,0,4.93,0,5.38,0,5.84,0,6.29,0.01,6.75,0.01,7.21,0.02,7.67,0.03,8.12,0.04,8.56,0.05,8.98,0.07,9.39,0.1,9.78,0.13,10.14,0.16,10.47,0.2,10.78,0.24,11.06,0.29,11.31,0.34,11.53,0.39,11.75,0.45,4.93,0.01,5.39,0.01,5.84,0.01,6.3,0.02,6.76,0.02,7.22,0.03,7.68,0.03,8.13,0.04,8.58,0.06,9.02,0.07,9.44,0.1,9.85,0.13,10.23,0.16,10.59,0.2,10.91,0.24,11.21,0.29,11.48,0.35,11.72,0.41,11.93,0.47,12.13,0.53,5.39,0.07,5.84,0.09,6.3,0.11,6.75,0.12,7.21,0.13,7.67,0.14,8.13,0.14,8.59,0.15,9.03,0.16,9.47,0.17,9.89,0.19,10.3,0.21,10.68,0.24,11.03,0.28,11.36,0.32,11.65,0.37,11.91,0.42,12.15,0.49,12.36,0.55,12.56,0.62,5.85,0.07,6.3,0.09,6.76,0.09,7.22,0.1,7.68,0.1,8.14,0.1,8.59,0.11,9.05,0.12,9.49,0.13,9.93,0.15,10.35,0.17,10.75,0.2,11.12,0.24,11.47,0.28,11.79,0.33,12.07,0.39,12.32,0.45,12.55,0.52,12.75,0.59,12.93,0.67,6.31,0.1,6.76,0.11,7.21,0.12,7.66,0.12,8.12,0.13,8.57,0.13,9.02,0.14,9.46,0.15,9.89,0.17,10.31,0.19,10.72,0.22,11.11,0.25,11.47,0.29,11.81,0.34,12.12,0.39,12.41,0.46,12.68,0.52,12.93,0.59,13.18,0.66,13.42,0.73,6.77,0.13,7.22,0.14,7.67,0.15,8.12,0.15,8.57,0.15,9.02,0.16,9.46,0.17,9.9,0.18,10.33,0.19,10.75,0.21,11.15,0.24,11.53,0.28,11.89,0.32,12.23,0.37,12.54,0.43,12.83,0.49,13.1,0.56,13.36,0.64,13.61,0.72,13.87,0.79,7.22,0.16,7.67,0.17,8.11,0.18,8.55,0.18,9,0.19,9.43,0.2,9.87,0.21,10.3,0.23,10.72,0.25,11.13,0.28,11.53,0.31,11.92,0.36,12.29,0.41,12.65,0.46,12.99,0.53,13.32,0.59,13.65,0.67,13.97,0.74,14.32,0.81,14.66,0.88,7.68,0.18,8.12,0.2,8.55,0.21,8.99,0.22,9.42,0.23,9.85,0.24,10.28,0.26,10.7,0.29,11.12,0.32,11.53,0.35,11.94,0.4,12.34,0.45,12.74,0.5,13.13,0.56,13.52,0.62,13.92,0.69,14.32,0.75,14.74,0.81,15.17,0.86,15.61,0.92,8.14,0.21,8.58,0.23,9.02,0.24,9.46,0.26,9.89,0.28,10.33,0.3,10.77,0.33,11.2,0.36,11.64,0.39,12.07,0.43,12.5,0.48,12.93,0.53,13.34,0.59,13.76,0.65,14.17,0.7,14.58,0.75,14.99,0.79,15.39,0.83,15.79,0.87,16.2,0.9,8.6,0.26,9.05,0.28,9.49,0.3,9.94,0.33,10.39,0.35,10.84,0.37,11.29,0.4,11.73,0.43,12.18,0.46,12.62,0.5,13.05,0.54,13.47,0.59,13.88,0.64,14.28,0.68,14.66,0.73,15.03,0.76,15.38,0.8,15.71,0.82,16.04,0.85,16.35,0.89,9.08,0.32,9.53,0.35,9.99,0.38,10.44,0.4,10.9,0.42,11.35,0.44,11.8,0.46,12.26,0.49,12.7,0.52,13.14,0.56,13.56,0.59,13.97,0.64,14.37,0.68,14.74,0.72,15.09,0.75,15.41,0.78,15.72,0.81,16,0.83,16.26,0.85,16.51,0.87,9.57,0.37,10.03,0.41,10.49,0.43,10.95,0.45,11.41,0.47,11.86,0.48,12.31,0.5,12.76,0.52,13.2,0.55,13.63,0.58,14.04,0.61,14.43,0.65,14.81,0.69,15.15,0.73,15.47,0.76,15.76,0.79,16.02,0.81,16.25,0.83,16.46,0.85,16.66,0.87,10.07,0.43,10.55,0.47,11.01,0.49,11.47,0.51,11.93,0.53,12.38,0.54,12.82,0.56,13.26,0.58,13.69,0.6,14.1,0.63,14.5,0.66,14.87,0.69,15.22,0.72,15.54,0.75,15.83,0.77,16.09,0.79,16.31,0.8,16.5,0.82,16.66,0.83,16.81,0.85,10.59,0.49,11.07,0.52,11.54,0.54,12.01,0.56,12.46,0.57,12.91,0.58,13.35,0.59,13.78,0.61,14.2,0.63,14.6,0.65,14.99,0.68,15.35,0.71,15.67,0.73,15.97,0.76,16.23,0.78,16.45,0.79,16.62,0.81,16.76,0.82,16.87,0.83,16.96,0.85,11.13,0.57,11.61,0.6,12.08,0.62,12.54,0.64,12.98,0.64,13.42,0.65,13.84,0.66,14.26,0.66,14.65,0.68,15.03,0.69,15.38,0.71,15.71,0.73,16.02,0.74,16.29,0.76,16.53,0.77,16.72,0.78,16.88,0.8,16.99,0.81,17.06,0.83,17.12,0.84,11.68,0.63,12.17,0.66,12.64,0.68,13.09,0.68,13.53,0.69,13.96,0.69,14.38,0.69,14.78,0.7,15.17,0.71,15.53,0.72,15.88,0.73,16.19,0.75,16.48,0.76,16.72,0.77,16.92,0.78,17.08,0.78,17.18,0.79,17.25,0.81,17.27,0.82,17.27,0.84,12.22,0.69,12.7,0.71,13.16,0.72,13.61,0.72,14.03,0.72,14.45,0.71,14.84,0.71,15.22,0.71,15.59,0.71,15.93,0.72,16.25,0.73,16.53,0.75,16.79,0.76,17.02,0.77,17.19,0.78,17.32,0.78,17.39,0.8,17.42,0.81,17.43,0.82,17.42,0.84,12.76,0.77,13.23,0.79,13.68,0.79,14.1,0.77,14.51,0.76,14.9,0.74,15.27,0.73,15.62,0.72,15.96,0.72,16.27,0.73,16.55,0.74,16.81,0.75,17.05,0.76,17.25,0.77,17.4,0.78,17.5,0.78,17.56,0.8,17.58,0.81,17.57,0.82,17.57,0.84,13.3,0.83,13.76,0.83,14.19,0.82,14.59,0.8,14.96,0.78,15.33,0.75,15.67,0.74,16,0.73,16.3,0.73,16.58,0.73,16.84,0.74,17.07,0.75,17.28,0.76,17.46,0.77,17.59,0.78,17.68,0.79,17.72,0.8,17.73,0.81,17.72,0.83,17.72,0.84,13.85,0.91,14.3,0.92,14.72,0.9,15.11,0.88,15.47,0.85,15.81,0.82,16.13,0.79,16.42,0.77,16.69,0.75,16.93,0.75,17.16,0.75,17.35,0.75,17.53,0.76,17.68,0.77,17.79,0.78,17.86,0.79,17.88,0.8,17.88,0.81,17.87,0.83,17.87,0.84,14.4,0.97,14.85,0.97,15.27,0.95,15.65,0.92,16,0.89,16.33,0.86,16.64,0.82,16.92,0.8,17.17,0.78,17.4,0.77,17.6,0.76,17.76,0.76,17.89,0.76,17.98,0.77,18.02,0.78,18.04,0.79,18.04,0.8,18.03,0.81,18.02,0.83,18.02,0.84,14.94,0.99,15.38,0.98,15.77,0.95,16.13,0.92,16.46,0.88,16.77,0.84,17.05,0.81,17.3,0.79,17.53,0.77,17.73,0.76,17.9,0.76,18.03,0.76,18.12,0.76,18.18,0.77,18.19,0.78,18.19,0.79,18.18,0.8,18.18,0.82,18.17,0.83,18.17,0.85,15.46,1,15.88,0.98,16.27,0.95,16.63,0.91,16.95,0.87,17.24,0.84,17.5,0.81,17.73,0.78,17.91,0.77,18.07,0.76,18.19,0.76,18.27,0.76,18.33,0.76,18.35,0.77,18.34,0.78,18.34,0.79,18.33,0.81,18.33,0.82,18.32,0.84,18.32,0.85,15.94,1.02,16.36,0.99,16.75,0.96,17.11,0.92,17.43,0.88,17.71,0.84,17.96,0.81,18.16,0.79,18.31,0.77,18.41,0.76,18.48,0.76,18.5,0.76,18.5,0.76,18.5,0.77,18.49,0.78,18.49,0.79,18.48,0.81,18.48,0.82,18.47,0.84,18.46,0.85,16.39,1.02,16.79,0.99,17.16,0.95,17.49,0.91,17.79,0.87,18.05,0.84,18.26,0.81,18.42,0.79,18.54,0.77,18.61,0.76,18.65,0.76,18.65,0.76,18.65,0.76,18.65,0.77,18.64,0.78,18.64,0.8,18.63,0.81,18.63,0.82,18.62,0.84,18.61,0.85,16.81,1.02,17.18,0.99,17.53,0.95,17.84,0.91,18.11,0.87,18.34,0.83,18.52,0.8,18.66,0.78,18.75,0.76,18.79,0.75,18.81,0.75,18.81,0.75,18.81,0.75,18.8,0.76,18.8,0.76,18.8,0.78,18.79,0.79,18.79,0.8,18.78,0.81,18.77,0.82,17.17,1.02,17.52,0.99,17.83,0.95,18.12,0.91,18.37,0.86,18.57,0.82,18.74,0.79,18.85,0.77,18.92,0.75,18.96,0.74,18.96,0.74,18.96,0.74,18.96,0.74,18.96,0.74,18.96,0.75,18.96,0.75,18.95,0.76,18.95,0.77,18.95,0.77,18.95,0.78,17.5,1.02,17.81,0.99,18.11,0.94,18.37,0.9,18.6,0.85,18.79,0.81,18.94,0.78,19.04,0.75,19.1,0.73,19.12,0.72,19.12,0.72,19.12,0.72,19.12,0.72,19.12,0.72,19.12,0.72,19.12,0.73,19.12,0.73,19.11,0.74,19.11,0.74,19.11,0.74,17.78,1.02,18.07,0.98,18.34,0.94,18.59,0.89,18.8,0.84,18.98,0.8,19.12,0.76,19.21,0.73,19.26,0.71,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,19.28,0.7,18.02,1.02,18.28,0.98,18.54,0.93,18.77,0.88,18.98,0.83,19.15,0.79,19.29,0.74,19.38,0.71,19.43,0.69,19.45,0.68,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67,19.45,0.67];
+  const OB=[[15,.3],[10,.5]]; // 장애물 1·2 초기 x [m], 속도 [m/s] (sim_settings.m scenario 1)
+  const SPEED=2,LEAD=600,HOLD=2500,TEND=20;
+  const X=x=>34+(x+2)*12,Y=y=>34+(6-y)*12,f1=v=>v.toFixed(1);
+  const traj=svg.querySelector('.lm-traj'),pred=svg.querySelector('.lm-pred'),ship=svg.querySelector('.lm-ship'),
+        time=svg.querySelector('.lm-time'),obs=[svg.querySelector('.lm-obs1'),svg.querySelector('.lm-obs2')];
+  const dots=[],refG=svg.querySelector('.lm-refdots');
+  for(let j=0;j<21;j++){
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r','1.1');c.setAttribute('cy',Y(0));refG.appendChild(c);dots.push(c);
+  }
+  function draw(t){
+    const k=Math.min(199,Math.floor(t*10)),u=t*10-k;
+    const ax=TR[2*k],ay=TR[2*k+1],bx=TR[2*k+2],by=TR[2*k+3];
+    const sx=ax+(bx-ax)*u,sy=ay+(by-ay)*u;
+    let p='';
+    for(let i=0;i<=k;i++)p+=f1(X(TR[2*i]))+','+f1(Y(TR[2*i+1]))+' ';
+    traj.setAttribute('points',p+f1(X(sx))+','+f1(Y(sy)));
+    ship.setAttribute('transform','translate('+f1(X(sx))+' '+f1(Y(sy))+') rotate('+(-Math.atan2(by-ay,bx-ax)*180/Math.PI).toFixed(1)+')');
+    OB.forEach((o,i)=>obs[i].setAttribute('cx',f1(X(o[0]+o[1]*t))));
+    dots.forEach((c,j)=>c.setAttribute('cx',f1(X(sx-.5+.5*j))));
+    const m=Math.min(39,Math.floor(t*2)),g=t*2-m;
+    p=f1(X(sx))+','+f1(Y(sy));
+    for(let j=0;j<20;j++){
+      const a=40*m+2*j,b=a+40;
+      p+=' '+f1(X(PR[a]+(PR[b]-PR[a])*g))+','+f1(Y(PR[a+1]+(PR[b+1]-PR[a+1])*g));
+    }
+    pred.setAttribute('points',p);
+    time.textContent='Time: '+(Math.floor(t*10+1e-6)/10).toFixed(2)+' s';
+  }
+  let raf=0,t0=0;
+  function tick(){
+    const e=(performance.now()-t0-LEAD)*SPEED/1000;
+    if(e>TEND+HOLD*SPEED/1000){t0=performance.now();draw(0);}
+    else draw(Math.max(0,Math.min(TEND,e)));
+    raf=requestAnimationFrame(tick);
+  }
+  function start(){cancelAnimationFrame(raf);t0=performance.now();draw(0);raf=requestAnimationFrame(tick);}
+  function stop(){cancelAnimationFrame(raf);raf=0;draw(TEND);}
+  svg.addEventListener('click',start);
+  new MutationObserver(()=>{
+    const on=sec.classList.contains('active');
+    if(on&&!raf)start();else if(!on&&raf)stop();
+  }).observe(sec,{attributes:true,attributeFilter:['class']});
+  if(sec.classList.contains('active'))start();else stop();
+})();
+</script>
+</body>
+</html>
