@@ -18,6 +18,11 @@
     const counter=document.getElementById('counter'),progress=document.getElementById('progress');
     let io=null,cur=deck.cur,raf=0,lastW=0;
 
+    // UI text follows the deck language (<html lang>): Korean by default, English for lang="en"
+    const T=/^en\b/i.test(root.lang)
+      ?{rotate:'Rotate to landscape to view one slide at a time',count:n=>n+' slides',top:'↑ Back to top'}
+      :{rotate:'가로로 돌리면 한 장씩 크게 볼 수 있어요',count:n=>n+'장',top:'↑ 처음으로'};
+
     // title block above the first slide and a back-to-top button after the last
     const [title,sub]=document.title.split(' — ');
     const head=document.createElement('header');
@@ -26,14 +31,16 @@
       '<p class="fh-meta"><span class="fh-count"></span><span class="fh-rotate">'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
       '<rect x="2.5" y="9" width="14" height="9" rx="2"/><path d="M9 5.2A8 8 0 0 1 21 11"/><path d="M21.6 7.6 21 11l-3.3-1"/></svg>'+
-      '가로로 돌리면 한 장씩 크게 볼 수 있어요</span></p>';
+      '<span class="fh-rotate-text"></span></span></p>';
     head.querySelector('.fh-eyebrow').textContent=sub||'';
     head.querySelector('.fh-title').textContent=title;
-    head.querySelector('.fh-count').textContent=total+'장';
+    head.querySelector('.fh-count').textContent=T.count(total);
+    head.querySelector('.fh-rotate-text').textContent=T.rotate;
     document.body.prepend(head);
     const foot=document.createElement('footer');
     foot.id='feedFoot';
-    foot.innerHTML='<button type="button">↑ 처음으로</button>';
+    foot.innerHTML='<button type="button"></button>';
+    foot.firstChild.textContent=T.top;
     foot.firstChild.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
     document.getElementById('viewport').after(foot);
 

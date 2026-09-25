@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turning Circle-based Control Barrier Function for Efficient Collision Avoidance of Nonholonomic Vehicles — IEEE TCST 2026</title>
+<link rel="stylesheet" href="presentation_assets/katex/katex.min.css">
+<script defer src="presentation_assets/katex/katex.min.js"></script>
+<script defer src="presentation_assets/katex/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{
+    delimiters:[
+      {left:'\\[',right:'\\]',display:true},
+      {left:'\\(',right:'\\)',display:false}
+    ],
+    throwOnError:false,
+    strict:'ignore'
+  });
+});
+</script>
+<style>
+/* ============ Apple-style design system (shared with ksoe2026.html / sail-research.html) ============ */
+:root{
+  --bg-light:#f5f5f7;
+  --bg-white:#ffffff;
+  --bg-dark:#000000;
+  --bg-dark2:#161617;
+  --text-dark:#1d1d1f;
+  --text-gray:#6e6e73;
+  --text-light:#f5f5f7;
+  --text-lightgray:#a1a1a6;
+  --blue:#0071e3;
+  --blue-bright:#2997ff;
+  --green:#30d158;
+  --orange:#ff9f0a;
+  --red:#ff453a;
+  --purple:#bf5af2;
+  --card-radius:24px;
+  --grad-hero:linear-gradient(96deg,#2997ff 0%,#7b6cff 45%,#bf5af2 75%,#ff6482 100%);
+  --grad-blue:linear-gradient(96deg,#0a84ff,#64d2ff);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:#000;}
+body{
+  /* English deck: Latin UI fonts first, Korean fonts only as fallback */
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable Display","Segoe UI","Pretendard","Helvetica Neue",Arial,"Noto Sans KR","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+/* ============ Stage & slides ============ */
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
+#stage{position:relative;width:1280px;height:720px;flex:none;transform-origin:center center;}
+.slide{
+  position:absolute;inset:0;width:1280px;height:720px;
+  padding:72px 90px;
+  opacity:0;visibility:hidden;
+  transition:opacity .55s cubic-bezier(.32,.08,.24,1),visibility .55s;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.slide.active{opacity:1;visibility:visible;z-index:2;}
+.slide.light{background:var(--bg-light);color:var(--text-dark);}
+.slide.white{background:var(--bg-white);color:var(--text-dark);}
+.slide.dark{background:var(--bg-dark);color:var(--text-light);}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(26px);}
+.slide.active .reveal{animation:rise .8s cubic-bezier(.22,.61,.21,1) forwards;}
+.slide.active .reveal:nth-child(1),.slide.active .d1{animation-delay:.05s;}
+.slide.active .d2{animation-delay:.18s;}
+.slide.active .d3{animation-delay:.31s;}
+.slide.active .d4{animation-delay:.44s;}
+.slide.active .d5{animation-delay:.57s;}
+.slide.active .d6{animation-delay:.70s;}
+@keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+/* ============ Typography ============ */
+.eyebrow{font-size:17px;font-weight:600;letter-spacing:.02em;color:var(--blue);margin-bottom:14px;}
+.dark .eyebrow{color:var(--blue-bright);}
+h1{font-size:64px;font-weight:700;letter-spacing:-.02em;line-height:1.08;}
+h2{font-size:46px;font-weight:700;letter-spacing:-.018em;line-height:1.12;margin-bottom:10px;white-space:nowrap;}
+h3{font-size:23px;font-weight:700;letter-spacing:-.01em;}
+.grad-blue-text{background:var(--grad-blue);-webkit-background-clip:text;background-clip:text;color:transparent;}
+p,li{font-size:19px;line-height:1.55;}
+.small{font-size:15px;color:var(--text-gray);}
+b{font-weight:700;}
+em.v{font-family:KaTeX_Math,"Times New Roman",serif;font-style:italic;}
+.nw{white-space:nowrap;}
+
+/* ============ Components ============ */
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:980px;
+  font-size:15px;font-weight:600;letter-spacing:.01em;
+  background:rgba(255,255,255,.1);color:var(--text-light);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(10px);
+}
+.light .badge,.white .badge{background:rgba(0,0,0,.05);color:var(--text-dark);border:1px solid rgba(0,0,0,.08);}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--blue-bright);}
+
+.cards{display:grid;gap:20px;margin-top:34px;}
+.cards.c3{grid-template-columns:1fr 1fr 1fr;}
+.card{background:#fff;border-radius:var(--card-radius);padding:30px 30px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.card h3{margin-bottom:10px;}
+.card p{font-size:17px;color:var(--text-gray);line-height:1.55;}
+
+.eq{
+  font-family:"STIX Two Math",Georgia,"Times New Roman",serif;
+  font-style:italic;font-size:24px;letter-spacing:.01em;
+  padding:18px 26px;border-radius:16px;
+  background:rgba(0,113,227,.06);color:var(--text-dark);
+  display:inline-block;
+}
+.eq.math-eq{font-family:inherit;font-style:normal;}
+.math-eq .katex-display{margin:0;text-align:left;}
+.asset-frame{background:#fff;border-radius:20px;padding:10px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.asset-frame img{width:100%;height:100%;object-fit:contain;display:block;}
+.source-caption{font-size:12.5px;color:var(--text-gray);line-height:1.35;}
+.source-caption a{color:var(--blue);text-decoration:none;}
+.slide-footer .source-caption{margin-right:auto;}
+
+/* limit → proposal band (ksoe2026 slide 3), single-column variant */
+.approach-limit-heading{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.approach-limit-label{font-size:13px;font-weight:700;color:var(--limit-accent);flex-shrink:0;}
+.proposal-band{
+  position:relative;display:grid;grid-template-columns:1fr;
+  border-radius:20px;
+  background:linear-gradient(96deg,rgba(10,132,255,.08),rgba(100,210,255,.12));
+  border:1px solid rgba(10,132,255,.22);
+}
+.proposal-item{--limit-accent:#0071e3;position:relative;padding:18px 24px 14px;}
+.proposal-item h3{font-size:21px;line-height:1.25;letter-spacing:-.02em;}
+.proposal-item p{font-size:15.5px;line-height:1.45;color:var(--text-gray);margin:0;}
+.proposal-arrow{
+  position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  width:30px;height:30px;border-radius:50%;background:var(--grad-blue);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(10,132,255,.3);
+}
+
+/* message band: the one-sentence takeaway of a slide */
+.msg{
+  margin-top:auto;border-radius:18px;padding:14px 26px;text-align:center;
+  background:linear-gradient(96deg,rgba(10,132,255,.07),rgba(100,210,255,.11));
+  border:1px solid rgba(10,132,255,.18);
+  font-size:18px;line-height:1.5;color:var(--text-dark);
+}
+.msg b{font-weight:700;}
+.msg .dn{color:#1fa94a;font-weight:700;}
+
+.pill{padding:9px 18px;border-radius:980px;font-size:16px;font-weight:600;background:rgba(0,113,227,.09);color:var(--blue);}
+
+/* table */
+table.apple{
+  width:100%;border-collapse:separate;border-spacing:0;
+  background:#fff;border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);font-size:18px;
+}
+table.apple th{
+  background:#fafafa;font-weight:600;color:var(--text-gray);
+  padding:14px 18px;text-align:center;font-size:15.5px;
+  border-bottom:1px solid #e8e8ed;
+}
+table.apple td{padding:15px 18px;text-align:center;border-bottom:1px solid #f0f0f2;color:var(--text-dark);}
+table.apple tr:last-child td{border-bottom:none;}
+table.apple td:first-child,table.apple th:first-child{text-align:left;padding-left:26px;}
+table.apple.compact th,table.apple.compact td{padding-top:8px;padding-bottom:8px;}
+/* result tables (scenario rowspan · ED row · TC row) */
+table.res{font-size:17px;}
+table.res th{font-size:14px;line-height:1.3;padding:10px 10px;}
+table.res td{padding:9px 10px;font-variant-numeric:tabular-nums;}
+table.res td.sc{text-align:left;font-weight:700;font-size:16px;line-height:1.25;border-right:1px solid #f0f0f2;padding-left:22px;}
+table.res td.sc small{display:block;font-size:13px;font-weight:500;color:var(--text-gray);}
+table.res td.cn{font-size:15px;font-weight:600;color:var(--text-gray);text-align:left;padding-left:14px!important;}
+table.res tr.tc td{background:rgba(0,113,227,.06);font-weight:700;color:#0066cc;}
+table.res tr.tc td.cn{color:#0066cc;}
+table.res tr.ed td{border-bottom:1px dashed #e3e3e8;}
+table.res td.sc{background:#fff!important;color:var(--text-dark)!important;}
+
+/* two-col layout */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;flex:1;min-height:0;}
+
+/* list style */
+ul.clean{list-style:none;margin-top:22px;}
+ul.clean li{position:relative;padding-left:34px;margin-bottom:16px;font-size:19px;line-height:1.5;color:var(--text-dark);}
+ul.clean li::before{content:"";position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:50%;background:var(--blue);}
+ul.clean li .sub{display:block;font-size:15.5px;color:var(--text-gray);margin-top:3px;}
+ul.check li::before{content:"✓";background:none;color:var(--green);font-weight:800;font-size:19px;top:0;}
+
+/* numbered points */
+.problem-head{display:flex;align-items:center;gap:12px;}
+.problem-head .n{
+  width:32px;height:32px;border-radius:50%;background:var(--grad-blue);flex:none;
+  color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;
+}
+.problem-head h3{font-size:22px;letter-spacing:-.015em;}
+.problem-desc{font-size:16.5px;line-height:1.45;color:var(--text-gray);margin:4px 0 0 44px;}
+
+/* horizon videos (ksoe2026 slide 2) */
+.horizon-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+.horizon-video{background:#fff;border-radius:16px;padding:6px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.horizon-video video{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:10px;background:#fff;}
+.horizon-result{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:9px;font-size:15.5px;font-weight:600;white-space:nowrap;}
+.horizon-result .h{padding:3px 10px;border-radius:980px;background:rgba(0,0,0,.06);color:var(--text-dark);font-size:13.5px;}
+.horizon-result.fail{color:#d70015;}
+.horizon-result.ok{color:#248a3d;}
+
+/* footer of slide */
+.slide-footer{
+  position:absolute;bottom:34px;left:90px;right:90px;
+  display:flex;justify-content:flex-end;align-items:center;
+  font-size:13.5px;color:#aeaeb2;font-weight:500;letter-spacing:.01em;
+}
+
+/* annotated OCP (ksoe2026 slide 6) */
+.ocp{
+  --blue-fg:#0066cc;--blue-bg:rgba(0,113,227,.09);
+  --purple-fg:#8a3fc0;--purple-bg:rgba(175,82,222,.11);
+  --teal-fg:#0a7485;--teal-bg:rgba(0,168,190,.12);
+  --green-fg:#15803d;--green-bg:rgba(48,209,88,.14);
+  --red-fg:#d70015;--red-bg:rgba(255,59,48,.1);
+  --ann-gray:#86868b;
+}
+.ocp-card{position:relative;background:#f5f5f7;border-radius:20px;padding:12px 20px 16px;}
+.light .ocp-card{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.ocp-tag{font-size:13.5px;font-weight:700;color:var(--text-dark);letter-spacing:.01em;}
+.ocp-idx{position:absolute;top:13px;right:20px;font-size:12.5px;color:var(--text-gray);}
+.ocp-eq{display:flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;}
+.ocp-eq .tm{position:relative;display:inline-block;}
+.ocp-eq .op{margin:0 .2em;}
+.ocp .chip{padding:1px 6px;border-radius:9px;}
+.ocp .c-blue{--fg:var(--blue-fg);background:var(--blue-bg);color:var(--fg);}
+.ocp .c-purple{--fg:var(--purple-fg);background:var(--purple-bg);color:var(--fg);}
+.ocp .c-teal{--fg:var(--teal-fg);background:var(--teal-bg);color:var(--fg);}
+.ocp .c-green{--fg:var(--green-fg);background:var(--green-bg);color:var(--fg);}
+.ocp .c-red{--fg:var(--red-fg);background:var(--red-bg);color:var(--fg);}
+.ocp .c-plain{--fg:var(--ann-gray);color:var(--text-dark);}
+.ocp .ann{
+  position:absolute;left:50%;transform:translateX(-50%);
+  white-space:nowrap;text-align:center;line-height:1.2;
+  color:var(--fg,var(--ann-gray));font-family:inherit;pointer-events:none;
+}
+.ocp .ann b{display:block;font-size:13px;font-weight:700;}
+.ocp .ann small{display:block;font-size:11.5px;font-weight:500;color:var(--ann-gray);margin-top:1px;}
+.ocp .ann::before,.ocp .ann::after{content:"";position:absolute;left:50%;}
+.ocp .ann::before{width:1.5px;margin-left:-.75px;background:currentColor;opacity:.7;}
+.ocp .ann::after{margin-left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;}
+.ocp .ann.dn{top:100%;padding-top:var(--stem,17px);}
+.ocp .ann.dn::before{top:7px;height:calc(var(--stem,17px) - 9px);}
+.ocp .ann.dn::after{top:2px;border-bottom:6px solid currentColor;}
+.ocp-st{display:grid;grid-template-columns:auto 1fr auto;column-gap:0;row-gap:8px;align-items:center;}
+.ocp-st .kw{padding-right:12px;}
+.ocp-st .eqlead{display:flex;align-items:center;min-width:0;}
+.ocp-st .eqlead .lead{flex:1;min-width:26px;}
+.ocp-st .lead{position:relative;height:1.5px;margin:0 10px 0 9px;background:currentColor;color:#b8b8bd;}
+.ocp-st .lead::before{content:"";position:absolute;left:-3px;top:50%;transform:translateY(-50%);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;border-right:6px solid currentColor;}
+.ocp-st .lead::after{content:"";position:absolute;right:-2px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:currentColor;}
+.ocp-st .lead.c-red{background:var(--red-fg);color:var(--red-fg);}
+.ocp-st .lead.c-green{background:var(--green-fg);color:var(--green-fg);}
+.ocp-st .lab{font-size:13.5px;line-height:1.3;color:var(--text-gray);}
+.ocp-st .lab b{color:var(--text-dark);margin-right:5px;}
+.ocp-st .lab.c-red,.ocp-st .lab.c-green{background:none;color:var(--text-gray);}
+.ocp-st .lab.c-red b{color:var(--red-fg);}
+.ocp-st .lab.c-green b{color:var(--green-fg);}
+.ocp-st .lab small{display:block;font-size:12px;}
+
+/* animated construction scene (ksoe2026 slide 4): click replays */
+.bg-scene{background:#fff;border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;cursor:pointer;}
+.bg-scene svg{display:block;width:100%;height:auto;}
+.bg-scene text{font-family:inherit;}
+.bg-scene .fade{opacity:0;}
+.slide.active .bg-scene .fade{animation:bgIn .5s ease var(--in) both;}
+.tc-scene .mi{font-family:KaTeX_Math,"Times New Roman",serif;font-style:italic;}
+.tc-scene .mr{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;}
+.tc-scene .mb{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;font-weight:700;}
+.tc-scene .tc-pop{transform-box:fill-box;transform-origin:center;}
+.tc-scene .tc-draw{stroke-dasharray:1 1.1;stroke-dashoffset:1;}
+.slide.active .tc-scene .tc-pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) var(--t) both;}
+.slide.active .tc-scene .tc-draw{animation:bgDraw var(--dur,.5s) var(--ease,ease-in-out) var(--t) both;}
+@keyframes bgPop{from{opacity:0;transform:scale(.2);}}
+@keyframes bgDraw{to{stroke-dashoffset:0;}}
+@keyframes bgIn{from{opacity:0;}to{opacity:1;}}
+@media (prefers-reduced-motion:reduce){.slide.active .bg-scene *,.slide.active .map-over,.slide.active .map-over-key{animation-duration:.01s!important;animation-delay:0s!important;}}
+
+/* ============ SAIL deck components (sail-research.html) ============ */
+.venue{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:980px;
+  background:rgba(0,113,227,.09);color:var(--blue);font-size:13.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;
+}
+.venue.gray{background:rgba(0,0,0,.05);color:var(--text-gray);}
+.vframe{position:relative;background:#fff;border-radius:16px;padding:6px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.vframe video,.vframe>img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:#f5f5f7;}
+.vframe .tag,.tagx{
+  position:absolute;top:12px;left:12px;z-index:2;padding:4px 10px;border-radius:980px;
+  background:rgba(0,0,0,.72);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;
+}
+.vframe .tag.blue,.tagx.blue{background:rgba(0,113,227,.9);}
+.vframe .tag.r{left:auto;right:12px;}
+.kpi-row{display:grid;gap:14px;}
+.kpi{background:#fff;border-radius:20px;padding:16px 20px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.white .kpi{background:#f5f5f7;box-shadow:none;}
+.kpi .v{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1.05;}
+.kpi .v small{font-size:18px;font-weight:600;margin-left:2px;}
+.kpi .l{font-size:14.5px;line-height:1.4;color:var(--text-gray);margin-top:6px;}
+.kpi .l b{color:var(--text-dark);}
+
+/* ============ this deck ============ */
+/* controller chips (colours follow the plot lines) */
+.ctl{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:980px;font-size:13.5px;font-weight:700;background:rgba(0,0,0,.05);color:var(--text-dark);white-space:nowrap;}
+.ctl.tc{background:rgba(0,113,227,.1);color:#0066cc;}
+.ctl i{display:inline-block;width:16px;height:3px;border-radius:2px;}
+.ctl small{font-size:12px;font-weight:600;opacity:.8;}
+
+/* title slide */
+.t-hero{position:absolute;inset:0;background-size:cover;background-position:64% 50%;}
+.t-hero::after{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,#000 0%,rgba(0,0,0,.93) 36%,rgba(0,0,0,.6) 58%,rgba(0,0,0,.18) 82%,rgba(0,0,0,.08) 100%),
+    linear-gradient(0deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,0) 22%);
+}
+.t-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center;max-width:900px;}
+.t-badges{display:flex;gap:12px;margin-bottom:28px;}
+.t-h1{font-size:47px;line-height:1.1;letter-spacing:-.025em;}
+.t-authors{font-size:21px;color:var(--text-light);margin-top:26px;}
+.t-authors sup,.t-affil sup{font-size:.62em;margin-left:1px;}
+.t-affil{font-size:15.5px;color:var(--text-lightgray);margin-top:2px;}
+.t-pi{margin-top:26px;padding-left:18px;border-left:2px solid rgba(41,151,255,.7);}
+.t-pi .nm{font-size:25px;font-weight:700;letter-spacing:-.01em;line-height:1.2;}
+.t-pi .nm span{font-size:16px;font-weight:600;color:var(--blue-bright);margin-left:10px;letter-spacing:.02em;}
+.t-pi .af{font-size:16.5px;color:var(--text-light);margin-top:5px;line-height:1.4;}
+.t-pi .em{font-size:15.5px;font-weight:500;color:var(--blue-bright);margin-top:2px;}
+.t-logos{display:flex;align-items:center;gap:22px;margin-top:30px;}
+.t-logos img{display:block;width:auto;}
+.t-logos img.sail{height:54px;}
+.t-logos img.knu{height:40px;}
+.t-logos i{width:1px;height:34px;background:rgba(255,255,255,.22);}
+.title-slide .slide-footer{color:rgba(255,255,255,.5);}
+
+/* slide 2 / 4: figure + OCP */
+.bg-grid{display:grid;grid-template-columns:470px 1fr;gap:34px;flex:1;min-height:0;align-items:center;margin-top:2px;}
+.bg-fig{display:flex;flex-direction:column;gap:12px;}
+.bg-fig .asset-frame{padding:14px 18px;}
+.dc-pill{display:flex;align-items:center;justify-content:center;gap:14px;padding:11px 16px;border-radius:14px;background:rgba(255,59,48,.07);font-size:16px;font-weight:600;color:#d70015;}
+.dc-pill .katex{font-size:1.15em;}
+.cbf-pill{background:rgba(48,209,88,.1);color:#15803d;}
+
+/* slide 3: horizon */
+.hz-grid{display:grid;grid-template-columns:300px 600px;justify-content:center;gap:44px;flex:1;min-height:0;align-items:center;margin-top:4px;}
+.hz-concept{padding:16px 18px;}
+.hz-cap{font-size:14px;color:var(--text-gray);text-align:center;margin-top:10px;}
+
+/* slide 5: ED-CBF limitation */
+.lim-grid{display:grid;grid-template-columns:470px 1fr;gap:44px;flex:1;min-height:0;align-items:center;margin-top:0;}
+.map-card{padding:12px 16px 12px;cursor:pointer;}
+.map-card img{height:auto;}
+.map-card h3{font-size:16.5px;text-align:center;margin:2px 0 6px;}
+.map-stack{position:relative;}
+.map-stack img{display:block;width:100%;height:auto;}
+.map-stack .map-over{position:absolute;inset:0;opacity:0;}
+.slide.active .map-over,.slide.active .map-over-key{animation:bgIn .7s ease 2.3s both;}
+.map-key{display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-left:4px;}
+.map-key span{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;line-height:1.3;}
+.map-key i{width:14px;height:14px;border-radius:4px;flex:none;}
+.map-key .red{color:#c4001a;}
+.map-key .red i{background:#8f3a4d;border:2px solid #ff1f1f;}
+.map-key .green{color:#1d8a36;opacity:0;}
+.map-key .green i{background:#3aad4a;}
+.lim-pts{display:flex;flex-direction:column;gap:22px;}
+.lim-band{margin-top:22px;}
+
+/* slide 6: TC-CBF */
+.tc-grid{display:grid;grid-template-columns:1fr 440px;gap:34px;flex:1;min-height:0;align-items:center;margin-top:0;}
+.tc-intro{font-size:17px;line-height:1.5;color:var(--text-gray);margin-bottom:12px;white-space:nowrap;}
+.tc-intro b{color:var(--text-dark);}
+.tc-steps{display:flex;flex-direction:column;gap:9px;}
+.tc-step{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;background:#fff;border-radius:16px;padding:10px 18px 10px 12px;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.tc-step .n{width:26px;height:26px;border-radius:50%;background:var(--grad-blue);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+.tc-step .t{font-size:15px;font-weight:600;color:var(--text-dark);line-height:1.35;}
+.tc-step .m{font-size:16.5px;margin-top:4px;}
+.tc-step .m .katex-display{margin:0;text-align:left;}
+.tc-step .m .katex-display>.katex{text-align:left;}
+.tc-step .note{font-size:13px;color:var(--text-gray);margin-top:3px;}
+.tc-checks{margin-top:14px;}
+.tc-checks li{font-size:16px;margin-bottom:6px;}
+.tc-scene svg{height:440px;width:auto;margin:0 auto;}
+
+/* slide 7: restricted regions */
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:10px;}
+.cmp-card{padding:14px 16px 12px;}
+.cmp-card .hd{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px;}
+.cmp-card .hd h3{font-size:21px;letter-spacing:-.01em;}
+.cmp-card .cap{display:flex;align-items:center;gap:9px;justify-content:center;margin-top:8px;font-size:15px;font-weight:700;}
+.cmp-card .cap i{width:14px;height:14px;border-radius:4px;flex:none;}
+.cmp-card .cap.red{color:#c4001a;}
+.cmp-card .cap.red i{background:#8f3a4d;border:2px solid #ff1f1f;}
+.cmp-card .cap.green{color:#1d8a36;}
+.cmp-card .cap.green i{background:#1f6b28;border:2px solid #ff4a2a;}
+.cmp-foot{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:auto;}
+.cmp-foot .lc{padding:11px 26px;border-radius:980px;background:rgba(48,209,88,.13);color:#1a8f3d;font-size:20px;font-weight:700;letter-spacing:-.01em;}
+.cmp-foot span{font-size:15px;color:var(--text-gray);}
+
+/* simulation figure cards */
+.lede{font-size:18px;line-height:1.45;color:var(--text-gray);margin-top:0;}
+.lede b{color:var(--text-dark);}
+.fig-card{padding:12px 18px 14px;}
+.fig-card img{height:auto;}
+.fig-card .fig-img{max-width:1000px;margin:0 auto;}
+.fig-card.sm .fig-img{max-width:940px;}
+.fig-card.sm .plot-row{padding:0 50px;gap:20px;}
+.fig-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 2px 6px;}
+.fig-head h3{font-size:17px;letter-spacing:-.01em;white-space:nowrap;}
+.fig-head h3 span{font-size:13.5px;font-weight:600;color:var(--text-gray);margin-left:8px;}
+.lg{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 14px;font-size:13px;color:var(--text-gray);}
+.lg>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.lg i{display:inline-block;width:18px;height:3px;border-radius:2px;}
+.lg .tc{font-weight:700;color:var(--text-dark);}
+.lg .tc i{height:3.5px;}
+.lg .grp{font-weight:700;color:var(--text-dark);}
+.fig-img{display:block;width:100%;height:auto;}
+.plot-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:6px;align-items:end;}
+.plot{position:relative;}
+.plot img{display:block;width:100%;height:auto;}
+.anno{
+  position:absolute;padding:3px 10px;border-radius:980px;white-space:nowrap;
+  background:rgba(255,255,255,.94);box-shadow:0 1px 6px rgba(0,0,0,.12);
+  font-size:12.5px;font-weight:700;color:var(--text-dark);
+}
+.anno.ed{color:#1f6fb2;}
+.anno.tc{color:#d4550f;}
+.sim-note{font-size:13px;color:var(--text-gray);}
+
+/* slide 11 / 17: results */
+.res-grid{display:grid;grid-template-columns:1fr 300px;gap:30px;flex:1;min-height:0;align-items:center;margin-top:0;}
+.res-kpis{display:flex;flex-direction:column;gap:12px;}
+.res-kpis .kpi{display:grid;grid-template-columns:112px 1fr;align-items:center;gap:10px;padding:14px 18px;}
+.res-kpis .kpi .v{font-size:34px;}
+.res-kpis .kpi .l{margin-top:0;font-size:14px;}
+.res-note{font-size:13px;color:var(--text-gray);text-align:center;}
+.metric-def{font-size:14px;color:var(--text-gray);margin-top:10px;}
+.metric-def b{color:var(--text-dark);font-weight:600;}
+
+/* slide 12: setup */
+.setup-photos{display:grid;grid-template-columns:376px 1fr;gap:16px;height:300px;margin-top:6px;}
+.setup-photos .vframe{height:100%;}
+.setup-info{display:grid;grid-template-columns:1fr 1.25fr 1.25fr;gap:14px;margin-top:16px;}
+.setup-info .kpi{padding:14px 18px 15px;}
+.setup-info .k{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.03em;}
+.setup-info p{font-size:15.5px;line-height:1.45;color:var(--text-dark);margin-top:5px;}
+.setup-info p small{display:block;font-size:13.5px;color:var(--text-gray);margin-top:2px;}
+.setup-info .katex{font-size:1.08em;}
+
+/* slide 13: static experiment */
+.xs-grid{display:grid;grid-template-columns:440px 400px;gap:26px;justify-content:center;margin-top:4px;}
+.xs-grid .asset-frame{padding:8px 10px;}
+.xs-right{display:flex;flex-direction:column;gap:10px;}
+.find-row{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:14px;margin-top:auto;}
+.find{background:#fff;border-radius:18px;padding:13px 18px 14px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.find .ctl{margin-bottom:7px;}
+.find p{font-size:15.5px;line-height:1.42;color:var(--text-dark);}
+.find p .dn{color:#1fa94a;font-weight:700;}
+.find.best{background:linear-gradient(96deg,rgba(10,132,255,.07),rgba(100,210,255,.11));box-shadow:none;border:1px solid rgba(10,132,255,.2);}
+
+/* slide 14: head-on experiment (videos with axis ticks) */
+.ho-grid{display:grid;grid-template-columns:780px 1fr;gap:26px;flex:1;min-height:0;align-items:center;margin-top:0;}
+.ho-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.ho-col .ctl{margin:0 0 8px 44px;}
+.axes{position:relative;margin:0 4px 34px 44px;}
+.axes video{display:block;width:100%;aspect-ratio:582/436;background:#fff;}
+.axes .xt,.axes .yt{position:absolute;font-family:KaTeX_Main,"Times New Roman",serif;font-size:13px;color:#1d1d1f;line-height:1;}
+.axes .xt{top:100%;margin-top:5px;transform:translateX(-50%);}
+.axes .yt{right:100%;margin-right:6px;transform:translateY(-50%);}
+.axes .xl,.axes .yl{position:absolute;font-size:13px;color:#1d1d1f;white-space:nowrap;}
+.axes .xl{top:100%;left:50%;transform:translateX(-50%);margin-top:19px;}
+.axes .yl{left:-36px;top:50%;transform:translate(-50%,-50%) rotate(-90deg);}
+.axes .xl i,.axes .yl i{font-family:KaTeX_Math,"Times New Roman",serif;font-size:14px;}
+.ho-col .cbf{display:block;width:calc(100% - 40px);margin-left:36px;height:auto;}
+.ho-kpis{display:flex;flex-direction:column;gap:11px;}
+.ho-kpis .kpi{padding:13px 18px;}
+.ho-kpis .kpi .v{font-size:30px;}
+.ho-kpis .kpi .v s{font-size:16px;font-weight:600;color:#8e8e93;text-decoration:none;margin-right:6px;}
+.ho-kpis .kpi .l{margin-top:2px;}
+.ho-kpis .kpi .l .dn{color:#1fa94a;font-weight:700;margin-left:6px;}
+.ho-safe{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:16px;background:rgba(48,209,88,.1);font-size:14.5px;line-height:1.4;color:#1a7f37;font-weight:600;}
+
+/* slide 15: overtaking videos */
+.ov-rows{display:flex;flex-direction:column;gap:14px;margin-top:6px;}
+.ov-row{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;}
+.ov-row .ctl{grid-column:1 / -1;justify-self:start;}
+.ov-row .vframe.strip{width:700px;padding:5px;}
+.ov-row .vframe.strip video{height:auto;aspect-ratio:1216/286;}
+.ov-row .vframe.viz{padding:5px;}
+.ov-row .vframe.viz video{height:auto;aspect-ratio:1000/464;object-fit:cover;background:#fff;}
+.ov-cap{display:grid;grid-template-columns:700px 1fr;gap:14px;font-size:13.5px;color:var(--text-gray);margin-top:8px;}
+
+/* slide 16: overtaking results */
+.or-fig{padding:10px 14px;margin-top:2px;}
+.or-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;}
+.or-kpis .kpi{display:flex;align-items:baseline;gap:14px;padding:13px 20px;}
+.or-kpis .kpi .v{font-size:34px;}
+.or-kpis .kpi .l{margin-top:0;}
+
+/* slide 18: conclusion */
+.concl{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px;}
+.concl .card{padding:26px 26px 28px;}
+.concl .card .n{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:14px;}
+.concl .card h3{font-size:21px;margin-bottom:10px;letter-spacing:-.015em;}
+.concl .card p{font-size:16.5px;line-height:1.55;}
+.concl .card p b{color:var(--text-dark);}
+.next{margin-top:auto;display:flex;align-items:center;gap:16px;flex-wrap:nowrap;padding:14px 22px;border-radius:18px;background:#f5f5f7;}
+.next .k{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.04em;white-space:nowrap;}
+.next .it{display:flex;align-items:center;gap:9px;font-size:15px;color:var(--text-dark);white-space:nowrap;}
+.next i.sep{width:1px;height:22px;background:#d2d2d7;flex:none;}
+
+/* closing */
+.close-wrap{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+.close-brand{display:flex;align-items:center;gap:18px;}
+.close-brand img{display:block;height:64px;width:auto;}
+.close-brand .wm{text-align:left;line-height:1.15;}
+.close-brand .wm b{display:block;font-size:30px;font-weight:800;letter-spacing:.02em;color:#1b3a5c;}
+.close-brand .wm span{display:block;font-size:14px;font-weight:600;color:var(--text-gray);}
+.close-brand .sep{width:1px;height:48px;background:#d2d2d7;margin:0 6px;}
+.close-contact{display:grid;grid-template-columns:repeat(3,auto);gap:12px;margin-top:38px;}
+.close-contact>div{background:#f5f5f7;border-radius:16px;padding:12px 20px 13px;text-align:left;min-width:220px;}
+.close-contact .k{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.04em;}
+.close-contact .v{font-size:18px;font-weight:700;color:var(--text-dark);margin-top:3px;white-space:nowrap;}
+.close-contact .v a{color:inherit;text-decoration:none;}
+.close-contact .s{font-size:14px;color:var(--text-gray);margin-top:1px;white-space:nowrap;}
+.close-contact .s a{color:var(--blue);text-decoration:none;}
+.close-co{margin-top:18px;font-size:15px;color:var(--text-gray);}
+.close-co a.badge{text-decoration:none;margin-left:10px;}
+
+/* ============ UI chrome ============ */
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--grad-hero);z-index:100;transition:width .4s cubic-bezier(.22,.61,.21,1);}
+#counter{
+  position:fixed;bottom:20px;right:26px;z-index:100;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.55);
+  background:rgba(20,20,22,.6);padding:6px 14px;border-radius:980px;
+  backdrop-filter:blur(10px);font-variant-numeric:tabular-nums;
+}
+#navBtns{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:10px;opacity:0;transition:opacity .3s;}
+body:hover #navBtns{opacity:1;}
+#navBtns button{
+  width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(20,20,22,.65);color:#fff;font-size:18px;
+  backdrop-filter:blur(10px);transition:background .2s;
+}
+#navBtns button:hover{background:rgba(60,60,64,.85);}
+</style>
+<link rel="stylesheet" href="presentation_assets/deck-mobile.css">
+<script src="presentation_assets/deck-mobile.js"></script>
+</head>
+<body>
+
+<div id="viewport">
+<div id="stage">
+
+<!-- ================= Slide 1 : Title ================= -->
+<section class="slide dark title-slide">
+  <div class="t-hero" style="background-image:url('tcst2026_contents/hero.jpg')" aria-hidden="true"></div>
+  <div class="t-body">
+    <div class="reveal d1 t-badges">
+      <span class="badge"><span class="dot"></span>IEEE Transactions on Control Systems Technology · 2026</span>
+    </div>
+    <h1 class="reveal d2 t-h1"><span class="grad-blue-text">Turning Circle-based</span><br>Control Barrier Function<br>for Efficient Collision Avoidance<br>of Nonholonomic Vehicles</h1>
+    <p class="reveal d3 t-authors"><b>Changyu Lee</b><sup>1</sup>, Kiyong Park<sup>2</sup>, and Jinwhan Kim<sup>2,*</sup></p>
+    <p class="reveal d3 t-affil"><sup>1</sup>Kongju National University&nbsp;&nbsp;·&nbsp;&nbsp;<sup>2</sup>KAIST</p>
+    <div class="reveal d4 t-pi">
+      <div class="nm">Changyu Lee <span>PRESENTER</span></div>
+      <div class="af">Assistant Professor, Department of Mechanical &amp; Automotive Engineering, Kongju National University</div>
+      <div class="em">leeck@kongju.ac.kr</div>
+    </div>
+    <div class="reveal d5 t-logos">
+      <img class="sail" src="sail_contents/01_opening/sail_lockup_w.png" alt="SAIL, Safe Autonomy &amp; Intelligence Lab">
+      <i aria-hidden="true"></i>
+      <img class="knu" src="sail_contents/01_opening/knu_lockup_w.png" alt="Kongju National University">
+    </div>
+  </div>
+  <div class="slide-footer"><span>Safe Autonomy &amp; Intelligence Lab · Kongju National University</span></div>
+</section>
+
+<!-- ================= Slide 2 : MPC with distance constraints ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Background · MPC-based obstacle avoidance</div>
+    <h2>Distance constraints in MPC <span class="grad-blue-text">(MPC-DC)</span></h2>
+  </div>
+  <div class="bg-grid">
+    <div class="bg-fig reveal d2">
+      <div class="asset-frame"><img src="presentation_contents/ed_cbf.png" alt="Vehicle with safety radius R_s at position (x, y) and a circular obstacle of radius o_r; h(x) is the clearance between them"></div>
+      <div class="dc-pill">Distance constraint (obstacle avoidance): <span>\(h(\mathbf{x})\ge 0\)</span></div>
+    </div>
+    <div class="ocp reveal d3">
+      <div class="ocp-card">
+        <div class="ocp-tag">MPC-DC</div>
+        <div class="ocp-idx">\(i=0,\ldots,N-1\)</div>
+        <div class="ocp-eq" style="font-size:15px;padding:14px 0 48px;">
+          <span class="tm c-plain">\(\displaystyle\min_{\mathbf{x}(\cdot),\mathbf{u}(\cdot)}\)</span>
+          <span class="tm c-plain" style="margin-left:.4em;">\(\displaystyle\sum_{i=0}^{N-1}\)</span>
+          <span class="op" style="margin-left:0;">\(\Big(\)</span>
+          <span class="tm chip c-blue">\(\|\mathbf{x}_i-\mathbf{r}_i\|_Q^2\)<span class="ann dn"><b>Tracking error</b><small>reference path</small></span></span>
+          <span class="op">\(+\)</span>
+          <span class="tm chip c-purple">\(\|\mathbf{u}_i\|_R^2\)<span class="ann dn"><b>Control effort</b></span></span>
+          <span class="op" style="margin-right:0;">\(\Big)\)</span>
+          <span class="op">\(+\)</span>
+          <span class="tm chip c-teal">\(\|\mathbf{x}_N-\mathbf{r}_N\|_P^2\)<span class="ann dn"><b>Terminal cost</b></span></span>
+        </div>
+        <div class="ocp-st" style="font-size:14.5px;">
+          <span class="kw">\(\text{s.t.}\)</span>
+          <span class="eqlead"><span>\(\mathbf{x}_0-\mathbf{x}_{\mathrm{init}}=0\)</span><span class="lead"></span></span>
+          <span class="lab"><b>Initial condition</b></span>
+
+          <span></span>
+          <span class="eqlead"><span>\(\mathbf{x}_{i+1}-f_d(\mathbf{x}_i,\mathbf{u}_i)=0\)</span><span class="lead"></span></span>
+          <span class="lab"><b>Vehicle dynamics</b></span>
+
+          <span></span>
+          <span class="eqlead"><span>\(\mathbf{x}_i\in\mathbf{X},\ \ \mathbf{u}_i\in\mathbf{U}\)</span><span class="lead"></span></span>
+          <span class="lab"><b>State and input limits</b></span>
+
+          <span></span>
+          <span class="eqlead"><span class="chip c-red" style="margin-left:-6px;">\(h(\mathbf{x}_i)\ge 0\)</span><span class="lead c-red"></span></span>
+          <span class="lab c-red"><b>Distance constraint</b><small>safe clearance at every step</small></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="msg reveal d4"><b>Safe distance constraints</b> can be incorporated into an MPC's state constraints to generate <b>collision-free trajectories</b></div>
+  <div class="slide-footer"><span>02</span></div>
+</section>
+
+<!-- ================= Slide 3 : long horizon ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Background · Limitation of MPC-DC</div>
+    <h2>Distance constraints need a <span class="grad-blue-text">long horizon</span></h2>
+  </div>
+  <div class="hz-grid">
+    <div class="asset-frame hz-concept reveal d2"><img src="presentation_contents/MPC_horizon.png" alt="With a long prediction horizon the predicted path bends around the obstacle; with a short horizon the prediction ends before the obstacle"></div>
+    <div class="reveal d3">
+      <div class="horizon-grid" aria-label="MPC-DC with prediction horizons of 1.5 s and 3.0 s">
+        <div>
+          <div class="horizon-video"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/1_5sMPC.mp4"></video></div>
+          <div class="horizon-result fail"><span class="h">Horizon 1.5 s</span>stuck at the obstacle</div>
+        </div>
+        <div>
+          <div class="horizon-video"><video autoplay muted loop playsinline preload="auto" src="presentation_contents/3_0sMPC.mp4"></video></div>
+          <div class="horizon-result ok"><span class="h">Horizon 3.0 s</span>reaches the goal</div>
+        </div>
+      </div>
+      <p class="hz-cap">Same scenario — only the prediction horizon of MPC-DC differs</p>
+    </div>
+  </div>
+  <div class="msg reveal d4" style="margin-top:18px;">Obstacle avoidance constraints are <b>only activated when the vehicle is close to obstacles</b><br>→ MPC-DC <b>requires a long prediction horizon</b>, which increases the computational load</div>
+  <div class="slide-footer"><span>03</span></div>
+</section>
+
+<!-- ================= Slide 4 : MPC-CBF ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Background · CBF-based MPC [1]</div>
+    <h2>CBF constraints in MPC <span class="grad-blue-text">(MPC-CBF)</span></h2>
+  </div>
+  <div class="bg-grid" style="grid-template-columns:450px 1fr;">
+    <div class="bg-fig reveal d2">
+      <div class="asset-frame" style="padding:12px 16px;"><img src="presentation_contents/ed_cbf_constraints.png" alt="Exponential CBF: the rate of change of the clearance h toward the obstacle, h-dot, is bounded by the clearance itself"></div>
+      <div class="asset-frame" style="padding:10px 16px;"><img src="presentation_contents/cbf.png" alt="Under the CBF condition h-dot is at least minus alpha times h, so h may decrease but always stays positive"></div>
+    </div>
+    <div class="reveal d3" style="min-width:0;">
+      <div class="ocp">
+        <div class="ocp-card">
+          <div class="ocp-tag">MPC-CBF <span style="font-weight:500;color:var(--text-gray);margin-left:6px;">same cost and constraints as MPC-DC, except the obstacle constraint</span></div>
+          <div class="ocp-st" style="font-size:14.5px;margin-top:12px;">
+            <span class="kw">\(\text{s.t.}\)</span>
+            <span class="eqlead"><span>\(\mathbf{x}_0-\mathbf{x}_{\mathrm{init}}=0,\ \ \mathbf{x}_{i+1}-f_d(\mathbf{x}_i,\mathbf{u}_i)=0,\ \ \mathbf{x}_i\in\mathbf{X},\ \mathbf{u}_i\in\mathbf{U}\)</span></span>
+            <span></span>
+
+            <span></span>
+            <span class="eqlead"><span class="chip c-green" style="margin-left:-6px;">\(\Delta h_e(\mathbf{x}_i,\mathbf{u}_i)+\alpha_e h_e(\mathbf{x}_i)\ge 0\)</span><span class="lead c-green"></span></span>
+            <span class="lab c-green"><b>Discrete-time CBF</b><small>replaces \(h(\mathbf{x}_i)\ge 0\)</small></span>
+
+            <span></span>
+            <span class="eqlead"><span>\(\Delta h_e(\mathbf{x}_i,\mathbf{u}_i)=h_e(\mathbf{x}_{i+1})-h_e(\mathbf{x}_i)\)</span><span class="lead"></span></span>
+            <span class="lab"><b>One-step change</b></span>
+
+            <span></span>
+            <span class="eqlead"><span>\(h_e(\mathbf{x})=\dot h(\mathbf{x})+\alpha\,h(\mathbf{x})\ge 0,\ \ \alpha>0\)</span><span class="lead"></span></span>
+            <span class="lab"><b>Exponential CBF</b><small>of the distance \(h\)</small></span>
+          </div>
+        </div>
+      </div>
+      <ul class="clean check" style="margin-top:22px;">
+        <li style="font-size:17.5px;margin-bottom:12px;">The CBF <b>limits the speed toward an obstacle</b> in proportion to the relative distance from it</li>
+        <li style="font-size:17.5px;margin-bottom:0;">MPC-CBF with a <b>shorter horizon</b> can still achieve performance similar to MPC-DC [1]</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">[1] <a href="https://doi.org/10.23919/ACC50511.2021.9483029" target="_blank" rel="noopener">J. Zeng, B. Zhang, and K. Sreenath, “Safety-critical model predictive control with discrete-time control barrier function,” ACC 2021</a></span>
+    <span>04</span>
+  </div>
+</section>
+
+<!-- ================= Slide 5 : limitation of ED-CBF ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Motivation · Euclidean distance-based CBF (ED-CBF)</div>
+    <h2>ED-CBF overlooks <span class="grad-blue-text">heading and turning</span></h2>
+  </div>
+  <div class="lim-grid">
+    <figure class="asset-frame map-card replay reveal d2" title="Click to replay" style="margin:0;">
+      <h3>ED-CBF values for a circular obstacle</h3>
+      <div class="map-stack">
+        <img src="tcst2026_contents/ed_map_red.png" alt="ED-CBF value map: a vehicle moving in +x at 1.5 m/s; a wide crescent in front of the obstacle has negative CBF values">
+        <img class="map-over" src="tcst2026_contents/ed_map_green.png" alt="The upper and lower parts of the crescent are highlighted green: states from which the vehicle could still turn away">
+      </div>
+      <div class="map-key">
+        <span class="red"><i></i>States restricted by the ED-CBF (negative value)</span>
+        <span class="green map-over-key"><i></i>Avoidable by turning, yet still restricted by the ED-CBF</span>
+      </div>
+    </figure>
+    <div class="lim-pts">
+      <div class="reveal d3">
+        <div class="problem-head"><span class="n">1</span><h3>Only the closest Euclidean distance</h3></div>
+        <p class="problem-desc">Conventional CBFs measure the shortest distance to the obstacle — the <b style="color:var(--text-dark);">ED-CBF</b></p>
+      </div>
+      <div class="reveal d4">
+        <div class="problem-head"><span class="n">2</span><h3>Heading and turning are ignored</h3></div>
+        <p class="problem-desc">Limited turning capability is a common characteristic of nonholonomic vehicles — cars, robots, ships</p>
+      </div>
+      <div class="reveal d5">
+        <div class="problem-head"><span class="n">3</span><h3>Safe states are perceived as risks</h3></div>
+        <p class="problem-desc">States that are actually safe for navigation are restricted → <b style="color:var(--text-dark);">conservative trajectories</b></p>
+      </div>
+    </div>
+  </div>
+  <div class="proposal-band lim-band reveal d6">
+    <div class="proposal-item" style="text-align:center;">
+      <span class="proposal-arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2.5v10.5M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="approach-limit-heading" style="justify-content:center;"><span class="approach-limit-label">Proposed</span><h3>Nonholonomic characteristics in the CBF design → Turning Circle-based CBF (TC-CBF)</h3></div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>05</span></div>
+</section>
+
+<!-- ================= Slide 6 : TC-CBF ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Proposed method</div>
+    <h2>Turning Circle-based CBF <span class="grad-blue-text">(TC-CBF)</span></h2>
+  </div>
+  <div class="tc-grid">
+    <div>
+      <p class="tc-intro reveal d2">Clearance is measured from the vehicle's <b>left and right turning circles</b></p>
+      <div class="tc-steps reveal d3">
+        <div class="tc-step"><span class="n">1</span><div>
+          <div class="t">Two turning circles from the speed \(u\) and max. turning rate \(r_{\max}\)</div>
+          <div class="m">\(R=u\,/\,r_{\max},\qquad \mathbf{p}_{tl},\,\mathbf{p}_{tr}=\mathbf{p}\pm R\,\big[\cos(\psi+\tfrac{\pi}{2}),\,\sin(\psi+\tfrac{\pi}{2})\big]^{\top}\)</div>
+        </div></div>
+        <div class="tc-step"><span class="n">2</span><div>
+          <div class="t">A CBF for each circle: circle-to-obstacle clearance</div>
+          <div class="m">\[\begin{aligned}h_{tl}(\mathbf{x})&=\big\|\mathbf{p}_{tl}-\mathbf{o}\big\|-(o_r+R+R_s)\\ h_{tr}(\mathbf{x})&=\big\|\mathbf{p}_{tr}-\mathbf{o}\big\|-(o_r+R+R_s)\end{aligned}\]</div>
+        </div></div>
+        <div class="tc-step"><span class="n">3</span><div>
+          <div class="t">Safe while <b>at least one</b> turning circle does not intersect the obstacle</div>
+          <div class="m">\(h_t(\mathbf{x})=\max\big(h_{tr}(\mathbf{x}),\,h_{tl}(\mathbf{x})\big)\)</div>
+          <div class="note">implemented with a smooth log-sum-exp approximation of the max</div>
+        </div></div>
+      </div>
+      <ul class="clean check tc-checks reveal d4">
+        <li>Always <b>leaves space on the left or right</b> to avoid obstacles</li>
+        <li>In MPC as a discrete-time CBF: \(\Delta h_t(\mathbf{x}_i,\mathbf{u}_i)+\alpha_t\,h_t(\mathbf{x}_i)\ge 0\)</li>
+      </ul>
+    </div>
+    <div class="reveal d3"><div class="bg-scene tc-scene" title="Click to replay"><svg viewBox="0 0 440 462" role="img" aria-label="TC-CBF construction: the left and right turning-circle centers p_tl and p_tr lie a distance R = u/r_max from the vehicle, perpendicular to its heading. The safety margins h_tl and h_tr are the center-to-obstacle distances minus o_r + R + R_s. If the larger one, h_t, is non-negative, the vehicle can escape by turning to one side.">
+  <defs>
+    <marker id="tcAh" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0.5 L8,4 L0,7.5 Z" fill="#1d1d1f"/></marker>
+    <pattern id="tcHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#d1d1d6" stroke-width="1.3"/></pattern>
+  </defs>
+
+  <!-- legend -->
+  <g class="fade" style="--in:.2s" font-size="12.5" fill="#1d1d1f">
+    <line x1="252" y1="21" x2="274" y2="21" stroke="#bf5af2" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <text x="281" y="25.5">Left turning circle</text>
+    <line x1="252" y1="41" x2="274" y2="41" stroke="#0a84ff" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <text x="281" y="45.5">Right turning circle</text>
+    <line x1="252" y1="61" x2="274" y2="61" stroke="#ff453a" stroke-width="1.6"/>
+    <text x="281" y="65.5">Center–obstacle distance</text>
+    <line x1="252" y1="81" x2="274" y2="81" stroke="#30d158" stroke-width="4.5"/>
+    <text x="281" y="85.5">Safety margins <tspan class="mi">h</tspan><tspan class="mi" font-size="9.5" dy="3">tl</tspan><tspan dy="-3">, </tspan><tspan class="mi">h</tspan><tspan class="mi" font-size="9.5" dy="3">tr</tspan></text>
+  </g>
+
+  <!-- outer boundaries R + R_s (swept by the safety disc during an emergency turn) -->
+  <g class="fade" style="--in:2.8s" fill="none" stroke-width="1" stroke-dasharray="2 3">
+    <circle cx="123.80" cy="144.03" r="117" stroke="#bf5af2" stroke-opacity=".6"/>
+    <circle cx="192.20" cy="331.97" r="117" stroke="#0a84ff" stroke-opacity=".6"/>
+  </g>
+
+  <!-- left turning circle -->
+  <g class="fade" style="--in:1.0s">
+    <circle cx="123.80" cy="144.03" r="100" fill="rgba(191,90,242,.05)" stroke="#bf5af2" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="123.80" y1="144.03" x2="158" y2="238" stroke="#bf5af2" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <text x="131" y="198" text-anchor="end" font-size="15" fill="#8a3fc0"><tspan class="mi">R</tspan></text>
+    <text x="112" y="137" text-anchor="end" font-size="15" fill="#8a3fc0"><tspan class="mb">p</tspan><tspan class="mi" font-size="11" dy="3.5">tl</tspan></text>
+  </g>
+  <circle class="tc-pop" cx="123.80" cy="144.03" r="3.6" fill="#bf5af2" style="--t:1.05s"/>
+  <path class="tc-draw" pathLength="1" d="M158,238 A100,100 0 0 0 222.28,126.67" fill="none" stroke="#bf5af2" stroke-width="2.2" style="--t:1.2s;--dur:.6s;--ease:linear"/>
+  <g transform="translate(222.28,126.67) rotate(-100)"><polygon class="tc-pop" points="3,0 -7,-4.6 -7,4.6" fill="#bf5af2" style="--t:1.75s"/></g>
+
+  <!-- right turning circle -->
+  <g class="fade" style="--in:1.8s">
+    <circle cx="192.20" cy="331.97" r="100" fill="rgba(10,132,255,.05)" stroke="#0a84ff" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="192.20" y1="331.97" x2="158" y2="238" stroke="#0a84ff" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <text x="182" y="355" text-anchor="end" font-size="15" fill="#0071e3"><tspan class="mb">p</tspan><tspan class="mi" font-size="11" dy="3.5">tr</tspan></text>
+    <text x="175" y="307" text-anchor="end" font-size="13.5" fill="#0071e3"><tspan class="mi">R</tspan><tspan class="mr"> = </tspan><tspan class="mi">u</tspan><tspan class="mr">/</tspan><tspan class="mi">r</tspan><tspan class="mr" font-size="10" dy="3">max</tspan></text>
+  </g>
+  <circle class="tc-pop" cx="192.20" cy="331.97" r="3.6" fill="#0a84ff" style="--t:1.85s"/>
+  <path class="tc-draw" pathLength="1" d="M158,238 A100,100 0 0 1 278.80,281.97" fill="none" stroke="#0a84ff" stroke-width="2.2" style="--t:2.0s;--dur:.6s;--ease:linear"/>
+  <g transform="translate(278.80,281.97) rotate(60)"><polygon class="tc-pop" points="3,0 -7,-4.6 -7,4.6" fill="#0a84ff" style="--t:2.55s"/></g>
+
+  <!-- obstacle -->
+  <g class="tc-pop" style="--t:.25s">
+    <circle cx="352" cy="196" r="34" fill="#f5f5f7"/>
+    <circle cx="352" cy="196" r="34" fill="url(#tcHatch)" stroke="#8e8e93" stroke-width="1.3"/>
+  </g>
+  <g class="fade" style="--in:.5s">
+    <line x1="352" y1="196" x2="376.04" y2="220.04" stroke="#6e6e73" stroke-width="1.1" stroke-dasharray="3 2"/>
+    <circle cx="352" cy="196" r="2.4" fill="#1d1d1f"/>
+    <text x="352" y="153" text-anchor="middle" font-size="13" font-weight="700" fill="#6e6e73">Obstacle</text>
+    <text x="354" y="188" text-anchor="middle" font-size="14" fill="#1d1d1f"><tspan class="mb">o</tspan></text>
+    <text x="380" y="238" font-size="14" fill="#1d1d1f"><tspan class="mi">o</tspan><tspan class="mi" font-size="10.5" dy="3">r</tspan></text>
+  </g>
+
+  <!-- centre-to-obstacle distances and safety margins -->
+  <line class="tc-draw" pathLength="1" x1="123.80" y1="144.03" x2="352" y2="196" stroke="#ff453a" stroke-width="1.5" style="--t:3.0s;--dur:.45s"/>
+  <line class="tc-draw" pathLength="1" x1="192.20" y1="331.97" x2="352" y2="196" stroke="#ff453a" stroke-width="1.5" style="--t:3.1s;--dur:.45s"/>
+  <line class="tc-draw" pathLength="1" x1="237.88" y1="170.01" x2="318.85" y2="188.45" stroke="#30d158" stroke-width="4.5" style="--t:3.55s;--dur:.35s"/>
+  <line class="tc-draw" pathLength="1" x1="281.31" y1="256.15" x2="326.11" y2="218.03" stroke="#30d158" stroke-width="4.5" style="--t:3.65s;--dur:.35s"/>
+  <g class="fade" style="--in:3.8s" font-size="15" font-weight="700" fill="#248a3d">
+    <text x="262" y="167"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="3.5">tl</tspan></text>
+    <text x="314" y="258"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="3.5">tr</tspan></text>
+  </g>
+
+  <!-- own vehicle: position p, heading 20 deg up, speed u, safety radius R_s -->
+  <g class="tc-pop" style="--t:.4s">
+    <g transform="translate(158,238) rotate(-20)">
+      <circle r="17" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.2"/>
+      <line x1="0" y1="0" x2="-17" y2="0" stroke="#1d1d1f" stroke-width="1" stroke-dasharray="2.5 2"/>
+      <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#1d1d1f"/>
+    </g>
+  </g>
+  <g class="fade" style="--in:.6s">
+    <line x1="177.73" y1="230.82" x2="206.86" y2="220.22" stroke="#1d1d1f" stroke-width="1.6" marker-end="url(#tcAh)"/>
+    <text x="213" y="219" font-size="15" fill="#1d1d1f"><tspan class="mi">u</tspan></text>
+    <text x="137" y="266" text-anchor="end" font-size="14" fill="#1d1d1f"><tspan class="mi">R</tspan><tspan class="mi" font-size="10.5" dy="3">s</tspan></text>
+  </g>
+
+  <!-- summary -->
+  <g class="fade" style="--in:4.2s">
+    <rect x="262" y="390" width="176" height="54" rx="14" fill="rgba(48,209,88,.12)"/>
+    <text x="350" y="411" text-anchor="middle" font-size="13.5" fill="#1d1d1f"><tspan class="mi">h</tspan><tspan class="mi" font-size="10" dy="3">t</tspan><tspan class="mr" dy="-3"> = max(</tspan><tspan class="mi">h</tspan><tspan class="mi" font-size="10" dy="3">tr</tspan><tspan class="mr" dy="-3">, </tspan><tspan class="mi">h</tspan><tspan class="mi" font-size="10" dy="3">tl</tspan><tspan class="mr" dy="-3">) ≥ 0</tspan></text>
+    <text x="350" y="433" text-anchor="middle" font-size="13" font-weight="700" fill="#248a3d">→ an escape turn exists</text>
+  </g>
+  <text class="fade" x="436" y="459" text-anchor="end" font-size="12" fill="#aeaeb2" style="--in:4.4s">↻ Click to replay</text>
+</svg></div></div>
+  </div>
+  <div class="slide-footer"><span>06</span></div>
+</section>
+
+<!-- ================= Slide 7 : restricted states ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Proposed method · Comparison of restricted states</div>
+    <h2>TC-CBF restricts <span class="grad-blue-text">far fewer states</span></h2>
+  </div>
+  <div class="cmp-grid">
+    <figure class="asset-frame cmp-card reveal d2" style="margin:0;">
+      <div class="hd"><h3>ED-CBF</h3><span class="venue gray">conventional</span></div>
+      <img src="tcst2026_contents/cmp_ed.png" alt="ED-CBF value map: a wide crescent in front of the obstacle is restricted">
+      <div class="cap red"><i></i>States restricted by the ED-CBF (negative value)</div>
+    </figure>
+    <figure class="asset-frame cmp-card reveal d3" style="margin:0;">
+      <div class="hd"><h3>TC-CBF</h3><span class="venue">proposed</span></div>
+      <img src="tcst2026_contents/cmp_tc.png" alt="TC-CBF value map: only a narrow lens-shaped region directly in front of the obstacle is restricted">
+      <div class="cap green"><i></i>States restricted by the TC-CBF (negative value)</div>
+    </figure>
+  </div>
+  <div class="cmp-foot reveal d4">
+    <span class="lc">Less conservative!</span>
+    <span>Vehicle heading +<em class="v">x</em> at 1.5 m/s · only states from which neither turn avoids the obstacle are restricted</span>
+  </div>
+  <div class="slide-footer"><span>07</span></div>
+</section>
+
+<!-- ================= Slide 8 : simulation, static ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Simulation · Unicycle · Static obstacle</div>
+    <h2>ED-CBF stays conservative <span class="grad-blue-text">after tuning</span></h2>
+    <p class="lede">Even with different parameter sets, <b>ED-CBF generates more conservative trajectories</b> than TC-CBF due to its inherent characteristics</p>
+  </div>
+  <div class="asset-frame fig-card reveal d2" style="margin-top:14px;">
+    <div class="lg" style="justify-content:center;margin:2px 0 6px;">
+      <span class="tc"><i style="background:#ff0000;"></i>MPC-TCCBF</span>
+      <span class="grp" style="margin-left:10px;">MPC-EDCBF \((\alpha,\ \alpha_e)\):</span>
+      <span><i style="background:#9225ff;"></i>(0.25, 0.05)</span>
+      <span><i style="background:#5698f9;"></i>(0.50, 0.05)</span>
+      <span><i style="background:#49e2e2;"></i>(0.75, 0.05)</span>
+      <span><i style="background:#99ffc3;"></i>(1.00, 0.05)</span>
+      <span><i style="background:#dbe292;"></i>(0.50, 0.03)</span>
+      <span><i style="background:#ff9867;"></i>(0.50, 0.07)</span>
+    </div>
+    <img class="fig-img" src="tcst2026_contents/sim_static_traj.png" alt="x-y trajectories around a static obstacle: MPC-TCCBF (red) deviates least; all six MPC-EDCBF variants detour further">
+    <div class="plot-row" style="gap:22px;padding:0 40px;">
+      <div class="plot"><img src="tcst2026_contents/sim_static_u.png" alt="Speed u: MPC-TCCBF keeps 2.0 m/s while every MPC-EDCBF variant slows to 1.2–1.4 m/s"><span class="anno tc" style="right:10px;top:30%;">TC-CBF: no slowdown</span></div>
+      <div class="plot"><img src="tcst2026_contents/sim_static_r.png" alt="Turning rate r: MPC-EDCBF variants saturate at −0.2 rad/s early in the avoidance, MPC-TCCBF turns more gently"></div>
+      <div class="plot"><img src="tcst2026_contents/sim_static_cbf.png" alt="CBF values over time for all controllers stay non-negative"></div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="source-caption">Unicycle model · MPC with \(N=10,\ T_s=0.1\) s for all controllers · ED-CBF uses an exponential CBF with parameters \(\alpha,\ \alpha_e\)</span><span>08</span></div>
+</section>
+
+<!-- ================= Slide 9 : simulation, head-on ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Simulation · Unicycle · Head-on encounter</div>
+    <h2>Head-on: avoidance <span class="grad-blue-text">without slowing down</span></h2>
+    <p class="lede">TC-CBF starts a <b>gentle turn early</b> instead of braking hard — the oncoming obstacle is avoided at <b>full speed</b></p>
+  </div>
+  <div class="asset-frame fig-card sm reveal d2" style="margin-top:14px;">
+    <div class="fig-head">
+      <h3>Moving obstacle approaching head-on<span>obstacle moves from <em class="v">x</em> = 25 m toward the vehicle (0 → 30 s)</span></h3>
+      <div class="lg"><span class="grp"><i style="background:#1f77b4;"></i>MPC-EDCBF</span><span class="grp"><i style="background:#ff7f0e;"></i>MPC-TCCBF</span></div>
+    </div>
+    <img class="fig-img" src="tcst2026_contents/sim_head_traj.png" alt="Head-on scenario trajectories: both controllers pass the oncoming obstacle; snapshots every 2.5 s">
+    <div class="plot-row">
+      <div class="plot"><img src="tcst2026_contents/sim_head_u.png" alt="Speed: MPC-EDCBF slows to about 1.2 m/s, MPC-TCCBF stays near 2.0 m/s"><span class="anno ed" style="left:44%;top:62%;">ED-CBF slows to ≈1.2 m/s</span></div>
+      <div class="plot"><img src="tcst2026_contents/sim_head_r.png" alt="Turning rate: MPC-EDCBF saturates at ±0.2 rad/s, MPC-TCCBF turns earlier and more gently"><span class="anno ed" style="right:8px;top:56%;">ED-CBF saturates at −0.2 rad/s</span></div>
+      <div class="plot"><img src="tcst2026_contents/sim_head_cbf.png" alt="CBF values: the TC-CBF keeps a larger margin than the ED-CBF, both non-negative"><span class="anno tc" style="left:42%;top:40%;">TC-CBF keeps a margin</span></div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>09</span></div>
+</section>
+
+<!-- ================= Slide 10 : simulation, overtaking ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Simulation · Unicycle · Overtaking</div>
+    <h2>Overtaking: <span class="grad-blue-text">a smaller detour</span>, no slowdown</h2>
+    <p class="lede">MPC-TCCBF passes with <b>about half the lateral deviation</b> (≈1.3 m vs ≈2.7 m) while keeping the desired speed</p>
+  </div>
+  <div class="asset-frame fig-card sm reveal d2" style="margin-top:14px;">
+    <div class="fig-head">
+      <h3>Overtaking a slower obstacle<span>obstacle moves in +<em class="v">x</em> along the path (0 → 20 s)</span></h3>
+      <div class="lg"><span class="grp"><i style="background:#1f77b4;"></i>MPC-EDCBF</span><span class="grp"><i style="background:#ff7f0e;"></i>MPC-TCCBF</span></div>
+    </div>
+    <img class="fig-img" src="tcst2026_contents/sim_over_traj.png" alt="Overtaking trajectories: MPC-TCCBF deviates about 1.3 m from the path, MPC-EDCBF about 2.7 m">
+    <div class="plot-row">
+      <div class="plot"><img src="tcst2026_contents/sim_over_u.png" alt="Speed: MPC-EDCBF slows to about 1.4 m/s, MPC-TCCBF stays at 2.0 m/s"><span class="anno ed" style="left:42%;top:58%;">ED-CBF slows to ≈1.4 m/s</span></div>
+      <div class="plot"><img src="tcst2026_contents/sim_over_r.png" alt="Turning rate: MPC-EDCBF saturates at ±0.2 rad/s, MPC-TCCBF peaks around 0.15 rad/s"><span class="anno ed" style="left:44%;top:56%;">ED-CBF saturates at ±0.2 rad/s</span></div>
+      <div class="plot"><img src="tcst2026_contents/sim_over_cbf.png" alt="CBF values of both controllers stay non-negative"></div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>10</span></div>
+</section>
+
+<!-- ================= Slide 11 : simulation summary ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Simulation · Summary</div>
+    <h2>MPC-TCCBF is <span class="grad-blue-text">more efficient</span></h2>
+  </div>
+  <div class="res-grid">
+    <div class="reveal d2">
+      <table class="apple compact res">
+        <thead><tr><th style="width:22%;">Scenario</th><th style="width:24%;text-align:left;">Controller</th><th>Arrival time<br>\(t_a\) [s]</th><th>Speed error<br>\(e_{\mathrm{speed}}\)</th><th>Cross-track error<br>\(e_{\mathrm{cte}}\)</th></tr></thead>
+        <tbody>
+          <tr class="ed"><td class="sc" rowspan="2">Static</td><td class="cn">MPC-EDCBF</td><td>21.6</td><td>0.088</td><td>1.273</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>20.4</td><td>0.005</td><td>0.962</td></tr>
+          <tr class="ed"><td class="sc" rowspan="2">Head-on</td><td class="cn">MPC-EDCBF</td><td>26.9</td><td>0.107</td><td>0.889</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>25.5</td><td>0.019</td><td>0.659</td></tr>
+          <tr class="ed"><td class="sc" rowspan="2">Overtaking</td><td class="cn">MPC-EDCBF</td><td>21.3</td><td>0.087</td><td>0.916</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>20.1</td><td>0.002</td><td>0.450</td></tr>
+        </tbody>
+      </table>
+      <p class="metric-def"><b>\(t_a\)</b> arrival time · <b>\(e_{\mathrm{speed}}\)</b> average speed tracking error · <b>\(e_{\mathrm{cte}}\)</b> average cross-track error</p>
+    </div>
+    <div class="res-kpis reveal d3">
+      <div class="kpi"><div class="v grad-blue-text">5.5%↓</div><div class="l"><b>Arrival time</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">91%↓</div><div class="l"><b>Speed tracking error</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">34%↓</div><div class="l"><b>Cross-track error</b></div></div>
+      <p class="res-note">vs MPC-EDCBF · average over the 3 scenarios</p>
+    </div>
+  </div>
+  <div class="msg reveal d4" style="margin-top:16px;"><b>MPC-TCCBF is more efficient</b>, avoiding unnecessary slowdowns and aggressive turns</div>
+  <div class="slide-footer"><span>11</span></div>
+</section>
+
+<!-- ================= Slide 12 : experimental setup ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment · Setup</div>
+    <h2>Real-world validation with an <span class="grad-blue-text">ASV</span></h2>
+  </div>
+  <div class="setup-photos reveal d2">
+    <div class="vframe"><span class="tag">Clearpath Robotics Heron</span><img src="tcst2026_contents/heron.jpg" alt="Clearpath Robotics Heron autonomous surface vehicle on the water"></div>
+    <div class="vframe"><span class="tag">Experimental site · KAIST</span><img src="tcst2026_contents/site.jpg" alt="Aerial view of the pond at KAIST used for the experiments"></div>
+  </div>
+  <div class="setup-info reveal d3">
+    <div class="kpi"><div class="k">VEHICLE</div><p>Differential-thrust catamaran ASV<small>1.35 × 0.98 × 0.32 m · desired speed 0.9 m/s</small></p></div>
+    <div class="kpi"><div class="k">ASV MODEL</div><p>\(M\dot{\nu}+C(\nu)\nu+D(\nu)\nu=\tau_c,\ \ \dot{\eta}=R(\psi)\nu\)<small>\(\nu=[u,v,r]^\top\) velocities · \(\eta=[x,y,\psi]^\top\) pose</small></p></div>
+    <div class="kpi"><div class="k">CONTROLLERS · SCENARIOS</div><p>MPC-TCCBF / MPC-EDCBF: \(N=20,\ T_s=0.1\) s<small>MPC-DC: \(N=50,\ T_s=0.2\) s · static, head-on, overtaking</small></p></div>
+  </div>
+  <div class="slide-footer"><span>12</span></div>
+</section>
+
+<!-- ================= Slide 13 : experiment, static ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment ① · Static obstacle</div>
+    <h2>Smooth avoidance with a <span class="grad-blue-text">short horizon</span></h2>
+  </div>
+  <div class="xs-grid reveal d2">
+    <div class="asset-frame"><img src="tcst2026_contents/exp_static_traj.png" alt="Heron trajectories around a static obstacle for MPC-TCCBF, MPC-EDCBF and MPC-DC with time stamps every 6 s"></div>
+    <div class="xs-right">
+      <div class="asset-frame"><img src="tcst2026_contents/exp_static_speed.png" alt="Speed over time: MPC-DC swings between 0.6 and 1.2 m/s, MPC-EDCBF slows to about 0.65 m/s, MPC-TCCBF stays near 0.9 m/s and arrives first"></div>
+      <div class="asset-frame"><img src="tcst2026_contents/exp_static_dist.png" alt="Closest distance to the obstacle over time for the three controllers, all non-negative"></div>
+    </div>
+  </div>
+  <div class="find-row reveal d3">
+    <div class="find"><span class="ctl"><i style="background:#edb120;"></i>MPC-DC <small>N = 50, Ts = 0.2 s</small></span><p><b>Aggressive maneuvers</b> when close to the obstacle, even with a long horizon</p></div>
+    <div class="find"><span class="ctl"><i style="background:#0072bd;"></i><i style="background:#d95319;margin-left:-4px;"></i>MPC-CBF <small>N = 20, Ts = 0.1 s</small></span><p>Both CBF controllers avoid <b>smoothly</b> with a significantly shorter horizon</p></div>
+    <div class="find best"><span class="ctl tc"><i style="background:#d95319;"></i>MPC-TCCBF vs MPC-EDCBF</span><p>Arrival time <span class="dn">10%↓</span> · speed error <span class="dn">68%↓</span> · cross-track error <span class="dn">8%↓</span></p></div>
+  </div>
+  <div class="slide-footer"><span>13</span></div>
+</section>
+
+<!-- ================= Slide 14 : experiment, head-on ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment ② · Head-on encounter</div>
+    <h2>Head-on: faster, <span class="grad-blue-text">closer to the path</span></h2>
+  </div>
+  <div class="ho-grid">
+    <div class="ho-cols reveal d2">
+      <div class="ho-col">
+        <span class="ctl tc">MPC-TCCBF <small>proposed</small></span>
+        <div class="axes">
+          <video autoplay muted loop playsinline preload="auto" src="tcst2026_contents/headon_tc.mp4" aria-label="Heron with MPC-TCCBF avoiding an oncoming obstacle; snapshots every 4 s"></video>
+          <span class="xt" style="left:6.19%;">0</span><span class="xt" style="left:21.82%;">5</span><span class="xt" style="left:37.46%;">10</span><span class="xt" style="left:53.09%;">15</span><span class="xt" style="left:68.81%;">20</span><span class="xt" style="left:84.19%;">25</span><span class="xt" style="left:99.83%;">30</span>
+          <span class="yt" style="top:91.63%;">0</span><span class="yt" style="top:70.76%;">5</span><span class="yt" style="top:50.11%;">10</span><span class="yt" style="top:29.24%;">15</span><span class="yt" style="top:8.37%;">20</span>
+          <span class="xl"><i>x</i> [m]</span><span class="yl"><i>y</i> [m]</span>
+        </div>
+        <img class="cbf" src="tcst2026_contents/exp_head_cbf_tc.png" alt="TC-CBF values over time: decreasing from 16 to a minimum near 1 and rising again, always positive">
+      </div>
+      <div class="ho-col">
+        <span class="ctl">MPC-EDCBF</span>
+        <div class="axes">
+          <video autoplay muted loop playsinline preload="auto" src="tcst2026_contents/headon_ed.mp4" aria-label="Heron with MPC-EDCBF avoiding an oncoming obstacle; snapshots every 4 s"></video>
+          <span class="xt" style="left:6.19%;">0</span><span class="xt" style="left:21.82%;">5</span><span class="xt" style="left:37.46%;">10</span><span class="xt" style="left:53.09%;">15</span><span class="xt" style="left:68.81%;">20</span><span class="xt" style="left:84.19%;">25</span><span class="xt" style="left:99.83%;">30</span>
+          <span class="yt" style="top:91.63%;">0</span><span class="yt" style="top:70.76%;">5</span><span class="yt" style="top:50.11%;">10</span><span class="yt" style="top:29.24%;">15</span><span class="yt" style="top:8.37%;">20</span>
+          <span class="xl"><i>x</i> [m]</span><span class="yl"><i>y</i> [m]</span>
+        </div>
+        <img class="cbf" src="tcst2026_contents/exp_head_cbf_ed.png" alt="ED-CBF values over time: decreasing from about 4 to a minimum near 0.3 and rising again, always positive">
+      </div>
+    </div>
+    <div class="ho-kpis reveal d3">
+      <div class="kpi"><div class="v"><s>42.2 →</s>38.8<small>s</small></div><div class="l"><b>Arrival time</b> \(t_a\)<span class="dn">8%↓</span></div></div>
+      <div class="kpi"><div class="v"><s>0.097 →</s>0.051</div><div class="l"><b>Speed error</b> \(e_{\mathrm{speed}}\)<span class="dn">47%↓</span></div></div>
+      <div class="kpi"><div class="v"><s>2.014 →</s>1.453</div><div class="l"><b>Cross-track error</b> \(e_{\mathrm{cte}}\)<span class="dn">28%↓</span></div></div>
+      <div class="ho-safe"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8 3.2 4.6v5c0 4.2 2.9 7.6 6.8 8.6 3.9-1 6.8-4.4 6.8-8.6v-5Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m6.6 10 2.4 2.4 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Both CBF values stay positive — collision-free in both runs</div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="source-caption">Heron ASV · red discs: oncoming obstacle over time · snapshots every 4 s · metrics: MPC-EDCBF → MPC-TCCBF</span><span>14</span></div>
+</section>
+
+<!-- ================= Slide 15 : experiment, overtaking (videos) ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment ③ · Overtaking a moving obstacle</div>
+    <h2>Overtaking: experiment and <span class="grad-blue-text">CBF landscape</span></h2>
+  </div>
+  <div class="ov-rows">
+    <div class="ov-row reveal d2">
+      <span class="ctl">MPC-EDCBF</span>
+      <div class="vframe strip"><video autoplay muted loop playsinline preload="auto" src="sail_contents/05_tccbf/exp_edcbf.mp4" aria-label="Heron overtaking a moving obstacle with MPC-EDCBF, 4x speed"></video></div>
+      <div class="vframe viz"><video autoplay muted loop playsinline preload="auto" src="tcst2026_contents/cbfviz_ed.mp4" aria-label="ED-CBF values over the plane, side and top views, during the overtaking run"></video></div>
+    </div>
+    <div class="ov-row reveal d3">
+      <span class="ctl tc">MPC-TCCBF <small>proposed</small></span>
+      <div class="vframe strip"><video autoplay muted loop playsinline preload="auto" src="sail_contents/05_tccbf/exp_tccbf.mp4" aria-label="Heron overtaking a moving obstacle with MPC-TCCBF, 4x speed"></video></div>
+      <div class="vframe viz"><video autoplay muted loop playsinline preload="auto" src="tcst2026_contents/cbfviz_tc.mp4" aria-label="TC-CBF values over the plane, side and top views, during the overtaking run"></video></div>
+    </div>
+  </div>
+  <div class="ov-cap reveal d4">
+    <span>Snapshots at 4-second intervals · red disc: moving obstacle · green: reference path · play speed ×4</span>
+    <span>CBF visualization · side view (left) and top view (right)</span>
+  </div>
+  <div class="slide-footer"><span>15</span></div>
+</section>
+
+<!-- ================= Slide 16 : experiment, overtaking (results) ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment ③ · Overtaking results</div>
+    <h2>MPC-TCCBF outperforms <span class="grad-blue-text">MPC-EDCBF</span></h2>
+  </div>
+  <div class="asset-frame or-fig reveal d2"><img src="tcst2026_contents/exp_over_fig.png" alt="Overtaking experiment: trajectories of MPC-TCCBF (arrives at 40 s) and MPC-EDCBF (arrives at 44 s) with the moving obstacle, plus speed, ED-CBF and TC-CBF values over time"></div>
+  <div class="or-kpis reveal d3">
+    <div class="kpi"><div class="v grad-blue-text">13%↓</div><div class="l"><b>Arrival time</b><br>46.8 → 40.7 s</div></div>
+    <div class="kpi"><div class="v grad-blue-text">53%↓</div><div class="l"><b>Speed tracking error</b><br>0.133 → 0.063</div></div>
+    <div class="kpi"><div class="v grad-blue-text">16%↓</div><div class="l"><b>Cross-track error</b><br>2.113 → 1.776</div></div>
+  </div>
+  <div class="slide-footer"><span>16</span></div>
+</section>
+
+<!-- ================= Slide 17 : experimental summary ================= -->
+<section class="slide light">
+  <div class="reveal d1">
+    <div class="eyebrow">Experiment · Summary on the Heron ASV</div>
+    <h2>Faster and more accurate <span class="grad-blue-text">in all scenarios</span></h2>
+  </div>
+  <div class="res-grid">
+    <div class="reveal d2">
+      <table class="apple compact res">
+        <thead><tr><th style="width:22%;">Scenario</th><th style="width:24%;text-align:left;">Controller</th><th>Arrival time<br>\(t_a\) [s]</th><th>Speed error<br>\(e_{\mathrm{speed}}\)</th><th>Cross-track error<br>\(e_{\mathrm{cte}}\)</th></tr></thead>
+        <tbody>
+          <tr class="ed"><td class="sc" rowspan="2">Static</td><td class="cn">MPC-EDCBF</td><td>45.4</td><td>0.124</td><td>1.765</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>41.0</td><td>0.040</td><td>1.623</td></tr>
+          <tr class="ed"><td class="sc" rowspan="2">Head-on</td><td class="cn">MPC-EDCBF</td><td>42.2</td><td>0.097</td><td>2.014</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>38.8</td><td>0.051</td><td>1.453</td></tr>
+          <tr class="ed"><td class="sc" rowspan="2">Overtaking</td><td class="cn">MPC-EDCBF</td><td>46.8</td><td>0.133</td><td>2.113</td></tr>
+          <tr class="tc"><td class="cn">MPC-TCCBF</td><td>40.7</td><td>0.063</td><td>1.776</td></tr>
+        </tbody>
+      </table>
+      <p class="metric-def">Short-horizon MPC (\(N=20,\ T_s=0.1\) s) on the Clearpath Heron · desired speed 0.9 m/s</p>
+    </div>
+    <div class="res-kpis reveal d3">
+      <div class="kpi"><div class="v grad-blue-text">10%↓</div><div class="l"><b>Arrival time</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">56%↓</div><div class="l"><b>Speed tracking error</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">17%↓</div><div class="l"><b>Cross-track error</b></div></div>
+      <p class="res-note">vs MPC-EDCBF · average over the 3 scenarios</p>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="source-caption"><a href="https://doi.org/10.1109/TCST.2026.3692226" target="_blank" rel="noopener">Lee, Park &amp; Kim, IEEE TCST, 2026</a> · <a href="https://arxiv.org/abs/2503.20280" target="_blank" rel="noopener">arXiv:2503.20280</a></span><span>17</span></div>
+</section>
+
+<!-- ================= Slide 18 : conclusion ================= -->
+<section class="slide white">
+  <div class="reveal d1">
+    <div class="eyebrow">Conclusion</div>
+    <h2>TC-CBF for <span class="grad-blue-text">efficient collision avoidance</span></h2>
+  </div>
+  <div class="concl">
+    <div class="card reveal d2" style="background:#f5f5f7;box-shadow:none;">
+      <div class="n grad-blue-text">01</div>
+      <h3>Turning circles in the CBF</h3>
+      <p>The CBF is defined by the clearance between the obstacle and the vehicle's <b>left and right turning circles</b>, so heading and limited turning capability enter the safety constraint.</p>
+    </div>
+    <div class="card reveal d3" style="background:#f5f5f7;box-shadow:none;">
+      <div class="n grad-blue-text">02</div>
+      <h3>Less conservative, still safe</h3>
+      <p>Only states from which neither turn avoids the obstacle are restricted — MPC-TCCBF <b>avoids unnecessary slowdowns and aggressive turns</b> with a short horizon.</p>
+    </div>
+    <div class="card reveal d4" style="background:#f5f5f7;box-shadow:none;">
+      <div class="n grad-blue-text">03</div>
+      <h3>Validated on a real ASV</h3>
+      <p>Unicycle simulations and Heron ASV experiments: vs MPC-EDCBF, <b>arrival time 10%↓, speed error 56%↓, cross-track error 17%↓</b> on average.</p>
+    </div>
+  </div>
+  <div class="next reveal d5">
+    <span class="k">FOLLOW-UP WORK</span>
+    <span class="it"><span class="venue">Mechatronics 2026</span>COLREGs-compliant avoidance with TC-CBF</span>
+    <i class="sep" aria-hidden="true"></i>
+    <span class="it"><span class="venue">ICCAS 2026</span>Multimodal trajectory planning with TC-CBF</span>
+  </div>
+  <div class="slide-footer"><span>18</span></div>
+</section>
+
+<!-- ================= Slide 19 : Thank you ================= -->
+<section class="slide white">
+  <div class="close-wrap">
+    <div class="close-brand reveal d1">
+      <img src="sail_contents/web/sail_logo.png" alt="SAIL logo">
+      <div class="wm"><b>SAIL</b><span>Safe Autonomy &amp; Intelligence Lab</span></div>
+      <i class="sep"></i>
+      <img src="sail_contents/web/knu-w.png" alt="Kongju National University" style="height:74px;">
+    </div>
+    <h1 class="reveal d2" style="font-size:88px;margin-top:40px;"><span class="grad-blue-text">Thank you</span></h1>
+    <p class="reveal d3" style="font-size:24px;color:var(--text-gray);margin-top:16px;">Questions &amp; discussion</p>
+    <div class="close-contact reveal d4">
+      <div><div class="k">EMAIL</div><div class="v"><a href="mailto:leeck@kongju.ac.kr">leeck@kongju.ac.kr</a></div><div class="s">Prof. Changyu Lee</div></div>
+      <div><div class="k">AFFILIATION</div><div class="v">Kongju National University</div><div class="s">Dept. of Mechanical &amp; Automotive Engineering</div></div>
+      <div><div class="k">PAPER</div><div class="v"><a href="https://doi.org/10.1109/TCST.2026.3692226" target="_blank" rel="noopener">IEEE TCST · 2026</a></div><div class="s"><a href="https://arxiv.org/abs/2503.20280" target="_blank" rel="noopener">arXiv:2503.20280</a></div></div>
+    </div>
+    <p class="close-co reveal d5">Joint work with Kiyong Park and Jinwhan Kim (KAIST)<a class="badge" href="https://sail-knu.github.io/Home/" target="_blank" rel="noopener"><span class="dot"></span>sail-knu.github.io/Home</a></p>
+  </div>
+  <div class="slide-footer"><span>19</span></div>
+</section>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<div id="progress"></div>
+<div id="counter">1 / 19</div>
+<div id="navBtns">
+  <button id="btnPrev" aria-label="Previous slide">‹</button>
+  <button id="btnNext" aria-label="Next slide">›</button>
+</div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let cur=0;
+  // portrait-phone scroll view (presentation_assets/deck-mobile.js): slides are laid out
+  // in a column there, so keyboard, swipe and hash navigation stand down
+  const feed=()=>document.documentElement.classList.contains('feed');
+
+  // start or stop one slide: entry animations and videos
+  function setActive(s,on){
+    s.classList.toggle('active',on);
+    s.querySelectorAll('video').forEach(v=>{
+      if(on){
+        v.currentTime=0;
+        const playPromise=v.play();
+        if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+      }else{
+        v.pause();
+      }
+    });
+  }
+  function goTo(i,push=true){
+    i=Math.max(0,Math.min(total-1,i));
+    if(i===cur&&slides[cur].classList.contains('active'))return;
+    slides.forEach((s,k)=>setActive(s,k===i));
+    cur=i;
+    document.getElementById('counter').textContent=(i+1)+' / '+total;
+    document.getElementById('progress').style.width=((i+1)/total*100)+'%';
+    if(push)location.hash='#'+(i+1);
+  }
+  function next(){goTo(cur+1);}
+  function prev(){goTo(cur-1);}
+
+  document.addEventListener('keydown',e=>{
+    if(feed())return;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){goTo(0);}
+    else if(e.key==='End'){goTo(total-1);}
+    else if(e.key==='f'||e.key==='F'){
+      if(document.fullscreenElement)document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+  document.getElementById('btnNext').addEventListener('click',next);
+  document.getElementById('btnPrev').addEventListener('click',prev);
+
+  // touch swipe (one finger, mostly horizontal, not while pinch-zoomed)
+  let tx=null,ty=0;
+  document.addEventListener('touchstart',e=>{
+    tx=e.touches.length===1?e.touches[0].clientX:null;
+    ty=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(tx===null||feed()||(window.visualViewport&&visualViewport.scale>1.05))return;
+    const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dy)>Math.abs(dx))return;
+    if(dx<-50)next();else if(dx>50)prev();
+  },{passive:true});
+
+  // scale stage to fit
+  const stage=document.getElementById('stage');
+  function fit(){
+    const s=Math.min(innerWidth/1280,innerHeight/720);
+    stage.style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();
+
+  window.deck={slides,goTo,setActive,fit,get cur(){return cur;}};
+
+  // init from hash
+  const h=parseInt((location.hash||'').replace('#',''),10);
+  goTo(isNaN(h)?0:h-1,false);
+  addEventListener('hashchange',()=>{
+    const n=parseInt(location.hash.replace('#',''),10);
+    if(!isNaN(n)&&!feed())goTo(n-1,false);
+  });
+})();
+</script>
+<script>
+// .replay elements and .bg-scene: click restarts the slide's CSS animations (except the entry 'rise')
+document.querySelectorAll('.replay,.bg-scene').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const sec=el.closest('.slide');
+    if(!sec||!sec.getAnimations)return;
+    sec.getAnimations({subtree:true}).forEach(a=>{
+      if(a.animationName&&a.animationName!=='rise'){a.cancel();a.play();}
+    });
+  });
+});
+</script>
+</body>
+</html>

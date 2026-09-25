@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Efficient COLREGs-Compliant Collision Avoidance Using Turning Circle-Based Control Barrier Function — IFAC World Congress 2026</title>
+<link rel="stylesheet" href="presentation_assets/katex/katex.min.css">
+<script defer src="presentation_assets/katex/katex.min.js"></script>
+<script defer src="presentation_assets/katex/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{
+    delimiters:[
+      {left:'\\[',right:'\\]',display:true},
+      {left:'\\(',right:'\\)',display:false}
+    ],
+    throwOnError:false,
+    strict:'ignore'
+  });
+});
+</script>
+<style>
+/* ============ Apple-style design system (same tokens as ksoe2026.html) ============ */
+:root{
+  --bg-light:#f5f5f7;
+  --bg-white:#ffffff;
+  --text-dark:#1d1d1f;
+  --text-gray:#6e6e73;
+  --text-light:#f5f5f7;
+  --text-lightgray:#a1a1a6;
+  --blue:#0071e3;
+  --blue-bright:#2997ff;
+  --green:#30d158;
+  --red:#ff453a;
+  --purple:#bf5af2;
+  --rtc:#0071e3;   /* right turning circle */
+  --ltc:#8a3fc0;   /* left turning circle */
+  --card-radius:24px;
+  --grad-hero:linear-gradient(96deg,#2997ff 0%,#7b6cff 45%,#bf5af2 75%,#ff6482 100%);
+  --grad-blue:linear-gradient(96deg,#0a84ff,#64d2ff);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:#000;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro KR","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic","Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+/* ============ Stage & slides ============ */
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
+#stage{position:relative;width:1280px;height:720px;flex:none;transform-origin:center center;}
+.slide{
+  position:absolute;inset:0;width:1280px;height:720px;
+  padding:72px 90px;
+  opacity:0;visibility:hidden;
+  transition:opacity .55s cubic-bezier(.32,.08,.24,1),visibility .55s;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.slide.active{opacity:1;visibility:visible;z-index:2;}
+.slide.light{background:var(--bg-light);color:var(--text-dark);}
+.slide.white{background:var(--bg-white);color:var(--text-dark);}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(26px);}
+.slide.active .reveal{animation:rise .8s cubic-bezier(.22,.61,.21,1) forwards;}
+.slide.active .d1{animation-delay:.05s;}
+.slide.active .d2{animation-delay:.18s;}
+.slide.active .d3{animation-delay:.31s;}
+.slide.active .d4{animation-delay:.44s;}
+.slide.active .d5{animation-delay:.57s;}
+.slide.active .d6{animation-delay:.70s;}
+@keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+/* ============ Typography ============ */
+.eyebrow{font-size:17px;font-weight:600;letter-spacing:.02em;color:var(--blue);margin-bottom:14px;}
+h1{font-size:64px;font-weight:700;letter-spacing:-.02em;line-height:1.08;}
+h2{font-size:46px;font-weight:700;letter-spacing:-.018em;line-height:1.12;margin-bottom:10px;white-space:nowrap;}
+h3{font-size:23px;font-weight:700;letter-spacing:-.01em;}
+.grad-blue-text{background:var(--grad-blue);-webkit-background-clip:text;background-clip:text;color:transparent;}
+p,li{font-size:19px;line-height:1.55;}
+.small{font-size:15px;color:var(--text-gray);}
+b{font-weight:700;}
+sup{font-size:.6em;line-height:0;position:relative;top:-.55em;vertical-align:baseline;}
+
+/* ============ Components ============ */
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:980px;
+  font-size:15px;font-weight:600;letter-spacing:.01em;
+  background:rgba(0,0,0,.05);color:var(--text-dark);border:1px solid rgba(0,0,0,.08);
+}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--blue-bright);}
+.card{background:#fff;border-radius:var(--card-radius);padding:26px 28px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.card h3{margin-bottom:10px;}
+.eq{font-size:24px;padding:18px 26px;border-radius:16px;background:rgba(0,113,227,.06);color:var(--text-dark);display:inline-block;}
+.math-eq .katex-display{margin:0;text-align:left;}
+.math-eq .katex-display>.katex{text-align:left;}
+.asset-frame{background:#fff;border-radius:20px;padding:10px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.asset-frame img{width:100%;height:100%;object-fit:contain;display:block;}
+.source-caption{font-size:12.5px;color:var(--text-gray);line-height:1.35;}
+.source-caption a{color:var(--blue);text-decoration:none;}
+.pill-row{display:flex;gap:10px;flex-wrap:wrap;}
+.pill{padding:7px 16px;border-radius:980px;font-size:15px;font-weight:600;background:rgba(0,113,227,.09);color:var(--blue);}
+.venue{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:980px;
+  background:rgba(0,113,227,.09);color:var(--blue);font-size:13.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;
+}
+.venue.gray{background:rgba(0,0,0,.05);color:var(--text-gray);}
+.venue.green{background:rgba(48,209,88,.13);color:#1fa94a;}
+/* turning-circle tags: RTC = starboard (blue), LTC = port (purple) */
+.ctag{display:inline-flex;align-items:center;padding:3px 11px;border-radius:980px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:.01em;}
+.ctag.rtc{background:var(--rtc);}
+.ctag.ltc{background:var(--ltc);}
+
+/* numbered heads (ksoe) */
+.problem-head{display:flex;align-items:center;gap:12px;}
+.problem-head .n{
+  width:32px;height:32px;border-radius:50%;background:var(--grad-blue);flex:none;
+  color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;
+}
+.problem-head h3{font-size:24px;}
+
+/* existing method → limit → objective (ksoe slide 3) */
+.approach-limit{
+  --limit-accent:#0071e3;
+  position:relative;margin-top:10px;padding:11px 4px 0;border-top:1px solid #dcdce1;
+}
+.approach-limit::before{content:"";position:absolute;top:-1px;left:0;width:36px;height:2px;background:var(--limit-accent);}
+.approach-limit-heading{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.approach-limit-label{font-size:12.5px;font-weight:700;color:var(--limit-accent);flex-shrink:0;}
+.approach-limit h3{font-size:20px;line-height:1.25;letter-spacing:-.02em;}
+.approach-limit p{font-size:15px;line-height:1.45;color:var(--text-gray);margin:0;}
+.gap-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;flex:1;min-height:0;margin-top:8px;}
+.gap-col{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.gap-col .problem-head{margin-bottom:10px;}
+.gap-card{flex:1;min-height:0;margin:0;padding:12px 18px 10px;display:flex;flex-direction:column;}
+.gap-card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.gap-card-head h3{font-size:18px;letter-spacing:-.01em;}
+.gap-tag{flex:none;padding:3px 10px;border-radius:980px;background:rgba(0,0,0,.05);font-size:12.5px;font-weight:700;color:var(--text-gray);}
+.gap-fig{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
+.gap-col .approach-limit{--limit-accent:#d70015;}
+.proposal-band{
+  position:relative;margin-top:24px;border-radius:20px;
+  background:linear-gradient(96deg,rgba(10,132,255,.08),rgba(100,210,255,.12));
+  border:1px solid rgba(10,132,255,.22);
+}
+.proposal-item{--limit-accent:#0071e3;position:relative;padding:18px 26px 15px;text-align:center;}
+.proposal-item .approach-limit-heading{justify-content:center;}
+.proposal-item h3{font-size:21px;line-height:1.3;letter-spacing:-.02em;}
+.proposal-arrow{
+  position:absolute;top:-15px;transform:translateX(-50%);
+  width:30px;height:30px;border-radius:50%;background:var(--grad-blue);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(10,132,255,.3);
+}
+
+/* table */
+table.apple{
+  width:100%;border-collapse:separate;border-spacing:0;
+  background:#fff;border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,0,0,.05);font-size:17px;
+}
+table.apple th{
+  background:#fafafa;font-weight:600;color:var(--text-gray);
+  padding:12px 16px;text-align:center;font-size:14.5px;border-bottom:1px solid #e8e8ed;
+}
+table.apple td{padding:12px 16px;text-align:center;border-bottom:1px solid #f0f0f2;color:var(--text-dark);font-variant-numeric:tabular-nums;}
+table.apple tr:last-child td{border-bottom:none;}
+table.apple td:first-child,table.apple th:first-child{text-align:left;padding-left:24px;}
+table.apple.compact th{padding-top:9px;padding-bottom:9px;}
+table.apple.compact td{padding-top:8px;padding-bottom:8px;}
+
+/* list style */
+ul.clean{list-style:none;margin-top:18px;}
+ul.clean li{position:relative;padding-left:32px;margin-bottom:14px;font-size:18px;line-height:1.5;color:var(--text-dark);}
+ul.clean li::before{content:"";position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:50%;background:var(--blue);}
+ul.clean li .sub{display:block;font-size:15px;color:var(--text-gray);margin-top:3px;}
+ul.check li::before{content:"✓";background:none;color:var(--green);font-weight:800;font-size:18px;top:0;width:auto;height:auto;border-radius:0;}
+
+/* video / media frame with label (sail-research) */
+.vframe{position:relative;background:#fff;border-radius:16px;padding:6px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;}
+.vframe video,.vframe>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;background:#fff;}
+.vframe .tag{
+  position:absolute;top:12px;left:12px;z-index:2;padding:4px 10px;border-radius:980px;
+  background:rgba(0,0,0,.72);color:#fff;font-size:13px;font-weight:700;
+}
+.vframe .tag.blue{background:rgba(0,113,227,.92);}
+img.anim-clip{cursor:pointer;}
+
+/* KPI tiles (sail-research) */
+.kpi{background:#fff;border-radius:20px;padding:16px 20px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.white .kpi{background:#f5f5f7;box-shadow:none;}
+.kpi .v{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1.05;}
+.kpi .v small{font-size:20px;font-weight:600;margin-left:2px;}
+.kpi .l{font-size:14px;line-height:1.4;color:var(--text-gray);margin-top:5px;}
+.kpi .l b{color:var(--text-dark);}
+
+/* block diagrams: absolute boxes over an SVG wire layer (sail-research framework figure) */
+.bd{position:relative;flex:none;}
+.bd>svg{position:absolute;left:0;top:0;overflow:visible;}
+.bd-box{
+  position:absolute;border:2px solid #8e8e93;border-radius:16px;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+.bd-box b{font-size:18px;letter-spacing:-.01em;line-height:1.25;}
+.bd-box .m{font-size:14.5px;color:var(--text-gray);margin-top:2px;}
+.bd-box.hl{border-color:#0a84ff;background:#eef5ff;box-shadow:0 6px 18px rgba(10,132,255,.14);}
+.bd-box.qp{justify-content:flex-start;padding-top:11px;}
+.bd-box.qp b{font-size:17px;}
+.bd-eq{font-size:15.5px;margin-top:2px;}
+.bd-eq .katex-display{margin:4px 0 0;}
+.bd-lab{position:absolute;font-size:18px;color:var(--text-dark);white-space:nowrap;}
+.bd-lab.sel{font-size:14.5px;font-weight:600;color:#0066cc;}
+
+/* footer of slide */
+.slide-footer{
+  position:absolute;bottom:34px;left:90px;right:90px;
+  display:flex;justify-content:flex-end;align-items:center;gap:20px;
+  font-size:13.5px;color:#aeaeb2;font-weight:500;letter-spacing:.01em;
+}
+.slide-footer .source-caption{margin-right:auto;}
+
+/* ============ Animated figures (click to replay, as in ksoe2026.html) ============ */
+.bg-scene{background:#fff;border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.05);overflow:hidden;cursor:pointer;}
+.bg-scene svg{display:block;width:100%;height:auto;}
+.bg-scene text{font-family:inherit;}
+.bg-scene .mi{font-family:KaTeX_Math,"Times New Roman",serif;font-style:italic;}
+.bg-scene .mr{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;}
+.bg-scene .mb{font-family:KaTeX_Main,"Times New Roman",serif;font-style:normal;font-weight:700;}
+.bg-scene .fade{opacity:0;}
+.bg-scene .pop{transform-box:fill-box;transform-origin:center;}
+.bg-scene .draw{stroke-dasharray:1 1.1;stroke-dashoffset:1;}
+.slide.active .bg-scene .fade{animation:bgIn .5s ease var(--in) both;}
+.slide.active .bg-scene .pop{animation:bgPop .35s cubic-bezier(.3,1.6,.5,1) var(--t) both;}
+.slide.active .bg-scene .draw{animation:bgDraw var(--dur,.5s) var(--ease,ease-in-out) var(--t) both;}
+@keyframes bgIn{from{opacity:0;}to{opacity:1;}}
+@keyframes bgPop{from{opacity:0;transform:scale(.2);}}
+@keyframes bgDraw{to{stroke-dashoffset:0;}}
+@media (prefers-reduced-motion:reduce){.slide.active .bg-scene *{animation-duration:.01s!important;animation-delay:0s!important;}}
+
+/* ============ 01 · title ============ */
+.s01 .t-logos{display:flex;align-items:center;gap:26px;}
+.s01 .t-logos img{display:block;width:auto;}
+.s01 .t-logos .ifac{height:66px;}
+.s01 .t-logos .knu{height:62px;margin-left:auto;}
+.s01 .t-logos .kaist{height:44px;}
+.s01 .t-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:14px;}
+.s01 .t-badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px;}
+.s01 .t-badges .badge{padding:8px 16px;font-size:14.5px;}
+.s01 h1{font-size:54px;line-height:1.12;letter-spacing:-.024em;}
+.s01 .t-authors{margin-top:38px;padding-left:18px;border-left:2px solid rgba(0,113,227,.6);}
+.s01 .t-authors .nm{font-size:28px;line-height:1.3;letter-spacing:-.01em;}
+.s01 .t-authors .af{font-size:17px;line-height:1.5;color:var(--text-gray);}
+.s01 .t-authors .af:first-of-type{margin-top:10px;}
+
+/* ============ 02 · background ============ */
+.s02 .bg2{display:grid;grid-template-columns:400px minmax(0,1fr);gap:36px;flex:1;min-height:0;margin-top:8px;align-items:center;}
+.s02 .pts{display:flex;flex-direction:column;gap:24px;}
+.s02 .problem-head{align-items:flex-start;}
+.s02 .problem-head h3{font-size:21px;line-height:1.3;padding-top:2px;}
+.s02 .pts p{font-size:16px;line-height:1.5;color:var(--text-gray);margin:6px 0 0 44px;}
+.s02 .pts .q{display:inline-block;margin:10px 0 0 44px;padding:4px 13px;border-radius:980px;background:rgba(255,69,58,.1);color:#d70015;font-size:15.5px;font-weight:700;}
+.s02 .goal{margin-left:44px;padding:13px 16px;border-radius:16px;background:rgba(0,113,227,.07);font-size:16px;line-height:1.45;}
+.s02 .man-card{background:#fff;border-radius:22px;box-shadow:0 2px 14px rgba(0,0,0,.06);padding:16px 22px 14px;}
+.s02 .man-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.s02 .man-head h3{font-size:18px;}
+.s02 .man-key{margin-left:auto;display:flex;gap:14px;font-size:13.5px;font-weight:600;color:var(--text-gray);}
+.s02 .man-key i{display:inline-block;width:13px;height:13px;border-radius:3px;border:1.5px solid #1d1d1f;vertical-align:-2px;margin-right:6px;}
+.s02 .man{width:520px;margin:0 auto;}
+.s02 .man img{display:block;width:100%;height:auto;}
+.s02 .man-lbl{position:relative;height:92px;margin-top:10px;}
+.s02 .man-lbl>div{position:absolute;top:0;width:172px;transform:translateX(-50%);text-align:center;}
+.s02 .man-lbl b{font-size:17px;letter-spacing:-.01em;}
+.s02 .man-lbl .rule{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:980px;background:rgba(0,113,227,.09);color:var(--blue);font-size:12px;font-weight:700;vertical-align:2px;}
+.s02 .man-lbl p{font-size:13.5px;line-height:1.38;color:var(--text-gray);margin-top:4px;}
+
+/* ============ 03 · related work ============ */
+.s03 .gap-fig img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;}
+.s03 .gap-card{padding:12px 16px 8px;}
+.s03 .gap-col .approach-limit h3{font-size:19.5px;}
+.s03 .proposal-band{margin-top:26px;}
+.s03 .proposal-item{padding:16px 24px 14px;}
+.s03 .proposal-item h3{font-size:20px;}
+
+/* ============ 04 · CBF ============ */
+.s04 .cbf-grid{display:grid;grid-template-columns:470px minmax(0,1fr);gap:18px 36px;flex:1;min-height:0;margin-top:6px;}
+.s04 .sec{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.s04 .sec h3{font-size:19px;}
+.s04 .def-row{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+.s04 .def-row .k{flex:none;width:150px;font-size:14.5px;font-weight:700;color:var(--text-gray);}
+.s04 .def-row .v{font-size:19px;}
+.s04 .def-row .eq{font-size:19px;padding:9px 16px;}
+.s04 .def p{font-size:14.5px;line-height:1.45;color:var(--text-gray);margin-top:4px;}
+.s04 .plot{position:relative;}
+.s04 .plot .lab{position:absolute;white-space:nowrap;font-size:16px;line-height:1;pointer-events:none;}
+.s04 .ed-fig{padding:8px 14px;}
+.s04 .ed-fig img{height:auto;}
+.s04 .ap-cap{font-size:14.5px;line-height:1.45;color:var(--text-gray);margin-top:8px;}
+.s04 .ap-cap b{color:var(--text-dark);}
+/* worst-case approach at the limit  -hdot = gamma h:  h(tau) = h0 e^{-3 tau}, 10 linear segments */
+.ap .ap-ship,.ap .ap-tick,.ap .ap-line,.ap .ap-head,.ap .ap-gap,.ap .ap-hl{transform-box:view-box;}
+.ap .ap-line{transform-origin:104px 84px;}
+.ap .ap-gap{transform-origin:424px 128px;}
+.slide.active .ap .ap-ship,.slide.active .ap .ap-tick{animation:apMove 4s linear .9s both;}
+.slide.active .ap .ap-line{animation:apLine 4s linear .9s both;}
+.slide.active .ap .ap-head{animation:apHead 4s linear .9s both;}
+.slide.active .ap .ap-gap{animation:apGap 4s linear .9s both;}
+.slide.active .ap .ap-hl{animation:apHalf 4s linear .9s both;}
+@keyframes apMove{0%{transform:translateX(0)}10%{transform:translateX(82.9px)}20%{transform:translateX(144.4px)}30%{transform:translateX(189.9px)}40%{transform:translateX(223.6px)}50%{transform:translateX(248.6px)}60%{transform:translateX(267.1px)}70%{transform:translateX(280.8px)}80%{transform:translateX(291px)}90%{transform:translateX(298.5px)}100%{transform:translateX(304.1px)}}
+@keyframes apLine{0%{transform:translateX(0) scaleX(1)}10%{transform:translateX(82.9px) scaleX(.741)}20%{transform:translateX(144.4px) scaleX(.549)}30%{transform:translateX(189.9px) scaleX(.407)}40%{transform:translateX(223.6px) scaleX(.301)}50%{transform:translateX(248.6px) scaleX(.223)}60%{transform:translateX(267.1px) scaleX(.165)}70%{transform:translateX(280.8px) scaleX(.122)}80%{transform:translateX(291px) scaleX(.091)}90%{transform:translateX(298.5px) scaleX(.067)}100%{transform:translateX(304.1px) scaleX(.05)}}
+@keyframes apHead{0%{transform:translateX(0)}10%{transform:translateX(51.8px)}20%{transform:translateX(90.3px)}30%{transform:translateX(118.7px)}40%{transform:translateX(139.7px)}50%{transform:translateX(155.4px)}60%{transform:translateX(166.9px)}70%{transform:translateX(175.5px)}80%{transform:translateX(181.9px)}90%{transform:translateX(186.6px)}100%{transform:translateX(190.1px)}}
+@keyframes apGap{0%{transform:scaleX(1)}10%{transform:scaleX(.741)}20%{transform:scaleX(.549)}30%{transform:scaleX(.407)}40%{transform:scaleX(.301)}50%{transform:scaleX(.223)}60%{transform:scaleX(.165)}70%{transform:scaleX(.122)}80%{transform:scaleX(.091)}90%{transform:scaleX(.067)}100%{transform:scaleX(.05)}}
+@keyframes apHalf{0%{transform:translateX(0)}10%{transform:translateX(41.5px)}20%{transform:translateX(72.2px)}30%{transform:translateX(95px)}40%{transform:translateX(111.8px)}50%{transform:translateX(124.3px)}60%{transform:translateX(133.6px)}70%{transform:translateX(140.4px)}80%{transform:translateX(145.5px)}90%{transform:translateX(149.3px)}100%{transform:translateX(152.1px)}}
+
+/* ============ 05 · CBF-QP safety filter + challenges ============ */
+.s05 .qpd{width:1100px;height:150px;margin-top:14px;}
+.s05 .qp-props{display:flex;gap:10px;justify-content:center;margin-top:14px;}
+.s05 .ch-grid{display:grid;grid-template-columns:minmax(0,1fr) 292px;gap:26px;flex:1;min-height:0;margin-top:20px;}
+.s05 .ch-head{display:flex;align-items:baseline;gap:12px;}
+.s05 .ch-lbl{flex:none;font-size:13px;font-weight:700;color:#d70015;letter-spacing:.02em;}
+.s05 .ch-head h3{font-size:21px;line-height:1.3;letter-spacing:-.015em;}
+.s05 .ch-items{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+.s05 .ch-item{display:flex;align-items:flex-start;gap:14px;background:#fff;border-radius:18px;padding:14px 18px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.s05 .ch-item .n{
+  flex:none;width:30px;height:30px;border-radius:50%;background:rgba(215,0,21,.1);color:#d70015;
+  font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:1px;
+}
+.s05 .ch-item b{display:block;font-size:18px;line-height:1.35;letter-spacing:-.01em;}
+.s05 .ch-item p{font-size:15px;line-height:1.45;color:var(--text-gray);margin-top:2px;}
+.s05 .dom{display:flex;flex-direction:column;min-height:0;}
+.s05 .dom .asset-frame{flex:1;min-height:0;padding:10px 14px;}
+.s05 .dom figcaption{font-size:13px;line-height:1.4;color:var(--text-gray);text-align:center;margin-top:7px;}
+
+/* ============ 06 · TC-CBF ============ */
+.s06 .tc-grid{display:grid;grid-template-columns:minmax(0,1fr) 452px;gap:34px;flex:1;min-height:0;align-items:center;}
+.s06 .tc-intro{font-size:17px;line-height:1.55;color:var(--text-gray);margin-bottom:14px;}
+.s06 .tc-intro b{color:var(--text-dark);}
+.s06 .tc-eqs{display:flex;flex-direction:column;gap:9px;}
+.s06 .tc-eqs .eq{position:relative;display:block;font-size:17px;padding:10px 18px 10px;background:#f5f5f7;}
+.s06 .tc-eqs .eq p{font-size:14px;line-height:1.4;color:var(--text-gray);margin-top:3px;}
+.s06 .tc-eqs .eq .ctag{position:absolute;top:50%;right:14px;transform:translateY(-50%);}
+.s06 .tc-checks{margin-top:14px;}
+.s06 .tc-checks li{font-size:16px;margin-bottom:6px;}
+.s06 .tc-scene svg{height:462px;width:auto;margin:0 auto;}
+
+/* ============ 07 · constraint visualization ============ */
+.s07 .viz-key{display:flex;gap:34px;justify-content:center;align-items:center;margin-top:6px;font-size:17px;font-weight:600;}
+.s07 .viz-key span{display:inline-flex;align-items:center;gap:10px;}
+.s07 .viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:14px;}
+.s07 .viz-card{background:#fff;border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.05);padding:14px 16px 12px;}
+.s07 .viz-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.s07 .viz-head h3{font-size:18px;}
+.s07 .viz-card img{display:block;width:100%;height:auto;}
+.s07 .viz-card p{font-size:14.5px;line-height:1.45;color:var(--text-gray);margin-top:2px;padding:0 4px;}
+.s07 .viz-band{margin-top:18px;padding:14px 22px;border-radius:18px;text-align:center;
+  background:linear-gradient(96deg,rgba(10,132,255,.08),rgba(100,210,255,.12));border:1px solid rgba(10,132,255,.22);}
+.s07 .viz-band p{font-size:18px;line-height:1.45;}
+
+/* ============ 08 · framework ============ */
+.s08 .fw{width:1100px;height:236px;margin-top:8px;}
+.s08 .dm-card{flex:1;min-height:0;margin-top:14px;background:#f5f5f7;border-radius:20px;padding:12px 20px 12px;display:flex;flex-direction:column;}
+.s08 .dm-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.s08 .dm-head h3{font-size:18.5px;}
+.s08 .dm-body{flex:1;min-height:0;display:flex;align-items:center;gap:18px;}
+.s08 .dm-body img{display:block;width:auto;flex:none;border-radius:8px;background:#fff;}
+.s08 .dm-geo{height:132px;padding:6px 8px;}
+.s08 .dm-maps{height:148px;padding:4px;}
+.s08 .dm-txt{min-width:0;}
+.s08 .dm-legend{display:grid;grid-template-columns:auto auto;gap:4px 14px;margin-bottom:8px;}
+.s08 .dm-legend span{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;white-space:nowrap;}
+.s08 .dm-legend i{width:13px;height:13px;border-radius:4px;flex:none;}
+.s08 .dm-txt p{font-size:14.5px;line-height:1.45;color:var(--text-gray);}
+.s08 .dm-txt p b{color:var(--text-dark);}
+.s08 .dm-txt p.ex{margin-top:4px;font-weight:600;color:var(--text-dark);}
+
+/* ============ 09 · parameter tuning ============ */
+.s09 .tune-grid{display:grid;grid-template-columns:358px 358px minmax(0,1fr);gap:20px;flex:1;min-height:0;margin-top:6px;align-items:center;}
+.s09 .tune-card{background:#fff;border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.05);padding:12px 14px 10px;}
+.s09 .tune-card h3{font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px;}
+.s09 .tune-card h3 .gap-tag{font-size:13px;}
+.s09 .tune-card img{display:block;width:100%;height:auto;margin-top:6px;}
+.s09 .scn .gap-tag{display:inline-block;margin-bottom:8px;}
+.s09 .scn h3{font-size:21px;line-height:1.3;}
+.s09 .scn p{font-size:15.5px;line-height:1.5;color:var(--text-gray);margin-top:6px;}
+.s09 .ins{margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+.s09 .ins>div{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:12px 16px;box-shadow:0 2px 14px rgba(0,0,0,.05);}
+.s09 .ins .k{flex:none;min-width:58px;text-align:center;padding:5px 10px;border-radius:12px;background:rgba(0,113,227,.09);color:var(--blue);font-size:19px;font-weight:700;}
+.s09 .ins p{font-size:16px;line-height:1.4;}
+
+/* ============ 10–11 · multi-ship encounters ============ */
+.rs-row{display:flex;gap:12px;height:298px;margin-top:10px;flex:none;}
+.rs-row .vframe{flex:none;height:100%;}
+.rs-row .vframe.plot{padding:34px 8px 8px;}
+.rs-row .vframe.plot .tag{top:8px;left:10px;}
+.rs-row .kpis{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;}
+.rs-row .kpis .kpi{flex:1;display:flex;flex-direction:column;justify-content:center;padding:12px 18px;}
+.rs-row .kpis .kpi .v{font-size:40px;}
+table.rs-tbl{margin-top:14px;flex:none;}
+table.rs-tbl td.m{font-weight:600;white-space:nowrap;}
+table.rs-tbl tr.prop td{background:rgba(0,113,227,.05);}
+table.rs-tbl tr.prop td.m{color:var(--blue);}
+.rs-note{font-size:13.5px;line-height:1.4;color:var(--text-gray);margin-top:8px;}
+
+/* ============ 12 · complex traffic ============ */
+.s12 .cx-grid{display:grid;grid-template-columns:384px 384px minmax(0,1fr);gap:18px;flex:1;min-height:0;margin-top:10px;align-items:center;}
+.s12 .cx-grid .vframe{aspect-ratio:1/1;}
+.s12 table.cx-tbl{font-size:16px;}
+.s12 table.cx-tbl td:first-child,.s12 table.cx-tbl th:first-child{padding-left:18px;}
+.s12 table.cx-tbl th{font-size:13.5px;line-height:1.3;padding-left:10px;padding-right:10px;}
+.s12 table.cx-tbl td{padding-left:10px;padding-right:10px;}
+.s12 table.cx-tbl tr.hl td{background:rgba(0,113,227,.05);font-weight:700;}
+.s12 .cx-side ul.clean{margin-top:18px;}
+.s12 .cx-side ul.clean li{font-size:16px;margin-bottom:10px;}
+
+/* ============ 13 · conclusion ============ */
+.s13 .cc-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding-bottom:20px;}
+.s13 .cc{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.s13 .card h3{font-size:21px;line-height:1.3;}
+.s13 .card ul.clean{margin-top:12px;}
+.s13 .card ul.clean li{font-size:17px;margin-bottom:12px;}
+.s13 .card ul.clean li:last-child{margin-bottom:0;}
+.s13 .cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:22px;}
+.s13 .cc-stats .kpi{padding:18px 26px;}
+.s13 .cc-stats .v{font-size:46px;}
+.s13 .cc-stats .v small{font-size:21px;}
+.s13 .cc-stats .l{font-size:15px;}
+
+/* ============ 14 · thank you ============ */
+.s14 .ty-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;}
+.s14 .ty-head h1{font-size:82px;line-height:1;letter-spacing:-.03em;padding-bottom:4px;}
+.s14 .ty-sub{font-size:22px;color:var(--text-gray);margin-top:10px;}
+.s14 .ty-contact{display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding-bottom:6px;}
+.s14 .ty-lbl{font-size:15px;font-weight:700;color:var(--blue);letter-spacing:.01em;margin-top:28px;}
+.s14 .papers{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px;}
+.s14 .paper{background:#f5f5f7;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;}
+.s14 .paper .media{height:196px;background:#fff;display:flex;align-items:center;justify-content:center;padding:8px;border:1px solid #ececf0;border-bottom:none;border-radius:20px 20px 0 0;}
+.s14 .paper .media img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;}
+.s14 .paper .pb{padding:12px 18px 14px;}
+.s14 .paper .pv{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13.5px;font-weight:600;}
+.s14 .paper .pv a{color:var(--blue);text-decoration:none;}
+.s14 .paper h3{font-size:17px;line-height:1.35;letter-spacing:-.01em;}
+.s14 .paper p{font-size:14.5px;color:var(--text-gray);margin-top:4px;}
+.s14 .paper p b{color:var(--text-dark);}
+.s14 .this-talk{display:flex;align-items:baseline;gap:10px;margin-top:14px;font-size:14px;line-height:1.45;color:var(--text-gray);}
+.s14 .this-talk .venue{flex:none;}
+.s14 .this-talk b{color:var(--text-dark);}
+.s14 .this-talk a{color:var(--blue);text-decoration:none;}
+
+/* ============ UI chrome ============ */
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--grad-hero);z-index:100;transition:width .4s cubic-bezier(.22,.61,.21,1);}
+#counter{
+  position:fixed;bottom:20px;right:26px;z-index:100;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.55);
+  background:rgba(20,20,22,.6);padding:6px 14px;border-radius:980px;
+  backdrop-filter:blur(10px);font-variant-numeric:tabular-nums;
+}
+#navBtns{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:10px;opacity:0;transition:opacity .3s;}
+body:hover #navBtns{opacity:1;}
+#navBtns button{
+  width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(20,20,22,.65);color:#fff;font-size:18px;
+  backdrop-filter:blur(10px);transition:background .2s;
+}
+#navBtns button:hover{background:rgba(60,60,64,.85);}
+/* speaker notes from the original .pptx: press N to show them for the current slide */
+.notes{display:none;}
+#notesPanel{
+  display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:101;
+  width:min(980px,calc(100vw - 32px));max-height:36vh;overflow:auto;
+  padding:14px 22px 6px;border-radius:16px;background:rgba(20,20,22,.9);color:#f5f5f7;
+  backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+#notesPanel .nh{font-size:12.5px;font-weight:700;color:var(--blue-bright);margin-bottom:6px;}
+#notesPanel p{font-size:16px;line-height:1.6;margin-bottom:8px;}
+body.notes-on #notesPanel{display:block;}
+html.feed #notesPanel{display:none!important;}
+</style>
+<link rel="stylesheet" href="presentation_assets/deck-mobile.css">
+<script src="presentation_assets/deck-mobile.js"></script>
+</head>
+<body>
+
+<div id="viewport">
+<div id="stage">
+
+<!-- ================= Slide 1 : Title ================= -->
+<section class="slide white s01">
+  <div class="t-logos reveal d1">
+    <img class="ifac" src="ifac_contents/ifac2026_logo.png" alt="IFAC 2026 Busan">
+    <img class="knu" src="ifac_contents/knu_seal.png" alt="Kongju National University">
+    <img class="kaist" src="sail_contents/web/kaist.png" alt="KAIST">
+  </div>
+  <div class="t-body">
+    <div class="t-badges reveal d2">
+      <span class="badge"><span class="dot"></span>IFAC World Congress 2026 · Busan</span>
+      <span class="badge">MoC32 · JO-MECH: High-Performance Motion Control Systems</span>
+      <span class="badge">15:30 – 15:50 · Paper MoC32.1</span>
+    </div>
+    <h1 class="reveal d3">Efficient COLREGs-Compliant Collision<br>Avoidance Using <span style="color:var(--blue);">Turning Circle-Based<br>Control Barrier Function</span></h1>
+    <div class="t-authors reveal d4">
+      <div class="nm"><b>Changyu Lee<sup>1</sup></b>, Jinwook Park<sup>2</sup>, Jinwhan Kim<sup>2</sup></div>
+      <div class="af"><sup>1</sup> Kongju National University, Department of Mechanical &amp; Automotive Engineering</div>
+      <div class="af"><sup>2</sup> KAIST, Department of Mechanical Engineering</div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>IFAC World Congress 2026</span></div>
+</section>
+
+<!-- ================= Slide 2 : Research background ================= -->
+<section class="slide white s02">
+  <div class="reveal d1">
+    <div class="eyebrow">Introduction · Research background</div>
+    <h2>ASVs must avoid collisions <span class="grad-blue-text">the right way</span></h2>
+  </div>
+  <div class="bg2">
+    <div class="pts">
+      <div class="reveal d2">
+        <div class="problem-head"><span class="n">1</span><h3>Guaranteeing safety is essential for autonomous surface vehicles (ASVs)</h3></div>
+        <p>Ships that navigate and control themselves without direct human operation</p>
+      </div>
+      <div class="reveal d3">
+        <div class="problem-head"><span class="n">2</span><h3>International regulations for preventing collisions at sea (COLREGs)</h3></div>
+        <span class="q">“Maritime traffic rules”</span>
+        <p>They specify how each ship must maneuver when it encounters another ship</p>
+      </div>
+      <div class="goal reveal d4">Not only avoid collisions, but avoid them <b>in the way COLREGs require</b></div>
+    </div>
+    <div class="man-card reveal d3">
+      <div class="man-head">
+        <h3>COLREGs-compliant evasive maneuvers</h3>
+        <div class="man-key"><span><i style="background:#e6e6fa;"></i>Own ship</span><span><i style="background:#f8e4e4;"></i>Target ship</span></div>
+      </div>
+      <div class="man">
+        <img src="sail_contents/06_colregs/colregs_maneuvers.png" alt="COLREGs evasive maneuvers of the own ship: overtaking on either side, both ships turning to starboard when head-on, and turning to starboard to pass astern in a crossing">
+        <div class="man-lbl">
+          <div style="left:12.5%;"><b>Overtaking</b><span class="rule">Rule 13</span><p>Keep out of the way of the ship being overtaken</p></div>
+          <div style="left:47.4%;"><b>Head-on</b><span class="rule">Rule 14</span><p>Both ships alter course to starboard</p></div>
+          <div style="left:83.4%;"><b>Crossing</b><span class="rule">Rule 15</span><p>Give-way ship turns to starboard and passes astern</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>02</span></div>
+  <aside class="notes">
+    <p>First, let me briefly explain the background. An autonomous surface vehicle, or ASV, is basically a ship that can navigate and control itself without direct human operation.</p>
+    <p>Just like autonomous cars have to follow traffic rules, autonomous ships also have to follow maritime traffic rules. These rules are called COLREGs, the international rules for preventing collisions at sea.</p>
+    <p>COLREGs specify how ships should maneuver when they encounter other ships, for example in overtaking, head-on, and crossing situations, as shown here.</p>
+    <p>So, an autonomous ship should not only avoid collisions, but also avoid them in the right way according to COLREGs.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 3 : Related work ================= -->
+<section class="slide light s03">
+  <div class="reveal d1">
+    <div class="eyebrow">Introduction · Related work</div>
+    <h2>Two existing approaches, <span class="grad-blue-text">two limitations</span></h2>
+  </div>
+  <div class="gap-grid">
+    <div class="gap-col reveal d2">
+      <div class="problem-head"><span class="n">1</span><h3>Velocity obstacle (VO)</h3></div>
+      <figure class="asset-frame gap-card">
+        <figcaption class="gap-card-head"><span class="gap-tag">Existing</span><h3>Choose a velocity outside the collision cone</h3></figcaption>
+        <div class="gap-fig"><img src="sail_contents/06_colregs/related_vo.png" alt="Velocity obstacle: the own ship picks a velocity whose relative velocity to the target ship lies outside the collision cone"></div>
+      </figure>
+      <div class="approach-limit">
+        <div class="approach-limit-heading"><span class="approach-limit-label">Limit</span><h3>Can result in overly conservative behavior</h3></div>
+        <p>Limits the ship’s velocity to avoid collision in compliance with COLREGs</p>
+      </div>
+    </div>
+    <div class="gap-col reveal d3">
+      <div class="problem-head"><span class="n">2</span><h3>Model predictive control (MPC)</h3></div>
+      <figure class="asset-frame gap-card">
+        <figcaption class="gap-card-head"><span class="gap-tag">Existing</span><h3>Predict motion, optimize under constraints</h3></figcaption>
+        <div class="gap-fig"><img src="sail_contents/06_colregs/related_mpc.png" alt="MPC-based collision avoidance: the predicted target ship motion is imposed as constraints while the own ship trajectory is optimized"></div>
+      </figure>
+      <div class="approach-limit">
+        <div class="approach-limit-heading"><span class="approach-limit-label">Limit</span><h3>Outperforms VO but needs more computation</h3></div>
+        <p>An optimization problem over the prediction horizon at every step</p>
+      </div>
+    </div>
+  </div>
+  <div class="proposal-band reveal d4">
+    <span class="proposal-arrow" style="left:25%;" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2.5v10.5M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="proposal-arrow" style="left:75%;" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2.5v10.5M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <div class="proposal-item">
+      <div class="approach-limit-heading"><span class="approach-limit-label">Research objective</span></div>
+      <h3>COLREGs-compliant collision avoidance with <span style="color:var(--blue);">MPC-level performance</span> at <span style="color:var(--blue);">high computational efficiency</span></h3>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">Sources: Yu et al., <i>IJNAOE</i>, 2024 (VO) · Tsolakis et al., <i>IEEE T-ITS</i>, 2024 (MPC)</span>
+    <span>03</span>
+  </div>
+  <aside class="notes">
+    <p>Next, let me briefly introduce two representative collision avoidance methods.</p>
+    <p>First, the velocity obstacle, or VO, method limits the ship’s velocity to avoid potential collisions. It is computationally efficient and can be combined with COLREGs. However, it can sometimes result in overly conservative behavior.</p>
+    <p>Another widely used approach is model predictive control, or MPC. MPC predicts the future motion of the ships and optimizes the control inputs while considering safety constraints. It generally provides better performance than VO, but it requires much more computation.</p>
+    <p>So, our research objective is to achieve MPC-level collision avoidance performance with much lower computational cost, while also satisfying COLREGs.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 4 : Control barrier function ================= -->
+<section class="slide white s04">
+  <div class="reveal d1">
+    <div class="eyebrow">Introduction · Control barrier function (CBF)</div>
+    <h2>A CBF keeps the system inside a <span class="grad-blue-text">safe set</span></h2>
+  </div>
+  <div class="cbf-grid">
+    <div class="def reveal d2">
+      <div class="sec"><span class="gap-tag">CBF</span><h3>Safe set and CBF constraint</h3></div>
+      <div class="def-row"><span class="k">Pre-defined safe set</span><span class="v">\(h(\mathbf{x})\ge 0\)</span></div>
+      <div class="def-row"><span class="k">CBF constraint</span><div class="eq math-eq">\(\dot h(\mathbf{x},\mathbf{u})+\gamma\,h(\mathbf{x})\ge 0\)</div></div>
+      <p>for some \(\mathbf{u}\in U\), with \(\gamma>0\): \(h\) may decrease, but never faster than the exponential bound \(\dot h=-\gamma h\), so it never crosses zero.</p>
+    </div>
+    <div class="reveal d3">
+      <div class="bg-scene plot" title="Click to replay">
+        <svg viewBox="0 0 540 176" role="img" aria-label="A trajectory of h(x) over time stays above the exponential bound h-dot = -gamma h and therefore never becomes negative">
+          <defs><marker id="plAh" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0.5 L8,4 L0,7.5 Z" fill="#1d1d1f"/></marker></defs>
+          <rect x="60" y="148" width="462" height="24" fill="rgba(255,69,58,.08)"/>
+          <text x="516" y="165" text-anchor="end" font-size="12" font-weight="600" fill="#d70015"><tspan class="mi">h</tspan> &lt; 0 · unsafe</text>
+          <line x1="60" y1="148" x2="526" y2="148" stroke="#1d1d1f" stroke-width="1.3" marker-end="url(#plAh)"/>
+          <line x1="60" y1="172" x2="60" y2="10" stroke="#1d1d1f" stroke-width="1.3" marker-end="url(#plAh)"/>
+          <text x="531" y="152" font-size="16" fill="#1d1d1f"><tspan class="mi">t</tspan></text>
+          <text x="70" y="22" font-size="16" fill="#1d1d1f"><tspan class="mi">h</tspan><tspan class="mr">(</tspan><tspan class="mb">x</tspan><tspan class="mr">)</tspan></text>
+          <path class="fade" style="--in:.5s" d="M60.0 35.9C63.7 38.7 74.7 47.4 82.0 52.5C89.3 57.6 96.7 62.2 104.0 66.6C111.3 71.0 118.7 74.9 126.0 78.6C133.3 82.3 140.7 85.7 148.0 88.9C155.3 92.1 162.7 94.9 170.0 97.6C177.3 100.3 184.7 102.8 192.0 105.1C199.3 107.4 206.7 109.5 214.0 111.4C221.3 113.4 228.7 115.2 236.0 116.8C243.3 118.5 250.7 120.0 258.0 121.4C265.3 122.9 272.7 124.2 280.0 125.4C287.3 126.6 294.7 127.7 302.0 128.7C309.3 129.7 316.7 130.7 324.0 131.6C331.3 132.4 338.7 133.2 346.0 134.0C353.3 134.7 360.7 135.4 368.0 136.1C375.3 136.7 382.7 137.3 390.0 137.8C397.3 138.4 404.7 138.9 412.0 139.3C419.3 139.8 426.7 140.2 434.0 140.6C441.3 141.0 448.7 141.4 456.0 141.7C463.3 142.0 470.7 142.4 478.0 142.6C485.3 142.9 496.3 143.3 500.0 143.4" fill="none" stroke="#0a6fd6" stroke-width="2" stroke-dasharray="8 4 2 4"/>
+          <path class="draw" pathLength="1" style="--t:.8s;--dur:1.8s" d="M60.0 35.9C63.7 38.4 74.7 46.7 82.0 51.1C89.3 55.5 96.7 59.8 104.0 62.5C111.3 65.2 118.7 66.2 126.0 67.2C133.3 68.3 137.0 68.4 148.0 68.7C159.0 69.0 177.3 68.9 192.0 69.2C206.7 69.4 225.0 68.4 236.0 70.1C247.0 71.8 250.7 76.4 258.0 79.6C265.3 82.8 269.0 85.0 280.0 89.1C291.0 93.2 309.3 99.9 324.0 104.3C338.7 108.7 353.3 112.4 368.0 115.7C382.7 119.0 397.3 121.8 412.0 124.2C426.7 126.7 441.3 128.7 456.0 130.4C470.7 132.2 492.7 134.0 500.0 134.7" fill="none" stroke="#1d1d1f" stroke-width="2.2"/>
+        </svg>
+        <span class="lab fade" style="--in:.7s;left:15.6%;top:64%;color:#0a6fd6;">\(\dot h=-\gamma h\)</span>
+        <span class="lab fade" style="--in:1.9s;left:55.6%;top:32%;">\(\dot h\ge-\gamma h\)</span>
+        <span class="lab fade" style="--in:2.5s;left:55.6%;top:9%;color:#0a6fd6;font-weight:700;font-size:15.5px;">Always stays positive: safe</span>
+      </div>
+    </div>
+    <div class="reveal d4">
+      <div class="sec"><span class="gap-tag">Collision avoidance</span><h3>Distance-based CBF</h3></div>
+      <div class="asset-frame ed-fig"><img src="presentation_contents/ed_cbf.png" alt="Distance-based CBF: h(x) is the distance from the ship position (x, y) to the obstacle center minus the obstacle radius o_r and the safety radius R_s"></div>
+    </div>
+    <div class="reveal d5">
+      <div class="bg-scene ap" title="Click to replay">
+        <svg viewBox="0 0 540 176" role="img" aria-label="Animation: a ship approaches an obstacle at the maximum speed allowed by the CBF. The allowed approach speed gamma times h shrinks with the distance margin h, so the ship moves fast while far away and slows down as it gets close.">
+          <defs><pattern id="apHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#d1d1d6" stroke-width="1.3"/></pattern></defs>
+          <g class="fade" style="--in:.4s" font-size="13" fill="#1d1d1f">
+            <line x1="20" y1="20" x2="40" y2="20" stroke="#ff453a" stroke-width="3"/><polygon points="50,20 39,14.5 39,25.5" fill="#ff453a"/>
+            <text x="58" y="24.5">allowed approach speed <tspan class="mi">γ</tspan><tspan class="mi">h</tspan></text>
+            <line x1="262" y1="20" x2="286" y2="20" stroke="#30d158" stroke-width="4.5"/>
+            <text x="294" y="24.5">distance margin <tspan class="mi">h</tspan><tspan class="mr">(</tspan><tspan class="mb">x</tspan><tspan class="mr">)</tspan></text>
+          </g>
+          <circle cx="462" cy="84" r="38" fill="#f5f5f7"/>
+          <circle cx="462" cy="84" r="38" fill="url(#apHatch)" stroke="#8e8e93" stroke-width="1.3"/>
+          <text x="462" y="88.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d1d1f" stroke="#f5f5f7" stroke-width="4" paint-order="stroke">Obstacle</text>
+          <!-- positions at equal time steps: the spacing shrinks as the ship slows down -->
+          <g fill="#1d1d1f" fill-opacity=".16">
+            <polygon class="fade" style="--in:1.5s" transform="translate(196,84)" points="15,0 6,6 -15,6 -15,-6 6,-6"/>
+            <polygon class="fade" style="--in:2.1s" transform="translate(269.9,84)" points="15,0 6,6 -15,6 -15,-6 6,-6"/>
+            <polygon class="fade" style="--in:2.7s" transform="translate(317.1,84)" points="15,0 6,6 -15,6 -15,-6 6,-6"/>
+            <polygon class="fade" style="--in:3.3s" transform="translate(347.1,84)" points="15,0 6,6 -15,6 -15,-6 6,-6"/>
+            <polygon class="fade" style="--in:3.9s" transform="translate(366.3,84)" points="15,0 6,6 -15,6 -15,-6 6,-6"/>
+          </g>
+          <line class="ap-gap" x1="104" y1="128" x2="424" y2="128" stroke="#30d158" stroke-width="4.5"/>
+          <line class="ap-tick" x1="104" y1="120" x2="104" y2="136" stroke="#30d158" stroke-width="1.8"/>
+          <line x1="424" y1="120" x2="424" y2="136" stroke="#30d158" stroke-width="1.8"/>
+          <text class="ap-hl" x="264" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#248a3d"><tspan class="mi">h</tspan></text>
+          <g class="ap-ship">
+            <circle cx="80" cy="84" r="24" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.2"/>
+            <polygon transform="translate(80,84)" points="15,0 6,6 -15,6 -15,-6 6,-6" fill="#1d1d1f"/>
+          </g>
+          <line class="ap-line" x1="104" y1="84" x2="214" y2="84" stroke="#ff453a" stroke-width="3"/>
+          <polygon class="ap-head" points="224,84 212,78 212,90" fill="#ff453a"/>
+          <g font-size="12.5" fill="#8e8e93">
+            <text x="104" y="170">far: fast approach allowed</text>
+            <text x="424" y="170" text-anchor="end">near: must slow down</text>
+          </g>
+        </svg>
+      </div>
+      <p class="ap-cap">The CBF limits the speed toward an obstacle <b>in proportion to the relative distance</b> from it: \(-\dot h(\mathbf{x})\le\gamma\,h(\mathbf{x})\)</p>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">Source: Ames et al., “Control barrier functions: Theory and applications,” ECC, 2019</span>
+    <span>04</span>
+  </div>
+  <aside class="notes">
+    <p>Now let me explain our main tool, the control barrier function, or CBF. The idea of a CBF is simple. We define a safety function, h of x. When h is zero or above, the ship is safe.</p>
+    <p>The CBF keeps h from going below zero, at all times. So the ship never enters the unsafe region. How is this used for collision avoidance problem?</p>
+    <p>Please look at the figures with the obstacle. A common choice is h equals distance minus safety radius. Here, the distance is measured to the obstacle. With this CBF, the controller limits the speed toward the obstacle. Far away, the ship can move fast. Close by, it must slow down.</p>
+    <p>This represents the physical meaning of the CBF constraints.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 5 : Safety filter (CBF-QP) + challenges ================= -->
+<section class="slide light s05">
+  <div class="reveal d1">
+    <div class="eyebrow">Introduction · Safety filter (CBF-QP)</div>
+    <h2>A CBF-QP safety filter works with <span class="grad-blue-text">any controller</span></h2>
+  </div>
+  <div class="bd qpd reveal d2" role="img" aria-label="Block diagram: the nominal controller outputs u_n; the CBF-QP safety filter returns the closest input u that satisfies the CBF constraint and input limits; u is applied to the vehicle">
+    <svg width="1100" height="150" viewBox="0 0 1100 150" aria-hidden="true">
+      <defs><marker id="qpAh" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,1 L9,5 L0,9 Z" fill="#1d1d1f"/></marker></defs>
+      <g fill="none" stroke="#1d1d1f" stroke-width="2">
+        <path d="M210 75H316" marker-end="url(#qpAh)"/>
+        <path d="M780 75H886" marker-end="url(#qpAh)"/>
+      </g>
+    </svg>
+    <div class="bd-box" style="left:0;top:33px;width:210px;height:84px;"><b>Nominal controller</b><span class="m">any controller</span></div>
+    <div class="bd-box hl qp" style="left:320px;top:0;width:460px;height:150px;">
+      <b>Safety filter · CBF-QP</b>
+      <div class="bd-eq">\[\begin{aligned}\mathbf{u}^{*}=\;&\arg\min_{\mathbf{u}\in\mathbb{R}^m}\ \|\mathbf{u}-\mathbf{u}_n\|_H^2\\ \text{s.t.}\;\;&L_f h(\mathbf{x})+L_g h(\mathbf{x})\,\mathbf{u}+\gamma\,h(\mathbf{x})\ge 0\\ &\mathbf{u}_{\min}\le\mathbf{u}\le\mathbf{u}_{\max}\end{aligned}\]</div>
+    </div>
+    <div class="bd-box" style="left:890px;top:33px;width:210px;height:84px;"><b>Vehicle</b></div>
+    <span class="bd-lab" style="left:250px;top:40px;">\(\mathbf{u}_n\)</span>
+    <span class="bd-lab" style="left:826px;top:40px;">\(\mathbf{u}\)</span>
+  </div>
+  <div class="qp-props reveal d3">
+    <span class="pill">Compatible with any controller</span>
+    <span class="pill">Changes the nominal input as little as possible</span>
+    <span class="pill">Computationally efficient</span>
+  </div>
+  <div class="ch-grid">
+    <div class="reveal d4">
+      <div class="ch-head"><span class="ch-lbl">Challenge</span><h3>How to integrate COLREGs into CBFs to ensure rule compliance and improve performance?</h3></div>
+      <div class="ch-items">
+        <div class="ch-item"><span class="n">1</span><div><b>Conventional CBFs lack explicit logic for avoidance direction</b><p>In COLREGs the direction is the key point: the rules tell the ship which way to go</p></div></div>
+        <div class="ch-item"><span class="n">2</span><div><b>They do not properly account for ships’ turning limitations</b><p>A ship cannot turn in place</p></div></div>
+      </div>
+    </div>
+    <figure class="dom reveal d5">
+      <div class="asset-frame"><img src="ifac_contents/ship_domain.png" alt="Target ship domain: a line through points p_D and p_B, defined relative to the target ship position, heading and bearing, bounds the region the own ship must stay out of"></div>
+      <figcaption>Prior work: target ship domain + CBF</figcaption>
+    </figure>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">Sources: Ames et al., ECC, 2019 (CBF-QP) · Thyri et al., CCTA, 2020; Thyri &amp; Breivik, <i>Field Robotics</i>, 2022 (ship domain + CBF)</span>
+    <span>05</span>
+  </div>
+  <aside class="notes">
+    <p>Then, we can use these constraints to make a safety filter, as shown here. This framework is called CBF-QP. QP stands for quadratic programming.</p>
+    <p>Any controller gives a desired control input. We call it the nominal input. The QP changes this input as little as possible, so the CBF condition stays true. It works with any controller, and it is very fast.</p>
+    <p>So, why not use it directly for ships? There are two problems.</p>
+    <p>First, standard CBFs have no logic for the avoidance direction. But in COLREGs, direction is the key point. The rules tell the ship which way to go.</p>
+    <p>Second, standard CBFs do not consider the turning limits of a ship. A ship cannot turn in place.</p>
+    <p>These two problems are the starting point of our work.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 6 : TC-CBF ================= -->
+<section class="slide white s06">
+  <div class="reveal d1">
+    <div class="eyebrow">Proposed method · Turning circle-based CBF (TC-CBF)</div>
+    <h2>Keep the <span class="grad-blue-text">turning circles</span> free of obstacles</h2>
+  </div>
+  <div class="tc-grid">
+    <div>
+      <p class="tc-intro reveal d2">Two TC-CBFs ensure safety by keeping the vehicle’s <b>left and right turning circles</b>, defined by its speed, heading, and turning limit, <b>free of obstacles</b>.</p>
+      <div class="tc-eqs reveal d3">
+        <div class="eq math-eq">\[R=\alpha\,\frac{u}{r_{\max}}\]<p>Turning radius at the maximum turning rate \(r_{\max}\); the scaling factor \(\alpha\) enlarges the circle for a smoother turn</p></div>
+        <div class="eq math-eq">\[h_{tr}(\mathbf{x})=\sqrt{(x_{tr}-o_x)^2+(y_{tr}-o_y)^2}-(o_r+R+R_s)\]<span class="ctag rtc">RTC-CBF</span></div>
+        <div class="eq math-eq">\[h_{tl}(\mathbf{x})=\sqrt{(x_{tl}-o_x)^2+(y_{tl}-o_y)^2}-(o_r+R+R_s)\]<span class="ctag ltc">LTC-CBF</span></div>
+      </div>
+      <ul class="clean check tc-checks reveal d4">
+        <li>\(h_{tr}\ge 0\): the right turning circle is clear, so the ship can always escape by <b>turning right</b></li>
+        <li>\(h_{tl}\ge 0\): the left turning circle is clear, so the ship can always escape by <b>turning left</b></li>
+      </ul>
+    </div>
+    <div class="reveal d3"><div class="bg-scene tc-scene" title="Click to replay"><svg viewBox="0 0 440 462" role="img" aria-label="TC-CBF construction: the left and right turning circles of radius R lie on either side of the ship, perpendicular to its heading. The distances d_L and d_R from the circle centers to the obstacle, minus o_r + R + R_s, give the safety margins h_tl and h_tr. A non-negative margin means the ship can always escape by turning to that side.">
+  <defs>
+    <marker id="tcAh" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0.5 L8,4 L0,7.5 Z" fill="#1d1d1f"/></marker>
+    <pattern id="tcHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#d1d1d6" stroke-width="1.3"/></pattern>
+  </defs>
+
+  <!-- legend -->
+  <g class="fade" style="--in:.2s" font-size="13" fill="#1d1d1f">
+    <line x1="240" y1="20" x2="262" y2="20" stroke="#bf5af2" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <text x="269" y="24.5">Left turning circle</text>
+    <line x1="240" y1="40" x2="262" y2="40" stroke="#0a84ff" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <text x="269" y="44.5">Right turning circle</text>
+    <line x1="240" y1="60" x2="262" y2="60" stroke="#ff453a" stroke-width="1.6"/>
+    <text x="269" y="64.5">Center–obstacle distance</text>
+    <line x1="240" y1="80" x2="262" y2="80" stroke="#30d158" stroke-width="4.5"/>
+    <text x="269" y="84.5">Safety margin</text>
+  </g>
+
+  <!-- outer boundaries R + R_s (swept by the safety disc during a hard turn) -->
+  <g class="fade" style="--in:2.8s" fill="none" stroke-width="1" stroke-dasharray="2 3">
+    <circle cx="123.80" cy="144.03" r="117" stroke="#bf5af2" stroke-opacity=".6"/>
+    <circle cx="192.20" cy="331.97" r="117" stroke="#0a84ff" stroke-opacity=".6"/>
+  </g>
+
+  <!-- left turning circle -->
+  <g class="fade" style="--in:1.0s">
+    <circle cx="123.80" cy="144.03" r="100" fill="rgba(191,90,242,.05)" stroke="#bf5af2" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="123.80" y1="144.03" x2="158" y2="238" stroke="#bf5af2" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <text x="131" y="198" text-anchor="end" font-size="15" fill="#8a3fc0"><tspan class="mi">R</tspan></text>
+    <text x="115" y="137" text-anchor="end" font-size="14" fill="#8a3fc0" class="mr">(<tspan class="mi">x</tspan><tspan class="mi" font-size="10.5" dy="3">tl</tspan><tspan dy="-3">, </tspan><tspan class="mi">y</tspan><tspan class="mi" font-size="10.5" dy="3">tl</tspan><tspan dy="-3">)</tspan></text>
+  </g>
+  <circle class="pop" cx="123.80" cy="144.03" r="3.6" fill="#bf5af2" style="--t:1.05s"/>
+  <path class="draw" pathLength="1" d="M158,238 A100,100 0 0 0 222.28,126.67" fill="none" stroke="#bf5af2" stroke-width="2.2" style="--t:1.2s;--dur:.6s;--ease:linear"/>
+  <g transform="translate(222.28,126.67) rotate(-100)"><polygon class="pop" points="3,0 -7,-4.6 -7,4.6" fill="#bf5af2" style="--t:1.75s"/></g>
+
+  <!-- right turning circle -->
+  <g class="fade" style="--in:1.8s">
+    <circle cx="192.20" cy="331.97" r="100" fill="rgba(10,132,255,.05)" stroke="#0a84ff" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="192.20" y1="331.97" x2="158" y2="238" stroke="#0a84ff" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <text x="184" y="357" text-anchor="end" font-size="14" fill="#0071e3" class="mr">(<tspan class="mi">x</tspan><tspan class="mi" font-size="10.5" dy="3">tr</tspan><tspan dy="-3">, </tspan><tspan class="mi">y</tspan><tspan class="mi" font-size="10.5" dy="3">tr</tspan><tspan dy="-3">)</tspan></text>
+    <text x="170" y="293" text-anchor="end" font-size="15" fill="#0071e3"><tspan class="mi">R</tspan></text>
+  </g>
+  <circle class="pop" cx="192.20" cy="331.97" r="3.6" fill="#0a84ff" style="--t:1.85s"/>
+  <path class="draw" pathLength="1" d="M158,238 A100,100 0 0 1 278.80,281.97" fill="none" stroke="#0a84ff" stroke-width="2.2" style="--t:2.0s;--dur:.6s;--ease:linear"/>
+  <g transform="translate(278.80,281.97) rotate(60)"><polygon class="pop" points="3,0 -7,-4.6 -7,4.6" fill="#0a84ff" style="--t:2.55s"/></g>
+
+  <!-- obstacle -->
+  <g class="pop" style="--t:.25s">
+    <circle cx="352" cy="196" r="34" fill="#f5f5f7"/>
+    <circle cx="352" cy="196" r="34" fill="url(#tcHatch)" stroke="#8e8e93" stroke-width="1.3"/>
+  </g>
+  <g class="fade" style="--in:.5s">
+    <line x1="352" y1="196" x2="376.04" y2="220.04" stroke="#6e6e73" stroke-width="1.1" stroke-dasharray="3 2"/>
+    <circle cx="352" cy="196" r="2.4" fill="#1d1d1f"/>
+    <text x="352" y="152" text-anchor="middle" font-size="13.5" font-weight="700" fill="#6e6e73">Obstacle</text>
+    <text x="380" y="238" font-size="14" fill="#1d1d1f"><tspan class="mi">o</tspan><tspan class="mi" font-size="10.5" dy="3">r</tspan></text>
+  </g>
+
+  <!-- centre-to-obstacle distances d_L, d_R and safety margins h_tl, h_tr -->
+  <line class="draw" pathLength="1" x1="123.80" y1="144.03" x2="352" y2="196" stroke="#ff453a" stroke-width="1.5" style="--t:3.0s;--dur:.45s"/>
+  <line class="draw" pathLength="1" x1="192.20" y1="331.97" x2="352" y2="196" stroke="#ff453a" stroke-width="1.5" style="--t:3.1s;--dur:.45s"/>
+  <g class="fade" style="--in:3.4s" font-size="14.5" fill="#d70015">
+    <text x="176" y="147"><tspan class="mi">d</tspan><tspan class="mi" font-size="10.5" dy="3">L</tspan></text>
+    <text x="240" y="321"><tspan class="mi">d</tspan><tspan class="mi" font-size="10.5" dy="3">R</tspan></text>
+  </g>
+  <line class="draw" pathLength="1" x1="237.88" y1="170.01" x2="318.85" y2="188.45" stroke="#30d158" stroke-width="4.5" style="--t:3.55s;--dur:.35s"/>
+  <line class="draw" pathLength="1" x1="281.31" y1="256.15" x2="326.11" y2="218.03" stroke="#30d158" stroke-width="4.5" style="--t:3.65s;--dur:.35s"/>
+  <g class="fade" style="--in:3.8s" font-size="15" font-weight="700" fill="#248a3d">
+    <text x="262" y="167"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="3.5">tl</tspan></text>
+    <text x="314" y="258"><tspan class="mi">h</tspan><tspan class="mi" font-size="11" dy="3.5">tr</tspan></text>
+  </g>
+
+  <!-- own vehicle: position, heading 20 deg up, speed u, safety radius R_s -->
+  <g class="pop" style="--t:.4s">
+    <g transform="translate(158,238) rotate(-20)">
+      <circle r="17" fill="rgba(29,29,31,.05)" stroke="#1d1d1f" stroke-width="1.2"/>
+      <line x1="0" y1="0" x2="-17" y2="0" stroke="#1d1d1f" stroke-width="1" stroke-dasharray="2.5 2"/>
+      <polygon points="13,0 5,5 -13,5 -13,-5 5,-5" fill="#1d1d1f"/>
+    </g>
+  </g>
+  <g class="fade" style="--in:.6s">
+    <line x1="177.73" y1="230.82" x2="206.86" y2="220.22" stroke="#1d1d1f" stroke-width="1.6" marker-end="url(#tcAh)"/>
+    <text x="213" y="219" font-size="15" fill="#1d1d1f"><tspan class="mi">u</tspan></text>
+    <text x="137" y="266" text-anchor="end" font-size="14" fill="#1d1d1f"><tspan class="mi">R</tspan><tspan class="mi" font-size="10.5" dy="3">s</tspan></text>
+  </g>
+
+  <!-- summary -->
+  <g class="fade" style="--in:4.2s">
+    <rect x="272" y="388" width="164" height="58" rx="14" fill="#eaf9ee"/>
+    <text x="286" y="411" font-size="13.5" fill="#1d1d1f"><tspan class="mi">h</tspan><tspan class="mi" font-size="10" dy="3">tr</tspan><tspan class="mr" dy="-3"> ≥ 0 </tspan><tspan font-weight="700" fill="#0071e3">→ turn right</tspan></text>
+    <text x="286" y="434" font-size="13.5" fill="#1d1d1f"><tspan class="mi">h</tspan><tspan class="mi" font-size="10" dy="3">tl</tspan><tspan class="mr" dy="-3"> ≥ 0 </tspan><tspan font-weight="700" fill="#8a3fc0">→ turn left</tspan></text>
+  </g>
+  <text class="fade" x="436" y="459" text-anchor="end" font-size="12" fill="#aeaeb2" style="--in:4.4s">↻ Click to replay</text>
+</svg></div></div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">TC-CBF was introduced within MPC (<a href="https://doi.org/10.1109/TCST.2026.3692226" target="_blank" rel="noopener">Lee, Park &amp; Kim, <i>IEEE TCST</i>, 2026</a>); here the two CBFs are used separately to encode the avoidance side</span>
+    <span>06</span>
+  </div>
+  <aside class="notes">
+    <p>Now, here is our simple geometric idea. We call it the turning circle-based CBF, or TC-CBF.</p>
+    <p>Imagine a ship moving forward. If it turns as hard as it can, to the left or to the right, it follows a circle on that side. We call these the left and right turning circles.</p>
+    <p>Please look at the figure. The radius R depends on the current speed and the maximum turning rate. R equals alpha times the speed u, divided by r max. alpha is a scaling factor. A larger alpha makes the circle bigger and the turn smoother.</p>
+    <p>Now, the safety idea is very simple. We just keep the turning circle away from the obstacle. As shown in the figure, we measure the distance from the center of the turning circle to the obstacle. This distance should be larger than R plus the safety radius.</p>
+    <p>From this, we define two CBFs: one for the right turning circle, called the RTC-CBF, and one for the left turning circle, called the LTC-CBF. If the right turning circle is clear, the ship has a safe way to escape by turning right. If the left circle is clear, it can escape by turning left.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 7 : Visualization of the constraints ================= -->
+<section class="slide light s07">
+  <div class="reveal d1">
+    <div class="eyebrow">Proposed method · Visualization of TC-CBF constraints</div>
+    <h2>RTC or LTC-CBF: <span class="grad-blue-text">choose the avoidance side</span></h2>
+  </div>
+  <div class="viz-key reveal d2">
+    <span><svg width="56" height="14" viewBox="0 0 56 14" aria-hidden="true"><path d="M0 7H42" stroke="#1d1d1f" stroke-width="4"/><path d="M40 1L56 7L40 13Z" fill="#1d1d1f"/></svg>Nominal control input</span>
+    <span><svg width="56" height="14" viewBox="0 0 56 14" aria-hidden="true"><path d="M0 7H42" stroke="#ff1f1f" stroke-width="4"/><path d="M40 1L56 7L40 13Z" fill="#ff1f1f"/></svg>Safe control input (filtered by TC-CBF-QP)</span>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-card reveal d3">
+      <div class="viz-head"><span class="ctag rtc">RTC-CBF</span><h3>Right-side avoidance</h3></div>
+      <img src="presentation_contents/RTCCBF.png" alt="RTC-CBF value over vehicle positions with the vehicle heading +x toward an obstacle at (10, 0): the filtered input turns the vehicle to the right">
+      <p>The filtered input turns the vehicle to <b style="color:var(--rtc);">starboard</b>, keeping the right turning circle clear</p>
+    </div>
+    <div class="viz-card reveal d4">
+      <div class="viz-head"><span class="ctag ltc">LTC-CBF</span><h3>Left-side avoidance</h3></div>
+      <img src="presentation_contents/LTCCBF.png" alt="LTC-CBF value over vehicle positions with the vehicle heading +x toward an obstacle at (10, 0): the filtered input turns the vehicle to the left">
+      <p>The filtered input turns the vehicle to <b style="color:var(--ltc);">port</b>, keeping the left turning circle clear</p>
+    </div>
+  </div>
+  <div class="viz-band reveal d5"><p>By choosing the <b style="color:var(--rtc);">RTC-CBF</b> or the <b style="color:var(--ltc);">LTC-CBF</b>, we can <b>explicitly choose the avoidance direction</b></p></div>
+  <div class="slide-footer"><span class="source-caption">Color: CBF value \(h(\mathbf{x})\) over the vehicle position (heading \(+x\)) · black curve: safety boundary \(h=0\)</span><span>07</span></div>
+  <aside class="notes">
+    <p>This figure shows how the CBF constraints affect the control input. The black arrow is the nominal control input, without considering safety. The red arrow is the safe control input filtered by the TC-CBF-QP.</p>
+    <p>On the left, we apply the RTC-CBF. The control input is modified to make the ship avoid the obstacle on the right side.</p>
+    <p>On the right, we apply the LTC-CBF, so the ship avoids the obstacle on the left side.</p>
+    <p>So, by choosing the RTC-CBF or LTC-CBF, we can explicitly choose the avoidance direction.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 8 : Overall framework ================= -->
+<section class="slide white s08">
+  <div class="reveal d1">
+    <div class="eyebrow">Proposed method · Overall framework</div>
+    <h2>COLREGs choose the side, <span class="grad-blue-text">TC-CBF keeps it safe</span></h2>
+  </div>
+  <div class="bd fw reveal d2" role="img" aria-label="Framework: LOS guidance and PD control follow the waypoint path and output the nominal input u_n. The decision-making module classifies the encounter with each traffic ship by the COLREGs rules and selects the LTC or RTC constraint. The TC-CBF-QP safety filter returns the safe input u to the ASV, whose state x is fed back.">
+    <svg width="1100" height="236" viewBox="0 0 1100 236" aria-hidden="true">
+      <defs>
+        <marker id="fwAh" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,1 L9,5 L0,9 Z" fill="#1d1d1f"/></marker>
+        <marker id="fwAhb" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,1 L9,5 L0,9 Z" fill="#0a84ff"/></marker>
+      </defs>
+      <g fill="none" stroke="#1d1d1f" stroke-width="2">
+        <path d="M200 62H286" marker-end="url(#fwAh)"/>
+        <path d="M790 62H896" marker-end="url(#fwAh)"/>
+        <path d="M100 150V108" marker-end="url(#fwAh)"/>
+        <path d="M1000 104V192H862" marker-end="url(#fwAh)"/>
+        <path d="M1000 192V230H100V210" marker-end="url(#fwAh)"/>
+        <path d="M640 192H558" marker-end="url(#fwAh)"/>
+      </g>
+      <path d="M420 166V144" fill="none" stroke="#0a84ff" stroke-width="2.4" marker-end="url(#fwAhb)"/>
+      <circle cx="1000" cy="192" r="3.5" fill="#1d1d1f"/>
+    </svg>
+    <div class="bd-box" style="left:0;top:20px;width:200px;height:84px;"><b>LOS guidance<br>+ PD control</b></div>
+    <div class="bd-box" style="left:0;top:150px;width:200px;height:56px;"><b>Waypoint path</b></div>
+    <div class="bd-box hl qp" style="left:290px;top:0;width:500px;height:140px;">
+      <b>Safety filter · TC-CBF-QP</b>
+      <div class="bd-eq">\[\begin{aligned}\mathbf{u}^{*}=\;&\arg\min_{\mathbf{u}\in\mathbb{R}^m}\ \|\mathbf{u}-\mathbf{u}_n\|_Q^2\\ \text{s.t.}\;\;&\dot h_{i,\sigma_i}(\mathbf{x})+\gamma_i\,h_{i,\sigma_i}(\mathbf{x})\ge 0,\quad i=1,\dots,n\\ &\mathbf{u}_{\min}\le\mathbf{u}\le\mathbf{u}_{\max}\end{aligned}\]</div>
+    </div>
+    <div class="bd-box" style="left:900px;top:20px;width:200px;height:84px;"><b>ASV</b><span class="m">own ship</span></div>
+    <div class="bd-box hl" style="left:290px;top:166px;width:268px;height:52px;"><b>Decision making</b><span class="m">COLREGs rules</span></div>
+    <div class="bd-box" style="left:640px;top:166px;width:222px;height:52px;"><b>Traffic ship \(i\)</b><span class="m">\(i=1,\dots,n\)</span></div>
+    <span class="bd-lab" style="left:232px;top:30px;">\(\mathbf{u}_n\)</span>
+    <span class="bd-lab" style="left:836px;top:30px;">\(\mathbf{u}\)</span>
+    <span class="bd-lab" style="left:110px;top:116px;">\(\mathbf{r}\)</span>
+    <span class="bd-lab" style="left:1012px;top:130px;">\(\mathbf{x}\)</span>
+    <span class="bd-lab sel" style="left:432px;top:144px;">\(\sigma_i\in\{\mathrm{L},\mathrm{R}\}\): LTC- or RTC-CBF chosen for each traffic ship</span>
+  </div>
+  <div class="dm-card reveal d3">
+    <div class="dm-head"><h3>Decision-making module</h3><span class="gap-tag">COLREGs encounter classification</span></div>
+    <div class="dm-body">
+      <img class="dm-geo" src="ifac_contents/dm_geometry.png" alt="Encounter geometry: own ship heading psi_o and speed V_o, traffic ship heading psi_t and speed V_t, and the bearing beta_ot from the own ship to the traffic ship">
+      <img class="dm-maps" src="ifac_contents/encounter_maps.png" alt="Encounter classification maps for the own ship and the traffic ship over relative heading psi_OT and bearing beta_OT">
+      <div class="dm-txt">
+        <div class="dm-legend">
+          <span><i style="background:#9db3ca;"></i>Head-on</span>
+          <span><i style="background:#f0bf86;"></i>Starboard crossing</span>
+          <span><i style="background:#dd8f8d;"></i>Overtaking</span>
+          <span><i style="background:#b1d3a7;"></i>Port crossing</span>
+          <span><i style="background:#c2a7cd;"></i>Overtaken</span>
+        </div>
+        <p>Classifies each traffic ship by bearing \(\beta_{OT}\) and relative heading \(\psi_{OT}\), then applies <b>only the constraint for the side the rule requires</b></p>
+        <p class="ex">e.g., head-on → alter course to starboard → <span style="color:var(--rtc);">RTC-CBF</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">Encounter classification: symmetry-guaranteed COLREGs classification of Cho et al., <i>IEEE T-ITS</i>, 2020</span>
+    <span>08</span>
+  </div>
+  <aside class="notes">
+    <p>Now, let me show you the overall framework. First, the LOS guidance and PD controller generate the nominal control input based on the waypoint path.</p>
+    <p>At the same time, the decision-making module identifies the encounter situation based on the COLREGs rules. Then, for each traffic ship, it decides whether to use the LTC-CBF or the RTC-CBF.</p>
+    <p>These selected CBF constraints are sent to the safety filter. The safety filter modifies the nominal control input only when necessary, and generates the safe control input for the ASV.</p>
+    <p>So, the main idea is simple: the decision-making module chooses the avoidance side, and the TC-CBF guarantees safety on that side.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 9 : Parameter tuning ================= -->
+<section class="slide light s09">
+  <div class="reveal d1">
+    <div class="eyebrow">Results · One-to-one encounter simulations</div>
+    <h2>Tuning \(\alpha\) and \(\gamma\): <span class="grad-blue-text">when and how wide to avoid</span></h2>
+  </div>
+  <div class="tune-grid">
+    <div class="tune-card reveal d2">
+      <h3><span>Turning-circle scale \(\alpha\)</span><span class="gap-tag">fixed \(\gamma=0.02\)</span></h3>
+      <img src="ifac_contents/tuning_alpha.png" alt="Own ship trajectories in a starboard-crossing encounter for alpha = 1, 2, 3, 5 and 10 with gamma = 0.02: larger alpha starts the avoidance earlier with a smoother path">
+    </div>
+    <div class="tune-card reveal d3">
+      <h3><span>CBF parameter \(\gamma\)</span><span class="gap-tag">fixed \(\alpha=5\)</span></h3>
+      <img src="ifac_contents/tuning_gamma.png" alt="Own ship trajectories for gamma = 0.005, 0.007, 0.01, 0.02 and 0.03 with alpha = 5: smaller gamma gives a wider avoidance">
+    </div>
+    <div>
+      <div class="scn reveal d4">
+        <span class="gap-tag">Scenario</span>
+        <h3>Starboard-crossing encounter</h3>
+        <p>The traffic ship (red) crosses from the starboard side; the own ship gives way by turning to starboard and passing astern. Snapshots every 150 s.</p>
+      </div>
+      <div class="ins reveal d5">
+        <div><span class="k">\(\alpha\uparrow\)</span><p>Larger turning circle → <b>earlier and smoother</b> avoidance</p></div>
+        <div><span class="k">\(\gamma\downarrow\)</span><p>More conservative constraint → <b>larger avoidance distance</b></p></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>09</span></div>
+  <aside class="notes">
+    <p>Next, we tune the two main parameters of the TC-CBF.</p>
+    <p>On the left, we change alpha. A larger alpha gives a larger turning circle, resulting in earlier and smoother avoidance.</p>
+    <p>On the right, we change gamma. A smaller gamma makes the safety constraint more conservative and increases the avoidance distance.</p>
+    <p>Based on these results, we use alpha equals 5 and gamma equals 0.02 in the following simulations.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 10 : Multi-ship encounter A ================= -->
+<section class="slide white s10">
+  <div class="reveal d1">
+    <div class="eyebrow">Results · Multi-ship encounter simulation · own ship + 6 traffic ships</div>
+    <h2>Comparable to MPC, <span class="grad-blue-text">167× faster on average</span></h2>
+  </div>
+  <div class="rs-row">
+    <div class="vframe plot reveal d2" style="width:452px;"><span class="tag blue">Proposed (TC-CBF-QP)</span><img src="ifac_contents/multi6_proposed.png" alt="Proposed method: the own ship (red) follows the straight path along y = 0 and avoids six traffic ships; snapshots at t = 1000, 2000, 3000 and 4000 s"></div>
+    <div class="vframe plot reveal d3" style="width:452px;"><span class="tag">MPC-based</span><img src="ifac_contents/multi6_mpc.png" alt="MPC-based method in the same six-ship scenario"></div>
+    <div class="kpis reveal d4">
+      <div class="kpi"><div class="v grad-blue-text">167<small>×</small></div><div class="l">faster on average<br>23.35 → <b>0.14 ms</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">−29<small>%</small></div><div class="l">control effort<br>8.66 → <b>6.16</b></div></div>
+    </div>
+  </div>
+  <table class="apple compact rs-tbl reveal d5">
+    <tr><th style="width:24%;">Controller</th><th>Avg. comp. time*</th><th>Max. comp. time</th><th>Avg. CTE</th><th>Max. CTE</th><th>Control effort**</th></tr>
+    <tr class="prop"><td class="m">Proposed (TC-CBF-QP)</td><td><b>0.14 ms</b></td><td><b>1.80 ms</b></td><td>439.5 m</td><td><b>992.4 m</b></td><td><b>6.16</b></td></tr>
+    <tr><td class="m">MPC-based</td><td>23.35 ms</td><td>40.18 ms</td><td><b>390.6 m</b></td><td>1001.2 m</td><td>8.66</td></tr>
+  </table>
+  <p class="rs-note reveal d6">Bold: better · CTE: cross-track error from the reference path · both methods avoid all traffic ships and return to the path</p>
+  <div class="slide-footer">
+    <span class="source-caption">* Intel i5-14600KF CPU @ 3.50 GHz with 32 GB of RAM (MATLAB, OSQP) · ** cumulative sum of the absolute values of accelerations and turning rates</span>
+    <span>10</span>
+  </div>
+  <aside class="notes">
+    <p>Next, we compare our method with MPC in a multi-ship encounter. Both methods successfully avoid all traffic ships and return to the reference path.</p>
+    <p>The path-following performance is also quite similar.</p>
+    <p>Our method is tens of times faster than the MPC-based method. So, we achieve similar performance with much lower computational cost.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 11 : Multi-ship encounter B ================= -->
+<section class="slide light s11">
+  <div class="reveal d1">
+    <div class="eyebrow">Results · Multi-ship encounter simulation · four ships crossing at the center</div>
+    <h2>Four ships at once: <span class="grad-blue-text">140× faster</span> than MPC</h2>
+  </div>
+  <div class="rs-row">
+    <div class="vframe plot reveal d2" style="width:292px;"><span class="tag blue">Proposed</span><img src="ifac_contents/multi4_proposed.png" alt="Proposed method: four ships start on a circle and cross the center while avoiding each other"></div>
+    <div class="vframe plot reveal d3" style="width:292px;"><span class="tag">MPC-based</span><img src="ifac_contents/multi4_mpc.png" alt="MPC-based method in the same four-ship scenario"></div>
+    <div class="vframe reveal d4" style="width:298px;"><span class="tag blue">Proposed · animation</span><video autoplay muted loop playsinline preload="auto" src="sail_contents/06_colregs/sim_ship4_mutual.mp4" aria-label="Animation of the four-ship encounter with the proposed method"></video></div>
+    <div class="kpis reveal d5">
+      <div class="kpi"><div class="v grad-blue-text">140<small>×</small></div><div class="l">faster on average<br>12.60 → <b>0.09 ms</b></div></div>
+      <div class="kpi"><div class="v grad-blue-text">−20<small>%</small></div><div class="l">control effort<br>15.29 → <b>12.25</b></div></div>
+    </div>
+  </div>
+  <table class="apple compact rs-tbl reveal d5">
+    <tr><th style="width:24%;">Controller</th><th>Avg. comp. time*</th><th>Max. comp. time</th><th>Avg. CTE</th><th>Max. CTE</th><th>Control effort**</th></tr>
+    <tr class="prop"><td class="m">Proposed (TC-CBF-QP)</td><td><b>0.09 ms</b></td><td><b>1.62 ms</b></td><td>61.4 m</td><td>228.6 m</td><td><b>12.25</b></td></tr>
+    <tr><td class="m">MPC-based</td><td>12.60 ms</td><td>38.70 ms</td><td><b>52.9 m</b></td><td><b>164.9 m</b></td><td>15.29</td></tr>
+  </table>
+  <p class="rs-note reveal d6">Bold: better · MPC tracks the path slightly better (lower CTE), while the proposed method needs less control effort</p>
+  <div class="slide-footer">
+    <span class="source-caption">* Intel i5-14600KF CPU @ 3.50 GHz with 32 GB of RAM (MATLAB, OSQP) · ** cumulative sum of the absolute values of accelerations and turning rates</span>
+    <span>11</span>
+  </div>
+  <aside class="notes">
+    <p>Next, we consider another multi-ship encounter scenario. Again, both methods successfully avoid all traffic ships.</p>
+    <p>The MPC shows slightly better path-following performance, but our proposed method requires less control effort. More importantly, our method is extremely faster than the MPC-based method.</p>
+    <p>So, we can achieve comparable performance with significantly lower computational cost.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 12 : Complex traffic ================= -->
+<section class="slide white s12">
+  <div class="reveal d1">
+    <div class="eyebrow">Results · Complex traffic simulations</div>
+    <h2>Computation stays <span class="grad-blue-text">about 0.1 ms</span> as traffic grows</h2>
+  </div>
+  <div class="cx-grid">
+    <div class="vframe reveal d2"><span class="tag">8 ASVs</span><video autoplay muted loop playsinline preload="auto" poster="ifac_contents/traffic8_poster.jpg" src="ifac_contents/traffic8.mp4" aria-label="Simulation of eight ASVs avoiding one another"></video></div>
+    <div class="vframe reveal d3"><span class="tag">10 ASVs</span><video autoplay muted loop playsinline preload="auto" poster="ifac_contents/traffic10_poster.jpg" src="ifac_contents/traffic10.mp4" aria-label="Simulation of ten ASVs avoiding one another"></video></div>
+    <div class="cx-side reveal d4">
+      <h3 style="font-size:19px;margin-bottom:12px;">Computation time vs. number of ships</h3>
+      <table class="apple compact cx-tbl">
+        <tr><th>Ships</th><th>Avg. comp. time*</th><th>Max. comp. time</th></tr>
+        <tr><td>6</td><td>0.111 ms</td><td>1.934 ms</td></tr>
+        <tr><td>8</td><td>0.117 ms</td><td>1.947 ms</td></tr>
+        <tr class="hl"><td>10</td><td>0.128 ms</td><td>1.962 ms</td></tr>
+      </table>
+      <ul class="clean check">
+        <li>The average time increases <b>only slightly and linearly</b> with the number of ships</li>
+        <li>The maximum stays <b>below 2 ms</b> in every case</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span class="source-caption">* Intel i5-14600KF CPU @ 3.50 GHz with 32 GB of RAM (MATLAB, OSQP)</span>
+    <span>12</span>
+  </div>
+  <aside class="notes">
+    <p>Next, we evaluate the computation time in more complex traffic situations. We test scenarios with six, eight, and ten ships.</p>
+    <p>As the number of ships increases, the average computation time increases only slightly and linearly.</p>
+    <p>This shows that our method can handle complex multi-ship situations with very low computational cost.</p>
+  </aside>
+</section>
+
+<!-- ================= Slide 13 : Conclusion ================= -->
+<section class="slide light s13">
+  <div class="reveal d1">
+    <div class="eyebrow">Conclusion</div>
+    <h2>Rule-compliant, direction-aware, and <span class="grad-blue-text">lightweight</span></h2>
+  </div>
+  <div class="cc-body">
+    <div class="cc">
+      <div class="card reveal d2">
+        <h3>🧭 TC-CBF-based COLREGs-compliant safety filter</h3>
+        <ul class="clean check">
+          <li>Developed a <b>TC-CBF-QP-based framework</b> ensuring rule-compliant and direction-aware collision avoidance</li>
+          <li>Incorporated <b>ship turning capability</b> through left/right CBFs (LTC-CBF, RTC-CBF)</li>
+        </ul>
+      </div>
+      <div class="card reveal d3">
+        <h3>⚡ Efficient and high-performance</h3>
+        <ul class="clean check">
+          <li>Achieved <b>MPC-level avoidance performance</b> with significantly lower computational cost across diverse encounter scenarios</li>
+          <li>Computation time grows only slightly with traffic: <b>below 2 ms</b> even with 10 ships</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cc-stats">
+      <div class="kpi reveal d4"><div class="v grad-blue-text">0.09–0.14<small>ms</small></div><div class="l">average computation time in the multi-ship encounters</div></div>
+      <div class="kpi reveal d5"><div class="v grad-blue-text">140–167<small>×</small></div><div class="l">faster than MPC on average</div></div>
+      <div class="kpi reveal d6"><div class="v grad-blue-text">&lt; 2<small>ms</small></div><div class="l">maximum computation time, with up to 10 ships</div></div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>13</span></div>
+</section>
+
+<!-- ================= Slide 14 : Thank you ================= -->
+<section class="slide white s14">
+  <div class="ty-head">
+    <div class="reveal d1">
+      <h1><span class="grad-blue-text">Thank you</span></h1>
+      <p class="ty-sub">Questions &amp; discussion</p>
+    </div>
+    <div class="ty-contact reveal d2">
+      <span class="badge">✉️ leeck@kongju.ac.kr</span>
+      <span class="small">Changyu Lee · Kongju National University</span>
+    </div>
+  </div>
+  <div class="ty-lbl reveal d3">Additional papers applying TC-CBF</div>
+  <div class="papers">
+    <article class="paper reveal d3">
+      <div class="media"><img src="ifac_contents/tccbf_sim.png" alt="MPC-TCCBF avoids a static obstacle with a smaller detour and without slowing down, compared with distance-based CBFs under six parameter settings"></div>
+      <div class="pb">
+        <div class="pv"><span class="venue">IEEE TCST · 2026</span><a href="https://doi.org/10.1109/TCST.2026.3692226" target="_blank" rel="noopener">DOI</a><a href="https://arxiv.org/abs/2503.20280" target="_blank" rel="noopener">arXiv</a></div>
+        <h3>Turning Circle-based Control Barrier Function for Efficient Collision Avoidance of Nonholonomic Vehicles</h3>
+        <p><b>Changyu Lee</b>, Kiyong Park, Jinwhan Kim*</p>
+      </div>
+    </article>
+    <article class="paper reveal d4">
+      <div class="media"><img class="anim-clip" src="presentation_contents/v10_D4t1_mm16_poster.jpg" data-anim="presentation_contents/v10_D4t1_mm16.webp" alt="Multimodal trajectory planning with 16 candidate avoidance modes along a 33.7 km route in dense traffic" title="Click to replay"></div>
+      <div class="pb">
+        <div class="pv"><span class="venue gray">Under review</span></div>
+        <h3>Multimodal Trajectory Planning for Surface Vehicles using Turning Circle-based Control Barrier Function</h3>
+        <p><b>Changyu Lee*</b></p>
+      </div>
+    </article>
+  </div>
+  <p class="this-talk reveal d5"><span class="venue green">This talk</span><span><b>Changyu Lee</b>, Jinwook Park, Jinwhan Kim*, “Efficient COLREGs-Compliant Collision Avoidance using Turning Circle-based Control Barrier Function,” <i>Mechatronics</i>, 2026 · <a href="https://doi.org/10.1016/j.mechatronics.2026.103495" target="_blank" rel="noopener">DOI</a> · <a href="https://arxiv.org/abs/2504.19247" target="_blank" rel="noopener">arXiv</a></span></p>
+  <div class="slide-footer"><span>14</span></div>
+  <aside class="notes">
+    <p>Before I finish, one more slide. We have more papers related to TC-CBF. If you have interest in our paper, please let me know.</p>
+    <p>This is the end of my talk. Thank you very much.</p>
+  </aside>
+</section>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<div id="progress"></div>
+<div id="counter">1 / 14</div>
+<div id="navBtns">
+  <button id="btnPrev" aria-label="Previous">‹</button>
+  <button id="btnNext" aria-label="Next">›</button>
+</div>
+<div id="notesPanel" aria-live="polite"></div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let cur=0;
+  // portrait-phone scroll view (presentation_assets/deck-mobile.js): slides are laid out
+  // in a column there, so keyboard, swipe and hash navigation stand down
+  const feed=()=>document.documentElement.classList.contains('feed');
+  const notesPanel=document.getElementById('notesPanel');
+
+  // start or stop one slide: entry animations, videos, animated WebP clips
+  function setActive(s,on){
+    s.classList.toggle('active',on);
+    s.querySelectorAll('video').forEach(v=>{
+      if(on){
+        v.currentTime=0;
+        const playPromise=v.play();
+        if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+      }else{
+        v.pause();
+      }
+    });
+    // animated WebP clips play once: restart on entry, show the poster elsewhere
+    s.querySelectorAll('img[data-anim]').forEach(im=>{
+      if(!im.dataset.poster)im.dataset.poster=im.getAttribute('src');
+      im.src=on?im.dataset.anim+'?t='+Date.now():im.dataset.poster;
+    });
+  }
+  function showNotes(i){
+    const n=slides[i].querySelector('.notes');
+    notesPanel.innerHTML='<div class="nh">Speaker notes · '+(i+1)+' / '+total+'</div>'+(n?n.innerHTML:'<p>—</p>');
+    notesPanel.scrollTop=0;
+  }
+  function goTo(i,push=true){
+    i=Math.max(0,Math.min(total-1,i));
+    if(i===cur&&slides[cur].classList.contains('active'))return;
+    slides.forEach((s,k)=>setActive(s,k===i));
+    cur=i;
+    document.getElementById('counter').textContent=(i+1)+' / '+total;
+    document.getElementById('progress').style.width=((i+1)/total*100)+'%';
+    showNotes(i);
+    if(push)location.hash='#'+(i+1);
+  }
+  function next(){goTo(cur+1);}
+  function prev(){goTo(cur-1);}
+
+  document.addEventListener('keydown',e=>{
+    if(feed())return;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){goTo(0);}
+    else if(e.key==='End'){goTo(total-1);}
+    else if(e.key==='n'||e.key==='N'){document.body.classList.toggle('notes-on');}
+    else if(e.key==='f'||e.key==='F'){
+      if(document.fullscreenElement)document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+  document.getElementById('btnNext').addEventListener('click',next);
+  document.getElementById('btnPrev').addEventListener('click',prev);
+  document.querySelectorAll('img[data-anim]').forEach(im=>{
+    im.addEventListener('click',()=>{im.src=im.dataset.anim+'?t='+Date.now();});
+  });
+
+  // touch swipe (one finger, mostly horizontal, not while pinch-zoomed)
+  let tx=null,ty=0;
+  document.addEventListener('touchstart',e=>{
+    tx=e.touches.length===1?e.touches[0].clientX:null;
+    ty=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(tx===null||feed()||(window.visualViewport&&visualViewport.scale>1.05))return;
+    const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dy)>Math.abs(dx))return;
+    if(dx<-50)next();else if(dx>50)prev();
+  },{passive:true});
+
+  // scale stage to fit
+  const stage=document.getElementById('stage');
+  function fit(){
+    const s=Math.min(innerWidth/1280,innerHeight/720);
+    stage.style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();
+
+  window.deck={slides,goTo,setActive,fit,get cur(){return cur;}};
+
+  // init from hash
+  const h=parseInt((location.hash||'').replace('#',''),10);
+  goTo(isNaN(h)?0:h-1,false);
+  addEventListener('hashchange',()=>{
+    const n=parseInt(location.hash.replace('#',''),10);
+    if(!isNaN(n)&&!feed())goTo(n-1,false);
+  });
+})();
+</script>
+<script>
+// animated figures: click a scene to replay the slide's step animations from the start
+document.querySelectorAll('.bg-scene').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const sec=el.closest('.slide');
+    if(!sec||!sec.getAnimations)return;
+    sec.getAnimations({subtree:true}).forEach(a=>{
+      if(a.animationName&&a.animationName!=='rise'){a.cancel();a.play();}
+    });
+  });
+});
+</script>
+</body>
+</html>
