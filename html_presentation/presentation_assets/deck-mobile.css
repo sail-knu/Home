@@ -1,0 +1,50 @@
+/* Mobile support for the slide decks in html_presentation/ (behaviour in deck-mobile.js). */
+
+/* ============ Touch screens, one slide at a time ============ */
+/* no hover to reveal the buttons, so keep them visible at the screen edges */
+@media (hover:none){
+  #navBtns{
+    opacity:1;left:0;right:0;top:50%;bottom:auto;transform:translateY(-50%);
+    justify-content:space-between;padding:0 10px;pointer-events:none;
+  }
+  #navBtns button{
+    pointer-events:auto;touch-action:manipulation;
+    width:36px;height:36px;font-size:17px;background:rgba(20,20,22,.45);
+  }
+  #counter{bottom:12px;right:14px;}
+}
+
+/* ============ Portrait phones: scroll view ============ */
+/* html.feed is set by deck-mobile.js; --fz = (screen width - gutters) / 1280 */
+#feedHead,#feedFoot{display:none;}
+html.feed,html.feed body{height:auto;overflow:visible;}
+html.feed body{overflow-x:hidden;background:#161617;}
+html.feed #viewport{position:static;display:block;padding:0 12px;background:none;}
+html.feed #stage{width:auto;height:auto;transform:none!important;}
+html.feed .slide{
+  position:relative;inset:auto;opacity:1;visibility:visible;transition:none;
+  zoom:var(--fz,.28);
+  margin-bottom:calc(12px / var(--fz,.28));
+  border-radius:calc(10px / var(--fz,.28));
+  box-shadow:0 0 0 calc(1px / var(--fz,.28)) rgba(255,255,255,.08);
+}
+html.feed #navBtns{display:none;}
+html.feed #counter{bottom:calc(14px + env(safe-area-inset-bottom));right:14px;}
+
+html.feed #feedHead{display:block;padding:24px 16px 18px;color:#f5f5f7;}
+#feedHead .fh-eyebrow{font-size:12.5px;line-height:1.4;font-weight:600;color:#2997ff;margin-bottom:6px;}
+#feedHead .fh-title{font-size:20px;line-height:1.35;font-weight:700;letter-spacing:-.02em;word-break:keep-all;}
+#feedHead .fh-meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px;
+  font-size:13px;line-height:1.4;color:#a1a1a6;
+}
+#feedHead .fh-count{padding:3px 10px;border-radius:980px;background:rgba(255,255,255,.1);color:#f5f5f7;font-weight:600;}
+#feedHead .fh-rotate{display:inline-flex;align-items:center;gap:6px;}
+#feedHead .fh-rotate svg{width:17px;height:17px;flex:none;}
+
+html.feed #feedFoot{display:flex;justify-content:center;padding:10px 0 calc(72px + env(safe-area-inset-bottom));}
+#feedFoot button{
+  border:none;border-radius:980px;padding:10px 20px;cursor:pointer;
+  font:inherit;font-size:14px;font-weight:600;
+  background:rgba(255,255,255,.1);color:#f5f5f7;
+}

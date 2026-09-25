@@ -50,7 +50,7 @@ body{
 }
 /* ============ Stage & slides ============ */
 #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
-#stage{position:relative;width:1280px;height:720px;transform-origin:center center;}
+#stage{position:relative;width:1280px;height:720px;flex:none;transform-origin:center center;}
 .slide{
   position:absolute;inset:0;width:1280px;height:720px;
   padding:72px 90px;
@@ -682,6 +682,8 @@ body:hover #navBtns{opacity:1;}
   color:rgba(255,255,255,.4);font-weight:500;
 }
 </style>
+<link rel="stylesheet" href="presentation_assets/deck-mobile.css">
+<script src="presentation_assets/deck-mobile.js"></script>
 </head>
 <body>
 
@@ -1902,41 +1904,47 @@ body:hover #navBtns{opacity:1;}
   const slides=[...document.querySelectorAll('.slide')];
   const total=slides.length;
   let cur=0;
+  // portrait-phone scroll view (presentation_assets/deck-mobile.js): slides are laid out
+  // in a column there, so keyboard, swipe and hash navigation stand down
+  const feed=()=>document.documentElement.classList.contains('feed');
 
+  // start or stop one slide: entry animations, videos, animated WebP clips, bar charts
+  function setActive(s,on){
+    s.classList.toggle('active',on);
+    s.querySelectorAll('video').forEach(v=>{
+      if(on){
+        v.currentTime=0;
+        const playPromise=v.play();
+        if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+      }else{
+        v.pause();
+      }
+    });
+    // animated WebP clips play once: restart on entry, show the poster elsewhere
+    s.querySelectorAll('img[data-anim]').forEach(im=>{
+      if(!im.dataset.poster)im.dataset.poster=im.getAttribute('src');
+      im.src=on?im.dataset.anim+'?t='+Date.now():im.dataset.poster;
+    });
+    // animate charts
+    if(on)s.querySelectorAll('.bar').forEach(b=>{
+      b.style.height='0%';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.height=b.dataset.h+'%';}));
+    });
+  }
   function goTo(i,push=true){
     i=Math.max(0,Math.min(total-1,i));
     if(i===cur&&slides[cur].classList.contains('active'))return;
-    slides.forEach((s,k)=>{
-      s.classList.toggle('active',k===i);
-      s.querySelectorAll('video').forEach(v=>{
-        if(k===i){
-          v.currentTime=0;
-          const playPromise=v.play();
-          if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
-        }else{
-          v.pause();
-        }
-      });
-      // animated WebP clips play once: restart on entry, show the poster elsewhere
-      s.querySelectorAll('img[data-anim]').forEach(im=>{
-        if(!im.dataset.poster)im.dataset.poster=im.getAttribute('src');
-        im.src=k===i?im.dataset.anim+'?t='+Date.now():im.dataset.poster;
-      });
-    });
+    slides.forEach((s,k)=>setActive(s,k===i));
     cur=i;
     document.getElementById('counter').textContent=(i+1)+' / '+total;
     document.getElementById('progress').style.width=((i+1)/total*100)+'%';
     if(push)location.hash='#'+(i+1);
-    // animate charts
-    slides[i].querySelectorAll('.bar').forEach(b=>{
-      b.style.height='0%';
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.height=b.dataset.h+'%';}));
-    });
   }
   function next(){goTo(cur+1);}
   function prev(){goTo(cur-1);}
 
   document.addEventListener('keydown',e=>{
+    if(feed())return;
     if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
     else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();prev();}
     else if(e.key==='Home'){goTo(0);}
@@ -1952,11 +1960,16 @@ body:hover #navBtns{opacity:1;}
     im.addEventListener('click',()=>{im.src=im.dataset.anim+'?t='+Date.now();});
   });
 
-  // touch swipe
-  let tx=0;
-  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+  // touch swipe (one finger, mostly horizontal, not while pinch-zoomed)
+  let tx=null,ty=0;
+  document.addEventListener('touchstart',e=>{
+    tx=e.touches.length===1?e.touches[0].clientX:null;
+    ty=e.touches[0].clientY;
+  },{passive:true});
   document.addEventListener('touchend',e=>{
-    const dx=e.changedTouches[0].clientX-tx;
+    if(tx===null||feed()||(window.visualViewport&&visualViewport.scale>1.05))return;
+    const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dy)>Math.abs(dx))return;
     if(dx<-50)next();else if(dx>50)prev();
   },{passive:true});
 
@@ -1968,12 +1981,14 @@ body:hover #navBtns{opacity:1;}
   }
   addEventListener('resize',fit);fit();
 
+  window.deck={slides,goTo,setActive,fit,get cur(){return cur;}};
+
   // init from hash
   const h=parseInt((location.hash||'').replace('#',''),10);
   goTo(isNaN(h)?0:h-1,false);
   addEventListener('hashchange',()=>{
     const n=parseInt(location.hash.replace('#',''),10);
-    if(!isNaN(n))goTo(n-1,false);
+    if(!isNaN(n)&&!feed())goTo(n-1,false);
   });
 })();
 </script>
