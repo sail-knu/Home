@@ -1191,9 +1191,9 @@
     if (typeof window.CanvasNestSetColor !== "function") return;
     var styles = getComputedStyle(document.documentElement);
     var rgb = [
-      styles.getPropertyValue("--theme-primary-r").trim() || "29",
-      styles.getPropertyValue("--theme-primary-g").trim() || "78",
-      styles.getPropertyValue("--theme-primary-b").trim() || "137"
+      styles.getPropertyValue("--theme-primary-r").trim() || "0",
+      styles.getPropertyValue("--theme-primary-g").trim() || "113",
+      styles.getPropertyValue("--theme-primary-b").trim() || "227"
     ].join(",");
     window.CanvasNestSetColor(rgb);
   };
@@ -1210,7 +1210,7 @@
       btn.setAttribute("aria-pressed", on ? "true" : "false");
     });
     const themeColor = document.getElementById("theme-color-meta");
-    if (themeColor) themeColor.setAttribute("content", next === "dark" ? "#0d1622" : "#f7f8fa");
+    if (themeColor) themeColor.setAttribute("content", next === "dark" ? "#000000" : "#f5f5f7");
     if (persist) {
       try { localStorage.setItem("sail-theme", next); } catch (e) {}
     }

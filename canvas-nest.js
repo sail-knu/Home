@@ -1,7 +1,7 @@
 (function () {
   var tag = document.currentScript || document.getElementsByTagName("script")[document.getElementsByTagName("script").length - 1];
-  var color = (tag && tag.getAttribute("color")) || "29,78,137";
-  var colorB = "13,38,68";
+  var color = (tag && tag.getAttribute("color")) || "0,113,227";
+  var colorB = "123,108,255";
   var opacity = parseFloat((tag && tag.getAttribute("opacity")) || "0.32");
   var zIndex = (tag && tag.getAttribute("zIndex")) || "0";
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -309,7 +309,7 @@
     ctx.translate(bot.x, bot.y);
     ctx.rotate(bot.th);
     ctx.globalAlpha = opacity;
-    ctx.fillStyle = "#1a2330";
+    ctx.fillStyle = "#1d1d1f";
     ctx.fillRect(-10, -16, 18, 6);
     ctx.fillRect(-10, 10, 18, 6);
     ctx.fillStyle = "rgb(" + bot.rgb + ")";
