@@ -452,6 +452,12 @@ html[data-lang="ko"] .univ-lockup {
   height: 48px;
 }
 
+.univ-logo {
+  display: block;
+  height: clamp(40px, 7vw, 60px);
+  width: auto;
+}
+
 .hero h1 {
   font-family: "Outfit", sans-serif;
   font-size: clamp(2.6rem, 6.5vw, 4.5rem);
@@ -459,10 +465,6 @@ html[data-lang="ko"] .univ-lockup {
   letter-spacing: 0.08em;
   line-height: 1;
   color: var(--primary-color);
-  background: var(--grad-hero);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .hero h2 {
@@ -2626,6 +2628,15 @@ html[data-theme="dark"] .demo-app {
 
 html[data-theme="dark"] .univ-seal {
   filter: brightness(1.18) contrast(1.04);
+}
+
+.univ-logo.seal-dark,
+html[data-theme="dark"] .univ-logo.seal-light {
+  display: none;
+}
+
+html[data-theme="dark"] .univ-logo.seal-dark {
+  display: block;
 }
 
 html[data-theme="dark"] .footer-sail-mark {
