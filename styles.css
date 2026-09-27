@@ -279,8 +279,17 @@ button,
   color: var(--switch-fg);
 }
 
+.theme-btn:not(.active) {
+  color: color-mix(in srgb, var(--text-color) 62%, transparent);
+}
+
 .theme-btn.active {
-  color: var(--on-primary);
+  background: #0071e3;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .theme-btn.active {
+  background: #0a84ff;
 }
 
 .theme-btn .icon {
@@ -289,6 +298,7 @@ button,
   vertical-align: top;
   color: inherit;
   stroke: currentColor;
+  stroke-width: 2.2;
 }
 
 .logo-header,
