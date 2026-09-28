@@ -1433,6 +1433,15 @@ a.project-page:hover {
   object-fit: cover;
 }
 
+.robot-visual-contain {
+  background: linear-gradient(160deg, #f5f6fa, #edecf7);
+}
+
+.robot-visual-contain img {
+  object-fit: contain;
+  padding: 10px;
+}
+
 .robot-visual .icon {
   width: 64px;
   height: 40px;
