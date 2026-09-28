@@ -33,7 +33,7 @@
   }
   var raf = 0;
   function isMembersPage(id) {
-    return id === "#members" || id === "#professor" || id === "#member-im" || id === "#member-yu" || id === "#member-woo";
+    return id === "#members" || id === "#professor" || id === "#member-im" || id === "#member-yu" || id === "#member-woo" || id === "#member-kwak";
   }
   var activeCount = isMembersPage(window.location.hash) ? 2 : 0;
   if (activeCount <= 0) canvas.style.display = "none";

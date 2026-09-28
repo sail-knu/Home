@@ -83,6 +83,7 @@
       "#member-im": "#members",
       "#member-yu": "#members",
       "#member-woo": "#members",
+      "#member-kwak": "#members",
       "#lecture-future": "#lecture",
       "#lecture-future-group": "#lecture",
       "#lecture-mechatronics": "#lecture",
