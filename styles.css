@@ -1293,6 +1293,11 @@ a.project-page:hover {
   font-size: 0.75rem;
 }
 
+/* student leading the project (실무책임 / Student Lead) */
+.project-person .member-role .jcr-pill {
+  font-size: 0.9em;
+}
+
 .video-item figcaption {
   margin-top: 8px;
   color: var(--muted-text);
