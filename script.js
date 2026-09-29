@@ -858,6 +858,7 @@
       { lec: "4", title: "소프트웨어", src: "lecture/mpc/04-software.html" },
       { lec: "4", title: "Linear (CVXGEN)", src: "lecture/mpc/04-linear.html" },
       { lec: "4", title: "Nonlinear (CasADi)", src: "lecture/mpc/04-nonlinear.html" },
+      { lec: "4", title: "Web Demo (CasADi WASM)", href: "https://web.casadi.org/blog/wasm-trajectory-lab/lab.html" },
       { lec: "5", title: "Tube-based MPC", src: "lecture/mpc/05-tube.html" },
       { lec: "6", title: "MPPI", src: "lecture/mpc/06-mppi.html" },
       { lec: "6", title: "선박 충돌 회피", embed: "mppi" }
@@ -891,7 +892,7 @@
     }
 
     function noteKey(note) {
-      return note.src || ("embed:" + note.embed);
+      return note.src || note.href || ("embed:" + note.embed);
     }
 
     function setMppiVisible(on) {
@@ -935,6 +936,16 @@
       simNav.replaceChildren();
       simNav.classList.toggle("is-empty", list.length <= 1);
       list.forEach((note) => {
+        if (note.href) {
+          const link = document.createElement("a");
+          link.className = "sim-pick-btn";
+          link.textContent = note.title;
+          link.href = note.href;
+          link.target = "_blank";
+          link.rel = "noopener";
+          simNav.appendChild(link);
+          return;
+        }
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "sim-pick-btn" + (noteKey(note) === state.src ? " active" : "");
@@ -945,7 +956,7 @@
     }
 
     function showNote(note) {
-      if (!note) return;
+      if (!note || note.href) return;
       const seq = ++state.seq;
       state.lec = note.lec;
       state.src = noteKey(note);
