@@ -296,6 +296,12 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   .slide[data-name="현재"] .card { min-height: 0; height: auto; }
   .slide[data-name="현재"] .card p + p { margin-top: 8px; }
   .slide[data-name="현재"] .card .src { margin-top: 12px; color: #8e8e8e; font-size: 13px; }
+  /* programs the lab takes part in: a compact row under the three funded projects */
+  .cards-mini { grid-template-columns: repeat(2, 1fr); margin-top: 16px; }
+  .slide[data-name="현재"] .cards-mini .card { padding: 16px 24px 18px; }
+  .cards-mini .mini-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; }
+  .cards-mini .mini-line h3 { margin: 6px 0 0; }
+  .cards-mini .mini-line p { margin-top: 6px; }
   .card {
     min-height: 280px; display: flex; flex-direction: column;
     border: 1px solid var(--line); border-radius: 16px; padding: 26px 24px 22px; background: #070707;
@@ -839,9 +845,19 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
               <polygon class="planner" points="0,-7 16,0 0,7"></polygon>
             </svg>
           </div>
-          <span class="idx">03 · 산학</span>
+          <span class="idx">03 · 2026 · 산학</span>
           <h3>삼성중공업</h3>
           <p>경로계획 · 제어</p>
+        </article>
+      </div>
+      <div class="cards cards-mini">
+        <article class="card">
+          <span class="idx">04 · 2026–2030</span>
+          <div class="mini-line"><h3>응용융합기술원</h3><p>국립공주대학교 · 충남대학교</p></div>
+        </article>
+        <article class="card">
+          <span class="idx">05 · 2026–2035</span>
+          <div class="mini-line"><h3>글로컬랩</h3><p>국립공주대학교 · KAIST · 한밭대학교</p></div>
         </article>
       </div>
     </div>
@@ -1033,6 +1049,12 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
       <p class="kicker">SAIL</p>
       <h2>연구실 인원</h2>
       <div class="roster roster-compact">
+        <article>
+          <div class="ph">곽</div>
+          <h3>곽정미<span>Jeongmi Kwak</span></h3>
+          <p class="role">석사과정</p>
+          <p class="since">2026.09–</p>
+        </article>
         <article>
           <div class="ph">임</div>
           <h3>임재민<span>Jaemin Im</span></h3>
