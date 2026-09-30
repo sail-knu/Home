@@ -493,7 +493,8 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   }
   .yearline h3 { margin: 0 0 14px; font-size: 22px; }
   .yearline ul { margin: 0; padding: 0; list-style: none; }
-  .yearline li { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+  .yearline li { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.45; word-break: keep-all; }
+  .yearline li .nw { white-space: nowrap; }
   .yearline li b { display: block; color: #f0f0f0; font-weight: 600; }
   .year-note {
     margin-top: 22px; padding: 16px 18px; border-radius: 12px;
@@ -1141,9 +1142,11 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
         <article>
           <h3>과제 선정</h3>
           <ul>
-            <li><b>한국연구재단 신진</b>도달가능성 기반 MPPI, 멀티모달 안전 궤적. 2026–2029</li>
-            <li><b>신임교수 정착연구</b>외란에 강건한 무인이동체 모델예측제어. 2026–2027</li>
-            <li><b>삼성중공업</b>경로계획 · 제어</li>
+            <li><b>한국연구재단 신진</b>도달가능성 기반 MPPI, 멀티모달 안전 궤적. <span class="nw">2026–2029</span></li>
+            <li><b>신임교수 정착연구</b>외란에 강건한 무인이동체 모델예측제어. <span class="nw">2026–2027</span></li>
+            <li><b>삼성중공업</b>경로계획 · 제어. 2026</li>
+            <li><b>응용융합기술원</b>국립공주대학교 · 충남대학교. <span class="nw">2026–2030</span></li>
+            <li><b>글로컬랩</b>국립공주대학교 · KAIST · 한밭대학교. <span class="nw">2026–2035</span></li>
           </ul>
         </article>
         <article>
@@ -1151,6 +1154,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
           <ul>
             <li><b>유재민 · 2026.01</b>ICROS 2026, 적응형 제어장벽함수. 학부 첫 학기 1저자</li>
             <li><b>임재민 · 2026.03</b>모바일 로봇 안전 경로계획</li>
+            <li><b>곽정미 · 2026.09</b>석사과정</li>
             <li><b>우민지 · 2026.09</b>멀티모달 MPPI</li>
           </ul>
         </article>
