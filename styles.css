@@ -1305,6 +1305,32 @@ a.project-page:hover {
   line-height: 1.45;
 }
 
+.seed-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.seed-picker button {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--muted-text);
+  cursor: pointer;
+}
+
+.seed-picker button.active,
+.seed-picker button:hover {
+  color: var(--on-primary);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
 .video-embed {
   position: relative;
   width: 100%;

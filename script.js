@@ -211,6 +211,19 @@
     });
   });
 
+  // SideNet replays: one player per card, the seed buttons swap the clip
+  document.querySelectorAll(".seed-clips").forEach((fig) => {
+    const video = fig.querySelector("video");
+    const buttons = fig.querySelectorAll(".seed-picker button");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.toggle("active", b === btn));
+        video.poster = `images/research/sidenet/poster_mixed_seed${btn.dataset.seed}.jpg`;
+        video.src = `images/research/sidenet/video_mixed_seed${btn.dataset.seed}.mp4`;
+      });
+    });
+  });
+
   document.querySelectorAll(".project-grid").forEach((grid) => {
     grid.querySelectorAll(".project-card").forEach((card) => {
       card.addEventListener("click", (e) => {

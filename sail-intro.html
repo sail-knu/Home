@@ -869,7 +869,7 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
         <p class="kicker">In progress</p>
         <h2>진행중인 연구</h2>
         <div class="now-grid">
-          <article class="now-card" data-thumb="images/thumbs/case_mc.png">
+          <article class="now-card" data-thumb="images/research/sidenet/poster_mixed_seed479.jpg">
             <div class="head">
               <span>01</span>
               <div>
@@ -877,13 +877,18 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
                 <em>회피 모드 모사학습 기반 멀티모달 MPC</em>
               </div>
             </div>
-            <div class="player" data-kind="mp4"
-              data-src="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/video_case_mc.mp4"
-              data-poster="https://sail-knu.github.io/Imitation-Learning-of-Avoidance-Modes-for-Computationally-Efficient-MM-MPC/static/poster_case_mc.png">
+            <div class="player" id="seed-player" data-kind="mp4"
+              data-src="images/research/sidenet/video_mixed_seed479.mp4"
+              data-poster="images/research/sidenet/poster_mixed_seed479.jpg">
               <div class="frame">
                 <video controls playsinline preload="metadata"></video>
                 <img class="still" alt="">
               </div>
+            </div>
+            <div class="switch" id="seed-switch" aria-label="Mixed-traffic seed">
+              <button type="button" class="is-on" data-seed="479">Seed 479</button>
+              <button type="button" data-seed="494">Seed 494</button>
+              <button type="button" data-seed="447">Seed 447</button>
             </div>
             <ul class="now-points">
               <li>A neural net picks the avoidance direction.</li>
@@ -1410,6 +1415,22 @@ try { if (localStorage.getItem("sail-theme") === "light") document.documentEleme
   function unmount(player) {
     if (player) clearFrame(player.querySelector(".frame"));
   }
+
+  // SideNet replays (slide 진행 연구): the seed buttons swap the clip in the first card
+  var seedPlayer = document.getElementById("seed-player");
+  var seedSwitch = document.getElementById("seed-switch");
+  Array.prototype.forEach.call(seedSwitch.children, function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      Array.prototype.forEach.call(seedSwitch.children, function (el) {
+        el.classList.toggle("is-on", el === b);
+      });
+      var seed = b.getAttribute("data-seed");
+      seedPlayer.setAttribute("data-src", "images/research/sidenet/video_mixed_seed" + seed + ".mp4");
+      seedPlayer.setAttribute("data-poster", "images/research/sidenet/poster_mixed_seed" + seed + ".jpg");
+      if (seedPlayer.closest(".slide").classList.contains("is-active")) mount(seedPlayer);
+    });
+  });
 
   function applyClip(player, copy, clip) {
     player.setAttribute("data-kind", clip.kind);
