@@ -41,9 +41,6 @@
   --project-link-hover-bg: rgba(255, 149, 0, 0.26);
   --project-link-hover: #8f4300;
   --toolbar-bg: color-mix(in srgb, #fff 92%, transparent);
-  --cursor-fill: #0071e3;
-  --cursor-stroke: #ffffff;
-  --cursor-shadow: rgba(0, 0, 0, 0.3);
   --still-bg: #ffffff;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
   --glow-a: 0.07;
@@ -93,9 +90,6 @@
   --project-link-hover-bg: rgba(255, 159, 10, 0.3);
   --project-link-hover: #ffc05a;
   --toolbar-bg: color-mix(in srgb, #161617 92%, transparent);
-  --cursor-fill: #2997ff;
-  --cursor-stroke: #000000;
-  --cursor-shadow: rgba(0, 0, 0, 0.5);
   --still-bg: #1c1c1e;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
   --glow-a: 0.14;
@@ -109,11 +103,13 @@
 }
 
 html {
+  min-height: 100%;
   scroll-behavior: smooth;
   background:
     radial-gradient(ellipse 70% 46% at 88% 6%, rgba(var(--theme-primary-r), var(--theme-primary-g), var(--theme-primary-b), var(--glow-a)), transparent 58%),
     radial-gradient(ellipse 58% 42% at 6% 94%, rgba(var(--theme-secondary-r), var(--theme-secondary-g), var(--theme-secondary-b), var(--glow-b)), transparent 52%),
     var(--bg-color);
+  background-repeat: no-repeat;
 }
 
 ::selection {
@@ -607,10 +603,6 @@ html[data-lang="ko"] .univ-lockup {
   gap: 4px 16px;
 }
 
-#home-news .news-item {
-  cursor: pointer;
-}
-
 .scroll-chevron {
   width: 28px;
   height: 28px;
@@ -741,6 +733,8 @@ html[data-lang="ko"] .univ-lockup {
 .research-card {
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
   transition:
     border-color var(--transition),
@@ -773,6 +767,13 @@ html[data-lang="ko"] .univ-lockup {
 .research-card.selected .research-index {
   color: var(--primary-color);
 }
+
+/* disclosure label swaps (research overview + research detail cards) */
+.when-open { display: none; }
+.research-card.selected .when-open,
+.bento-wrapper.expanded .when-open { display: inline; }
+.research-card.selected .when-closed,
+.bento-wrapper.expanded .when-closed { display: none; }
 
 .research-grid:has(.research-card:hover) .research-card:not(:hover):not(.selected),
 .research-grid:has(.research-card.selected) .research-card:not(.selected):not(:hover) {
@@ -865,43 +866,6 @@ html[data-lang="ko"] .univ-lockup {
   color: var(--primary-color);
 }
 
-#lab-overview .details-list {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition:
-    border-color var(--transition),
-    box-shadow var(--transition),
-    opacity var(--transition);
-}
-
-#lab-overview .details-list:hover:not(.selected) {
-  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
-}
-
-#lab-overview .details-list.selected {
-  border-color: var(--primary-color);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
-    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
-}
-
-#lab-overview .details-list.selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--primary-color);
-}
-
-#lab-overview .details-grid:has(.details-list:hover) .details-list:not(:hover):not(.selected),
-#lab-overview .details-grid:has(.details-list.selected) .details-list:not(.selected):not(:hover) {
-  opacity: 0.38;
-}
-
 .disclaimer-box {
   display: flex;
   gap: 10px;
@@ -946,9 +910,7 @@ html[data-lang="ko"] .univ-lockup {
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--surface-border);
-  background:
-    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--primary-color) 22%, transparent), transparent 32%),
-    linear-gradient(160deg, var(--bento-from), var(--bento-to));
+  background: linear-gradient(160deg, var(--bento-from), var(--bento-to));
   cursor: pointer;
   transition:
     border-color var(--transition),
@@ -994,6 +956,33 @@ html[data-lang="ko"] .univ-lockup {
   justify-content: flex-end;
 }
 
+/* research cards: text on the left, a representative still on the right */
+.bento-item:has(> .bento-media) {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+.bento-item:has(> .bento-media) > .bento-content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.bento-media {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  overflow: hidden;
+  background: var(--still-bg);
+}
+
+.bento-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .bento-badge {
   align-self: flex-start;
   font-size: 0.72rem;
@@ -1022,27 +1011,46 @@ html[data-lang="ko"] .univ-lockup {
   line-height: 1.55;
 }
 
-.bento-action {
+.bento-action,
+.research-more {
+  appearance: none;
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--accent-soft);
+  font: inherit;
   font-size: 0.88rem;
+  cursor: pointer;
 }
 
-.bento-action .icon {
+.bento-action {
+  margin-top: 14px;
+}
+
+.research-more {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.bento-action .icon,
+.research-more .icon {
   width: 14px;
   height: 14px;
   transition: transform 0.25s ease;
 }
 
-.bento-wrapper.expanded .bento-action {
+.bento-wrapper.expanded .bento-action,
+.research-card.selected .research-more {
   color: var(--primary-color);
   font-weight: 700;
 }
 
-.bento-wrapper.expanded .bento-action .icon {
+.bento-wrapper.expanded .bento-action .icon,
+.research-card.selected .research-more .icon {
   transform: rotate(180deg);
 }
 
@@ -1073,10 +1081,48 @@ html[data-lang="ko"] .univ-lockup {
   color: var(--copy-color);
 }
 
-.ack-list {
+.ack-details {
   margin-top: 16px;
-  font-size: 0.44rem;
-  line-height: 1.45;
+}
+
+.ack-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ack-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ack-details > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--transition);
+}
+
+.ack-details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.ack-details > summary:hover {
+  color: var(--primary-color);
+}
+
+.ack-list {
+  margin-top: 10px;
+  padding-left: 1.1em;
+  font-size: 0.8rem;
+  line-height: 1.55;
   color: var(--muted-text);
 }
 
@@ -1412,15 +1458,6 @@ a.project-page:hover {
   color: #f4f2ff;
 }
 
-.bento-badge.application {
-  background: var(--secondary-color);
-}
-
-.bento-badge.interest {
-  background: #2a6f7a;
-  color: #f3fafb;
-}
-
 #research-interest .bento-item {
   cursor: default;
 }
@@ -1490,6 +1527,17 @@ a.project-page:hover {
   gap: 24px;
 }
 
+.profile-wrap > .profile-card {
+  align-self: start;
+}
+
+@media (min-width: 993px) and (min-height: 700px) {
+  .profile-wrap > .profile-card {
+    position: sticky;
+    top: 88px;
+  }
+}
+
 .profile-photo {
   width: 100%;
   aspect-ratio: 1;
@@ -1537,6 +1585,32 @@ a.project-page:hover {
 
 .profile-card h2 {
   font-family: "Outfit", sans-serif;
+}
+
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.profile-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 32%, var(--surface-border));
+  border-radius: 999px;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.profile-links a:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--on-primary);
 }
 
 .contact-mini {
@@ -1612,49 +1686,14 @@ a.project-page:hover {
 
 a.member-card {
   color: inherit;
-}
-
-.member-card,
-.news-item {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
   transition:
     border-color var(--transition),
-    box-shadow var(--transition),
-    opacity var(--transition);
+    box-shadow var(--transition);
 }
 
-.member-card:hover:not(.selected),
-.news-item:hover:not(.selected) {
+a.member-card:hover {
   border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
-}
-
-.member-card.selected,
-.news-item.selected {
-  border-color: var(--primary-color);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
-    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
-}
-
-.member-card.selected::before,
-.news-item.selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--primary-color);
-}
-
-#members:has(.member-card:hover) .member-card:not(:hover):not(.selected),
-#members:has(.member-card.selected) .member-card:not(.selected):not(:hover),
-.news-list:has(.news-item:hover) .news-item:not(:hover):not(.selected),
-.news-list:has(.news-item.selected) .news-item:not(.selected):not(:hover) {
-  opacity: 0.38;
 }
 
 .lecture-sim-btn {
@@ -2032,6 +2071,44 @@ a.member-card {
   margin-bottom: 8px;
 }
 
+/* Selected Journals folds away under the recent list */
+.selected-block > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.selected-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.selected-block > summary .subsection-title {
+  margin-bottom: 0;
+}
+
+.selected-block > summary .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--primary-color);
+  transition: transform var(--transition);
+}
+
+.selected-block > summary:hover .subsection-title {
+  color: var(--primary-color);
+}
+
+.selected-block[open] > summary {
+  margin-bottom: 16px;
+}
+
+.selected-block[open] > summary .icon {
+  transform: rotate(180deg);
+}
+
 .jcr-pill {
   display: inline-block;
   vertical-align: 0.12em;
@@ -2052,47 +2129,6 @@ a.member-card {
 
 .lecture-grid {
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-}
-
-.lecture-card {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition:
-    border-color var(--transition),
-    box-shadow var(--transition),
-    opacity var(--transition);
-}
-
-.lecture-card:hover:not(.selected) {
-  border-color: color-mix(in srgb, var(--primary-color) 42%, var(--surface-border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 16%, transparent);
-}
-
-.lecture-card.selected {
-  border-color: var(--primary-color);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color) 26%, transparent),
-    0 12px 28px color-mix(in srgb, var(--primary-color) 14%, transparent);
-}
-
-.lecture-card.selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--primary-color);
-}
-
-#lecture:has(.lecture-card:hover) .lecture-card:not(:hover):not(.selected),
-#lecture:has(.lecture-card.selected) .lecture-card:not(.selected):not(:hover) {
-  opacity: 0.38;
-}
-
-.lecture-year + .lecture-year {
-  margin-top: 8px;
 }
 
 .course-wrap {
@@ -2632,27 +2668,87 @@ html[data-theme="dark"] .demo-app {
   grid-column: 2;
 }
 
+/* photos fill a 3:2 frame; posters keep a portrait frame */
 .gallery-slot {
   margin: 0;
   width: 100%;
-  aspect-ratio: 3 / 4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  aspect-ratio: 3 / 2;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--surface-border);
-  background: var(--photo-to);
+  background: var(--still-bg);
+}
+
+.gallery-slot.is-poster {
+  aspect-ratio: 5 / 7;
+}
+
+.gallery-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: zoom-in;
+}
+
+.gallery-link:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: -3px;
 }
 
 .gallery-slot img {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.gallery-slot img.focus-top {
+  object-position: 50% 15%;
+}
+
+.gallery-link:hover img {
+  transform: scale(1.03);
+}
+
+.lightbox {
+  /* the global reset zeroes margins; a modal dialog centers itself with margin: auto */
+  margin: auto;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.lightbox img {
+  display: block;
+  max-width: 92vw;
+  max-height: 88vh;
   width: auto;
   height: auto;
-  object-fit: contain;
-  object-position: center;
+  border-radius: 10px;
+  cursor: zoom-out;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .lecture-term {
@@ -2808,51 +2904,12 @@ html[data-theme="dark"] .footer-sail-mark {
   .robot-media { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
+  .bento-item:has(> .bento-media) { grid-template-columns: 1fr; }
+  .bento-item:has(> .bento-media) > .bento-content { grid-row: 2; }
+  .bento-media { grid-column: 1; grid-row: 1; aspect-ratio: 16 / 9; }
   .collab-card .member-role {
     white-space: normal;
   }
-}
-
-html.has-sail-cursor,
-html.has-sail-cursor * {
-  cursor: none !important;
-}
-
-html.has-sail-cursor iframe,
-html.has-sail-cursor input,
-html.has-sail-cursor textarea {
-  cursor: auto !important;
-}
-
-.sail-cursor {
-  position: fixed;
-  inset: 0;
-  z-index: 4000;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.sail-cursor.is-on { opacity: 1; }
-
-.sail-cursor-pointer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
-  overflow: visible;
-  filter: drop-shadow(0 1px 1px var(--cursor-shadow));
-  will-change: transform;
-}
-
-.sail-cursor-pointer path,
-#sail-cursor-pointer path {
-  fill: var(--cursor-fill);
-  stroke: var(--cursor-stroke);
-  stroke-width: 1.6;
-  stroke-linejoin: round;
-  paint-order: stroke fill;
 }
 
 @media (prefers-reduced-motion: reduce) {

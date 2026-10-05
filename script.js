@@ -67,6 +67,19 @@
     });
   })();
 
+  // Publications: the five newest journal papers, cloned from the International Journal tab
+  (function fillRecentJournals() {
+    const dest = document.getElementById("recent-journals");
+    const items = document.querySelectorAll("#journal .pub-list > li");
+    if (!dest || !items.length) return;
+    [...items].slice(0, 5).forEach((item) => {
+      const li = item.cloneNode(true);
+      const lead = li.firstChild;
+      if (lead && lead.nodeType === Node.TEXT_NODE) lead.textContent = lead.textContent.replace(/^\s*\[\d+\]\s*/, "");
+      dest.appendChild(li);
+    });
+  })();
+
   if (hamburger && navPanel) {
     hamburger.addEventListener("click", () => {
       setMenuOpen(!navPanel.classList.contains("active"));
@@ -152,12 +165,10 @@
   function setResearchCardOpen(wrapper, open) {
     const item = wrapper.querySelector(".bento-item");
     const details = wrapper.querySelector(".bento-details");
-    const actionText = wrapper.querySelector(".action-text");
     wrapper.classList.toggle("expanded", open);
     item?.classList.toggle("expanded", open);
-    item?.setAttribute("aria-expanded", open ? "true" : "false");
+    wrapper.querySelector(".bento-action")?.setAttribute("aria-expanded", open ? "true" : "false");
     if (details) details.style.maxHeight = open ? details.scrollHeight + "px" : null;
-    if (actionText) actionText.textContent = open ? "Close Details" : "View Details";
   }
 
   function collapseResearchCards() {
@@ -187,27 +198,19 @@
     document.querySelectorAll(".overview-videos").forEach((el) => {
       el.hidden = el.dataset.core !== core;
     });
+    document.querySelectorAll(".research-grid .research-card").forEach((card) => {
+      card.querySelector(".research-more")?.setAttribute("aria-expanded", card.dataset.core === core ? "true" : "false");
+    });
   }
 
-  document.querySelectorAll("#lecture .lecture-card, .research-grid .research-card").forEach((card) => {
+  document.querySelectorAll(".research-grid .research-card").forEach((card) => {
     card.addEventListener("click", () => {
       const on = card.classList.contains("selected");
-      const scope = card.closest(".research-grid") || document.getElementById("lecture");
-      scope.querySelectorAll(".lecture-card.selected, .research-card.selected").forEach((c) => {
+      card.closest(".research-grid").querySelectorAll(".research-card.selected").forEach((c) => {
         c.classList.remove("selected");
       });
       if (!on) card.classList.add("selected");
       syncOverviewVideos();
-    });
-  });
-
-  document.querySelectorAll(".news-list").forEach((list) => {
-    list.querySelectorAll(".news-item").forEach((card) => {
-      card.addEventListener("click", () => {
-        const on = card.classList.contains("selected");
-        list.querySelectorAll(".news-item.selected").forEach((c) => c.classList.remove("selected"));
-        if (!on) card.classList.add("selected");
-      });
     });
   });
 
@@ -235,29 +238,39 @@
     });
   });
 
-  document.querySelectorAll("#lab-overview .details-grid").forEach((grid) => {
-    grid.querySelectorAll(".details-list").forEach((card) => {
-      card.addEventListener("click", () => {
-        const on = card.classList.contains("selected");
-        grid.querySelectorAll(".details-list.selected").forEach((c) => c.classList.remove("selected"));
-        if (!on) card.classList.add("selected");
+  // Gallery: each link opens the original image; with JS it opens in a dialog instead
+  (function initGalleryLightbox() {
+    const links = document.querySelectorAll(".gallery-link");
+    if (!links.length || typeof HTMLDialogElement !== "function") return;
+    const dialog = document.createElement("dialog");
+    dialog.className = "lightbox";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "lightbox-close";
+    closeBtn.textContent = "×";
+    const full = document.createElement("img");
+    full.alt = "";
+    dialog.append(closeBtn, full);
+    document.body.appendChild(dialog);
+    let opener = null;
+    links.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        opener = link;
+        full.src = link.href;
+        full.alt = link.querySelector("img")?.alt || "";
+        closeBtn.setAttribute("aria-label", document.documentElement.lang === "en" ? "Close" : "닫기");
+        dialog.showModal();
       });
     });
-  });
-
-  document.querySelectorAll("#members .member-card").forEach((card) => {
-    card.addEventListener("click", (e) => {
-      const on = card.classList.contains("selected");
-      document.querySelectorAll("#members .member-card.selected").forEach((c) => {
-        c.classList.remove("selected");
-      });
-      if (!on) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        card.classList.add("selected");
-      }
-    }, true);
-  });
+    // any click (image, backdrop or the close button) dismisses it; Esc is native
+    dialog.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => {
+      full.removeAttribute("src");
+      opener?.focus();
+    });
+  })();
 
   function toggleDetails(wrapperId) {
     const wrapper = document.getElementById(wrapperId);
@@ -1230,7 +1243,7 @@
       el.setAttribute("data-theme", next);
     });
     document.querySelectorAll(".theme-btn").forEach((btn) => {
-      const on = btn.getAttribute("data-theme") === next;
+      const on = btn.getAttribute("data-set-theme") === next;
       btn.classList.toggle("active", on);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
     });
@@ -1245,7 +1258,7 @@
 
   applySailTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light", false);
   document.querySelectorAll(".theme-btn").forEach((btn) => {
-    btn.addEventListener("click", () => applySailTheme(btn.getAttribute("data-theme"), true));
+    btn.addEventListener("click", () => applySailTheme(btn.getAttribute("data-set-theme"), true));
   });
   const themeMq = window.matchMedia("(prefers-color-scheme: dark)");
   const onSystemTheme = (e) => {

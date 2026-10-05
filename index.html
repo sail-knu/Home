@@ -45,26 +45,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260927e">
-    <style>
-      html.has-sail-cursor, html.has-sail-cursor * { cursor: none !important; }
-      html.has-sail-cursor iframe, html.has-sail-cursor input, html.has-sail-cursor textarea { cursor: auto !important; }
-      #sail-cursor-pointer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-        z-index: 2147483647;
-        width: 24px;
-        height: 24px;
-        overflow: visible;
-        filter: drop-shadow(0 1px 1px var(--cursor-shadow, rgba(13, 38, 68, 0.35)));
-      }
-      @media (pointer: coarse) {
-        #sail-cursor-pointer { display: none !important; }
-        html.has-sail-cursor, html.has-sail-cursor * { cursor: auto !important; }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css?v=20261005b">
 </head>
 
 <body>
@@ -184,13 +165,13 @@
                 </ul>
                 <div class="nav-tools">
                     <div class="chip-switch" role="group" aria-label="Theme">
-                        <button type="button" class="chip-btn theme-btn active" data-theme="light" aria-label="Light mode" aria-pressed="true">
+                        <button type="button" class="chip-btn theme-btn active" data-set-theme="light" aria-label="Light mode" aria-pressed="true">
                             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <circle cx="12" cy="12" r="4"/>
                                 <path d="M12 3.2v1.8M12 19v1.8M3.2 12h1.8M19 12h1.8M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3"/>
                             </svg>
                         </button>
-                        <button type="button" class="chip-btn theme-btn" data-theme="dark" aria-label="Dark mode" aria-pressed="false">
+                        <button type="button" class="chip-btn theme-btn" data-set-theme="dark" aria-label="Dark mode" aria-pressed="false">
                             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M16.4 13.6A6.4 6.4 0 0 1 10.2 4.8 6.8 6.8 0 1 0 19 14.8a6.3 6.3 0 0 1-2.6-1.2z"/>
                             </svg>
@@ -281,6 +262,7 @@
                             <li>Reachability analysis</li>
                             <li>Safety-critical planning</li>
                         </ul>
+                        <button type="button" class="research-more" aria-expanded="false"><span class="when-closed" data-i18n="videos_open">영상 보기</span><span class="when-open" data-i18n="videos_close">영상 닫기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                     </div>
                     <div class="research-card cursor-pointer" data-core="predict">
                         <div class="research-top">
@@ -296,6 +278,7 @@
                             <li>MPPI / sampling-based planning</li>
                             <li>Data-driven modeling</li>
                         </ul>
+                        <button type="button" class="research-more" aria-expanded="false"><span class="when-closed" data-i18n="videos_open">영상 보기</span><span class="when-open" data-i18n="videos_close">영상 닫기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                     </div>
                     <div class="research-card cursor-pointer" data-core="mobility">
                         <div class="research-top">
@@ -310,6 +293,7 @@
                             <li>Mobile robots</li>
                             <li>Field experiments</li>
                         </ul>
+                        <button type="button" class="research-more" aria-expanded="false"><span class="when-closed" data-i18n="videos_open">영상 보기</span><span class="when-open" data-i18n="videos_close">영상 닫기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                     </div>
                 </div>
                 <div class="overview-videos" data-core="safe" hidden>
@@ -524,11 +508,11 @@
                 <div class="bento-grid">
                     <div class="bento-wrapper" id="item-r1">
                         <div class="bento-item" onclick="toggleDetails('item-r1')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/multimodal.png" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge">Algorithm</span>
                                 <h3>Multi-modal Obstacle Avoidance Trajectory Planning &amp; Control</h3>
                                 <p data-i18n="r1_card">비홀로노믹 이동체의 회전반경을 제약으로 두고, 하나의 궤적 대신 추종·회피·접안 등 여러 거동 후보를 만듭니다. 회전원 기반 제어장벽함수로 각 모드의 안전을 판정한 뒤, 그 가운데 안전한 모드를 고르는 멀티모달 계획을 연구합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -570,11 +554,11 @@
 
                     <div class="bento-wrapper" id="item-r2">
                         <div class="bento-item" onclick="toggleDetails('item-r2')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/perception.jpg" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge">Algorithm</span>
                                 <h3>Learning-based Planning &amp; Control</h3>
                                 <p data-i18n="r2_card">학습으로 선박 동역학을 맞추고, 비선형 MPC의 제어 정책을 imitation learning으로 모사합니다. 인지된 가항 영역을 따라가는 perception-guided MPC와 LLM 기반 선박 질의응답(MARQA)으로 계획·제어를 연결합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -634,11 +618,11 @@
 
                     <div class="bento-wrapper" id="item-r3">
                         <div class="bento-item" onclick="toggleDetails('item-r3')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/tube-mpc.jpg" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge">Algorithm</span>
                                 <h3>Robust Model Predictive Control</h3>
                                 <p data-i18n="r3_card">외란과 모델 오차를 튜브로 묶어, cascade tube-MPC와 L1 적응으로 안전 영역을 지킵니다. 선박 접안·USV 회수·쿼드롭터 궤적에 적용하고, Koopman 연산자로 비선형 동역학을 데이터로부터 모델링합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -688,11 +672,11 @@
 
                     <div class="bento-wrapper" id="item-r4">
                         <div class="bento-item" onclick="toggleDetails('item-r4')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/tc-cbf.png" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge">Algorithm</span>
                                 <h3>Control Barrier Function (CBF)</h3>
                                 <p data-i18n="r4_card">좌·우 회전원으로 선회 능력과 회피 방향을 함께 제약에 넣고, QP로 실시간 풉니다. 좁은 슬립 접안을 위한 exact-geometry MPC-CBF와, COLREGs를 지키는 다선 충돌회피로 확장합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -744,11 +728,11 @@
                 <div class="bento-grid">
                     <div class="bento-wrapper" id="item-r5">
                         <div class="bento-item" onclick="toggleDetails('item-r5')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/limo.jpg" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge application">Application</span>
                                 <h3>Mobile Robots</h3>
                                 <p data-i18n="r5_card">비홀로노믹 AGV와 배송 로봇이 움직이는 장애물·보행자를 피해 가도록 NMPC 경로계획을 연구합니다. 혼잡한 실내 보행자 공간에서 LIMO 등 모바일 로봇의 자율주행을 실험으로 검증합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -777,11 +761,11 @@
 
                     <div class="bento-wrapper" id="item-r6">
                         <div class="bento-item" onclick="toggleDetails('item-r6')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/cards/canal.jpg" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge application">Application</span>
                                 <h3>Marine Vehicles</h3>
                                 <p data-i18n="r6_card">운하·연안의 좁은 수로에서 장애물 제약을 넣은 비선형 MPC로 자율운항 선박을 제어합니다. 실선 ASV·크루즈 보트 현장 실험과 포항 운하 멀티모달 데이터셋으로 인지–계획–제어를 검증합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -813,11 +797,11 @@
 
                     <div class="bento-wrapper" id="item-r7">
                         <div class="bento-item" onclick="toggleDetails('item-r7')">
+                            <div class="bento-media" aria-hidden="true"><img src="images/research/multi.png" alt="" loading="lazy"></div>
                             <div class="bento-content">
-                                <span class="bento-badge application">Application</span>
                                 <h3>Multi-agent Control</h3>
                                 <p data-i18n="r7_card">베어링 기반 formation tracking으로 여러 이동체가 상대 위치를 유지하며 움직이게 합니다. 출력 조절과 제어장벽함수로 외란·장애물 아래에서도 편대를 유지하고 회피합니다.</p>
-                                <div class="bento-action"><span class="action-text">View Details</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></div>
+                                <button type="button" class="bento-action" aria-expanded="false"><span class="when-closed" data-i18n="details_open">자세히 보기</span><span class="when-open" data-i18n="details_close">접기</span> <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
                             </div>
                         </div>
                         <div class="bento-details">
@@ -855,14 +839,12 @@
                 <div class="bento-grid">
                     <div class="bento-item">
                         <div class="bento-content">
-                            <span class="bento-badge interest">Interest</span>
                             <h3>Physical AI</h3>
                             <p data-i18n="to_be_updated">To be updated</p>
                         </div>
                     </div>
                     <div class="bento-item">
                         <div class="bento-content">
-                            <span class="bento-badge interest">Interest</span>
                             <h3>Learning-based Control <span class="member-kor">Imitation Learning</span></h3>
                             <p data-i18n="to_be_updated">To be updated</p>
                         </div>
@@ -875,9 +857,8 @@
                 <div class="project-grid">
                     <div class="bento-item project-card">
                         <div class="bento-content">
-                            <span class="bento-badge">Current</span>
-                            <h3>한국연구재단 신진연구</h3>
-                            <p>멀티모달 안전 궤적 계획 및 제어를 위한 도달 가능성 분석 기반 MPPI 알고리즘 개발 (2026–2029)</p>
+                            <h3 data-i18n="proj_nrf_title">한국연구재단 신진연구</h3>
+                            <p data-i18n="proj_nrf_desc">멀티모달 안전 궤적 계획 및 제어를 위한 도달 가능성 분석 기반 MPPI 알고리즘 개발 (2026–2029)</p>
                             <div class="project-hint" data-i18n="project_view_team">참여자 보기</div>
                             <div class="project-team">
                                 <a href="#professor" class="project-person">
@@ -920,9 +901,8 @@
                     </div>
                     <div class="bento-item project-card">
                         <div class="bento-content">
-                            <span class="bento-badge">Current</span>
-                            <h3>국립공주대학교 신임교수정착연구비</h3>
-                            <p>모델예측제어를 통한 강건한 무인이동체 제어 알고리즘 개발 (2026–2027)</p>
+                            <h3 data-i18n="proj_knu_title">국립공주대학교 신임교수정착연구비</h3>
+                            <p data-i18n="proj_knu_desc">모델예측제어를 통한 강건한 무인이동체 제어 알고리즘 개발 (2026–2027)</p>
                             <div class="project-hint" data-i18n="project_view_team">참여자 보기</div>
                             <div class="project-team">
                                 <a href="#professor" class="project-person">
@@ -937,8 +917,7 @@
                     </div>
                     <div class="bento-item project-card">
                         <div class="bento-content">
-                            <span class="bento-badge">Current</span>
-                            <h3>삼성중공업 산학연구</h3>
+                            <h3 data-i18n="proj_shi_title">삼성중공업 산학연구</h3>
                             <p>(2026)</p>
                             <div class="project-hint" data-i18n="project_view_team">참여자 보기</div>
                             <div class="project-team">
@@ -961,24 +940,25 @@
                     </div>
                     <div class="bento-item project-card">
                         <div class="bento-content">
-                            <span class="bento-badge">Current</span>
-                            <h3>응용융합기술원</h3>
-                            <p>국립공주대학교 · 충남대학교 (2026–2030)</p>
+                            <h3 data-i18n="proj_iact_title">응용융합기술원</h3>
+                            <p data-i18n="proj_iact_desc">국립공주대학교 · 충남대학교 (2026–2030)</p>
                         </div>
                     </div>
                     <div class="bento-item project-card">
                         <div class="bento-content">
-                            <span class="bento-badge">Current</span>
-                            <h3>글로컬랩</h3>
-                            <p>국립공주대학교 · KAIST · 한밭대학교 (2026–2035)</p>
+                            <h3 data-i18n="proj_glocal_title">글로컬랩</h3>
+                            <p data-i18n="proj_glocal_desc">국립공주대학교 · KAIST · 한밭대학교 (2026–2035)</p>
                         </div>
                     </div>
                 </div>
-                <ul class="ack-list">
-                    <li>이 논문은 2026년 국립공주대학교 글로컬대학30사업의 지원을 받아 수행되었음.<br>This work was supported by the Glocal University 30 Project of Kongju National University in 2026.</li>
-                    <li>이 논문은 2026년 국립공주대학교 학술연구지원사업의 연구지원에 의하여 연구되었음.<br>This work was supported by the research grant of Kongju National University in 2026.</li>
-                    <li>이 성과는 정부(과학기술정보통신부)의 재원으로 한국연구재단의 지원을 받아 수행된 연구임 (RS-2026-25490010).<br>This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2026-25490010).</li>
-                </ul>
+                <details class="ack-details">
+                    <summary data-i18n="ack_summary">사사 문구</summary>
+                    <ul class="ack-list">
+                        <li>이 논문은 2026년 국립공주대학교 글로컬대학30사업의 지원을 받아 수행되었음.<br>This work was supported by the Glocal University 30 Project of Kongju National University in 2026.</li>
+                        <li>이 논문은 2026년 국립공주대학교 학술연구지원사업의 연구지원에 의하여 연구되었음.<br>This work was supported by the research grant of Kongju National University in 2026.</li>
+                        <li>이 성과는 정부(과학기술정보통신부)의 재원으로 한국연구재단의 지원을 받아 수행된 연구임 (RS-2026-25490010).<br>This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2026-25490010).</li>
+                    </ul>
+                </details>
             </div>
 
             <div class="mt-5">
@@ -1024,6 +1004,12 @@
                     <p class="accent-text">Assistant Professor</p>
                     <p>이찬규</p>
                     <p class="small-text">Department of Mechanical &amp; Automotive Engineering<br>Kongju National University</p>
+                    <div class="profile-links">
+                        <a href="https://scholar.google.com/citations?user=-skvKp4AAAAJ" target="_blank" rel="noopener">Google Scholar</a>
+                        <a href="https://orcid.org/0000-0003-1964-9101" target="_blank" rel="noopener">ORCID</a>
+                        <a href="https://github.com/lee-ck" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.overleaf.com/read/mnchtpfmmwgv#bb3ed3" target="_blank" rel="noopener">CV</a>
+                    </div>
                 </div>
                 <div>
                     <h3 class="subsection-title">Career</h3>
@@ -1399,7 +1385,12 @@
             <p class="update-note">Last updated: 2026. 09. 18.</p>
 
             <div class="major-block glass-panel">
-                <h3 class="subsection-title">Selected Journals</h3>
+                <h3 class="subsection-title">Recent Journals</h3>
+                <ul class="pub-list" id="recent-journals"></ul>
+            </div>
+
+            <details class="major-block glass-panel selected-block">
+                <summary><h3 class="subsection-title">Selected Journals</h3><svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></summary>
                 <h4>IEEE Transactions on Control Systems Technology <span class="jcr-pill">TCST</span></h4>
                 <ul class="pub-list">
                     <li><strong>Changyu Lee</strong>, Kiyong Park, Jinwhan Kim*, <a href="https://doi.org/10.1109/TCST.2026.3692226" target="_blank" rel="noopener">"Turning Circle-based Control Barrier Function for Efficient Collision Avoidance of Nonholonomic Vehicles,"</a> <em>IEEE Transactions on Control Systems Technology</em> <span class="jcr-pill">TCST</span>, 2026, Accepted. <a href="https://arxiv.org/abs/2503.20280" target="_blank" rel="noopener">arXiv</a> <a class="project-page" href="html_presentation/tcst2026.html" target="_blank" rel="noopener">Slides</a></li>
@@ -1421,7 +1412,7 @@
                 <ul class="pub-list">
                     <li>Jonghwi Kim**, <strong>Changyu Lee**</strong>, Dongha Chung, Jinwhan Kim*, <a href="https://doi.org/10.1109/LRA.2023.3291949" target="_blank" rel="noopener">"Navigable Area Detection and Perception-guided Model Predictive Control for Autonomous Navigation in Narrow Waterways,"</a> <em>IEEE Robotics and Automation Letters</em> <span class="jcr-pill">RA-L</span>, Sep 2023. (**: equally contributed; presented at IEEE International Conference on Robotics and Automation <span class="jcr-pill">ICRA</span> 2024)</li>
                 </ul>
-            </div>
+            </details>
 
             <div class="tabs">
                 <button class="tab-btn active" onclick="openTab(event, 'preprint')">Preprint</button>
@@ -1528,21 +1519,21 @@
                         <h3>미래첨단기술의이해 I</h3>
                         <p class="small-text">Undergraduate</p>
                         <div class="lecture-card-actions">
-                            <a href="#lecture-future-group" class="btn btn-primary lecture-sim-btn">조별활동</a>
-                            <a href="#lecture-future" class="btn btn-outline lecture-sim-btn lecture-sim-btn-sm">실습</a>
+                            <a href="#lecture-future-group" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_group">조별활동</a>
+                            <a href="#lecture-future" class="btn btn-outline lecture-sim-btn lecture-sim-btn-sm" data-i18n="lecture_practice">실습</a>
                         </div>
                     </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
                         <h3>메카트로닉스</h3>
                         <p class="small-text">Undergraduate</p>
-                        <a href="#lecture-mechatronics" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
+                        <a href="#lecture-mechatronics" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_sims">실습 시뮬레이터</a>
                     </div>
                     <div class="lecture-card">
                         <div class="lecture-term">2026 Fall</div>
                         <h3>기계진동학</h3>
                         <p class="small-text">Undergraduate</p>
-                        <a href="#lecture-vibrations" class="btn btn-primary lecture-sim-btn">실습 시뮬레이터</a>
+                        <a href="#lecture-vibrations" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_sims">실습 시뮬레이터</a>
                     </div>
                 </div>
             </div>
@@ -1610,28 +1601,28 @@
             </div>
             <p class="small-text" data-i18n="course_intro">학부 강의 실습용 시뮬레이터입니다. 아래 버튼으로 하나를 골라 조작할 수 있습니다.</p>
             <div class="lecture-card-actions">
-                <a href="#lecture-future-group" class="btn btn-primary lecture-sim-btn">조별활동</a>
+                <a href="#lecture-future-group" class="btn btn-primary lecture-sim-btn" data-i18n="lecture_group">조별활동</a>
             </div>
 
             <nav class="sim-nav" aria-label="실습 시뮬레이터">
-                <button type="button" class="sim-nav-btn active" data-sim="sim-los">LOS 유도</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-pid">역진자 PID 제어</button>
-                <button type="button" class="sim-nav-btn" data-sim="sim-pidpos">역진자 위치 제어</button>
+                <button type="button" class="sim-nav-btn active" data-sim="sim-los" data-i18n="sim_los">LOS 유도</button>
+                <button type="button" class="sim-nav-btn" data-sim="sim-pid" data-i18n="sim_pid">역진자 PID 제어</button>
+                <button type="button" class="sim-nav-btn" data-sim="sim-pidpos" data-i18n="sim_pidpos">역진자 위치 제어</button>
             </nav>
 
             <article class="sim-block" id="sim-los">
-                <h3 class="subsection-title">LOS 유도</h3>
+                <h3 class="subsection-title" data-i18n="sim_los">LOS 유도</h3>
                 <p class="small-text">e<sub>ψ</sub> heading PID · Δ · R<sub>acc</sub></p>
                 <div id="los-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-pid">
-                <h3 class="subsection-title">역진자 PID 제어</h3>
-                <p class="small-text">k<sub>P</sub> · k<sub>D</sub> — 위치 제어 없음</p>
+                <h3 class="subsection-title" data-i18n="sim_pid">역진자 PID 제어</h3>
+                <p class="small-text" data-i18n="sim_pid_note">k<sub>P</sub> · k<sub>D</sub> — 위치 제어 없음</p>
                 <div id="pid-host"></div>
             </article>
             <article class="sim-block is-hidden" id="sim-pidpos">
-                <h3 class="subsection-title">역진자 위치 제어</h3>
-                <p class="small-text">k<sub>Px</sub> · k<sub>Dx</sub> — 각도 PID는 고정</p>
+                <h3 class="subsection-title" data-i18n="sim_pidpos">역진자 위치 제어</h3>
+                <p class="small-text" data-i18n="sim_pidpos_note">k<sub>Px</sub> · k<sub>Dx</sub> — 각도 PID는 고정</p>
                 <div id="pidpos-host"></div>
             </article>
         </div>
@@ -1641,12 +1632,12 @@
         <div class="section-container course-wrap course-wrap-wide">
             <a href="#lecture" class="page-back">← Lecture</a>
             <div class="section-header">
-                <h2 class="section-title">조별활동</h2>
+                <h2 class="section-title" data-i18n="group_title">조별활동</h2>
                 <div class="underline"></div>
             </div>
-            <p class="small-text">미래첨단기술의이해 I 조별 활동. 조 페이지와 조원 개인 페이지로 이동합니다.</p>
+            <p class="small-text" data-i18n="group_intro">미래첨단기술의이해 I 조별 활동. 조 페이지와 조원 개인 페이지로 이동합니다.</p>
             <div class="lecture-card-actions">
-                <a href="#lecture-future" class="btn btn-outline lecture-sim-btn lecture-sim-btn-sm">실습</a>
+                <a href="#lecture-future" class="btn btn-outline lecture-sim-btn lecture-sim-btn-sm" data-i18n="lecture_practice">실습</a>
             </div>
             <div class="group-grid">
                 <article class="group-card" data-team="1" data-theme="dark">
@@ -1668,12 +1659,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">1조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_1">1조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">Connected Navigation</p>
                         <h3>Cooperative Localization</h3>
-                        <a href="https://rlarjsl03.github.io/Team-1.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://rlarjsl03.github.io/Team-1.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://rlarjsl03.github.io" target="_blank" rel="noopener">김건희</a></li>
                             <li><a href="https://yeonbin123.github.io" target="_blank" rel="noopener">김연빈</a></li>
@@ -1694,12 +1685,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">2조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_2">2조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">Autonomous Navigation</p>
                         <h3>지능형 자율 운행 시스템</h3>
-                        <a href="https://wonsnooy.github.io/team-2/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://wonsnooy.github.io/team-2/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://lim78781.github.io/" target="_blank" rel="noopener">임재민</a></li>
                             <li><a href="https://jhyunsu8144.github.io/" target="_blank" rel="noopener">조현수</a></li>
@@ -1721,12 +1712,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">3조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_3">3조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">혼자보다 강한 질서</p>
                         <h3>군집 드론</h3>
-                        <a href="https://thirdteamteam.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://thirdteamteam.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://dohyunkimkim.github.io" target="_blank" rel="noopener">김도현</a></li>
                             <li><a href="https://dhlee2727-cmyk.github.io" target="_blank" rel="noopener">이동호</a></li>
@@ -1748,12 +1739,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">4조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_4">4조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">ROAD / REASON</p>
                         <h3>도로 위의 AI 추론</h3>
-                        <a href="https://wjdgnrla0309.github.io/autonomous-driving/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://wjdgnrla0309.github.io/autonomous-driving/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://kimjooahn.github.io/" target="_blank" rel="noopener">김주안</a></li>
                             <li><a href="https://wjdgnrla0309.github.io/" target="_blank" rel="noopener">김정후</a></li>
@@ -1781,12 +1772,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">5조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_5">5조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">ROAD SENSE</p>
                         <h3>비전 기반 노면 마찰 추정</h3>
-                        <a href="https://jinseulgi.github.io/team5.github.io" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://jinseulgi.github.io/team5.github.io" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://ahj0310.github.io" target="_blank" rel="noopener">안형준</a></li>
                             <li><a href="https://yugyeong050913-cyber.github.io" target="_blank" rel="noopener">이유경</a></li>
@@ -1813,12 +1804,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">6조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_6">6조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">LAST 1 km</p>
                         <h3>LAST MILE 배달 로봇</h3>
-                        <a href="https://ljh2512644-art.github.io/create" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://ljh2512644-art.github.io/create" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://yuchan1224.github.io" target="_blank" rel="noopener">김유찬</a></li>
                             <li><a href="https://ljh2512644-art.github.io/github.io" target="_blank" rel="noopener">이정현</a></li>
@@ -1843,12 +1834,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">7조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_7">7조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">Vehicle-to-Everything</p>
                         <h3>V2X</h3>
-                        <a href="https://kmseok1229-star.github.io/kmseok1229_star.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://kmseok1229-star.github.io/kmseok1229_star.github.io/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://sty711-cpu.github.io/" target="_blank" rel="noopener">심태윤</a></li>
                             <li><a href="https://minjuuu-u.github.io/mindol0521.github.io/" target="_blank" rel="noopener">김민주</a></li>
@@ -1871,12 +1862,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">8조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_8">8조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">ROBOT DELIVERY LAB</p>
                         <h3>배달 로봇</h3>
-                        <a href="https://group8-robot-delivery.hello40269.chatgpt.site/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://group8-robot-delivery.hello40269.chatgpt.site/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://handonghun402.github.io/gksehdgns554.github.io/" target="_blank" rel="noopener">한동훈</a></li>
                             <li><a href="https://bonung.github.io/#home" target="_blank" rel="noopener">구본웅</a></li>
@@ -1900,12 +1891,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">9조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_9">9조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">WORLD MODEL</p>
                         <h3>미래를 상상하는 자율주행</h3>
-                        <a href="https://goodmanson15-ship-it.github.io/worldmodel.html" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://goodmanson15-ship-it.github.io/worldmodel.html" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://jaewon1116.github.io/" target="_blank" rel="noopener">정재원</a></li>
                             <li><a href="https://apdkfl1590-arch.github.io/" target="_blank" rel="noopener">이주한</a></li>
@@ -1928,12 +1919,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">10조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_10">10조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">핵심 기술 · 규제 동향</p>
                         <h3>자율주행 및 자율운항</h3>
-                        <a href="https://wnehdrjs-bot.github.io/viewer/code_artifact.html" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://wnehdrjs-bot.github.io/viewer/code_artifact.html" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://kimjunhan52.github.io/" target="_blank" rel="noopener">김준한</a></li>
                             <li><a href="https://wnehdrjs-bot.github.io/" target="_blank" rel="noopener">주동건</a></li>
@@ -1959,12 +1950,12 @@
                     </div>
                     <div class="group-card-body">
                         <div class="group-card-top">
-                            <span class="lecture-term">11조</span>
-                            <span class="bento-badge">제출</span>
+                            <span class="lecture-term" data-i18n="team_11">11조</span>
+                            <span class="bento-badge" data-i18n="group_submitted">제출</span>
                         </div>
                         <p class="group-kicker">Localization &amp; Mapping</p>
                         <h3>SLAM</h3>
-                        <a href="https://thkim403.github.io/team11/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener">조 페이지</a>
+                        <a href="https://thkim403.github.io/team11/" class="btn btn-primary lecture-sim-btn" target="_blank" rel="noopener" data-i18n="group_page">조 페이지</a>
                         <ul class="group-members">
                             <li><a href="https://junghunkim0912.github.io/" target="_blank" rel="noopener">김정훈</a></li>
                             <li><a href="https://eunsoo1324.github.io/" target="_blank" rel="noopener">이은수</a></li>
@@ -2061,31 +2052,31 @@
             <div class="gallery-group">
                 <h3 class="subsection-title">2026 IFAC World Congress <span class="jcr-pill">IFAC</span></h3>
                 <div class="gallery-grid">
-                    <figure class="gallery-slot"><img src="images/gallery/2026IFAC_1.jpg" alt="IFAC World Congress 2026, Busan"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2026IFAC_2.png" alt="IFAC 2026 presentation: Efficient COLREGs-Compliant Collision Avoidance"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2026IFAC_3.jpg" alt="IFAC World Congress 2026 session"></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2026IFAC_1.jpg"><img src="images/gallery/2026IFAC_1.jpg" alt="IFAC World Congress 2026, Busan"></a></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2026IFAC_2.png"><img src="images/gallery/2026IFAC_2.png" alt="IFAC 2026 presentation: Efficient COLREGs-Compliant Collision Avoidance"></a></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2026IFAC_3.jpg"><img src="images/gallery/2026IFAC_3.jpg" alt="IFAC World Congress 2026 session"></a></figure>
                 </div>
             </div>
             <div class="gallery-group mt-5">
                 <h3 class="subsection-title">2026 제어로봇시스템학회 <span class="jcr-pill">ICROS</span></h3>
                 <div class="gallery-grid">
-                    <figure class="gallery-slot"><img src="images/gallery/2026ICROS_1.png" alt="ICROS 2026"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2026ICROS_2.png" alt="ICROS 2026"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2026ICROS_3.png" alt="ICROS 2026"></figure>
+                    <figure class="gallery-slot is-poster"><a class="gallery-link" href="images/gallery/2026ICROS_1.png"><img src="images/gallery/2026ICROS_1.png" alt="ICROS 2026"></a></figure>
+                    <figure class="gallery-slot is-poster"><a class="gallery-link" href="images/gallery/2026ICROS_2.png"><img src="images/gallery/2026ICROS_2.png" alt="ICROS 2026"></a></figure>
+                    <figure class="gallery-slot is-poster"><a class="gallery-link" href="images/gallery/2026ICROS_3.png"><img src="images/gallery/2026ICROS_3.png" alt="ICROS 2026"></a></figure>
                 </div>
             </div>
             <div class="gallery-group mt-5">
                 <h3 class="subsection-title">2025 대한기계학회 추계학술대회 <span class="jcr-pill">KSME</span></h3>
                 <div class="gallery-grid">
-                    <figure class="gallery-slot"><img src="images/gallery/2025KSME_1.png" alt="KSME 2025"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2025KSME_2.png" alt="KSME 2025"></figure>
-                    <figure class="gallery-slot"><img src="images/gallery/2025KSME_3.png" alt="KSME 2025"></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2025KSME_1.png"><img class="focus-top" src="images/gallery/2025KSME_1.png" alt="KSME 2025"></a></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2025KSME_2.png"><img src="images/gallery/2025KSME_2.png" alt="KSME 2025"></a></figure>
+                    <figure class="gallery-slot"><a class="gallery-link" href="images/gallery/2025KSME_3.png"><img src="images/gallery/2025KSME_3.png" alt="KSME 2025"></a></figure>
                 </div>
             </div>
             <div class="gallery-group mt-5">
                 <h3 class="subsection-title">2025 수중수상로봇기술연구회 추계학술대회 <span class="jcr-pill">USURT</span></h3>
                 <div class="gallery-grid">
-                    <figure class="gallery-slot"><img src="images/gallery/2025UUV_2.png" alt="USURT 2025"></figure>
+                    <figure class="gallery-slot is-poster"><a class="gallery-link" href="images/gallery/2025UUV_2.png"><img src="images/gallery/2025UUV_2.png" alt="USURT 2025"></a></figure>
                 </div>
             </div>
         </div>
@@ -2118,32 +2109,12 @@
         </div>
     </section>
 
-    <script src="script.js?v=20260929a" defer></script>
+    <script src="script.js?v=20261005b" defer></script>
     <script
       color="0,113,227"
       opacity="0.32"
       zIndex="0"
       src="canvas-nest.js?v=20260927a">
-    </script>
-    <script>
-    (function () {
-      var ptr = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      ptr.id = "sail-cursor-pointer";
-      ptr.setAttribute("viewBox", "0 0 24 24");
-      ptr.setAttribute("aria-hidden", "true");
-      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", "M3.1 2.6L3.2 18.8L8.3 13.9L13.4 22.5L16.9 20.7L11.6 12.4H20.1Z");
-      path.setAttribute("fill", "#0071e3");
-      path.setAttribute("stroke", "#fff");
-      path.setAttribute("stroke-width", "1.6");
-      path.setAttribute("stroke-linejoin", "round");
-      ptr.appendChild(path);
-      document.documentElement.appendChild(ptr);
-      document.documentElement.classList.add("has-sail-cursor");
-      document.addEventListener("mousemove", function (e) {
-        ptr.style.transform = "translate3d(" + e.clientX + "px," + e.clientY + "px,0)";
-      }, { passive: true });
-    })();
     </script>
     <script>
     (function () {
@@ -2180,8 +2151,35 @@
         "mpc_kicker": `Model Predictive Control · a year-independent note. Pick a lecture, then read.`,
         "av_kicker": `Undergrad onboarding tutorial. Pick a lecture, then read. Run the code on GitHub.`,
         "project_view_team": `View participants`,
-        "student_lead": `Student Lead`
+        "student_lead": `Student Lead`,
+        "videos_open": `Watch videos`,
+        "videos_close": `Hide videos`,
+        "details_open": `View details`,
+        "details_close": `Close details`,
+        "ack_summary": `Acknowledgments`,
+        "proj_nrf_title": `NRF Early-Career Research Grant`,
+        "proj_nrf_desc": `Development of a Reachability Analysis-based MPPI Algorithm for Multimodal Safe Trajectory Planning and Control (2026–2029)`,
+        "proj_knu_title": `KNU New Faculty Research Grant`,
+        "proj_knu_desc": `Development of Robust Control Algorithms for Unmanned Vehicles via Model Predictive Control (2026–2027)`,
+        "proj_shi_title": `Samsung Heavy Industries Industry–Academia Project`,
+        "proj_iact_title": `Institute of Applied Convergence Technology`,
+        "proj_iact_desc": `Kongju National University · Chungnam National University (2026–2030)`,
+        "proj_glocal_title": `Glocal Lab`,
+        "proj_glocal_desc": `Kongju National University · KAIST · Hanbat National University (2026–2035)`,
+        "lecture_group": `Group work`,
+        "lecture_practice": `Simulators`,
+        "lecture_sims": `Lab simulators`,
+        "group_title": `Group Work`,
+        "group_intro": `Group work for the course 미래첨단기술의이해 I. Each card links to the group page and to each member's page.`,
+        "group_page": `Group page`,
+        "group_submitted": `Submitted`,
+        "sim_los": `LOS guidance`,
+        "sim_pid": `Inverted pendulum · PID`,
+        "sim_pidpos": `Inverted pendulum · position control`,
+        "sim_pid_note": `k<sub>P</sub> · k<sub>D</sub> — no position control`,
+        "sim_pidpos_note": `k<sub>Px</sub> · k<sub>Dx</sub> — angle PID fixed`
       };
+      for (var t = 1; t <= 11; t++) I18N_EN["team_" + t] = "Group " + t;
       var origKO = {};
       function cacheKO() {
         document.querySelectorAll("[data-i18n]").forEach(function (el) {
