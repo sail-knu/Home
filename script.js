@@ -96,6 +96,7 @@
       "#member-im": "#members",
       "#member-yu": "#members",
       "#member-woo": "#members",
+      "#member-lee": "#members",
       "#member-kwak": "#members",
       "#lecture-future": "#lecture",
       "#lecture-future-group": "#lecture",
