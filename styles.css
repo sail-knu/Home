@@ -2071,6 +2071,49 @@ a.member-card:hover {
   margin-bottom: 8px;
 }
 
+/* this year's papers: tinted panel with an accent bar and a large year */
+.year-block {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--primary-color) 30%, var(--surface-border));
+  background: color-mix(in srgb, var(--primary-color) 6%, var(--surface));
+}
+
+.year-block::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+}
+
+.year-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.year-num {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--primary-color);
+}
+
+.year-label {
+  font-family: "Outfit", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+}
+
 /* Selected Journals folds away under the recent list */
 .selected-block > summary {
   display: flex;

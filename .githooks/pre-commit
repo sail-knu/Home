@@ -1,0 +1,19 @@
+#!/bin/sh
+# Stamp "Last updated: YYYY. MM. DD." on the Publications page with the commit date.
+# The staged copy is edited directly, so unstaged changes in index.html stay unstaged.
+# Enable once per clone: git config core.hooksPath .githooks
+
+file=index.html
+pattern='Last updated: [0-9]\{4\}\. [0-9]\{2\}\. [0-9]\{2\}\.'
+stamp="Last updated: $(date '+%Y. %m. %d.')"
+
+entry=$(git ls-files -s -- "$file")
+[ -n "$entry" ] || exit 0
+mode=${entry%% *}
+
+blob=$(git cat-file blob ":$file" | sed "s/$pattern/$stamp/" | git hash-object -w --stdin) || exit 1
+git update-index --cacheinfo "$mode,$blob,$file" || exit 1
+
+# keep the working copy in step so the stamp does not show up as a pending change
+[ -f "$file" ] && sed -i "s/$pattern/$stamp/" "$file"
+exit 0
