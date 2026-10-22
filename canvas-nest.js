@@ -10,7 +10,7 @@
   var canvas = document.createElement("canvas");
   canvas.id = "nestCanvas";
   canvas.setAttribute("aria-hidden", "true");
-  canvas.style.cssText = "display:block;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:" + zIndex + ";contain:strict;transform:translateZ(0)";
+  canvas.style.cssText = "display:block;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;opacity:0.55;z-index:" + zIndex + ";contain:strict;transform:translateZ(0)";
   document.body.appendChild(canvas);
 
   var ctx = canvas.getContext("2d", { alpha: true });

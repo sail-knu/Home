@@ -67,6 +67,22 @@
     });
   })();
 
+  // Members: research-interest chips on each student card, taken from the profile page
+  (function fillMemberInterests() {
+    document.querySelectorAll('#members .member-card[href^="#member-"]').forEach((card) => {
+      const items = document.querySelectorAll(card.getAttribute("href") + " .interest-list > li");
+      if (!items.length) return;
+      const list = document.createElement("ul");
+      list.className = "member-interests";
+      items.forEach((item) => {
+        const chip = document.createElement("li");
+        chip.textContent = item.textContent;
+        list.appendChild(chip);
+      });
+      card.appendChild(list);
+    });
+  })();
+
   // Publications: this year's journal and conference papers, cloned from the tabs below
   (function fillYearPublications() {
     const dest = document.getElementById("year-pubs");
