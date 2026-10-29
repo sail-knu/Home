@@ -32,10 +32,10 @@
     for (var h = 0; h < beamCount; h++) robots[i].hits[h] = { ang: 0, dist: 0, kind: 0, x: 0, y: 0 };
   }
   var raf = 0;
-  function isMembersPage(id) {
-    return id === "#members" || id === "#professor" || id === "#member-im" || id === "#member-yu" || id === "#member-woo" || id === "#member-lee" || id === "#member-yang" || id === "#member-kwak";
+  function isVehiclePage(id) {
+    return id === "#contact";
   }
-  var activeCount = isMembersPage(window.location.hash) ? 2 : 0;
+  var activeCount = isVehiclePage(window.location.hash) ? 2 : 0;
   if (activeCount <= 0) canvas.style.display = "none";
 
   function size() {
@@ -358,7 +358,7 @@
   }
 
   window.setSailVehiclePage = function (targetId) {
-    var next = isMembersPage(targetId) ? 2 : 0;
+    var next = isVehiclePage(targetId) ? 2 : 0;
     if (next > 0 && activeCount === 0) {
       robots[0].x = viewW * 0.22;
       robots[0].y = viewH * 0.28;

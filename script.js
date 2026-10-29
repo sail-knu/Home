@@ -83,47 +83,6 @@
     });
   })();
 
-  // Publications: this year's journal and conference papers, cloned from the tabs below
-  (function fillYearPublications() {
-    const dest = document.getElementById("year-pubs");
-    if (!dest) return;
-    const groups = [
-      ["journal", "International Journal"],
-      ["conference", "International Conference"],
-      ["domestic-journal", "Domestic Journal"],
-      ["domestic-conference", "Domestic Conference"]
-    ].map(([id, label]) => ({
-      label,
-      items: [...document.querySelectorAll(`#${id} .pub-list > li`)].map((li) => {
-        // the last year in an entry is its date; titles can contain other years
-        const found = li.textContent.match(/\b(?:19|20)\d{2}\b/g);
-        return { li, year: found ? Number(found[found.length - 1]) : 0 };
-      })
-    }));
-    const now = new Date().getFullYear();
-    const years = groups.flatMap((g) => g.items.map((it) => it.year)).filter((y) => y && y <= now);
-    if (!years.length) return;
-    // early in a new year, keep showing the last year that has papers
-    const year = years.includes(now) ? now : Math.max(...years);
-    document.querySelector("#year-pubs-title .year-num").textContent = year;
-    groups.forEach((g) => {
-      const picked = g.items.filter((it) => it.year === year);
-      if (!picked.length) return;
-      const heading = document.createElement("h4");
-      heading.textContent = g.label;
-      if (dest.children.length) heading.className = "mt-30";
-      const list = document.createElement("ul");
-      list.className = "pub-list";
-      picked.forEach(({ li }) => {
-        const copy = li.cloneNode(true);
-        const lead = copy.firstChild;
-        if (lead && lead.nodeType === Node.TEXT_NODE) lead.textContent = lead.textContent.replace(/^\s*\[\d+\]\s*/, "");
-        list.appendChild(copy);
-      });
-      dest.append(heading, list);
-    });
-  })();
-
   if (hamburger && navPanel) {
     hamburger.addEventListener("click", () => {
       setMenuOpen(!navPanel.classList.contains("active"));

@@ -43,6 +43,16 @@
   --status-revision: #0a6e5c;
   --status-review: #2f3eae;
   --status-prep: #8e315c;
+  --role-first-fg: #0b4f9c;
+  --role-first-bg: rgba(11, 79, 156, 0.1);
+  --role-equal-fg: #6b3fa0;
+  --role-equal-bg: rgba(107, 63, 160, 0.1);
+  --role-co-fg: #5f6368;
+  --role-co-bg: rgba(95, 99, 104, 0.1);
+  --pub-title: #0b2d5c;
+  --pub-authors: #1f2937;
+  --pub-venue: #667085;
+  --pub-year: #1f8fd0;
   --toolbar-bg: color-mix(in srgb, #fff 92%, transparent);
   --still-bg: #ffffff;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
@@ -95,6 +105,16 @@
   --status-revision: #4eecc4;
   --status-review: #a8b4ff;
   --status-prep: #ff9ec4;
+  --role-first-fg: #8ec5ff;
+  --role-first-bg: rgba(142, 197, 255, 0.16);
+  --role-equal-fg: #d2b4ff;
+  --role-equal-bg: rgba(210, 180, 255, 0.16);
+  --role-co-fg: #b0b4bc;
+  --role-co-bg: rgba(176, 180, 188, 0.14);
+  --pub-title: #d6e6ff;
+  --pub-authors: #e5e7eb;
+  --pub-venue: #a8b0bd;
+  --pub-year: #5eb8ef;
   --toolbar-bg: color-mix(in srgb, #161617 92%, transparent);
   --still-bg: #1c1c1e;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
@@ -124,7 +144,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+  font-family: Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
   z-index: 1;
@@ -262,7 +282,7 @@ button,
   border: 0;
   background: transparent;
   color: var(--switch-fg);
-  font: 600 0.68rem/1 "Outfit", sans-serif;
+  font: 600 0.68rem/1 Roboto, sans-serif;
   letter-spacing: .04em;
   padding: 5px 8px;
   border-radius: 999px;
@@ -308,7 +328,7 @@ html[data-theme="dark"] .theme-btn.active {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-weight: 700;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -471,7 +491,7 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 .hero h1 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: clamp(2.6rem, 6.5vw, 4.5rem);
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -514,12 +534,12 @@ html[data-lang="ko"] .univ-lockup {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .status-flag {
   flex: none;
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -645,7 +665,7 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 .section-title {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: clamp(1.7rem, 3vw, 2rem);
   font-weight: 700;
 }
@@ -688,7 +708,7 @@ html[data-lang="ko"] .univ-lockup {
 .research-card h3,
 .robot-card h3,
 .lecture-card h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.15rem;
   margin-bottom: 12px;
 }
@@ -701,7 +721,7 @@ html[data-lang="ko"] .univ-lockup {
 }
 
 .research-index {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1006,7 +1026,7 @@ html[data-lang="ko"] .univ-lockup {
 .bento-badge.completed { background: #94a3b8; color: #0b1220; }
 
 .bento-content h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.35rem;
 }
 
@@ -1193,7 +1213,7 @@ a.project-page:hover {
 
 .rep-pub-title {
   margin: 22px 0 8px;
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.05rem;
 }
 
@@ -1325,7 +1345,7 @@ a.project-page:hover {
   overflow: hidden;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -1553,7 +1573,7 @@ a.project-page:hover {
   place-items: center;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 16px;
@@ -1590,7 +1610,7 @@ a.project-page:hover {
 }
 
 .profile-card h2 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
 }
 
 .profile-links {
@@ -1633,7 +1653,7 @@ a.project-page:hover {
 }
 
 .subsection-title {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.25rem;
   margin-bottom: 16px;
 }
@@ -1798,7 +1818,7 @@ a.member-card:hover {
 }
 
 .group-card h3 {
-  font-family: "Outfit", "Pretendard", sans-serif;
+  font-family: Roboto, "Pretendard", sans-serif;
   font-size: 1.05rem;
   margin-bottom: 12px;
   word-break: keep-all;
@@ -1975,7 +1995,7 @@ a.member-card:hover {
   overflow: hidden;
   background: linear-gradient(160deg, var(--photo-from), var(--photo-to));
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-weight: 700;
 }
 
@@ -2059,11 +2079,121 @@ a.member-card:hover {
   border-color: var(--primary-color);
 }
 
+.pub-year {
+  margin: 1.8rem 0 0.85rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-year) 45%, var(--surface-border));
+  color: var(--pub-year);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.tab-content > .pub-year:first-child,
+.year-block > .pub-year:first-child {
+  margin-top: 0;
+}
+
 .pub-list li {
-  margin: 12px 0;
+  margin: 0 0 1.15rem;
+  padding: 0 0 1rem;
   color: var(--copy-color);
-  padding-left: 14px;
-  border-left: 2px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.pub-list li:last-child {
+  margin-bottom: 0.2rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.pub-title {
+  margin: 0 0 0.22rem;
+  color: var(--pub-title);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.42;
+}
+
+.pub-title a {
+  color: inherit;
+  border-bottom: none;
+}
+
+.pub-title a:hover {
+  color: var(--primary-color);
+}
+
+.pub-authors {
+  margin: 0 0 0.15rem;
+  color: var(--pub-authors);
+  font-size: 0.9rem;
+  font-weight: 300;
+  line-height: 1.45;
+}
+
+.pub-venue {
+  margin: 0;
+  color: var(--pub-venue);
+  font-size: 0.88rem;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.pub-index {
+  margin-right: 0.35em;
+  color: var(--muted-text);
+  font-size: 0.82em;
+  font-weight: 500;
+}
+
+.pub-role {
+  display: inline-block;
+  vertical-align: 0.12em;
+  margin-right: 0.45em;
+  padding: 0.08em 0.5em;
+  border-radius: 999px;
+  font-size: 0.68em;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.pub-role.first {
+  color: var(--role-first-fg);
+  background: var(--role-first-bg);
+}
+
+.pub-role.equal {
+  color: var(--role-equal-fg);
+  background: var(--role-equal-bg);
+}
+
+.pub-role.co {
+  color: var(--role-co-fg);
+  background: var(--role-co-bg);
+}
+
+.author-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.author-legend .pub-role {
+  margin-right: 0;
+}
+
+.author-corr {
+  color: var(--muted-text);
+}
+
+.pub-preprints {
+  margin-bottom: 8px;
 }
 
 .pub-list a {
@@ -2075,8 +2205,26 @@ a.member-card:hover {
   color: var(--primary-color);
 }
 
+.pub-venue a:not(.project-page) {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--primary-color);
+  border-bottom: none;
+}
+
+.pub-venue .jcr-pill,
+.pub-venue .pub-status {
+  font-style: normal;
+}
+
 .pub-list em,
 .news-item em {
+  font-style: italic;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.pub-venue em {
   font-style: italic;
   font-weight: 700;
   color: var(--primary-color);
@@ -2106,7 +2254,7 @@ a.member-card:hover {
 }
 
 .major-block h4 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   margin-bottom: 8px;
 }
 
@@ -2136,7 +2284,7 @@ a.member-card:hover {
 }
 
 .year-num {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: clamp(2.4rem, 5vw, 3.2rem);
   font-weight: 800;
   line-height: 1;
@@ -2145,7 +2293,7 @@ a.member-card:hover {
 }
 
 .year-label {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -2200,7 +2348,7 @@ a.member-card:hover {
   border: 1px solid color-mix(in srgb, var(--primary-color) 38%, transparent);
   background: color-mix(in srgb, var(--primary-color) 10%, transparent);
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.68em;
   font-weight: 700;
   font-style: normal;
@@ -2229,7 +2377,7 @@ a.member-card:hover {
 }
 
 .note-step h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.05rem;
   margin: 10px 0 8px;
 }
@@ -2247,7 +2395,7 @@ a.member-card:hover {
   border-radius: 50%;
   background: var(--chip-bg);
   color: var(--primary-color);
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -2288,7 +2436,7 @@ a.member-card:hover {
 }
 
 .note-split h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.05rem;
   margin-bottom: 12px;
 }
@@ -2316,13 +2464,13 @@ a.member-card:hover {
 }
 
 .note-article h3 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.12rem;
   margin: 28px 0 12px;
 }
 
 .note-article h4 {
-  font-family: "Outfit", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1rem;
   margin: 20px 0 10px;
 }
@@ -2479,7 +2627,7 @@ a.member-card:hover {
   border-radius: 999px;
   background: var(--surface);
   color: var(--copy-color);
-  font: 600 0.8rem/1.3 "Outfit", "Apple SD Gothic Neo", sans-serif;
+  font: 600 0.8rem/1.3 Roboto, "Apple SD Gothic Neo", sans-serif;
   padding: 8px 12px;
   cursor: pointer;
   text-decoration: none;
@@ -2517,7 +2665,7 @@ a.member-card:hover {
   border-radius: 12px;
   background: transparent;
   color: var(--copy-color);
-  font: 600 0.86rem/1.35 "Outfit", "Apple SD Gothic Neo", sans-serif;
+  font: 600 0.86rem/1.35 Roboto, "Apple SD Gothic Neo", sans-serif;
   text-align: left;
   padding: 12px 14px;
   cursor: pointer;
