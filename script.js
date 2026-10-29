@@ -141,6 +141,7 @@
       "#member-yu": "#members",
       "#member-woo": "#members",
       "#member-lee": "#members",
+      "#member-yang": "#members",
       "#member-kwak": "#members",
       "#lecture-future": "#lecture",
       "#lecture-future-group": "#lecture",

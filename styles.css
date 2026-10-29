@@ -1991,6 +1991,7 @@ a.member-card:hover {
   white-space: nowrap;
 }
 .member-desc { color: var(--muted-text); font-size: 0.86rem; }
+.member-card .member-role .jcr-pill { font-size: 0.78em; }
 .member-card:has(.member-interests) { flex-wrap: wrap; align-content: flex-start; }
 .member-interests {
   flex-basis: 100%;
