@@ -40,6 +40,9 @@
   --project-link: #bd5800;
   --project-link-hover-bg: rgba(255, 149, 0, 0.26);
   --project-link-hover: #8f4300;
+  --status-revision: #0a6e5c;
+  --status-review: #2f3eae;
+  --status-prep: #8e315c;
   --toolbar-bg: color-mix(in srgb, #fff 92%, transparent);
   --still-bg: #ffffff;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
@@ -89,6 +92,9 @@
   --project-link: #ff9f0a;
   --project-link-hover-bg: rgba(255, 159, 10, 0.3);
   --project-link-hover: #ffc05a;
+  --status-revision: #4eecc4;
+  --status-review: #a8b4ff;
+  --status-prep: #ff9ec4;
   --toolbar-bg: color-mix(in srgb, #161617 92%, transparent);
   --still-bg: #1c1c1e;
   --grad-hero: linear-gradient(96deg, #2997ff 0%, #7b6cff 45%, #bf5af2 75%, #ff6482 100%);
@@ -1714,6 +1720,10 @@ a.member-card:hover {
   margin-top: 0;
 }
 
+#contact .lecture-card-actions {
+  margin-bottom: 36px;
+}
+
 .lecture-sim-btn-sm {
   padding: 6px 10px;
   font-size: 0.75rem;
@@ -2071,6 +2081,14 @@ a.member-card:hover {
   font-weight: 700;
   color: var(--primary-color);
 }
+
+.pub-status {
+  font-weight: 650;
+}
+
+.pub-status.revision { color: var(--status-revision); }
+.pub-status.review { color: var(--status-review); }
+.pub-status.prep { color: var(--status-prep); }
 
 .author-legend,
 .update-note {
