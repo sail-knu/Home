@@ -2090,9 +2090,14 @@ a.member-card:hover {
 }
 
 .tab-content > .pub-year:first-child,
-.year-block > .pub-year:first-child {
+.year-block > .pub-year:first-child,
+.pub-preprints > .pub-year:first-child {
   margin-top: 0;
 }
+
+.pub-year.status-revision { color: var(--status-revision); }
+.pub-year.status-review { color: var(--status-review); }
+.pub-year.status-prep { color: var(--status-prep); }
 
 .pub-list li {
   margin: 0 0 1.15rem;
@@ -2130,6 +2135,23 @@ a.member-card:hover {
   height: 100%;
   object-fit: contain;
   background: color-mix(in srgb, var(--banner-bg) 88%, var(--surface-border));
+}
+
+#publications .pub-thumb-logo img {
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+#publications .pub-thumb-logo .logo-dark {
+  display: none;
+}
+
+html[data-theme="dark"] #publications .pub-thumb-logo .logo-light {
+  display: none;
+}
+
+html[data-theme="dark"] #publications .pub-thumb-logo .logo-dark {
+  display: block;
 }
 
 #publications .pub-body {
