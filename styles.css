@@ -2013,6 +2013,13 @@ a.member-card:hover {
   object-position: center 18%;
 }
 
+/* hairline frame so photos with white backgrounds keep their rounded edge */
+.member-photo,
+.profile-photo:has(> img),
+.project-person-photo:has(> img) {
+  border: 1px solid var(--surface-border);
+}
+
 .member-name { font-weight: 700; }
 .member-kor { opacity: 0.55; font-size: 0.85rem; margin-left: 6px; }
 .member-role { color: var(--primary-color); font-size: 0.88rem; margin-top: 2px; }
