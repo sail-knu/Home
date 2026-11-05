@@ -1496,6 +1496,20 @@ a.project-page:hover {
   grid-template-columns: 1fr;
 }
 
+.robot-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.robot-grid-2 .robot-media {
+  grid-template-columns: 1fr;
+}
+
+.robot-grid-2 .robot-visual,
+.robot-grid-2 .robot-visual-contain {
+  aspect-ratio: 4 / 3;
+  max-width: none;
+}
+
 .robot-media {
   display: grid;
   grid-template-columns: 1fr 1fr;
