@@ -1005,7 +1005,8 @@ html[data-lang="ko"] .univ-lockup {
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 
-.bento-media img {
+.bento-media img,
+.bento-media video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1014,7 +1015,8 @@ html[data-lang="ko"] .univ-lockup {
   transition: transform 0.4s ease;
 }
 
-.bento-item:hover .bento-media img {
+.bento-item:hover .bento-media img,
+.bento-item:hover .bento-media video {
   transform: scale(1.03);
 }
 
