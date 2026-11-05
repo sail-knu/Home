@@ -997,8 +997,12 @@ html[data-lang="ko"] .univ-lockup {
   position: relative;
   grid-column: 2;
   grid-row: 1;
+  margin: 14px 14px 14px 0;
+  border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--surface-border);
   background: var(--still-bg);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 
 .bento-media img {
@@ -1007,6 +1011,11 @@ html[data-lang="ko"] .univ-lockup {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.bento-item:hover .bento-media img {
+  transform: scale(1.03);
 }
 
 .bento-badge {
@@ -3216,7 +3225,7 @@ html[data-theme="dark"] .footer-sail-mark {
   .gallery-grid:has(> :only-child) .gallery-slot { grid-column: auto; }
   .bento-item:has(> .bento-media) { grid-template-columns: 1fr; }
   .bento-item:has(> .bento-media) > .bento-content { grid-row: 2; }
-  .bento-media { grid-column: 1; grid-row: 1; aspect-ratio: 16 / 9; }
+  .bento-media { grid-column: 1; grid-row: 1; aspect-ratio: 2 / 1; margin: 14px 14px 0; }
   .collab-card .member-role {
     white-space: normal;
   }
